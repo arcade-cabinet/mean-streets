@@ -37,7 +37,12 @@ function calcPower(index: number, powerMod: number): number {
   return Math.max(1, Math.min(12, base + powerMod));
 }
 
-export function generateAllCards(seed = 42, starterCount = 20): CharacterCard[] {
+function calcResistance(index: number, resistanceMod: number): number {
+  const base = Math.floor(1 + (index / 99) * 7);
+  return Math.max(1, Math.min(12, base + resistanceMod));
+}
+
+export function generateAllCards(seed = 42, starterCount = 25): CharacterCard[] {
   const rng = createRng(seed);
   const cards: CharacterCard[] = [];
   const usedNames = new Set<string>();
@@ -90,6 +95,7 @@ export function generateAllCards(seed = 42, starterCount = 20): CharacterCard[] 
     const archetype = archetypes[i % archetypes.length];
     const affiliation = affQueue[i];
     const power = calcPower(i, archetype.powerMod);
+    const resistance = calcResistance(i, archetype.resistanceMod ?? 0);
 
     // If no nickname, use archetype title
     if (!nickname) {
@@ -102,11 +108,13 @@ export function generateAllCards(seed = 42, starterCount = 20): CharacterCard[] 
       archetype: archetype.id,
       affiliation,
       power,
+      resistance,
       abilityText: archetype.abilityText,
       unlocked: i < starterCount,
       unlockCondition: i >= starterCount
         ? unlockCondition(i, rng)
         : undefined,
+      locked: false,
     };
 
     const result = CharacterCardSchema.safeParse(card);

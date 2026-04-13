@@ -8,7 +8,8 @@
       "abilityText": "Ignores precision rule. Can attack any target regardless of HP.",
       "targets": "vanguard",
       "timing": "on_attack",
-      "powerMod": 1
+      "powerMod": 1,
+      "resistanceMod": 1
     },
     {
       "id": "snitch",
@@ -18,7 +19,8 @@
       "abilityText": "On play: reveal opponent's top 3 draw pile cards.",
       "targets": "draw_pile",
       "timing": "on_play",
-      "powerMod": -1
+      "powerMod": -1,
+      "resistanceMod": 0
     },
     {
       "id": "lookout",
@@ -28,7 +30,8 @@
       "abilityText": "On play: swap this card with any card in your reserves.",
       "targets": "reserves",
       "timing": "on_play",
-      "powerMod": 0
+      "powerMod": 0,
+      "resistanceMod": 0
     },
     {
       "id": "enforcer",
@@ -38,7 +41,8 @@
       "abilityText": "Deals double damage to cards from a rival affiliation.",
       "targets": "vanguard",
       "timing": "on_attack",
-      "powerMod": 0
+      "powerMod": 0,
+      "resistanceMod": 1
     },
     {
       "id": "ghost",
@@ -48,7 +52,8 @@
       "abilityText": "Can attack directly from reserves without being drawn first.",
       "targets": "vanguard",
       "timing": "on_attack",
-      "powerMod": -1
+      "powerMod": -1,
+      "resistanceMod": -1
     },
     {
       "id": "arsonist",
@@ -58,7 +63,8 @@
       "abilityText": "On attack: also deals 2 damage to opponent's top draw pile card.",
       "targets": "draw_pile",
       "timing": "on_attack",
-      "powerMod": 0
+      "powerMod": 0,
+      "resistanceMod": 0
     },
     {
       "id": "shark",
@@ -68,7 +74,8 @@
       "abilityText": "Damage +1 for each card fewer the opponent has than you.",
       "targets": "vanguard",
       "timing": "on_attack",
-      "powerMod": -1
+      "powerMod": -1,
+      "resistanceMod": -1
     },
     {
       "id": "fence",
@@ -78,7 +85,8 @@
       "abilityText": "On sacrifice: draw 2 cards instead of healing.",
       "targets": "self",
       "timing": "on_sacrifice",
-      "powerMod": 0
+      "powerMod": 0,
+      "resistanceMod": 0
     },
     {
       "id": "medic",
@@ -88,7 +96,8 @@
       "abilityText": "On sacrifice: heal double. Can heal from reserves.",
       "targets": "self",
       "timing": "on_sacrifice",
-      "powerMod": -1
+      "powerMod": -1,
+      "resistanceMod": 2
     },
     {
       "id": "wheelman",
@@ -98,7 +107,8 @@
       "abilityText": "On play: swap vanguard with any card in your hand.",
       "targets": "self",
       "timing": "on_play",
-      "powerMod": 0
+      "powerMod": 0,
+      "resistanceMod": 0
     },
     {
       "id": "hustler",
@@ -108,7 +118,8 @@
       "abilityText": "On attack: steal 1 random card from opponent's hand.",
       "targets": "hand",
       "timing": "on_attack",
-      "powerMod": -1
+      "powerMod": -1,
+      "resistanceMod": -1
     },
     {
       "id": "sniper",
@@ -118,7 +129,8 @@
       "abilityText": "Can target any card in opponent's hand, not just vanguard.",
       "targets": "hand",
       "timing": "on_attack",
-      "powerMod": -1
+      "powerMod": -1,
+      "resistanceMod": -1
     }
   ]
 }
