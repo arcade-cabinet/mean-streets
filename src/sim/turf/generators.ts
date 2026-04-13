@@ -1,108 +1,170 @@
 /**
- * Generators for product, cash, and weapon card pools.
- * Crew cards use the existing character generator.
+ * Category-based generators for weapon, drug, and cash card pools.
+ * Weapons: 5 categories x 10 = 50 unique cards.
+ * Drugs: 5 categories x 10 = 50 unique cards.
+ * Cash: 25x $100 + 5x $1000 = 30 cards.
  */
 
-import productsPool from '../../data/pools/products.json';
-import weaponsPool from '../../data/pools/weapons.json';
-import type { ProductCard, CashCard, WeaponCard } from './types';
+import weaponCategoriesPool from '../../data/pools/weapon-categories.json';
+import drugCategoriesPool from '../../data/pools/drug-categories.json';
+import type { WeaponCard, ProductCard, CashCard } from './types';
 import type { Rng } from '../cards/rng';
 
-/** Generate 25 product cards from adjective+noun permutations. */
-export function generateProducts(rng: Rng): ProductCard[] {
-  const { adjectives, nouns, effects } = productsPool;
-  const cards: ProductCard[] = [];
-  const usedNames = new Set<string>();
+const WEAPONS_PER_CATEGORY = 10;
+const DRUGS_PER_CATEGORY = 10;
+const UNLOCKED_PER_CATEGORY = 4;
 
-  for (let i = 0; i < 25; i++) {
-    let name: string;
-    let attempts = 0;
-    do {
-      name = `${rng.pick(adjectives)} ${rng.pick(nouns)}`;
-      attempts++;
-    } while (usedNames.has(name) && attempts < 50);
-    usedNames.add(name);
+function calcBonus(index: number, min: number, max: number, mod: number): number {
+  const range = max - min;
+  const base = min + Math.round((index / (WEAPONS_PER_CATEGORY - 1)) * range);
+  return Math.max(1, Math.min(5, base + mod));
+}
 
-    const effect = effects[i % effects.length];
-    const potency = Math.min(5, Math.floor(i / 5) + 1);
+function weaponUnlockCondition(rng: Rng): string {
+  const conds = [
+    `Win ${rng.int(3, 7)} games`,
+    `Kill ${rng.int(5, 15)} enemies total`,
+    `Win a game using only bladed weapons`,
+    `Win a game in under ${rng.int(12, 16)} rounds`,
+    `Seize ${rng.int(10, 20)} positions total`,
+    `Win without losing a position`,
+    `Kill ${rng.int(3, 5)} enemies in a single game`,
+    `Win with all 5 weapon categories in your deck`,
+  ];
+  return rng.pick(conds);
+}
 
-    cards.push({
-      type: 'product',
-      id: `prod-${String(i + 1).padStart(2, '0')}`,
-      name,
-      effect: effect.id,
-      effectDesc: effect.desc,
-      potency,
-    });
+function drugUnlockCondition(rng: Rng): string {
+  const conds = [
+    `Win ${rng.int(3, 7)} games`,
+    `Use ${rng.int(10, 20)} drugs in total across games`,
+    `Win a game using only stimulants`,
+    `Flip ${rng.int(5, 10)} enemies total`,
+    `Win without using steroids`,
+    `Win a game with all 5 drug categories in your deck`,
+    `Win a game in under ${rng.int(12, 16)} rounds`,
+    `Survive ${rng.int(3, 5)} killing blows using painkillers`,
+  ];
+  return rng.pick(conds);
+}
+
+function getBonusRange(categoryId: string): { min: number; max: number } {
+  switch (categoryId) {
+    case 'bladed': return { min: 1, max: 3 };
+    case 'blunt': return { min: 2, max: 4 };
+    case 'explosive': return { min: 2, max: 4 };
+    case 'ranged': return { min: 1, max: 2 };
+    case 'stealth': return { min: 1, max: 2 };
+    default: return { min: 1, max: 3 };
+  }
+}
+
+function getPotencyRange(categoryId: string): { min: number; max: number } {
+  switch (categoryId) {
+    case 'stimulant': return { min: 1, max: 3 };
+    case 'sedative': return { min: 2, max: 4 };
+    case 'hallucinogen': return { min: 1, max: 3 };
+    case 'steroid': return { min: 2, max: 4 };
+    case 'narcotic': return { min: 1, max: 2 };
+    default: return { min: 1, max: 3 };
+  }
+}
+
+/** Generate 50 weapon cards from 5 categories x 10. */
+export function generateWeapons(rng: Rng): WeaponCard[] {
+  const cards: WeaponCard[] = [];
+  let globalIdx = 0;
+
+  for (const cat of weaponCategoriesPool.categories) {
+    const names = rng.shuffle([...cat.names]);
+    const bonusRange = getBonusRange(cat.id);
+
+    for (let i = 0; i < WEAPONS_PER_CATEGORY; i++) {
+      const name = names[i % names.length];
+      const bonus = calcBonus(i, bonusRange.min, bonusRange.max, cat.bonusMod);
+      const isUnlocked = i < UNLOCKED_PER_CATEGORY;
+
+      cards.push({
+        type: 'weapon',
+        id: `weap-${String(globalIdx + 1).padStart(2, '0')}`,
+        name,
+        category: cat.id,
+        bonus,
+        offenseAbility: cat.offenseAbility,
+        offenseAbilityText: cat.offenseAbilityText,
+        defenseAbility: cat.defenseAbility,
+        defenseAbilityText: cat.defenseAbilityText,
+        unlocked: isUnlocked,
+        unlockCondition: isUnlocked ? undefined : weaponUnlockCondition(rng),
+        locked: false,
+      });
+      globalIdx++;
+    }
   }
   return cards;
 }
 
-/**
- * Generate cash card pool.
- * Each denomination has a starting count of unlocked copies.
- */
-export function generateCash(): {
-  cards: CashCard[];
-  denominations: Array<{ value: number; unlocked: number; max: number }>;
-} {
-  const denoms = [
-    { value: 1,    unlocked: 8,  max: 10 },
-    { value: 5,    unlocked: 6,  max: 10 },
-    { value: 10,   unlocked: 4,  max: 10 },
-    { value: 20,   unlocked: 2,  max: 10 },
-    { value: 100,  unlocked: 1,  max: 10 },
-    { value: 500,  unlocked: 0,  max: 10 },
-    { value: 1000, unlocked: 0,  max: 10 },
-  ];
+/** Generate 50 drug cards from 5 categories x 10. */
+export function generateDrugs(rng: Rng): ProductCard[] {
+  const cards: ProductCard[] = [];
+  let globalIdx = 0;
+  const usedNames = new Set<string>();
 
-  const cards: CashCard[] = [];
-  let idx = 0;
-  for (const d of denoms) {
-    for (let i = 0; i < d.unlocked; i++) {
+  for (const cat of drugCategoriesPool.categories) {
+    const adjectives = rng.shuffle([...cat.adjectives]);
+    const nouns = rng.shuffle([...cat.nouns]);
+    const potencyRange = getPotencyRange(cat.id);
+
+    for (let i = 0; i < DRUGS_PER_CATEGORY; i++) {
+      let name: string;
+      let attempts = 0;
+      do {
+        const adj = adjectives[i % adjectives.length];
+        const noun = nouns[(i + attempts) % nouns.length];
+        name = `${adj} ${noun}`;
+        attempts++;
+      } while (usedNames.has(name) && attempts < 50);
+      usedNames.add(name);
+
+      const potency = calcBonus(i, potencyRange.min, potencyRange.max, cat.potencyMod);
+      const isUnlocked = i < UNLOCKED_PER_CATEGORY;
+
       cards.push({
-        type: 'cash',
-        id: `cash-${String(++idx).padStart(3, '0')}`,
-        denomination: d.value,
+        type: 'product',
+        id: `drug-${String(globalIdx + 1).padStart(2, '0')}`,
+        name,
+        category: cat.id,
+        potency,
+        offenseAbility: cat.offenseAbility,
+        offenseAbilityText: cat.offenseAbilityText,
+        defenseAbility: cat.defenseAbility,
+        defenseAbilityText: cat.defenseAbilityText,
+        unlocked: isUnlocked,
+        unlockCondition: isUnlocked ? undefined : drugUnlockCondition(rng),
+        locked: false,
       });
+      globalIdx++;
     }
   }
-  return { cards, denominations: denoms };
+  return cards;
 }
 
-/** Generate weapon card pool from weapon definitions. */
-export function generateWeapons(): WeaponCard[] {
-  return weaponsPool.weapons.map(w => ({
-    type: 'weapon' as const,
-    id: w.id,
-    name: w.name,
-    effect: w.effect,
-    effectDesc: w.desc,
-    bonus: w.bonus,
-  }));
-}
-
-/** Print summary of generated card pools. */
-export function printPoolSummary(
-  products: ProductCard[],
-  cash: CashCard[],
-  weapons: WeaponCard[],
-): void {
-  console.log(`\nProducts: ${products.length}`);
-  const byEffect: Record<string, number> = {};
-  for (const p of products) {
-    byEffect[p.effect] = (byEffect[p.effect] ?? 0) + 1;
+/** Generate base cash pool: 25x $100 + 5x $1000. */
+export function generateCash(): CashCard[] {
+  const cards: CashCard[] = [];
+  for (let i = 0; i < 25; i++) {
+    cards.push({
+      type: 'cash',
+      id: `cash-${String(i + 1).padStart(3, '0')}`,
+      denomination: 100,
+    });
   }
-  console.log('  By effect:', Object.entries(byEffect).map(([k, v]) => `${k}:${v}`).join(' '));
-  console.log('  Sample:', products.slice(0, 5).map(p => `${p.name} (${p.effect} P${p.potency})`).join(', '));
-
-  console.log(`\nCash: ${cash.length} cards`);
-  const byDenom: Record<number, number> = {};
-  for (const c of cash) {
-    byDenom[c.denomination] = (byDenom[c.denomination] ?? 0) + 1;
+  for (let i = 0; i < 5; i++) {
+    cards.push({
+      type: 'cash',
+      id: `cash-${String(26 + i).padStart(3, '0')}`,
+      denomination: 1000,
+    });
   }
-  console.log('  By denom:', Object.entries(byDenom).map(([k, v]) => `$${k}:${v}`).join(' '));
-
-  console.log(`\nWeapons: ${weapons.length}`);
-  console.log('  Sample:', weapons.slice(0, 5).map(w => `${w.name} (+${w.bonus})`).join(', '));
+  return cards;
 }
