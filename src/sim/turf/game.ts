@@ -17,13 +17,15 @@ import { generateProducts, generateCash, generateWeapons } from './generators';
 import {
   createBoard, findEmptyActive, placeCrew, stackProduct,
   stackCash, armCrew, seizedCount, findPushReady,
-  findFundedReady, findDirectReady, positionPower,
-  seizePosition,
+  findFundedReady, findDirectReady, findNeedsStacking,
+  positionPower, positionDefense, seizePosition, tickPositions,
 } from './board';
 import {
   resolveDirectAttack, resolveFundedAttack, resolvePushedAttack,
   canPrecisionAttack,
 } from './attacks';
+import { evaluateFuzzy } from './ai-fuzzy';
+import { resolveState, getStatePriorities, type AiState } from './ai-states';
 
 function emptyMetrics(): TurfMetrics {
   return {
@@ -94,6 +96,8 @@ function createGame(config: TurfGameConfig, seed: number): TurfGameState {
     phase: 'buildup',
     buildupTurns: { A: 0, B: 0 },
     hasStruck: { A: false, B: false },
+    aiState: { A: 'BUILDING', B: 'BUILDING' },
+    aiTurnsInState: { A: 0, B: 0 },
     rng, seed,
     winner: null, endReason: null,
     metrics: emptyMetrics(),
@@ -119,39 +123,32 @@ function drawPhase(state: TurfGameState, side: 'A' | 'B'): void {
 // ── AI: Strike Timing Decision ───────────────────────────────
 
 /**
- * During buildup, AI decides whether to keep building or strike.
- * Factors: crew placed, weapons available, opponent's visible buildup,
- * archetype composition (aggressive archetypes = lower patience).
+ * During buildup, AI uses fuzzy logic to decide when to strike.
+ * Evaluates board state, resources, and threat to determine readiness.
  */
 function shouldStrike(state: TurfGameState, side: 'A' | 'B'): boolean {
   const p = state.players[side];
-  const opp = state.players[side === 'A' ? 'B' : 'A'];
   const buildTurns = state.buildupTurns[side];
+  const fuzzy = evaluateFuzzy(state, side);
 
-  // Count our active crew
-  const ourCrew = p.board.active.filter(pos => pos.crew).length;
-  // Count opponent's visible crew
-  const theirCrew = opp.board.active.filter(pos => pos.crew).length;
-
-  // Aggressive archetypes lower patience
-  const aggroCount = p.board.active
-    .filter(pos => pos.crew && ['bruiser', 'enforcer', 'arsonist', 'shark'].includes(pos.crew.archetype))
-    .length;
-
-  // Base patience: 3-7 turns depending on hand composition
-  const basePat = 5;
-  const patience = Math.max(2, basePat - aggroCount + (p.hand.product.length > 0 ? 1 : 0));
+  // Update AI state based on fuzzy evaluation
+  const currentState = state.aiState[side] as AiState;
+  const newState = resolveState(fuzzy, currentState, state.aiTurnsInState[side]);
+  if (newState !== currentState) {
+    state.aiState[side] = newState;
+    state.aiTurnsInState[side] = 0;
+  }
 
   // Strike if:
-  // 1. We've built enough (past patience threshold)
-  if (buildTurns >= patience) return true;
-  // 2. We have a significant crew advantage
-  if (ourCrew >= 3 && ourCrew > theirCrew + 1) return true;
-  // 3. We have a funded/push stack ready
+  // 1. Fuzzy aggression is high and patience is low
+  if (fuzzy.aggression > 0.6 && fuzzy.patience < 0.3) return true;
+  // 2. Desperation is high (must act now)
+  if (fuzzy.desperation > 0.5) return true;
+  // 3. Have a stacked attack ready
   if (findPushReady(p.board).length > 0) return true;
   if (findFundedReady(p.board).length > 0 && buildTurns >= 3) return true;
-  // 4. We have 4+ crew and at least one weapon
-  if (ourCrew >= 4 && p.board.active.some(pos => pos.weapon)) return true;
+  // 4. Been building too long
+  if (buildTurns >= 8) return true;
   // 5. Nothing left to build
   if (p.hand.crew.length === 0 && p.hand.product.length === 0 && p.hand.cash.length === 0) return true;
 
@@ -211,61 +208,146 @@ function aiCombatTurn(state: TurfGameState, side: 'A' | 'B'): void {
   const opp = state.players[side === 'A' ? 'B' : 'A'];
   const m = state.metrics;
 
-  // Priority 1: Pushed attack
-  const pushReady = findPushReady(p.board);
-  if (pushReady.length > 0) {
-    const atkIdx = pushReady[0];
-    const targetIdx = opp.board.active.findIndex(pos => pos.crew !== null);
-    if (targetIdx >= 0) {
+  // Update AI state via fuzzy logic
+  const fuzzy = evaluateFuzzy(state, side);
+  const currentState = state.aiState[side] as AiState;
+  const newState = resolveState(fuzzy, currentState, state.aiTurnsInState[side]);
+  if (newState !== currentState) {
+    state.aiState[side] = newState;
+    state.aiTurnsInState[side] = 0;
+  }
+  state.aiTurnsInState[side]++;
+
+  // Get priority order from state machine
+  const priorities = getStatePriorities(newState);
+
+  // Execute first viable action in priority order
+  for (const action of priorities) {
+    if (tryAction(state, side, action)) return;
+  }
+
+  m.passes++;
+}
+
+/** Try to execute a single action type. Returns true if action was taken. */
+function tryAction(state: TurfGameState, side: 'A' | 'B', action: string): boolean {
+  const p = state.players[side];
+  const opp = state.players[side === 'A' ? 'B' : 'A'];
+  const m = state.metrics;
+
+  switch (action) {
+    case 'reclaim': {
+      const seizedIdx = p.board.active.findIndex(pos => pos.seized);
+      if (seizedIdx >= 0 && p.hand.crew.length > 0 && p.hand.cash.length > 0) {
+        const crew = p.hand.crew.pop()!;
+        p.hand.cash.pop()!; // costs cash
+        const weakCrew = { ...crew, power: Math.max(1, Math.floor(crew.power / 2)) };
+        p.board.active[seizedIdx].seized = false;
+        p.board.active[seizedIdx].crew = weakCrew;
+        p.board.active[seizedIdx].turnsActive = 0;
+        opp.positionsSeized = Math.max(0, opp.positionsSeized - 1);
+        m.positionsReclaimed++;
+        m.crewPlaced++;
+        m.cashPlayed++;
+        return true;
+      }
+      return false;
+    }
+
+    case 'pushed_attack': {
+      const ready = findPushReady(p.board);
+      if (ready.length === 0) return false;
+      const targetIdx = opp.board.active.findIndex(pos => pos.crew !== null);
+      if (targetIdx < 0) return false;
       m.pushedAttacks++;
       m.dieRolls++;
       const outcome = resolvePushedAttack(
-        p.board.active[atkIdx], opp.board.active[targetIdx],
+        p.board.active[ready[0]], opp.board.active[targetIdx],
         opp.board.active, state.config, state.rng,
       );
       handleOutcome(state, side, outcome, opp, targetIdx);
-      return;
+      return true;
     }
-  }
 
-  // Priority 2: Funded attack
-  const fundedReady = findFundedReady(p.board);
-  if (fundedReady.length > 0) {
-    const atkIdx = fundedReady[0];
-    const targetIdx = opp.board.active.findIndex(pos => pos.crew !== null);
-    if (targetIdx >= 0) {
+    case 'funded_attack': {
+      const ready = findFundedReady(p.board);
+      if (ready.length === 0) return false;
+      const targetIdx = opp.board.active.findIndex(pos => pos.crew !== null);
+      if (targetIdx < 0) return false;
       m.fundedAttacks++;
       m.dieRolls++;
       const outcome = resolveFundedAttack(
-        p.board.active[atkIdx], opp.board.active[targetIdx],
+        p.board.active[ready[0]], opp.board.active[targetIdx],
         state.config, state.rng,
       );
       handleOutcome(state, side, outcome, opp, targetIdx);
-      return;
+      return true;
     }
-  }
 
-  // Priority 3: Direct attack
-  const directReady = findDirectReady(p.board);
-  if (directReady.length > 0) {
-    for (const atkIdx of directReady) {
-      const atkPos = p.board.active[atkIdx];
-      const targetIdx = opp.board.active.findIndex(pos =>
-        pos.crew !== null &&
-        canPrecisionAttack(positionPower(atkPos), pos.crew!.power,
-          state.config.precisionMult, atkPos.crew!.archetype === 'bruiser'),
+    case 'arm_weapon': {
+      if (p.hand.weapon.length === 0) return false;
+      const unarmed = p.board.active.findIndex(
+        pos => pos.crew && !pos.weapon && !pos.seized && pos.turnsActive >= 1,
       );
-      if (targetIdx >= 0) {
-        m.directAttacks++;
-        const outcome = resolveDirectAttack(atkPos, opp.board.active[targetIdx]);
-        handleOutcome(state, side, outcome, opp, targetIdx);
-        return;
-      }
+      if (unarmed < 0) return false;
+      armCrew(p.board, unarmed, p.hand.weapon.pop()!);
+      m.weaponsDrawn++;
+      return true;
     }
-  }
 
-  // Priority 4: Build (even during combat)
-  aiBuildupTurn(state, side);
+    case 'stack_product': {
+      if (p.hand.product.length === 0) return false;
+      const target = p.board.active.findIndex(pos => pos.crew && !pos.product && !pos.seized);
+      if (target < 0) return false;
+      stackProduct(p.board, target, p.hand.product.pop()!);
+      m.productPlayed++;
+      return true;
+    }
+
+    case 'stack_cash': {
+      if (p.hand.cash.length === 0) return false;
+      const target = p.board.active.findIndex(pos => pos.crew && !pos.cash && !pos.seized);
+      if (target < 0) return false;
+      stackCash(p.board, target, p.hand.cash.pop()!);
+      m.cashPlayed++;
+      return true;
+    }
+
+    case 'direct_attack': {
+      const ready = findDirectReady(p.board);
+      if (ready.length === 0) return false;
+      const sorted = ready.sort((a, b) =>
+        positionPower(p.board.active[b]) - positionPower(p.board.active[a]),
+      );
+      for (const atkIdx of sorted) {
+        const atkPos = p.board.active[atkIdx];
+        const targetIdx = opp.board.active.findIndex(pos =>
+          pos.crew !== null &&
+          canPrecisionAttack(positionPower(atkPos), positionDefense(pos),
+            state.config.precisionMult, atkPos.crew!.archetype === 'bruiser'),
+        );
+        if (targetIdx >= 0) {
+          m.directAttacks++;
+          const outcome = resolveDirectAttack(atkPos, opp.board.active[targetIdx]);
+          handleOutcome(state, side, outcome, opp, targetIdx);
+          return true;
+        }
+      }
+      return false;
+    }
+
+    case 'place_crew': {
+      if (p.hand.crew.length === 0) return false;
+      const emptyIdx = findEmptyActive(p.board);
+      if (emptyIdx < 0) return false;
+      placeCrew(p.board, emptyIdx, p.hand.crew.pop()!);
+      m.crewPlaced++;
+      return true;
+    }
+
+    default:
+      return false;
+  }
 }
 
 function handleOutcome(
@@ -336,6 +418,9 @@ export function playTurfGame(
     state.turnNumber++;
     state.metrics.turns++;
     const side = state.turnSide;
+
+    // Tick positions (increment turnsActive for crew placement cooldown)
+    tickPositions(state.players[side].board);
 
     // Draw phase (always happens)
     drawPhase(state, side);

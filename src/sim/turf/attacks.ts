@@ -5,7 +5,7 @@
 
 import type { Position, AttackOutcome, TurfGameConfig } from './types';
 import type { Rng } from '../cards/rng';
-import { positionPower, clearPosition, seizePosition } from './board';
+import { positionPower, positionDefense, clearPosition } from './board';
 
 /** Check precision: attacker power <= target power * multiplier. */
 export function canPrecisionAttack(
@@ -28,7 +28,7 @@ export function resolveDirectAttack(
   defender: Position,
 ): AttackOutcome {
   const atkPower = positionPower(attacker);
-  const defPower = positionPower(defender);
+  const defPower = positionDefense(defender); // defenders use full power, not bare-fist
 
   if (atkPower >= defPower) {
     const lost = clearPosition(defender);

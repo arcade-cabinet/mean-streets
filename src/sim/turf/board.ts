@@ -9,7 +9,14 @@ import type {
 
 /** Create an empty position owned by the given side. */
 export function emptyPosition(owner: 'A' | 'B'): Position {
-  return { crew: null, product: null, cash: null, weapon: null, owner, seized: false };
+  return { crew: null, product: null, cash: null, weapon: null, owner, seized: false, turnsActive: 0 };
+}
+
+/** Tick all positions — increment turnsActive for occupied slots. */
+export function tickPositions(board: PlayerBoard): void {
+  for (const pos of board.active) {
+    if (pos.crew) pos.turnsActive++;
+  }
 }
 
 /** Create initial board for a player. */
@@ -72,13 +79,28 @@ export function armCrew(board: PlayerBoard, idx: number, weapon: WeaponCard): bo
   return true;
 }
 
-/** Get effective power of a position (crew power + weapon bonus). */
+/**
+ * Get effective attack power of a position.
+ * Bare-fist (no weapon): power - 2 (minimum 1). Weapons are essential.
+ * Product boost stacks on top.
+ */
 export function positionPower(pos: Position): number {
   if (!pos.crew) return 0;
   let power = pos.crew.power;
-  if (pos.weapon) power += pos.weapon.bonus;
+  if (pos.weapon) {
+    power += pos.weapon.bonus;
+  } else {
+    // Bare-fist penalty: unarmed attacks are weaker
+    power = Math.max(1, power - 2);
+  }
   if (pos.product?.effect === 'boost') power += pos.product.potency;
   return power;
+}
+
+/** Get defensive power (full crew power, no bare-fist penalty). */
+export function positionDefense(pos: Position): number {
+  if (!pos.crew) return 0;
+  return pos.crew.power;
 }
 
 /** Kill/remove crew from a position, return all cards to discard. */
@@ -110,23 +132,30 @@ export function reclaimPosition(pos: Position, crew: CrewCard): boolean {
   return true;
 }
 
-/** Find positions with full stacks (crew + product + cash) for pushed attacks. */
+/** Find positions with full stacks (crew + product + cash) ready to push. */
 export function findPushReady(board: PlayerBoard): number[] {
   return board.active
-    .map((p, i) => (p.crew && p.product && p.cash) ? i : -1)
+    .map((p, i) => (p.crew && p.product && p.cash && p.turnsActive >= 1) ? i : -1)
     .filter(i => i >= 0);
 }
 
-/** Find positions with crew + cash for funded attacks. */
+/** Find positions with crew + cash ready for funded attacks. */
 export function findFundedReady(board: PlayerBoard): number[] {
   return board.active
-    .map((p, i) => (p.crew && p.cash && !p.product) ? i : -1)
+    .map((p, i) => (p.crew && p.cash && !p.product && p.turnsActive >= 1) ? i : -1)
     .filter(i => i >= 0);
 }
 
-/** Find positions with just crew for direct attacks. */
+/** Find positions with crew ready for direct attacks. Must have been placed at least 1 turn. */
 export function findDirectReady(board: PlayerBoard): number[] {
   return board.active
-    .map((p, i) => (p.crew && !p.cash && !p.product) ? i : -1)
+    .map((p, i) => (p.crew && p.turnsActive >= 1) ? i : -1)
+    .filter(i => i >= 0);
+}
+
+/** Find positions that need stacking (crew placed, waiting for product/cash/weapon). */
+export function findNeedsStacking(board: PlayerBoard): number[] {
+  return board.active
+    .map((p, i) => (p.crew && (!p.weapon || !p.product || !p.cash) && !p.seized) ? i : -1)
     .filter(i => i >= 0);
 }

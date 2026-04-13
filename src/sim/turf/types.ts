@@ -59,6 +59,8 @@ export interface Position {
   owner: 'A' | 'B';
   /** Is this position seized by the opponent? */
   seized: boolean;
+  /** Turns since crew was placed. 0 = just placed, can't act yet. */
+  turnsActive: number;
 }
 
 /** Full board for one player: 5 active + 5 reserve. */
@@ -141,6 +143,9 @@ export interface TurfGameState {
   buildupTurns: { A: number; B: number };
   /** Has each player decided to strike yet? */
   hasStruck: { A: boolean; B: boolean };
+  /** AI behavior state per player. */
+  aiState: { A: string; B: string };
+  aiTurnsInState: { A: number; B: number };
   rng: Rng;
   seed: number;
   winner: 'A' | 'B' | null;
