@@ -37,10 +37,17 @@ function formatName(
   return first;
 }
 
-/** Base stat calculation from tier (1-5). */
-function baseStat(tier: number): number {
-  // Tier 1: 2-3, Tier 2: 3-4, Tier 3: 4-5, Tier 4: 5-7, Tier 5: 6-8
-  return Math.floor(1 + tier * 1.4);
+/**
+ * Base stat calculations from tier (1-5).
+ * ATK scales faster than DEF so fights resolve before stalling.
+ */
+function baseAtk(tier: number): number {
+  // Tier 1: 3, Tier 2: 4, Tier 3: 6, Tier 4: 7, Tier 5: 9
+  return Math.floor(2 + tier * 1.5);
+}
+function baseDef(tier: number): number {
+  // Tier 1: 2, Tier 2: 2, Tier 3: 3, Tier 4: 4, Tier 5: 5
+  return Math.floor(1 + tier * 0.8);
 }
 
 /**
@@ -51,9 +58,8 @@ function calcStats(
   archetype: typeof archetypesPool.archetypes[0],
   affiliation: typeof affiliationsPool.affiliations[0] | typeof affiliationsPool.freelance,
 ) {
-  const base = baseStat(tier);
-  const atkBase = Math.max(0, base + archetype.statBias.atkMod + affiliation.modifier.atkBonus);
-  const defBase = Math.max(1, base + archetype.statBias.defMod + affiliation.modifier.defBonus);
+  const atkBase = Math.max(1, baseAtk(tier) + archetype.statBias.atkMod + affiliation.modifier.atkBonus);
+  const defBase = Math.max(1, baseDef(tier) + archetype.statBias.defMod + affiliation.modifier.defBonus);
 
   // Day/night shift based on archetype
   let dayAtk = atkBase;

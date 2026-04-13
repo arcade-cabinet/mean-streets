@@ -85,15 +85,15 @@ export interface BuiltDeck {
 
 /**
  * AI deck builder — picks 20 cards from the pool and assigns
- * them to active (6) + reserves (3) optimally.
+ * them to active (draw pile) + reserves (3 side cards).
  *
- * Strategy: maximize synergy, minimize conflicts, put buffer
- * cards (freelancers) between warring factions in reserves.
+ * Active = deckSize - reserveSize (e.g. 17 cards for 20-card deck with 3 reserves).
+ * Reserves are buffer cards (freelancers/fixers) that prevent adjacency conflicts.
  */
 export function buildAiDeck(
   pool: CharacterCard[],
   deckSize = 20,
-  activeSize = 6,
+  _activeSize = 0, // unused — active is everything not in reserves
   reserveSize = 3,
   rng = Math.random,
 ): BuiltDeck {
@@ -110,11 +110,10 @@ export function buildAiDeck(
     return rng() - 0.5;
   });
 
-  // Pick top cards by tier, trying to avoid too many war conflicts
+  // Pick top cards
   const deck = sorted.slice(0, deckSize);
 
-  // Separate into active and reserves
-  // Put freelancers and fixers in reserves (buffer cards)
+  // Pick reserves: prefer freelancers and fixers as buffers
   const buffers = deck.filter(
     c => c.affiliation === 'freelance' || c.archetype === 'fixer',
   );
@@ -125,30 +124,19 @@ export function buildAiDeck(
   const reserves: CharacterCard[] = [];
   const active: CharacterCard[] = [];
 
-  // Fill reserves with buffers first (up to reserveSize)
+  // Fill reserves with buffers first
   for (const b of buffers) {
     if (reserves.length < reserveSize) reserves.push(b);
     else active.push(b);
   }
-
-  // Fill active with non-buffers, trying to order by affiliation
-  // to minimize adjacency conflicts
-  const byAff: Record<string, CharacterCard[]> = {};
-  for (const c of nonBuffers) {
-    if (!byAff[c.affiliation]) byAff[c.affiliation] = [];
-    byAff[c.affiliation].push(c);
+  // If not enough buffers, fill reserves from weakest non-buffers
+  const remainingNonBuffers = [...nonBuffers];
+  while (reserves.length < reserveSize && remainingNonBuffers.length > 0) {
+    reserves.push(remainingNonBuffers.pop()!);
   }
 
-  // Interleave affiliations that are at peace, separate those at war
-  const affGroups = Object.entries(byAff);
-  for (const [, cards] of affGroups) {
-    for (const card of cards) {
-      if (active.length < activeSize) active.push(card);
-      else if (reserves.length < reserveSize) reserves.push(card);
-      // else: card is in the deck but not in active or reserves
-      // (remaining cards form the "draw pile" for the rest of the game)
-    }
-  }
+  // Everything else goes to active (the draw pile)
+  active.push(...remainingNonBuffers);
 
   // Validate and count
   const validation = validateActiveStack(active);
