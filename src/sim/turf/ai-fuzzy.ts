@@ -129,10 +129,8 @@ export function evaluateFuzzy(state: TurfGameState, side: 'A' | 'B'): FuzzyEval 
   const oppCount = opp.board.active.filter(pos => pos.crew).length;
   const threatLevel = Math.min(10, (oppPower / 5) + (oppCount * 0.5));
 
-  const handTotal = p.hand.crew.length + p.hand.product.length +
-    p.hand.cash.length + p.hand.weapon.length;
-  const drawTotal = p.crewDraw.length + p.productDraw.length +
-    p.cashDraw.length + p.weaponDraw.length;
+  const handTotal = p.hand.crew.length + p.hand.modifiers.length;
+  const drawTotal = p.crewDraw.length + p.modifierDraw.length;
   const resourceLevel = Math.min(10, handTotal * 0.8 + drawTotal * 0.2);
 
   const seizedAgainst = p.board.active.filter(pos => pos.seized).length;
