@@ -1,0 +1,724 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Skull, Crown, Crosshair, Heart, Sword, FastForward, Droplets, ShieldAlert, SkipForward } from 'lucide-react';
+
+// --- CUSTOM SUIT DESIGNS & ABILITIES ---
+const SUITS = {
+  KNUCKLE: { id: 'KNUCKLE', icon: '♥', color: 'text-stone-900', isRed: false, desc: 'BRUTAL: IGNORES OVERKILL' },
+  SHIV: { id: 'SHIV', icon: '♠', color: 'text-red-900', isRed: true, desc: 'PLANT: ENEMY DRAWS 1' },
+  CROW: { id: 'CROW', icon: '♣', color: 'text-stone-900', isRed: false, desc: 'SCAVENGE: YOU DRAW 1' },
+  CHAIN: { id: 'CHAIN', icon: '♦', color: 'text-red-900', isRed: true, desc: 'ANCHOR: +3 SHIELD (SAVES OVERDRAW)' }
+};
+
+const RANKS = [
+  { label: 'A', val: 1 }, { label: '2', val: 2 }, { label: '3', val: 3 }, { label: '4', val: 4 },
+  { label: '5', val: 5 }, { label: '6', val: 6 }, { label: '7', val: 7 }, { label: '8', val: 8 },
+  { label: '9', val: 9 }, { label: '10', val: 10 }, { label: 'J', val: 11 }, { label: 'Q', val: 12 }, { label: 'K', val: 13 }
+];
+
+// --- UTILS ---
+const shuffle = (array) => {
+  let cur = array.length, rnd;
+  while (cur !== 0) { rnd = Math.floor(Math.random() * cur); cur--; [array[cur], array[rnd]] = [array[rnd], array[cur]]; }
+  return array;
+};
+const generateId = () => Math.random().toString(36).substr(2, 9);
+const isPointInRect = (x, y, rect) => x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+
+const buildDeck = () => {
+  let newDeck = [];
+  Object.values(SUITS).forEach(suit => {
+    RANKS.forEach(rank => { 
+      newDeck.push({ uid: generateId(), suit, rank, hp: rank.val, maxHp: rank.val, shield: 0 }); 
+    });
+  });
+  return shuffle(newDeck);
+};
+
+// --- SVG FILTERS (Gritty Realism) ---
+const GrittyFilters = () => (
+  <svg width="0" height="0" className="absolute pointer-events-none">
+    <filter id="ragged-edge">
+      <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="3" result="noise" />
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G" />
+    </filter>
+    <filter id="grime">
+      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" result="noise" />
+      <feColorMatrix type="matrix" values="0 0 0 0 0, 0 0 0 0 0, 0 0 0 0 0, 0 0 0 0.25 0" in="noise" result="coloredNoise" />
+      <feBlend in="SourceGraphic" in2="coloredNoise" mode="multiply" />
+    </filter>
+    <filter id="metallic">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="3" result="noise" />
+      <feColorMatrix type="matrix" values="1 0 0 0 0, 0 1 0 0 0, 0 0 1 0 0, 0 0 0 0.4 0" in="noise" result="coloredNoise" />
+      <feBlend in="SourceGraphic" in2="coloredNoise" mode="multiply" />
+      <feDropShadow dx="4" dy="12" stdDeviation="6" floodColor="#000" floodOpacity="0.9"/>
+      <feComponentTransfer><feFuncA type="linear" slope="1.5"/></feComponentTransfer>
+    </filter>
+  </svg>
+);
+
+// --- MAIN COMPONENT ---
+export default function App() {
+  const [phase, setPhase] = useState('MENU'); 
+  const [turn, setTurn] = useState(null); 
+  const [notice, setNotice] = useState(null);
+  
+  // Board State
+  const [deck, setDeck] = useState([]);
+  const [discard, setDiscard] = useState([]);
+  
+  const [playerHand, setPlayerHand] = useState([]);
+  const [playerVanguard, setPlayerVanguard] = useState(null);
+  
+  const [enemyHand, setEnemyHand] = useState([]);
+  const [enemyVanguard, setEnemyVanguard] = useState(null);
+
+  // Animation & Interaction States
+  const [coinSide, setCoinSide] = useState('heads');
+  const [isFlipping, setIsFlipping] = useState(false);
+  const [dragState, setDragState] = useState(null);
+  const [hoverTarget, setHoverTarget] = useState(null); 
+  const [shakeTarget, setShakeTarget] = useState(null); 
+
+  const enemyVanguardRef = useRef(null);
+  const playerVanguardRef = useRef(null);
+
+  const flashNotice = (msg, duration = 2000) => {
+    setNotice(msg);
+    setTimeout(() => setNotice(null), duration);
+  };
+
+  // --- START & DEALING LOGIC ---
+  const handleCoinToss = () => {
+    setPhase('COIN_TOSS');
+    setIsFlipping(true);
+    
+    setTimeout(() => {
+      const isHeads = Math.random() > 0.5;
+      setCoinSide(isHeads ? 'heads' : 'tails');
+      setIsFlipping(false);
+      const winner = isHeads ? 'player' : 'enemy';
+      setTimeout(() => startDealing(winner), 2000); 
+    }, 2000);
+  };
+
+  const startDealing = (tossWinner) => {
+    setPhase('DEALING');
+    let currentDeck = buildDeck();
+    let pHand = [], eHand = [], pVan = null, eVan = null;
+
+    let step = 0;
+    const dealInterval = setInterval(() => {
+      if (currentDeck.length === 0) { clearInterval(dealInterval); return; }
+      const card = currentDeck.pop();
+      card.isDealing = true; 
+
+      if (step === 0) {
+        if (tossWinner === 'player') pVan = card; else eVan = card;
+      } else if (step === 1) {
+        if (tossWinner === 'player') eVan = card; else pVan = card;
+      } else if (step >= 2 && step < 6) {
+        if (tossWinner === 'player') pHand.push(card); else eHand.push(card);
+      } else if (step >= 6 && step < 10) {
+        if (tossWinner === 'player') eHand.push(card); else pHand.push(card);
+      }
+
+      setDeck([...currentDeck]);
+      setPlayerVanguard(pVan); setEnemyVanguard(eVan);
+      setPlayerHand([...pHand]); setEnemyHand([...eHand]);
+
+      step++;
+      if (step >= 10) { // Deal exactly 4 to hand + 1 vanguard = 5 total max
+        clearInterval(dealInterval);
+        setTimeout(() => {
+          const clean = (c) => c ? {...c, isDealing: false} : null;
+          const cleanArr = (arr) => arr.map(clean);
+          setPlayerVanguard(clean(pVan)); setEnemyVanguard(clean(eVan));
+          setPlayerHand(cleanArr(pHand)); setEnemyHand(cleanArr(eHand));
+          
+          setTurn(tossWinner); 
+          setPhase('BATTLE');
+        }, 500);
+      }
+    }, 250); 
+  };
+
+  // --- OVERDRAW LOGIC ENGINE ---
+  const executeDraw = (target, amount) => {
+    setDeck(currentDeck => {
+      let d = [...currentDeck];
+      if (d.length === 0) return d; 
+
+      let drawn = [];
+      for (let i = 0; i < amount && d.length > 0; i++) drawn.push(d.pop());
+
+      const processHandAndOverdraw = (prevHand, prevVan, setHand, setVan, targetName) => {
+         let newHand = [...prevHand, ...drawn];
+         let currentVan = prevVan;
+
+         while (newHand.length > 5) {
+            if (currentVan && currentVan.shield > 0) {
+                // SAVED BY SHIELD
+                currentVan = { ...currentVan, shield: currentVan.shield - 1 };
+                const discarded = newHand.pop();
+                setDiscard(dp => [...dp, discarded]);
+                flashNotice(`${targetName.toUpperCase()}: SHIELD SAVED OVERDRAW!`);
+            } else {
+                // PENALTY: FORCE PROMOTION
+                const forcedCard = newHand.shift(); // First card in queue
+                if (currentVan && currentVan.hp > 0) setDiscard(dp => [...dp, currentVan]); // Kill old vanguard
+                currentVan = { ...forcedCard, hp: forcedCard.maxHp, shield: 0 };
+                flashNotice(`${targetName.toUpperCase()}: OVERDRAW PENALTY!`);
+                setShakeTarget(targetName);
+            }
+         }
+         setHand(newHand);
+         setVan(currentVan);
+      };
+
+      if (target === 'player') processHandAndOverdraw(playerHand, playerVanguard, setPlayerHand, setPlayerVanguard, 'player');
+      else processHandAndOverdraw(enemyHand, enemyVanguard, setEnemyHand, setEnemyVanguard, 'enemy');
+      
+      return d;
+    });
+  };
+
+  // --- COMBAT & RULES LOGIC ---
+  const validatePlay = (card, target) => {
+    if (target === 'enemy') {
+       if (card.suit.id === 'KNUCKLE') return true; 
+       if (enemyVanguard && card.rank.val <= enemyVanguard.hp) return true; 
+       return false;
+    }
+    if (target === 'player') return true; 
+    return false;
+  };
+
+  const playCard = (cardIndex, source, target) => {
+    const isPlayer = source === 'player';
+    const hand = isPlayer ? playerHand : enemyHand;
+    const card = hand[cardIndex];
+    
+    // Remove played card
+    if (isPlayer) setPlayerHand(prev => prev.filter((_, i) => i !== cardIndex));
+    else setEnemyHand(prev => prev.filter((_, i) => i !== cardIndex));
+    setDiscard(prev => [...prev, card]);
+
+    if (!enemyVanguard || !playerVanguard) return; 
+
+    let actionCompleted = false;
+
+    // 1. EXECUTE ATTACK
+    if (target === 'enemy' && (isPlayer ? enemyVanguard : playerVanguard)) {
+       const targetVan = isPlayer ? enemyVanguard : playerVanguard;
+       const setTargetVan = isPlayer ? setEnemyVanguard : setPlayerVanguard;
+       
+       let dmg = card.rank.val;
+       let newHp = targetVan.hp;
+       let newShield = targetVan.shield;
+
+       if (newShield > 0) {
+         if (dmg >= newShield) { dmg -= newShield; newShield = 0; }
+         else { newShield -= dmg; dmg = 0; }
+       }
+       newHp = Math.max(0, newHp - dmg);
+
+       setTargetVan(prev => ({ ...prev, hp: newHp, shield: newShield }));
+       setShakeTarget(isPlayer ? 'enemy' : 'player');
+       setTimeout(() => setShakeTarget(null), 300);
+
+       // SUIT SPECIALS
+       if (card.suit.id === 'SHIV') { flashNotice("PLANT: ENEMY DRAWS 1!"); executeDraw(isPlayer ? 'enemy' : 'player', 1); }
+       if (card.suit.id === 'CROW') { flashNotice("SCAVENGE: +1 CARD"); executeDraw(source, 1); }
+       if (card.suit.id === 'CHAIN') { 
+         if (isPlayer) setPlayerVanguard(prev => ({...prev, shield: prev.shield + 3}));
+         else setEnemyVanguard(prev => ({...prev, shield: prev.shield + 3}));
+       }
+       
+       actionCompleted = true;
+       if (newHp === 0) setTimeout(() => handleVanguardDeath(isPlayer ? 'enemy' : 'player'), 400);
+
+    // 2. EXECUTE HEAL (SACRIFICE)
+    } else if (target === 'player' && (isPlayer ? playerVanguard : enemyVanguard)) {
+       const setSelfVan = isPlayer ? setPlayerVanguard : setEnemyVanguard;
+       setSelfVan(prev => ({ ...prev, hp: Math.min(prev.maxHp, prev.hp + card.rank.val) }));
+       flashNotice("SACRIFICE: HEALED!");
+       
+       if (card.suit.id === 'CROW') executeDraw(source, 1);
+       if (card.suit.id === 'SHIV') executeDraw(isPlayer ? 'enemy' : 'player', 1); 
+       if (card.suit.id === 'CHAIN') setSelfVan(prev => ({...prev, shield: prev.shield + 3}));
+
+       actionCompleted = true;
+    }
+
+    if (actionCompleted && phase === 'BATTLE') {
+       // Turn swaps unless we are waiting for promotion
+       setTimeout(() => {
+          if (phase === 'BATTLE') setTurn(isPlayer ? 'enemy' : 'player');
+       }, 500);
+    }
+  };
+
+  const handleVanguardDeath = (deadSide) => {
+    flashNotice("KILL! BOUNTY: +2 CARDS", 2500);
+    
+    if (deadSide === 'enemy') {
+      executeDraw('player', 2); 
+      setDiscard(prev => [...prev, enemyVanguard]);
+      setEnemyVanguard(null);
+      if (enemyHand.length === 0) setPhase('VICTORY'); 
+      else setPhase('ENEMY_PROMOTE');
+    } else {
+      executeDraw('enemy', 2); 
+      setDiscard(prev => [...prev, playerVanguard]);
+      setPlayerVanguard(null);
+      if (playerHand.length === 0) setPhase('GAMEOVER'); 
+      else setPhase('PLAYER_PROMOTE');
+    }
+  };
+
+  const promoteVanguard = (cardIndex, source) => {
+    if (source === 'player') {
+      const card = playerHand[cardIndex];
+      setPlayerVanguard({...card, hp: card.maxHp, shield: 0}); 
+      setPlayerHand(prev => prev.filter((_, i) => i !== cardIndex));
+      setPhase('BATTLE');
+      setTurn('enemy'); 
+    } else {
+      const card = enemyHand[cardIndex];
+      setEnemyVanguard({...card, hp: card.maxHp, shield: 0});
+      setEnemyHand(prev => prev.filter((_, i) => i !== cardIndex));
+      setPhase('BATTLE');
+      setTurn('player');
+    }
+  };
+
+  const passTurn = () => {
+    setTurn(turn === 'player' ? 'enemy' : 'player');
+  };
+
+  const hustle = (source) => {
+    if (source === 'player') {
+      setPlayerVanguard(prev => ({...prev, hp: prev.hp - 2}));
+      setShakeTarget('player');
+      setTimeout(() => setShakeTarget(null), 300);
+    } else {
+      setEnemyVanguard(prev => ({...prev, hp: prev.hp - 2}));
+      setShakeTarget('enemy');
+      setTimeout(() => setShakeTarget(null), 300);
+    }
+    flashNotice("HUSTLE: -2 HP, +1 CARD", 1500);
+    executeDraw(source, 1);
+    setTurn(source === 'player' ? 'enemy' : 'player');
+  };
+
+  // --- ENEMY AI ---
+  useEffect(() => {
+    if (phase === 'ENEMY_PROMOTE') {
+       const timer = setTimeout(() => {
+         if (enemyHand.length === 0) { setPhase('VICTORY'); return; }
+         // AI promotes highest HP card
+         let bestIdx = 0; let maxHp = -1;
+         enemyHand.forEach((c, i) => { if(c.rank.val > maxHp) { maxHp = c.rank.val; bestIdx = i; } });
+         promoteVanguard(bestIdx, 'enemy');
+       }, 1200);
+       return () => clearTimeout(timer);
+    }
+
+    if (turn === 'enemy' && phase === 'BATTLE' && enemyVanguard) {
+      const timer = setTimeout(() => {
+        if (enemyHand.length === 0) {
+           if (enemyVanguard.hp > 2) hustle('enemy');
+           else passTurn();
+           return; 
+        }
+
+        let possibleAttacks = [];
+        enemyHand.forEach((c, i) => {
+           if (playerVanguard && (c.suit.id === 'KNUCKLE' || c.rank.val <= playerVanguard.hp)) {
+             possibleAttacks.push(i);
+           }
+        });
+
+        if (possibleAttacks.length > 0) {
+           // AI prefers exact lethal, then high damage
+           let bestIdx = possibleAttacks[0];
+           let maxVal = -1;
+           possibleAttacks.forEach(idx => {
+              const c = enemyHand[idx];
+              let val = c.rank.val;
+              if (c.rank.val === playerVanguard.hp) val += 100; // Exact precision kill!
+              if (c.suit.id === 'SHIV' && playerHand.length > 3) val += 50; // Force overdraw
+              if (val > maxVal) { maxVal = val; bestIdx = idx; }
+           });
+           playCard(bestIdx, 'enemy', 'enemy'); 
+        } else {
+           // Can't attack. Heal if low, otherwise hustle/pass
+           if (enemyVanguard.hp < enemyVanguard.maxHp - 2) {
+             let bestIdx = 0; let minVal = 99; 
+             enemyHand.forEach((c, i) => { if(c.rank.val < minVal) { minVal = c.rank.val; bestIdx = i; } });
+             playCard(bestIdx, 'enemy', 'player'); 
+           } else {
+             if (enemyVanguard.hp > 3 && enemyHand.length < 5) hustle('enemy');
+             else passTurn();
+           }
+        }
+      }, 1500); 
+      return () => clearTimeout(timer);
+    }
+  }, [turn, phase, enemyVanguard, enemyHand, playerVanguard]);
+
+  // Constantly monitor win/loss state if vanguard is null and hand is empty
+  useEffect(() => {
+    if (phase === 'BATTLE') {
+      if (!playerVanguard && playerHand.length === 0) setPhase('GAMEOVER');
+      else if (!enemyVanguard && enemyHand.length === 0) setPhase('VICTORY');
+    }
+  }, [playerVanguard, enemyVanguard, playerHand, enemyHand, phase]);
+
+
+  // --- DRAG INTERACTION ---
+  const handlePointerDown = (e, index) => {
+    if (phase === 'PLAYER_PROMOTE') { promoteVanguard(index, 'player'); return; }
+    if (turn !== 'player' || phase !== 'BATTLE' || !playerVanguard || !enemyVanguard) return;
+    
+    e.target.setPointerCapture(e.pointerId);
+    setDragState({ index, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, x: 0, y: 0 });
+  };
+
+  const handlePointerMove = (e) => {
+    if (!dragState || e.pointerId !== dragState.pointerId) return;
+    setDragState(prev => ({ ...prev, x: e.clientX - prev.startX, y: e.clientY - prev.startY }));
+
+    if (enemyVanguardRef.current && isPointInRect(e.clientX, e.clientY, enemyVanguardRef.current.getBoundingClientRect())) {
+      setHoverTarget('enemy');
+    } else if (playerVanguardRef.current && isPointInRect(e.clientX, e.clientY, playerVanguardRef.current.getBoundingClientRect())) {
+      setHoverTarget('player');
+    } else {
+      setHoverTarget(null);
+    }
+  };
+
+  const handlePointerUp = (e) => {
+    if (!dragState || e.pointerId !== dragState.pointerId) return;
+    e.target.releasePointerCapture(e.pointerId);
+    
+    if (hoverTarget) {
+       const card = playerHand[dragState.index];
+       if (validatePlay(card, hoverTarget)) {
+          playCard(dragState.index, 'player', hoverTarget);
+       } else {
+          flashNotice("OVERKILL! USE LOWER CARD OR KNUCKLES");
+       }
+    }
+    setDragState(null);
+    setHoverTarget(null);
+  };
+
+
+  // --- RENDERING HELPERS ---
+  const SuitIcon = ({ suit, className = "" }) => (
+    <span className={`font-serif leading-none ${className}`}>{suit.icon}</span>
+  );
+
+  const renderCard = (card, mode, index = 0, dragProps = null) => {
+    if (!card) return null;
+    
+    const isFaceDown = mode === 'hand-enemy' || mode === 'deck';
+    const isVanguard = mode.includes('vanguard');
+    
+    let containerStyle = { zIndex: mode.includes('hand') ? index : 10 };
+    if (dragProps) {
+      containerStyle = { transform: `translate(${dragProps.x}px, ${dragProps.y}px) rotate(${dragProps.x * 0.05}deg) scale(1.15)`, zIndex: 50, pointerEvents: 'none' };
+    } else if (card.isDealing) {
+      containerStyle.animation = 'deal-anim 0.4s ease-out forwards';
+    }
+
+    const baseSize = isVanguard 
+      ? 'w-[130px] h-[180px] sm:w-[160px] sm:h-[230px] shadow-[0_15px_30px_rgba(0,0,0,0.8)]' 
+      : 'w-[90px] h-[130px] sm:w-[110px] sm:h-[160px] shadow-xl hover:-translate-y-4 hover:shadow-2xl transition-all duration-200';
+
+    if (isFaceDown) {
+      return (
+        <div style={{...containerStyle, filter: 'url(#ragged-edge) url(#grime)'}} className={`relative ${baseSize} bg-stone-900 border-[3px] border-stone-700 select-none`}>
+           <div className="absolute inset-1 border-2 border-stone-800/40 bg-[radial-gradient(circle_at_center,#292524_0%,#0c0a09_100%)] flex items-center justify-center">
+             <Skull size={32} className="text-stone-700/50"/>
+           </div>
+        </div>
+      );
+    }
+
+    return (
+      <div style={{...containerStyle, filter: 'url(#ragged-edge) url(#grime)'}} className={`relative ${baseSize} bg-[#e8e4db] flex flex-col justify-between p-1 border-[2px] border-stone-500 select-none ${dragProps ? 'cursor-grabbing' : 'cursor-grab'}`}>
+        <div className={`absolute inset-[4px] border-[1.5px] border-stone-800/20 pointer-events-none flex flex-col justify-between p-1 ${card.suit.color}`}>
+          <div className="flex flex-col items-center leading-none w-4">
+             <span className="font-serif font-black text-xl sm:text-2xl">{card.rank.label}</span>
+             <span className="text-2xl sm:text-3xl -mt-2"><SuitIcon suit={card.suit}/></span>
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
+             <span className="text-[6rem] sm:text-[8rem] leading-none"><SuitIcon suit={card.suit}/></span>
+          </div>
+          <div className="flex flex-col items-center leading-none w-4 self-end rotate-180">
+             <span className="font-serif font-black text-xl sm:text-2xl">{card.rank.label}</span>
+             <span className="text-2xl sm:text-3xl -mt-2"><SuitIcon suit={card.suit}/></span>
+          </div>
+        </div>
+
+        {/* Action Strip (Hand only) */}
+        {!isVanguard && (
+          <div className="absolute top-[40%] left-0 right-0 bg-stone-950/95 border-y-2 border-stone-700 py-1 px-1 z-10 pointer-events-none flex flex-col items-center shadow-lg">
+             <span className={`text-[9px] sm:text-[10px] font-black uppercase tracking-tighter ${card.suit.isRed ? 'text-red-500' : 'text-stone-300'} flex items-center gap-1`}>
+               <SuitIcon suit={card.suit} className="text-xs"/> {card.suit.id}
+             </span>
+             <span className="text-[7px] sm:text-[8px] font-serif leading-tight text-amber-500 text-center">{card.suit.desc}</span>
+          </div>
+        )}
+
+        {/* Dynamic HP Bar (Vanguard / Hand Potential) */}
+        <div className="absolute bottom-1 left-1 right-1 bg-stone-950/95 border-t-2 border-stone-700 flex flex-col z-20 pointer-events-none shadow-md overflow-hidden">
+           <div className={`flex w-full ${isVanguard ? 'h-6 sm:h-8' : 'h-4'} bg-red-950 relative`}>
+              <div className="h-full bg-red-700 transition-all" style={{width: `${(card.hp / card.maxHp)*100}%`}}></div>
+              <span className={`absolute inset-0 flex items-center justify-center font-black text-white mix-blend-difference drop-shadow ${isVanguard ? 'text-sm sm:text-base' : 'text-[9px]'}`}>{card.hp} / {card.maxHp} HP</span>
+           </div>
+           
+           {/* SHIELD OVERLAY */}
+           {card.shield > 0 && (
+             <div className="absolute inset-0 bg-stone-800/90 border border-stone-400 flex items-center justify-center gap-1 shadow-[inset_0_0_10px_rgba(255,255,255,0.2)]">
+               <ShieldAlert size={isVanguard ? 16 : 10} className="text-stone-300"/> 
+               <span className={`font-black text-stone-200 ${isVanguard ? 'text-sm' : 'text-[9px]'}`}>{card.shield}</span>
+             </div>
+           )}
+        </div>
+
+        {/* Attack Preview Overlays */}
+        {isVanguard && hoverTarget === 'enemy' && mode === 'vanguard-enemy' && dragState && (
+          <div className={`absolute inset-0 bg-red-950/80 flex flex-col items-center justify-center z-30 border-4 border-red-500 ${validatePlay(playerHand[dragState.index], 'enemy') ? 'animate-pulse' : 'bg-stone-950/90 border-stone-600'}`}>
+            <span className={`text-6xl font-black drop-shadow-2xl ${validatePlay(playerHand[dragState.index], 'enemy') ? 'text-red-500' : 'text-stone-600 text-3xl text-center'}`}>
+              {validatePlay(playerHand[dragState.index], 'enemy') ? `-${playerHand[dragState.index].rank.val}` : 'OVERKILL!'}
+            </span>
+          </div>
+        )}
+
+        {/* Heal Preview Overlays */}
+        {isVanguard && hoverTarget === 'player' && mode === 'vanguard-player' && dragState && (
+          <div className="absolute inset-0 bg-stone-900/80 flex flex-col items-center justify-center z-30 border-4 border-stone-400 animate-pulse">
+            <Heart className="text-stone-300 mb-2" size={32} />
+            <span className="text-5xl font-black text-stone-300 drop-shadow-2xl">+{playerHand[dragState.index].rank.val}</span>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+
+  // --- MAIN RENDER ---
+  return (
+    <div 
+      className={`min-h-[100dvh] bg-stone-950 text-stone-200 font-sans flex flex-col relative overflow-hidden touch-none select-none`}
+      onPointerMove={dragState ? handlePointerMove : undefined}
+      onPointerUp={dragState ? handlePointerUp : undefined}
+    >
+      <GrittyFilters />
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes deal-anim { 0% { transform: translate(200px, -100px) scale(0.5) rotate(45deg); opacity: 0; } 100% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 1; } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px) translateY(5px); } 50% { transform: translateX(10px) translateY(-5px); } 75% { transform: translateX(-5px) translateY(2px); } }
+        @keyframes flip-coin { 0% { transform: rotateY(0deg) scale(1); } 50% { transform: rotateY(900deg) scale(1.5); } 100% { transform: rotateY(1800deg) scale(1); } }
+        @keyframes pulse-red { 0%, 100% { background-color: rgba(28,25,23,0.4); } 50% { background-color: rgba(69, 10, 10, 0.4); } }
+        .coin-container { perspective: 1000px; }
+        .coin { transform-style: preserve-3d; transition: transform 2s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        .coin-face { backface-visibility: hidden; }
+        .coin-back { transform: rotateY(180deg); }
+      `}} />
+
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(40,20,20,0.3)_0%,rgba(10,10,10,1)_80%)] pointer-events-none"></div>
+      <div className="absolute inset-0 opacity-10 pointer-events-none" style={{filter: 'url(#grime)'}}></div>
+
+      {/* OVERLAYS (MENU, COIN TOSS, END SCREENS) */}
+      {(phase === 'MENU' || phase === 'GAMEOVER' || phase === 'VICTORY') && (
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-stone-950/90 backdrop-blur-sm">
+          <h1 className="text-6xl md:text-8xl font-black uppercase tracking-tighter mb-2 text-stone-200 drop-shadow-[0_5px_0_rgba(100,0,0,0.8)]" style={{filter: 'url(#ragged-edge)'}}>
+            {phase === 'MENU' ? <>MEAN<br/><span className="text-red-800">STREETS</span></> : phase === 'VICTORY' ? 'STARVED OUT' : 'CRUSHED'}
+          </h1>
+          <p className="text-stone-500 mb-12 tracking-widest text-sm font-bold border-t-2 border-stone-800 pt-2 w-full max-w-xs text-center">
+            {phase === 'MENU' ? 'PRECISION STARVATION' : phase === 'VICTORY' ? 'THE HOUSE IS DEAD.' : `NO MORE FIGHTERS.`}
+          </p>
+          <button onClick={handleCoinToss} className="px-10 py-5 bg-stone-300 border-4 border-stone-900 text-stone-950 font-black tracking-widest hover:bg-white hover:scale-105 transition-all shadow-[8px_8px_0_rgb(60,20,20)] flex items-center text-xl" style={{filter: 'url(#ragged-edge)'}}>
+            {phase === 'MENU' ? 'TOSS THE COIN' : 'NEW BOUT'}
+          </button>
+        </div>
+      )}
+
+      {phase === 'COIN_TOSS' && (
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-stone-950/95">
+          <h2 className="text-stone-400 font-black tracking-widest mb-16 text-2xl uppercase">WHO DRAWS FIRST?</h2>
+          <div className="coin-container w-48 h-48 sm:w-64 sm:h-64 mb-16">
+            <div className={`coin w-full h-full relative rounded-full ${isFlipping ? 'animate-[flip-coin_2s_ease-out_forwards]' : ''}`} style={!isFlipping ? { transform: coinSide === 'heads' ? 'rotateY(0deg)' : 'rotateY(180deg)' } : {}}>
+               <div className="coin-face absolute inset-0 rounded-full bg-stone-500 border-[6px] sm:border-[10px] border-stone-800 shadow-[inset_0_0_30px_rgba(0,0,0,0.9)] flex items-center justify-center" style={{filter: 'url(#metallic)'}}>
+                 <div className="absolute inset-1 sm:inset-2 rounded-full border-4 border-stone-700/50 border-dashed opacity-80"></div>
+                 <Skull size={90} className="text-stone-900 drop-shadow-xl" strokeWidth={1.5}/>
+               </div>
+               <div className="coin-face coin-back absolute inset-0 rounded-full bg-stone-600 border-[6px] sm:border-[10px] border-stone-900 shadow-[inset_0_0_30px_rgba(0,0,0,0.9)] flex items-center justify-center" style={{filter: 'url(#metallic)'}}>
+                 <div className="absolute inset-1 sm:inset-2 rounded-full border-4 border-stone-800/50 border-dotted opacity-80"></div>
+                 <Crown size={90} className="text-stone-950 drop-shadow-xl" strokeWidth={1.5}/>
+               </div>
+            </div>
+          </div>
+          <div className={`text-3xl sm:text-4xl font-black text-amber-500 tracking-tighter uppercase transition-opacity duration-500 ${isFlipping ? 'opacity-0' : 'opacity-100'} bg-stone-900/80 px-6 py-2 border-y-4 border-amber-700`} style={{filter: 'url(#ragged-edge)'}}>
+             {coinSide === 'heads' ? 'HEADS: YOU START' : 'TAILS: HOUSE STARTS'}
+          </div>
+        </div>
+      )}
+
+      {/* FLASH NOTICE */}
+      {notice && (
+        <div className="fixed top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 pointer-events-none">
+           <div className="bg-stone-950/95 text-red-500 border-4 border-stone-700 font-black text-2xl sm:text-4xl uppercase tracking-tighter px-8 py-4 shadow-[0_10px_50px_rgba(153,27,27,0.5)] animate-[shake_0.2s_ease-in-out] whitespace-nowrap" style={{filter: 'url(#ragged-edge)'}}>
+              {notice}
+           </div>
+        </div>
+      )}
+
+
+      {/* --- IN-GAME UI --- */}
+
+      {/* TOP: OPPONENT ZONE */}
+      <div className="flex-[0.35] w-full flex flex-col justify-start relative z-10 p-2 sm:p-4 pb-0">
+        <div className="flex justify-between items-center px-4 w-full text-[10px] sm:text-xs font-black text-stone-600 tracking-widest">
+           <span>HOUSE HAND ({enemyHand.length}/5)</span>
+           <span className="flex items-center gap-4">
+              <span>DECK: {deck.length}</span>
+              <span className="text-red-900/50">DISCARD: {discard.length}</span>
+           </span>
+        </div>
+        
+        <div className="flex justify-center gap-[-20px] sm:gap-[-40px] mt-2 pointer-events-none">
+           {enemyHand.map((card, i) => <div key={card.uid} style={{marginLeft: i>0 ? '-40px' : 0}}>{renderCard(card, 'hand-enemy', i)}</div>)}
+        </div>
+      </div>
+
+      {/* MIDDLE: THE STREET */}
+      <div className={`flex-[0.3] w-full border-y-4 border-stone-800/80 bg-stone-900/20 relative z-20 flex items-center justify-center p-2 shadow-[inset_0_0_50px_rgba(0,0,0,0.8)] transition-colors duration-500 ${turn==='enemy' ? 'animate-[pulse-red_2s_infinite]' : ''}`}>
+        
+        <div className="absolute left-4 top-4 text-[10px] sm:text-xs font-black tracking-widest text-amber-600/50 uppercase bg-stone-950/50 px-2 py-1 rounded border border-stone-800">
+           {phase === 'DEALING' ? 'DEALING...' : 
+            phase === 'PLAYER_PROMOTE' ? 'PROMOTE VANGUARD!' :
+            phase === 'ENEMY_PROMOTE' ? 'HOUSE PROMOTING...' :
+            turn === 'player' ? 'YOUR MOVE' : 'HOUSE MOVE'}
+        </div>
+
+        <div className="absolute right-4 top-4 text-[9px] font-black tracking-widest text-stone-600 uppercase text-right leading-tight hidden sm:block bg-stone-950/50 p-1 border border-stone-800 rounded">
+           KILL = +2 CARDS<br/>OVERDRAW = FORCED PROMOTION
+        </div>
+
+        <div className="flex items-center justify-center gap-6 sm:gap-24 w-full max-w-3xl relative">
+           
+           {/* Enemy Vanguard */}
+           <div ref={enemyVanguardRef} className={`relative transition-all duration-200 ${shakeTarget === 'enemy' ? 'animate-[shake_0.3s_ease-in-out]' : ''} ${hoverTarget === 'enemy' ? 'scale-110 z-30' : 'z-20'}`}>
+             {enemyVanguard ? renderCard(enemyVanguard, 'vanguard-enemy') : (
+               <div className="w-[130px] h-[180px] sm:w-[160px] sm:h-[230px] border-4 border-dashed border-red-900/30 rounded flex items-center justify-center opacity-50 bg-red-950/10">
+                 <span className="font-black text-red-900 tracking-widest rotate-90 text-2xl">DEAD</span>
+               </div>
+             )}
+             <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-sm font-black tracking-widest text-red-900 uppercase bg-stone-950 px-2 border border-red-900/50">HOUSE</span>
+             {hoverTarget === 'enemy' && <div className="absolute -inset-2 border-4 border-red-600 rounded animate-pulse pointer-events-none"></div>}
+           </div>
+
+           {/* VS Badge */}
+           <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-stone-950 border-4 border-stone-700 flex flex-col items-center justify-center shadow-2xl z-40" style={{filter: 'url(#ragged-edge)'}}>
+             <span className="font-black text-stone-500 italic text-sm sm:text-xl leading-none mt-1">VS</span>
+           </div>
+
+           {/* Player Vanguard */}
+           <div ref={playerVanguardRef} className={`relative transition-all duration-200 ${shakeTarget === 'player' ? 'animate-[shake_0.3s_ease-in-out]' : ''} ${hoverTarget === 'player' ? 'scale-110 z-30' : 'z-20'}`}>
+             {playerVanguard ? renderCard(playerVanguard, 'vanguard-player') : (
+               <div className={`w-[130px] h-[180px] sm:w-[160px] sm:h-[230px] border-4 border-dashed rounded flex items-center justify-center bg-stone-900/50 ${phase === 'PLAYER_PROMOTE' ? 'border-amber-500 animate-pulse' : 'border-stone-700/50 opacity-50'}`}>
+                 <span className={`font-black tracking-widest rotate-90 text-2xl ${phase === 'PLAYER_PROMOTE' ? 'text-amber-500' : 'text-stone-600'}`}>
+                   {phase === 'PLAYER_PROMOTE' ? 'PROMOTE' : 'DEAD'}
+                 </span>
+               </div>
+             )}
+             <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-sm font-black tracking-widest text-stone-500 uppercase bg-stone-950 px-2 border border-stone-700/50">YOU</span>
+             {hoverTarget === 'player' && <div className="absolute -inset-2 border-4 border-stone-400 rounded animate-pulse pointer-events-none"></div>}
+           </div>
+
+        </div>
+      </div>
+
+      {/* BOTTOM: PLAYER ZONE */}
+      <div className="flex-[0.35] w-full flex flex-col justify-end relative z-30 p-2 sm:p-4 pb-6 bg-gradient-to-t from-stone-950 to-transparent">
+        
+        {/* Controls Overlay */}
+        <div className="absolute top-2 right-4 z-50 flex gap-2">
+          {playerVanguard && playerVanguard.hp > 2 && (
+             <button 
+               onClick={() => hustle('player')}
+               disabled={turn !== 'player' || phase !== 'BATTLE' || dragState !== null || playerHand.length >= 5}
+               className="flex items-center gap-1 bg-red-950 border-2 border-red-800 text-red-500 px-3 py-2 font-black uppercase tracking-widest hover:bg-red-900 hover:text-white transition-all disabled:opacity-30 disabled:pointer-events-none shadow-lg text-[10px] sm:text-xs"
+               style={{filter: 'url(#ragged-edge)'}}
+             >
+               <Droplets size={14}/> HUSTLE (-2 HP)
+             </button>
+          )}
+          <button 
+            onClick={passTurn}
+            disabled={turn !== 'player' || phase !== 'BATTLE' || dragState !== null}
+            className="flex items-center gap-1 bg-stone-900 border-2 border-stone-600 text-stone-400 px-4 py-2 font-black uppercase tracking-widest hover:bg-stone-800 hover:text-white transition-all disabled:opacity-30 disabled:pointer-events-none shadow-lg text-[10px] sm:text-xs"
+            style={{filter: 'url(#ragged-edge)'}}
+          >
+            HOLD <SkipForward size={14}/>
+          </button>
+        </div>
+
+        <div className="absolute top-2 left-4 z-50">
+           <span className="text-[10px] font-black text-stone-500 tracking-widest bg-stone-950/80 px-2 py-1 rounded border border-stone-800">
+             HAND: {playerHand.length} / 5 MAX
+           </span>
+        </div>
+
+        {/* Promotion Warning Overlay */}
+        {phase === 'PLAYER_PROMOTE' && (
+           <div className="absolute top-0 left-0 right-0 flex justify-center z-40 pointer-events-none">
+              <div className="bg-amber-900/90 text-amber-400 border-2 border-amber-500 font-black px-6 py-2 tracking-widest animate-pulse shadow-2xl" style={{filter: 'url(#ragged-edge)'}}>
+                 DRAG A NEW VANGUARD TO THE STREET
+              </div>
+           </div>
+        )}
+
+        {/* Player Hand */}
+        <div className="flex-grow flex items-end justify-center relative touch-none pt-4 pb-2">
+           {playerHand.map((card, index) => {
+             const isDragging = dragState && dragState.index === index;
+             const isTurn = turn === 'player' && (phase === 'BATTLE' || phase === 'PLAYER_PROMOTE');
+             
+             return (
+               <div
+                 key={card.uid}
+                 onPointerDown={isTurn ? (e) => handlePointerDown(e, index) : null}
+                 className={`
+                   transition-transform duration-200 origin-bottom
+                   ${!isDragging && isTurn ? 'hover:-translate-y-8 hover:scale-110 cursor-grab hover:z-40' : ''}
+                   ${!isTurn ? 'opacity-70 grayscale-[0.5]' : ''}
+                   ${isDragging ? 'opacity-0' : 'opacity-100'}
+                 `}
+                 style={{ marginLeft: index > 0 ? '-30px' : '0' }}
+               >
+                 {renderCard(card, 'hand-player', index)}
+               </div>
+             );
+           })}
+
+           {dragState && renderCard(playerHand[dragState.index], 'hand-player', 0, dragState)}
+        </div>
+      </div>
+
+      {/* Dragging Instruction Hint */}
+      {dragState && phase === 'BATTLE' && (
+        <div className="fixed top-[20%] sm:top-1/4 left-1/2 -translate-x-1/2 bg-stone-950/95 px-4 sm:px-6 py-2 sm:py-3 border-2 border-stone-600 text-stone-300 font-black tracking-widest pointer-events-none flex items-center gap-2 sm:gap-4 z-50 shadow-2xl text-[10px] sm:text-xs" style={{filter: 'url(#ragged-edge)'}}>
+           <span className="flex items-center text-red-500 gap-1"><Sword size={14}/> ATTACK</span>
+           <span className="text-stone-600">|</span>
+           <span className="flex items-center text-stone-400 gap-1"><Heart size={14}/> HEAL / SHIELD</span>
+        </div>
+      )}
+
+    </div>
+  );
+}
