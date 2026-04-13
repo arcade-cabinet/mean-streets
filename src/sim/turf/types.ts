@@ -128,12 +128,19 @@ export const DEFAULT_TURF_CONFIG: TurfGameConfig = {
   flipThreshold: 4, // roll 4+ to flip on funded attack
 };
 
+export type GamePhase = 'buildup' | 'combat';
+
 export interface TurfGameState {
   config: TurfGameConfig;
   players: { A: PlayerState; B: PlayerState };
   turnSide: 'A' | 'B';
   firstPlayer: 'A' | 'B';
   turnNumber: number;
+  phase: GamePhase;
+  /** Per-player buildup turn count (how many turns each spent building). */
+  buildupTurns: { A: number; B: number };
+  /** Has each player decided to strike yet? */
+  hasStruck: { A: boolean; B: boolean };
   rng: Rng;
   seed: number;
   winner: 'A' | 'B' | null;
@@ -157,6 +164,9 @@ export interface TurfMetrics {
   positionsReclaimed: number;
   dieRolls: number;
   passes: number;
+  buildupTurnsA: number;
+  buildupTurnsB: number;
+  firstStrike: 'A' | 'B' | null;
 }
 
 export interface TurfGameResult {
