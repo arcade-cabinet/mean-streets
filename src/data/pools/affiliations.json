@@ -1,0 +1,103 @@
+{
+  "affiliations": [
+    {
+      "id": "kings_row",
+      "name": "Kings Row",
+      "color": "#8B0000",
+      "description": "Old money muscle. Run the uptown rackets.",
+      "atPeaceWith": ["jade_dragon"],
+      "atWarWith": ["iron_devils"],
+      "modifier": { "atkBonus": 1, "defBonus": 0 }
+    },
+    {
+      "id": "iron_devils",
+      "name": "Iron Devils",
+      "color": "#2F4F4F",
+      "description": "Dockyard thugs. Control the waterfront.",
+      "atPeaceWith": ["southside_saints"],
+      "atWarWith": ["kings_row"],
+      "modifier": { "atkBonus": 0, "defBonus": 1 }
+    },
+    {
+      "id": "jade_dragon",
+      "name": "Jade Dragon",
+      "color": "#006400",
+      "description": "Silent operators. Own Chinatown.",
+      "atPeaceWith": ["kings_row"],
+      "atWarWith": ["los_diablos"],
+      "modifier": { "atkBonus": 0, "defBonus": 0, "special": "peek_1" }
+    },
+    {
+      "id": "los_diablos",
+      "name": "Los Diablos",
+      "color": "#FF4500",
+      "description": "Burn it all down. Ask questions never.",
+      "atPeaceWith": ["iron_devils"],
+      "atWarWith": ["jade_dragon"],
+      "modifier": { "atkBonus": 2, "defBonus": -1 }
+    },
+    {
+      "id": "southside_saints",
+      "name": "Southside Saints",
+      "color": "#4169E1",
+      "description": "Community first. Protect the block.",
+      "atPeaceWith": ["iron_devils"],
+      "atWarWith": ["reapers"],
+      "modifier": { "atkBonus": -1, "defBonus": 2 }
+    },
+    {
+      "id": "reapers",
+      "name": "The Reapers",
+      "color": "#36013F",
+      "description": "Nobody knows who leads them. Nobody asks twice.",
+      "atPeaceWith": [],
+      "atWarWith": ["southside_saints", "dead_rabbits"],
+      "modifier": { "atkBonus": 1, "defBonus": -1, "special": "fear_1" }
+    },
+    {
+      "id": "dead_rabbits",
+      "name": "Dead Rabbits",
+      "color": "#556B2F",
+      "description": "Been here since before the roads were paved.",
+      "atPeaceWith": ["black_market"],
+      "atWarWith": ["reapers"],
+      "modifier": { "atkBonus": 0, "defBonus": 1, "special": "draw_1" }
+    },
+    {
+      "id": "neon_snakes",
+      "name": "Neon Snakes",
+      "color": "#00CED1",
+      "description": "Night crawlers. Own every club on the strip.",
+      "atPeaceWith": ["los_diablos"],
+      "atWarWith": ["black_market"],
+      "modifier": { "atkBonus": 0, "defBonus": 0, "special": "night_atk_2" }
+    },
+    {
+      "id": "black_market",
+      "name": "Black Market",
+      "color": "#696969",
+      "description": "If it exists, they sell it. No questions.",
+      "atPeaceWith": ["dead_rabbits"],
+      "atWarWith": ["neon_snakes"],
+      "modifier": { "atkBonus": 0, "defBonus": 0, "special": "swap_1" }
+    },
+    {
+      "id": "cobalt_syndicate",
+      "name": "Cobalt Syndicate",
+      "color": "#0047AB",
+      "description": "White collar criminals with blue collar muscle.",
+      "atPeaceWith": ["kings_row"],
+      "atWarWith": ["los_diablos"],
+      "modifier": { "atkBonus": 1, "defBonus": 1 }
+    }
+  ],
+  "freelance": {
+    "id": "freelance",
+    "name": "Freelance",
+    "color": "#A9A9A9",
+    "description": "No crew. No loyalty. Just the job.",
+    "atPeaceWith": [],
+    "atWarWith": [],
+    "modifier": { "atkBonus": 0, "defBonus": 0 }
+  }
+}
