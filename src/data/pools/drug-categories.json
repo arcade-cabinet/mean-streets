@@ -1,0 +1,104 @@
+{
+  "categories": [
+    {
+      "id": "stimulant",
+      "title": "Stimulant",
+      "description": "Uppers that boost speed and reaction.",
+      "offenseAbility": "RUSH",
+      "offenseAbilityText": "Crew acts immediately after placement, no setup turn cooldown.",
+      "defenseAbility": "REFLEXES",
+      "defenseAbilityText": "Crew counter-attacks for potency damage when hit.",
+      "potencyMod": 0,
+      "adjectives": [
+        "Electric", "Lightning", "Turbo", "Hyper", "Surge",
+        "Spark", "Bolt", "Flash", "Rapid", "Nitro",
+        "Sonic", "Blitz"
+      ],
+      "nouns": [
+        "Rush", "Jolt", "Kick", "Snap", "Crack",
+        "Zip", "Pop", "Buzz", "Zing", "Blast",
+        "Spike", "Charge"
+      ]
+    },
+    {
+      "id": "sedative",
+      "title": "Sedative",
+      "description": "Downers that suppress and slow.",
+      "offenseAbility": "SUPPRESS",
+      "offenseAbilityText": "Target crew's power reduced by potency for 2 rounds.",
+      "defenseAbility": "NUMB",
+      "defenseAbilityText": "Crew ignores first potency points of damage per round.",
+      "potencyMod": 1,
+      "adjectives": [
+        "Midnight", "Velvet", "Smooth", "Deep", "Slow",
+        "Dreamy", "Mellow", "Drowsy", "Heavy", "Still",
+        "Quiet", "Hush"
+      ],
+      "nouns": [
+        "Haze", "Drift", "Calm", "Fog", "Cloud",
+        "Sleep", "Dusk", "Mist", "Shade", "Lull",
+        "Peace", "Rest"
+      ]
+    },
+    {
+      "id": "hallucinogen",
+      "title": "Hallucinogen",
+      "description": "Mind-altering substances that confuse and disorient.",
+      "offenseAbility": "CONFUSE",
+      "offenseAbilityText": "Funded flip threshold reduced by potency.",
+      "defenseAbility": "PARANOIA",
+      "defenseAbilityText": "Funded flips against this crew cost potency extra cash.",
+      "potencyMod": 0,
+      "adjectives": [
+        "Crystal", "Rainbow", "Spiral", "Fractal", "Cosmic",
+        "Neon", "Prismatic", "Kaleidoscope", "Aurora", "Phantom",
+        "Warped", "Vivid"
+      ],
+      "nouns": [
+        "Dream", "Trip", "Vision", "Gaze", "Pulse",
+        "Echo", "Wave", "Flux", "Bloom", "Mirage",
+        "Prism", "Lens"
+      ]
+    },
+    {
+      "id": "steroid",
+      "title": "Steroid",
+      "description": "Performance enhancers that boost raw physical stats.",
+      "offenseAbility": "BULK",
+      "offenseAbilityText": "Crew gets +potency power for attacks.",
+      "defenseAbility": "FORTIFY",
+      "defenseAbilityText": "Crew gets +potency resistance.",
+      "potencyMod": 1,
+      "adjectives": [
+        "Iron", "Titan", "Bull", "Raw", "Heavy",
+        "Savage", "Brute", "Granite", "Steel", "Gorilla",
+        "Tank", "Mammoth"
+      ],
+      "nouns": [
+        "Surge", "Pump", "Mass", "Bulk", "Force",
+        "Rage", "Power", "Crush", "Slam", "Drive",
+        "Fury", "Might"
+      ]
+    },
+    {
+      "id": "narcotic",
+      "title": "Narcotic",
+      "description": "Heavy painkillers enabling reckless aggression.",
+      "offenseAbility": "BERSERK",
+      "offenseAbilityText": "Crew power boosted by potency but takes 1 self-damage after attacking.",
+      "defenseAbility": "PAINKILLERS",
+      "defenseAbilityText": "Crew survives next potency killing blows at 1 resistance instead of dying.",
+      "potencyMod": -1,
+      "adjectives": [
+        "Black", "Shadow", "Ghost", "Numb", "Void",
+        "Dark", "Hollow", "Faded", "Blank", "Dead",
+        "Cold", "Grey"
+      ],
+      "nouns": [
+        "Out", "Fade", "Dose", "Drop", "Fix",
+        "Hit", "Nod", "Smoke", "Dust", "Burn",
+        "Haze", "End"
+      ]
+    }
+  ]
+}

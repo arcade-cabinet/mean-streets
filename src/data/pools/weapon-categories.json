@@ -1,0 +1,79 @@
+{
+  "categories": [
+    {
+      "id": "bladed",
+      "title": "Bladed",
+      "description": "Edged weapons that cause bleeding wounds.",
+      "offenseAbility": "LACERATE",
+      "offenseAbilityText": "Target bleeds, losing 1 resistance per round for bonus rounds.",
+      "defenseAbility": "PARRY",
+      "defenseAbilityText": "Attacker takes bonus counter-damage.",
+      "bonusMod": 0,
+      "names": [
+        "Switchblade", "Box Cutter", "Stiletto", "Bowie Knife", "Straight Razor",
+        "Butterfly Knife", "Shiv", "Machete", "Hunting Knife", "Karambit",
+        "Tanto", "Cleaver"
+      ]
+    },
+    {
+      "id": "blunt",
+      "title": "Blunt",
+      "description": "Heavy impact weapons that shatter defenses.",
+      "offenseAbility": "SHATTER",
+      "offenseAbilityText": "On kill, destroys one random modifier on target position.",
+      "defenseAbility": "BRACE",
+      "defenseAbilityText": "Absorb first bonus points of damage before resistance takes hits.",
+      "bonusMod": 1,
+      "names": [
+        "Crowbar", "Baseball Bat", "Pipe Wrench", "Tire Iron", "Claw Hammer",
+        "Brick in a Sock", "Nail Bat", "Lead Pipe", "Rebar", "Mace",
+        "Blackjack", "Sap Gloves"
+      ]
+    },
+    {
+      "id": "explosive",
+      "title": "Explosive",
+      "description": "Area-of-effect weapons that damage multiple targets.",
+      "offenseAbility": "BLAST",
+      "offenseAbilityText": "Splash bonus damage to adjacent positions.",
+      "defenseAbility": "DETERRENT",
+      "defenseAbilityText": "Attackers must exceed defense by bonus extra to kill.",
+      "bonusMod": 0,
+      "names": [
+        "Pipe Bomb", "Molotov Cocktail", "Cherry Bomb", "Flashbang", "Stick of Dynamite",
+        "Road Flare", "Firecracker Bundle", "Smoke Bomb", "Thermite Charge", "Nail Bomb",
+        "Flash Powder", "Gas Can"
+      ]
+    },
+    {
+      "id": "ranged",
+      "title": "Ranged",
+      "description": "Reach weapons that strike from distance.",
+      "offenseAbility": "REACH",
+      "offenseAbilityText": "Can target any enemy position, not just front-line.",
+      "defenseAbility": "OVERWATCH",
+      "defenseAbilityText": "Deal bonus damage to any crew placed on adjacent positions.",
+      "bonusMod": -1,
+      "names": [
+        "Zip Gun", "Slingshot", "Throwing Knife", "Blowgun", "Crossbow Pistol",
+        "Derringer", "Wrist Rocket", "Nail Gun", "Staple Gun", "BB Gun",
+        "Pellet Rifle", "Dart Gun"
+      ]
+    },
+    {
+      "id": "stealth",
+      "title": "Stealth",
+      "description": "Covert weapons for silent strikes.",
+      "offenseAbility": "AMBUSH",
+      "offenseAbilityText": "No counter-damage when attacking. Attacker takes zero retaliation.",
+      "defenseAbility": "EVASION",
+      "defenseAbilityText": "First bonus attacks against this position miss entirely.",
+      "bonusMod": -1,
+      "names": [
+        "Garrote", "Poison Needle", "Silenced Pistol", "Piano Wire", "Ice Pick",
+        "Coat Hanger Wire", "Chloroform Rag", "Taser", "Syringe", "Hatpin",
+        "Pen Knife", "Wire Saw"
+      ]
+    }
+  ]
+}
