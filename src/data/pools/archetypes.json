@@ -2,111 +2,123 @@
   "archetypes": [
     {
       "id": "bruiser",
-      "title": "The Bruiser",
-      "description": "Raw damage dealer. No tricks, just fists.",
+      "title": "Bruiser",
+      "description": "Raw power. No precision restriction.",
       "ability": "OVERWHELM",
-      "abilityDesc": "Deals +2 damage when attacking a target with lower ATK than this card",
-      "statBias": { "atkMod": 2, "defMod": -1 },
-      "dayNightShift": "neutral"
+      "abilityText": "Ignores precision rule. Can attack any target regardless of HP.",
+      "targets": "vanguard",
+      "timing": "on_attack",
+      "powerMod": 1
     },
     {
       "id": "snitch",
-      "title": "The Snitch",
-      "description": "Reveals what the opponent is hiding.",
+      "title": "Snitch",
+      "description": "Reveals opponent secrets.",
       "ability": "RAT_OUT",
-      "abilityDesc": "On play: opponent must reveal 1 random card from their hand for the rest of the round",
-      "statBias": { "atkMod": -1, "defMod": 0 },
-      "dayNightShift": "night_strong"
+      "abilityText": "On play: reveal opponent's top 3 draw pile cards.",
+      "targets": "draw_pile",
+      "timing": "on_play",
+      "powerMod": -1
     },
     {
       "id": "lookout",
-      "title": "The Lookout",
-      "description": "Eyes on every corner. Always watching.",
-      "ability": "CASE_THE_JOINT",
-      "abilityDesc": "On play: peek at the top 2 cards of your own deck, reorder them",
-      "statBias": { "atkMod": -1, "defMod": 1 },
-      "dayNightShift": "day_strong"
+      "title": "Lookout",
+      "description": "Accesses the reserves.",
+      "ability": "SCOUT",
+      "abilityText": "On play: swap this card with any card in your reserves.",
+      "targets": "reserves",
+      "timing": "on_play",
+      "powerMod": 0
     },
     {
       "id": "enforcer",
-      "title": "The Enforcer",
-      "description": "Handles problems. Permanently.",
+      "title": "Enforcer",
+      "description": "Hits rival affiliations harder.",
       "ability": "VENDETTA",
-      "abilityDesc": "+3 damage against cards from a rival affiliation",
-      "statBias": { "atkMod": 1, "defMod": 1 },
-      "dayNightShift": "neutral"
-    },
-    {
-      "id": "hustler",
-      "title": "The Hustler",
-      "description": "Always working an angle.",
-      "ability": "SLEIGHT",
-      "abilityDesc": "On play: swap 1 card from your hand with 1 from your reserves",
-      "statBias": { "atkMod": 0, "defMod": 0 },
-      "dayNightShift": "night_strong"
-    },
-    {
-      "id": "medic",
-      "title": "The Medic",
-      "description": "Keeps people alive. For a price.",
-      "ability": "PATCH_UP",
-      "abilityDesc": "When sacrificed to heal: heals double the normal amount",
-      "statBias": { "atkMod": -2, "defMod": 2 },
-      "dayNightShift": "day_strong"
-    },
-    {
-      "id": "arsonist",
-      "title": "The Arsonist",
-      "description": "Burns everything. Friends included.",
-      "ability": "SCORCHED_EARTH",
-      "abilityDesc": "On attack: also deals 1 damage to the card behind the vanguard (next in line)",
-      "statBias": { "atkMod": 1, "defMod": -2 },
-      "dayNightShift": "night_strong"
+      "abilityText": "Deals double damage to cards from a rival affiliation.",
+      "targets": "vanguard",
+      "timing": "on_attack",
+      "powerMod": 0
     },
     {
       "id": "ghost",
-      "title": "The Ghost",
-      "description": "You didn't see anything.",
-      "ability": "VANISH",
-      "abilityDesc": "After attacking: cannot be targeted for the opponent's next turn",
-      "statBias": { "atkMod": 0, "defMod": -1 },
-      "dayNightShift": "night_strong"
+      "title": "Ghost",
+      "description": "Strikes from the shadows.",
+      "ability": "PHANTOM_STRIKE",
+      "abilityText": "Can attack directly from reserves without being drawn first.",
+      "targets": "vanguard",
+      "timing": "on_attack",
+      "powerMod": -1
     },
     {
-      "id": "fixer",
-      "title": "The Fixer",
-      "description": "Makes problems disappear. Makes friends appear.",
-      "ability": "BROKER",
-      "abilityDesc": "On play: change one card in your active stack's affiliation to match this card's for the round",
-      "statBias": { "atkMod": -1, "defMod": 1 },
-      "dayNightShift": "neutral"
-    },
-    {
-      "id": "wheelman",
-      "title": "The Wheelman",
-      "description": "Gets people in. Gets people out.",
-      "ability": "EXTRACTION",
-      "abilityDesc": "On play: swap your vanguard with any card in your active hand (vanguard goes to hand at current HP)",
-      "statBias": { "atkMod": 0, "defMod": 0 },
-      "dayNightShift": "day_strong"
+      "id": "arsonist",
+      "title": "Arsonist",
+      "description": "Collateral damage guaranteed.",
+      "ability": "SCORCHED_EARTH",
+      "abilityText": "On attack: also deals 2 damage to opponent's top draw pile card.",
+      "targets": "draw_pile",
+      "timing": "on_attack",
+      "powerMod": 0
     },
     {
       "id": "shark",
-      "title": "The Shark",
-      "description": "Smells blood in the water.",
+      "title": "Shark",
+      "description": "Preys on weakness.",
       "ability": "BLOOD_FRENZY",
-      "abilityDesc": "+1 damage for every point of damage already on the enemy vanguard",
-      "statBias": { "atkMod": 0, "defMod": -1 },
-      "dayNightShift": "neutral"
+      "abilityText": "Damage +1 for each card fewer the opponent has than you.",
+      "targets": "vanguard",
+      "timing": "on_attack",
+      "powerMod": -1
     },
     {
       "id": "fence",
-      "title": "The Fence",
-      "description": "Moves product. Any product.",
+      "title": "Fence",
+      "description": "Converts anything to value.",
       "ability": "HOT_SWAP",
-      "abilityDesc": "On sacrifice: draw 2 cards instead of healing",
-      "statBias": { "atkMod": -1, "defMod": 0 },
-      "dayNightShift": "night_strong"
+      "abilityText": "On sacrifice: draw 2 cards instead of healing.",
+      "targets": "self",
+      "timing": "on_sacrifice",
+      "powerMod": 0
+    },
+    {
+      "id": "medic",
+      "title": "Medic",
+      "description": "Keeps fighters alive.",
+      "ability": "PATCH_UP",
+      "abilityText": "On sacrifice: heal double. Can heal from reserves.",
+      "targets": "self",
+      "timing": "on_sacrifice",
+      "powerMod": -1
+    },
+    {
+      "id": "wheelman",
+      "title": "Wheelman",
+      "description": "Extracts and repositions.",
+      "ability": "EXTRACTION",
+      "abilityText": "On play: swap vanguard with any card in your hand.",
+      "targets": "self",
+      "timing": "on_play",
+      "powerMod": 0
+    },
+    {
+      "id": "hustler",
+      "title": "Hustler",
+      "description": "Takes what isn't his.",
+      "ability": "PICKPOCKET",
+      "abilityText": "On attack: steal 1 random card from opponent's hand.",
+      "targets": "hand",
+      "timing": "on_attack",
+      "powerMod": -1
+    },
+    {
+      "id": "sniper",
+      "title": "Sniper",
+      "description": "Picks targets precisely.",
+      "ability": "CALLED_SHOT",
+      "abilityText": "Can target any card in opponent's hand, not just vanguard.",
+      "targets": "hand",
+      "timing": "on_attack",
+      "powerMod": -1
     }
   ]
 }

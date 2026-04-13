@@ -1,25 +1,19 @@
 /**
- * Character card game simulation loop.
- * Two AI players build decks from the shared pool, then fight.
+ * Game simulation with single-power character cards.
+ * Random deck pulls, ability-driven combat, outlier detection.
  */
 
 import type { CharacterCard } from './schemas';
-import {
-  createLiveCard, getAtk, getDef, calcEffectiveAtk,
-  applyDamage, healCard, canPrecisionAttack, rollDie,
-  type LiveCard,
-} from './combat';
-import { buildAiDeck, type BuiltDeck } from './deckbuilder';
+import { createLiveCard, calcDamage, canAttack, applyDamage, rollDie, type LiveCard } from './combat';
 import { createEmptyMetrics, type GameMetrics } from '../types';
+import { createRng, randomSeed, type Rng } from './rng';
 
 export interface CardGameConfig {
   precisionMult: number;
   handMax: number;
   dieSize: number;
-  nightShiftEvery: number;
   maxTurns: number;
   deckSize: number;
-  activeSize: number;
   reserveSize: number;
 }
 
@@ -27,296 +21,225 @@ export const DEFAULT_CARD_CONFIG: CardGameConfig = {
   precisionMult: 3.0,
   handMax: 5,
   dieSize: 6,
-  nightShiftEvery: 2,
   maxTurns: 200,
   deckSize: 20,
-  activeSize: 6,
   reserveSize: 3,
 };
 
 interface PlayerState {
-  deck: BuiltDeck;
-  drawPile: CharacterCard[];
+  drawPile: LiveCard[];
   hand: LiveCard[];
   vanguard: LiveCard | null;
   reserves: LiveCard[];
   discard: CharacterCard[];
 }
 
-export interface CardGameState {
+interface GameState {
   config: CardGameConfig;
   players: { A: PlayerState; B: PlayerState };
   turnSide: 'A' | 'B';
   firstPlayer: 'A' | 'B';
-  isNight: boolean;
-  nightCounter: number;
   turnNumber: number;
   consecutivePasses: number;
   metrics: GameMetrics;
   winner: 'A' | 'B' | null;
   endReason: string | null;
+  rng: Rng;
+  gameSeed: number;
 }
 
 export interface CardGameResult {
   winner: 'A' | 'B';
   endReason: string;
   firstPlayer: 'A' | 'B';
+  turnCount: number;
   metrics: GameMetrics;
-  deckA: { conflicts: number; synergies: number };
-  deckB: { conflicts: number; synergies: number };
+  seed: number;
 }
 
-function shuffle<T>(arr: T[]): T[] {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
+function buildRandomDeck(pool: CharacterCard[], deckSize: number, reserveSize: number, rng: Rng) {
+  const unlocked = pool.filter(c => c.unlocked);
+  const shuffled = rng.shuffle([...unlocked]);
+  const picked = shuffled.slice(0, deckSize);
+  const reserves = picked.splice(picked.length - reserveSize, reserveSize);
+  return { active: picked, reserves };
 }
 
-/** Create initial game state from two built decks. */
-function createState(
-  deckA: BuiltDeck,
-  deckB: BuiltDeck,
-  config: CardGameConfig,
-): CardGameState {
-  const firstPlayer: 'A' | 'B' = Math.random() < 0.5 ? 'A' : 'B';
+function createState(pool: CharacterCard[], config: CardGameConfig, seed: number): GameState {
+  const rng = createRng(seed);
+  const deckA = buildRandomDeck(pool, config.deckSize, config.reserveSize, rng);
+  const deckB = buildRandomDeck(pool, config.deckSize, config.reserveSize, rng);
+  const first: 'A' | 'B' = rng.next() < 0.5 ? 'A' : 'B';
 
-  function initPlayer(deck: BuiltDeck, isFirst: boolean): PlayerState {
-    const drawPile = shuffle([...deck.active]);
-    const reserveLive = deck.reserves.map(c => createLiveCard(c, false));
-
-    // Draw vanguard
-    const vanCard = drawPile.pop()!;
-    const vanguard = createLiveCard(vanCard, false);
-
-    // Both players start with 4 cards
-    const handSize = 4;
+  function initPlayer(deck: { active: CharacterCard[]; reserves: CharacterCard[] }): PlayerState {
+    const pile = rng.shuffle(deck.active.map(c => createLiveCard(c)));
+    const van = pile.pop()!;
     const hand: LiveCard[] = [];
-    for (let i = 0; i < handSize && drawPile.length > 0; i++) {
-      hand.push(createLiveCard(drawPile.pop()!, false));
-    }
-
+    for (let i = 0; i < 4 && pile.length > 0; i++) hand.push(pile.pop()!);
     return {
-      deck,
-      drawPile,
+      drawPile: pile,
       hand,
-      vanguard,
-      reserves: reserveLive,
+      vanguard: van,
+      reserves: deck.reserves.map(c => createLiveCard(c)),
       discard: [],
     };
   }
 
   return {
     config,
-    players: {
-      A: initPlayer(deckA, firstPlayer === 'A'),
-      B: initPlayer(deckB, firstPlayer === 'B'),
-    },
-    turnSide: firstPlayer,
-    firstPlayer,
-    isNight: false,
-    nightCounter: 0,
+    players: { A: initPlayer(deckA), B: initPlayer(deckB) },
+    turnSide: first,
+    firstPlayer: first,
     turnNumber: 0,
     consecutivePasses: 0,
     metrics: createEmptyMetrics(),
     winner: null,
     endReason: null,
+    rng,
+    gameSeed: seed,
   };
 }
 
-/** Draw cards into a player's hand, handle overdraw. */
-function drawCards(
-  state: CardGameState,
-  side: 'A' | 'B',
-  count: number,
-): { overdraw: boolean; shieldSave: boolean } {
+/** Draw cards. Returns overdraw count. */
+function draw(state: GameState, side: 'A' | 'B', count: number): number {
   const p = state.players[side];
-  let overdraw = false;
-  let shieldSave = false;
-
+  let overdraw = 0;
   for (let i = 0; i < count; i++) {
-    // Try draw pile first, then reserves
-    let card: CharacterCard | undefined;
-    if (p.drawPile.length > 0) {
-      card = p.drawPile.pop();
-    } else if (p.reserves.length > 0) {
-      const r = p.reserves.pop()!;
-      card = r.card;
-    }
+    let card: LiveCard | undefined;
+    if (p.drawPile.length > 0) card = p.drawPile.pop();
+    else if (p.reserves.length > 0) card = p.reserves.pop();
     if (!card) break;
-
-    p.hand.push(createLiveCard(card, state.isNight));
-
-    // Overdraw check
+    p.hand.push(card);
     if (p.hand.length > state.config.handMax) {
-      if (p.vanguard && p.vanguard.shield > 0) {
-        p.vanguard.shield--;
-        const overflow = p.hand.pop()!;
-        p.discard.push(overflow.card);
-        shieldSave = true;
-        state.metrics.shieldSaves++;
-      } else {
-        overdraw = true;
-        state.metrics.overdrawPenalties++;
-        const forced = p.hand.shift()!;
-        if (p.vanguard) p.discard.push(p.vanguard.card);
-        p.vanguard = createLiveCard(forced.card, state.isNight);
-      }
+      overdraw++;
+      state.metrics.overdrawPenalties++;
+      const forced = p.hand.shift()!;
+      if (p.vanguard) p.discard.push(p.vanguard.card);
+      p.vanguard = createLiveCard(forced.card);
     }
   }
-
-  return { overdraw, shieldSave };
+  return overdraw;
 }
 
-/** Handle vanguard death — bounty, promote, check starvation. */
-function handleDeath(
-  state: CardGameState,
-  deadSide: 'A' | 'B',
-  killerSide: 'A' | 'B',
-): void {
+function handleDeath(state: GameState, deadSide: 'A' | 'B', killerSide: 'A' | 'B'): void {
   const dead = state.players[deadSide];
   const m = state.metrics;
-
   m.vanguardDeaths++;
-  if (killerSide === 'A') m.killsByA++;
-  else m.killsByB++;
+  if (killerSide === 'A') m.killsByA++; else m.killsByB++;
 
   if (dead.vanguard) {
     dead.discard.push(dead.vanguard.card);
     dead.vanguard = null;
   }
 
-  // Kill bounty: +2
-  drawCards(state, killerSide, 2);
+  // Kill bounty
+  draw(state, killerSide, 2);
+
+  // HUSTLER steal on kill
+  const killer = state.players[killerSide];
+  if (killer.hand.some(lc => lc.card.archetype === 'hustler') && dead.hand.length > 0) {
+    const stealIdx = Math.floor(state.rng.next() * dead.hand.length);
+    const stolen = dead.hand.splice(stealIdx, 1)[0];
+    killer.hand.push(stolen);
+  }
 
   // Check starvation
-  if (dead.hand.length === 0 && dead.reserves.length === 0) {
+  const totalCards = dead.hand.length + dead.drawPile.length + dead.reserves.length;
+  if (totalCards === 0) {
     state.winner = killerSide;
     state.endReason = 'starvation';
     return;
   }
 
-  // Night shift
-  state.nightCounter++;
-  if (state.nightCounter >= state.config.nightShiftEvery) {
-    state.isNight = !state.isNight;
-    state.nightCounter = 0;
-    state.metrics.nightShifts++;
-    // Update surviving vanguards
-    for (const s of ['A', 'B'] as const) {
-      const van = state.players[s].vanguard;
-      if (!van) continue;
-      const newDef = getDef(van.card, state.isNight);
-      const ratio = van.hp / van.maxHp;
-      van.maxHp = newDef;
-      van.hp = Math.max(1, Math.round(ratio * newDef));
-    }
-  }
-
-  // Promote — pick highest DEF
+  // Promote — highest power from hand, then reserves, then draw pile
   if (dead.hand.length > 0) {
     let bestIdx = 0;
-    let bestDef = -1;
-    dead.hand.forEach((lc, i) => {
-      const d = getDef(lc.card, state.isNight);
-      if (d > bestDef) { bestDef = d; bestIdx = i; }
-    });
-    const promoted = dead.hand.splice(bestIdx, 1)[0];
-    dead.vanguard = createLiveCard(promoted.card, state.isNight);
+    dead.hand.forEach((lc, i) => { if (lc.card.power > dead.hand[bestIdx].card.power) bestIdx = i; });
+    dead.vanguard = createLiveCard(dead.hand.splice(bestIdx, 1)[0].card);
   } else if (dead.reserves.length > 0) {
-    const promoted = dead.reserves.pop()!;
-    dead.vanguard = createLiveCard(promoted.card, state.isNight);
+    dead.vanguard = dead.reserves.pop()!;
+  } else if (dead.drawPile.length > 0) {
+    dead.vanguard = dead.drawPile.pop()!;
   } else {
     state.winner = killerSide;
     state.endReason = 'starvation';
   }
 }
 
-// ── AI Decision ──────────────────────────────────────────────
-
-interface Decision {
-  action: string;
-  indices: number[];
-  reason: string;
-}
-
-function aiDecide(state: CardGameState, side: 'A' | 'B'): Decision {
+function aiDecide(state: GameState, side: 'A' | 'B') {
   const p = state.players[side];
   const opp = state.players[side === 'A' ? 'B' : 'A'];
+  if (!p.vanguard || !opp.vanguard) return { action: 'pass' as const, idx: -1 };
 
-  if (!p.vanguard || !opp.vanguard) {
-    return { action: 'pass', indices: [], reason: 'no vanguard' };
+  // Check Ghost in reserves — can attack directly
+  const ghostReserve = p.reserves.findIndex(
+    lc => lc.card.archetype === 'ghost' && canAttack(lc.card, opp.vanguard!.hp, state.config.precisionMult),
+  );
+  if (ghostReserve >= 0) {
+    return { action: 'ghost_attack' as const, idx: ghostReserve };
   }
 
-  const oppVan = opp.vanguard;
-
   // Find valid attacks
-  const attacks: Array<{ idx: number; atk: number; lethal: boolean }> = [];
+  const attacks: Array<{ idx: number; dmg: number }> = [];
   p.hand.forEach((lc, i) => {
-    if (oppVan.vanished) return; // ghost ability
-    let atk = calcEffectiveAtk(lc.card, oppVan.card, state.isNight);
-    // SHARK bonus: +1 per damage already on target
-    if (lc.card.archetype === 'shark') {
-      atk += (oppVan.maxHp - oppVan.hp);
-    }
-    if (canPrecisionAttack(atk, oppVan.hp, state.config.precisionMult)) {
-      attacks.push({ idx: i, atk, lethal: atk >= oppVan.hp });
+    if (canAttack(lc.card, opp.vanguard!.hp, state.config.precisionMult)) {
+      const dmg = calcDamage(lc.card, opp.vanguard!.card, p.hand.length, opp.hand.length, opp.vanguard!.maxHp - opp.vanguard!.hp);
+      attacks.push({ idx: i, dmg });
     }
   });
 
-  // 1. Lethal attack
-  const lethals = attacks.filter(a => a.lethal);
+  // Lethal first
+  const lethals = attacks.filter(a => a.dmg >= opp.vanguard!.hp);
   if (lethals.length > 0) {
-    lethals.sort((a, b) => a.atk - b.atk);
-    return { action: 'attack', indices: [lethals[0].idx], reason: 'lethal' };
+    lethals.sort((a, b) => a.dmg - b.dmg);
+    return { action: 'attack' as const, idx: lethals[0].idx };
   }
 
-  // 2. Best attack
+  // Best damage
   if (attacks.length > 0) {
-    attacks.sort((a, b) => b.atk - a.atk);
-    return { action: 'attack', indices: [attacks[0].idx], reason: 'pressure' };
+    attacks.sort((a, b) => b.dmg - a.dmg);
+    return { action: 'attack' as const, idx: attacks[0].idx };
   }
 
-  // Track precision lock
-  if (p.hand.length > 0) {
-    state.metrics.precisionLocks++;
+  // Precision locked
+  if (p.hand.length > 0) state.metrics.precisionLocks++;
+
+  // Sniper — target opponent hand
+  const sniper = p.hand.findIndex(lc => lc.card.archetype === 'sniper');
+  if (sniper >= 0 && opp.hand.length > 0) {
+    return { action: 'sniper' as const, idx: sniper };
   }
 
-  // 3. Die roll if precision-locked with cards
-  if (p.hand.length > 2 && state.config.dieSize > 0) {
-    return { action: 'die', indices: [], reason: 'precision-locked' };
+  // Fence sacrifice — draw 2 (high priority when locked)
+  const fence = p.hand.findIndex(lc => lc.card.archetype === 'fence');
+  if (fence >= 0) return { action: 'sacrifice' as const, idx: fence };
+
+  // Die roll when precision-locked and have any cards
+  if (p.hand.length > 0 && state.config.dieSize > 0) {
+    return { action: 'die' as const, idx: -1 };
   }
 
-  // 4. Sacrifice to heal
+  // Sacrifice lowest to heal
   if (p.hand.length > 0 && p.vanguard.hp < p.vanguard.maxHp * 0.7) {
-    let worstIdx = 0;
-    let worstAtk = Infinity;
-    p.hand.forEach((lc, i) => {
-      const a = getAtk(lc.card, state.isNight);
-      if (a < worstAtk) { worstAtk = a; worstIdx = i; }
-    });
-    return { action: 'sacrifice', indices: [worstIdx], reason: 'heal' };
+    let worst = 0;
+    p.hand.forEach((lc, i) => { if (lc.card.power < p.hand[worst].card.power) worst = i; });
+    return { action: 'sacrifice' as const, idx: worst };
   }
 
-  // 5. Hustle
-  if (p.vanguard.hp > 3 && p.hand.length < state.config.handMax) {
-    if (p.drawPile.length > 0 || p.reserves.length > 0) {
-      return { action: 'hustle', indices: [], reason: 'draw' };
-    }
+  // Hustle — more aggressive: do it if HP > 2 (not 3) and have draw pile
+  if (p.vanguard.hp > 2 && p.hand.length < state.config.handMax && (p.drawPile.length > 0 || p.reserves.length > 0)) {
+    return { action: 'hustle' as const, idx: -1 };
   }
 
-  // 6. Sacrifice anyway
+  // Last resort sacrifice
   if (p.hand.length > 0) {
-    return { action: 'sacrifice', indices: [0], reason: 'dump' };
+    return { action: 'sacrifice' as const, idx: 0 };
   }
 
-  return { action: 'pass', indices: [], reason: 'stuck' };
+  return { action: 'pass' as const, idx: -1 };
 }
 
-// ── Turn Execution ───────────────────────────────────────────
-
-function executeTurn(state: CardGameState): boolean {
+function executeTurn(state: GameState): boolean {
   const side = state.turnSide;
   const opSide: 'A' | 'B' = side === 'A' ? 'B' : 'A';
   const p = state.players[side];
@@ -326,23 +249,20 @@ function executeTurn(state: CardGameState): boolean {
   state.turnNumber++;
   m.turns++;
 
-  // Clear vanish from previous turn
-  if (p.vanguard) p.vanguard.vanished = false;
-
-  // No automatic draws — you earn cards through kills, hustle, and abilities
-
-  // Win check: starvation
-  if (!p.vanguard && p.hand.length === 0 && p.reserves.length === 0) {
-    state.winner = opSide;
-    state.endReason = 'starvation';
-    return true;
+  // Exhaustion check
+  for (const s of ['A', 'B'] as const) {
+    const pl = state.players[s];
+    const empty = !pl.vanguard && pl.hand.length === 0 && pl.drawPile.length === 0 && pl.reserves.length === 0;
+    if (empty) {
+      state.winner = s === 'A' ? 'B' : 'A';
+      state.endReason = 'starvation';
+      return true;
+    }
   }
-
-  // Win check: exhaustion — both sides out of draw pile AND hand
-  const pEmpty = p.drawPile.length === 0 && p.hand.length === 0 && p.reserves.length === 0;
-  const oppEmpty = opp.drawPile.length === 0 && opp.hand.length === 0 && opp.reserves.length === 0;
-  if (pEmpty && oppEmpty) {
-    // Both exhausted — higher vanguard HP wins
+  // Both exhausted
+  const aEmpty = p.drawPile.length === 0 && p.hand.length === 0 && p.reserves.length === 0;
+  const bEmpty = opp.drawPile.length === 0 && opp.hand.length === 0 && opp.reserves.length === 0;
+  if (aEmpty && bEmpty) {
     const hpA = state.players.A.vanguard?.hp ?? 0;
     const hpB = state.players.B.vanguard?.hp ?? 0;
     state.winner = hpA >= hpB ? 'A' : 'B';
@@ -350,159 +270,140 @@ function executeTurn(state: CardGameState): boolean {
     return true;
   }
 
-  const decision = aiDecide(state, side);
+  const d = aiDecide(state, side);
 
-  switch (decision.action) {
+  switch (d.action) {
     case 'attack': {
       m.attacks++;
       state.consecutivePasses = 0;
-      const idx = decision.indices[0];
-      const lc = p.hand.splice(idx, 1)[0];
+      const lc = p.hand.splice(d.idx, 1)[0];
       p.discard.push(lc.card);
-
       if (!opp.vanguard) break;
-
-      let atk = calcEffectiveAtk(lc.card, opp.vanguard.card, state.isNight);
-      if (lc.card.archetype === 'shark') {
-        atk += (opp.vanguard.maxHp - opp.vanguard.hp);
+      const dmg = calcDamage(lc.card, opp.vanguard.card, p.hand.length, opp.hand.length, opp.vanguard.maxHp - opp.vanguard.hp);
+      // ARSONIST: also hit top of draw pile
+      if (lc.card.archetype === 'arsonist' && opp.drawPile.length > 0) {
+        const top = opp.drawPile[opp.drawPile.length - 1];
+        top.hp = Math.max(0, top.hp - 2);
       }
-
-      const result = applyDamage(opp.vanguard, atk);
-
-      // Archetype on-attack abilities
-      if (lc.card.archetype === 'snitch' && opp.hand.length > 0) {
-        const revIdx = Math.floor(Math.random() * opp.hand.length);
-        opp.hand[revIdx].revealed = true;
-      }
-      if (lc.card.archetype === 'ghost' && p.vanguard) {
-        p.vanguard.vanished = true;
-      }
-      if (lc.card.archetype === 'arsonist' && opp.hand.length > 0) {
-        // 1 damage to next card in line
-        const nextCard = opp.hand[0];
-        nextCard.hp = Math.max(0, nextCard.hp - 1);
-      }
-
-      if (result.killed) {
-        handleDeath(state, opSide, side);
+      if (applyDamage(opp.vanguard, dmg)) handleDeath(state, opSide, side);
+      break;
+    }
+    case 'ghost_attack': {
+      m.attacks++;
+      state.consecutivePasses = 0;
+      const lc = p.reserves.splice(d.idx, 1)[0];
+      p.discard.push(lc.card);
+      if (!opp.vanguard) break;
+      const dmg = lc.card.power;
+      if (applyDamage(opp.vanguard, dmg)) handleDeath(state, opSide, side);
+      break;
+    }
+    case 'sniper': {
+      m.attacks++;
+      state.consecutivePasses = 0;
+      const lc = p.hand.splice(d.idx, 1)[0];
+      p.discard.push(lc.card);
+      if (opp.hand.length > 0) {
+        // Target highest power card in opponent hand
+        let bestIdx = 0;
+        opp.hand.forEach((h, i) => { if (h.card.power > opp.hand[bestIdx].card.power) bestIdx = i; });
+        const target = opp.hand[bestIdx];
+        if (applyDamage(target, lc.card.power)) {
+          opp.discard.push(opp.hand.splice(bestIdx, 1)[0].card);
+        }
       }
       break;
     }
-
     case 'sacrifice': {
       m.sacrifices++;
       state.consecutivePasses = 0;
-      const idx = decision.indices[0];
-      const lc = p.hand.splice(idx, 1)[0];
+      const lc = p.hand.splice(d.idx, 1)[0];
       p.discard.push(lc.card);
-
-      if (p.vanguard) {
-        const healAmt = getDef(lc.card, state.isNight);
-        healCard(p.vanguard, healAmt, lc.card.archetype);
-      }
-
-      // FENCE: draw 2 instead of healing
       if (lc.card.archetype === 'fence') {
-        drawCards(state, side, 2);
+        draw(state, side, 2);
         m.sacrificeDraws += 2;
+      } else if (p.vanguard) {
+        const heal = lc.card.archetype === 'medic' ? lc.card.power * 2 : lc.card.power;
+        p.vanguard.hp = Math.min(p.vanguard.maxHp, p.vanguard.hp + heal);
       }
       break;
     }
-
     case 'hustle': {
       m.hustles++;
       state.consecutivePasses = 0;
       if (p.vanguard) {
-        p.vanguard.hp = Math.max(0, p.vanguard.hp - 2);
-        if (p.vanguard.hp <= 0) {
-          handleDeath(state, side, opSide);
-          break;
-        }
+        p.vanguard.hp -= 2;
+        if (p.vanguard.hp <= 0) { handleDeath(state, side, opSide); break; }
       }
-      drawCards(state, side, 1);
+      draw(state, side, 1);
       break;
     }
-
     case 'die': {
       m.dieRolls++;
       state.consecutivePasses = 0;
       const hasShield = (p.vanguard?.shield ?? 0) > 0;
-      const result = rollDie(state.config.dieSize, p.hand.length, hasShield);
-      if (result.hit) {
+      const r = rollDie(state.config.dieSize, p.hand.length, hasShield, state.rng);
+      if (r.hit) {
         m.dieHits++;
-        if (result.target === 'hand' && result.cardIndex !== undefined) {
-          const removed = p.hand.splice(result.cardIndex, 1)[0];
-          p.discard.push(removed.card);
-        } else if (result.target === 'vanguard' && p.vanguard) {
+        if (r.target === 'hand' && r.cardIndex !== undefined) {
+          p.discard.push(p.hand.splice(r.cardIndex, 1)[0].card);
+        } else if (r.target === 'vanguard' && p.vanguard) {
           p.vanguard.hp = Math.max(0, p.vanguard.hp - 2);
           m.dieVanguardHits++;
         }
-      } else {
-        if (result.target === 'shield_absorbed') {
-          m.shieldSaves++;
-          if (p.vanguard) p.vanguard.shield--;
-        } else {
-          m.dieMisses++;
-        }
-      }
+      } else { m.dieMisses++; }
       break;
     }
-
     default: {
       m.passes++;
       state.consecutivePasses++;
+      // Passing = you draw 1 (costs your action but restocks)
+      const canDraw = p.drawPile.length > 0 || p.reserves.length > 0;
+      if (canDraw) {
+        draw(state, side, 1);
+      }
+      // Both pass with nothing to draw = exhaustion
       if (state.consecutivePasses >= 2) {
-        m.stallBreakers++;
-        drawCards(state, 'A', 1);
-        drawCards(state, 'B', 1);
+        const canA = state.players.A.drawPile.length > 0 || state.players.A.reserves.length > 0
+          || state.players.A.hand.length > 0;
+        const canB = state.players.B.drawPile.length > 0 || state.players.B.reserves.length > 0
+          || state.players.B.hand.length > 0;
+        if (!canA && !canB) {
+          const hpA = state.players.A.vanguard?.hp ?? 0;
+          const hpB = state.players.B.vanguard?.hp ?? 0;
+          state.winner = hpA >= hpB ? 'A' : 'B';
+          state.endReason = 'exhaustion';
+          break;
+        }
         state.consecutivePasses = 0;
       }
     }
   }
 
-  // Swap turn
   state.turnSide = opSide;
   return state.winner !== null;
 }
 
-// ── Public API ───────────────────────────────────────────────
-
-/** Play a complete game between two AI-built decks. */
 export function playCardGame(
   pool: CharacterCard[],
-  config: CardGameConfig = DEFAULT_CARD_CONFIG,
+  config = DEFAULT_CARD_CONFIG,
+  seed?: number,
 ): CardGameResult {
-  const rngA = Math.random;
-  const rngB = Math.random;
-
-  const deckA = buildAiDeck(
-    pool, config.deckSize, config.activeSize, config.reserveSize, rngA,
-  );
-  const deckB = buildAiDeck(
-    pool, config.deckSize, config.activeSize, config.reserveSize, rngB,
-  );
-
-  const state = createState(deckA, deckB, config);
-
-  while (!state.winner && state.turnNumber < config.maxTurns) {
-    executeTurn(state);
-  }
-
+  const gameSeed = seed ?? randomSeed();
+  const state = createState(pool, config, gameSeed);
+  while (!state.winner && state.turnNumber < config.maxTurns) executeTurn(state);
   if (!state.winner) {
+    const hpA = state.players.A.vanguard?.hp ?? 0;
+    const hpB = state.players.B.vanguard?.hp ?? 0;
+    state.winner = hpA >= hpB ? 'A' : 'B';
     state.endReason = 'stall';
-    const scoreA = state.players.A.hand.length * 2 +
-      (state.players.A.vanguard?.hp ?? 0);
-    const scoreB = state.players.B.hand.length * 2 +
-      (state.players.B.vanguard?.hp ?? 0);
-    state.winner = scoreA >= scoreB ? 'A' : 'B';
   }
-
   return {
     winner: state.winner,
     endReason: state.endReason!,
     firstPlayer: state.firstPlayer,
+    turnCount: state.turnNumber,
     metrics: state.metrics,
-    deckA: { conflicts: deckA.conflicts, synergies: deckA.synergies },
-    deckB: { conflicts: deckB.conflicts, synergies: deckB.synergies },
+    seed: gameSeed,
   };
 }

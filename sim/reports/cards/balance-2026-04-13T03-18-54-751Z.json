@@ -1,0 +1,222 @@
+{
+  "timestamp": "2026-04-13T03:18:54.743Z",
+  "config": {
+    "precisionMult": 3,
+    "handMax": 5,
+    "dieSize": 6,
+    "maxTurns": 200,
+    "deckSize": 20,
+    "reserveSize": 3
+  },
+  "poolSize": 100,
+  "overall": {
+    "games": 10000,
+    "winRateA": 54.9,
+    "firstMoverWinRate": 39.6,
+    "stallRate": 0,
+    "avgTurns": 26.2,
+    "medianTurns": 26,
+    "avgPassRate": 30.6,
+    "avgPrecisionLockRate": 0.4,
+    "avgAttacks": 17.6,
+    "avgSacrifices": 0,
+    "avgHustles": 0,
+    "avgDieRolls": 0.2,
+    "avgDieHitRate": 48.7,
+    "avgVanguardDeaths": 14.9,
+    "avgOverdraw": 4.83,
+    "avgShieldSaves": 0,
+    "avgNightShifts": 0,
+    "avgDeckConflicts": 0,
+    "avgDeckSynergies": 0
+  },
+  "archetypes": [
+    {
+      "archetype": "bruiser",
+      "totalPlayed": 9,
+      "avgWinContribution": 0,
+      "avgAtk": 5.1,
+      "avgDef": 5.1
+    },
+    {
+      "archetype": "snitch",
+      "totalPlayed": 9,
+      "avgWinContribution": 0,
+      "avgAtk": 3.4,
+      "avgDef": 3.4
+    },
+    {
+      "archetype": "lookout",
+      "totalPlayed": 9,
+      "avgWinContribution": 0,
+      "avgAtk": 4.7,
+      "avgDef": 4.7
+    },
+    {
+      "archetype": "enforcer",
+      "totalPlayed": 9,
+      "avgWinContribution": 0,
+      "avgAtk": 5,
+      "avgDef": 5
+    },
+    {
+      "archetype": "ghost",
+      "totalPlayed": 8,
+      "avgWinContribution": 0,
+      "avgAtk": 3.6,
+      "avgDef": 3.6
+    },
+    {
+      "archetype": "arsonist",
+      "totalPlayed": 8,
+      "avgWinContribution": 0,
+      "avgAtk": 4.5,
+      "avgDef": 4.5
+    },
+    {
+      "archetype": "shark",
+      "totalPlayed": 8,
+      "avgWinContribution": 0,
+      "avgAtk": 3.6,
+      "avgDef": 3.6
+    },
+    {
+      "archetype": "fence",
+      "totalPlayed": 8,
+      "avgWinContribution": 0,
+      "avgAtk": 4.5,
+      "avgDef": 4.5
+    },
+    {
+      "archetype": "medic",
+      "totalPlayed": 8,
+      "avgWinContribution": 0,
+      "avgAtk": 3.6,
+      "avgDef": 3.6
+    },
+    {
+      "archetype": "wheelman",
+      "totalPlayed": 8,
+      "avgWinContribution": 0,
+      "avgAtk": 4.5,
+      "avgDef": 4.5
+    },
+    {
+      "archetype": "hustler",
+      "totalPlayed": 8,
+      "avgWinContribution": 0,
+      "avgAtk": 3.6,
+      "avgDef": 3.6
+    },
+    {
+      "archetype": "sniper",
+      "totalPlayed": 8,
+      "avgWinContribution": 0,
+      "avgAtk": 3.6,
+      "avgDef": 3.6
+    }
+  ],
+  "affiliations": [
+    {
+      "affiliation": "kings_row",
+      "totalInDecks": 9,
+      "avgConflicts": 0
+    },
+    {
+      "affiliation": "jade_dragon",
+      "totalInDecks": 9,
+      "avgConflicts": 0
+    },
+    {
+      "affiliation": "reapers",
+      "totalInDecks": 9,
+      "avgConflicts": 0
+    },
+    {
+      "affiliation": "black_market",
+      "totalInDecks": 9,
+      "avgConflicts": 0
+    },
+    {
+      "affiliation": "southside_saints",
+      "totalInDecks": 9,
+      "avgConflicts": 0
+    },
+    {
+      "affiliation": "freelance",
+      "totalInDecks": 10,
+      "avgConflicts": 0
+    },
+    {
+      "affiliation": "los_diablos",
+      "totalInDecks": 9,
+      "avgConflicts": 0
+    },
+    {
+      "affiliation": "iron_devils",
+      "totalInDecks": 9,
+      "avgConflicts": 0
+    },
+    {
+      "affiliation": "neon_snakes",
+      "totalInDecks": 9,
+      "avgConflicts": 0
+    },
+    {
+      "affiliation": "dead_rabbits",
+      "totalInDecks": 9,
+      "avgConflicts": 0
+    },
+    {
+      "affiliation": "cobalt_syndicate",
+      "totalInDecks": 9,
+      "avgConflicts": 0
+    }
+  ],
+  "tierDistribution": {
+    "1": {
+      "avgAtk": 1,
+      "avgDef": 1
+    },
+    "2": {
+      "avgAtk": 2,
+      "avgDef": 2
+    },
+    "3": {
+      "avgAtk": 3,
+      "avgDef": 3
+    },
+    "4": {
+      "avgAtk": 4,
+      "avgDef": 4
+    },
+    "5": {
+      "avgAtk": 5,
+      "avgDef": 5
+    },
+    "6": {
+      "avgAtk": 6,
+      "avgDef": 6
+    },
+    "7": {
+      "avgAtk": 7,
+      "avgDef": 7
+    },
+    "8": {
+      "avgAtk": 8,
+      "avgDef": 8
+    },
+    "9": {
+      "avgAtk": 9,
+      "avgDef": 9
+    }
+  },
+  "issues": [
+    "Pass rate 30.6% exceeds 20% threshold",
+    "First mover advantage 39.6%"
+  ],
+  "recommendations": [
+    "Lower high-tier card ATK or increase die penalty",
+    "Adjust second player bonus"
+  ]
+}

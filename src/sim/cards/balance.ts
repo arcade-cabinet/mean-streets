@@ -105,8 +105,7 @@ export function runCardBalance(
     totalOverdraw += m.overdrawPenalties;
     totalShieldSaves += m.shieldSaves;
     totalNightShifts += m.nightShifts;
-    totalConflicts += result.deckA.conflicts + result.deckB.conflicts;
-    totalSynergies += result.deckA.synergies + result.deckB.synergies;
+    // Deck conflict/synergy tracking removed — random decks now
   }
 
   allTurns.sort((a, b) => a - b);
@@ -132,14 +131,14 @@ export function runCardBalance(
     avgOverdraw: +(totalOverdraw / n).toFixed(2),
     avgShieldSaves: +(totalShieldSaves / n).toFixed(2),
     avgNightShifts: +(totalNightShifts / n).toFixed(1),
-    avgDeckConflicts: +(totalConflicts / (n * 2)).toFixed(2),
-    avgDeckSynergies: +(totalSynergies / (n * 2)).toFixed(2),
+    avgDeckConflicts: 0,
+    avgDeckSynergies: 0,
   };
 
   // Analyze pool stats by archetype and tier
   const archetypes = analyzeArchetypes(pool);
   const affiliations = analyzeAffiliations(pool);
-  const tierDist = analyzeTiers(pool);
+  const tierDist = analyzePowerDistribution(pool);
 
   // Generate issues and recommendations
   const issues: string[] = [];
@@ -193,9 +192,9 @@ function analyzeArchetypes(pool: CharacterCard[]): ArchetypeReport[] {
   return Object.entries(byArch).map(([arch, cards]) => ({
     archetype: arch,
     totalPlayed: cards.length,
-    avgWinContribution: 0, // would need per-card tracking
-    avgAtk: +(cards.reduce((s, c) => s + c.dayAtk, 0) / cards.length).toFixed(1),
-    avgDef: +(cards.reduce((s, c) => s + c.dayDef, 0) / cards.length).toFixed(1),
+    avgWinContribution: 0,
+    avgAtk: +(cards.reduce((s, c) => s + c.power, 0) / cards.length).toFixed(1),
+    avgDef: +(cards.reduce((s, c) => s + c.power, 0) / cards.length).toFixed(1),
   }));
 }
 
@@ -213,16 +212,17 @@ function analyzeAffiliations(pool: CharacterCard[]): AffiliationReport[] {
   }));
 }
 
-function analyzeTiers(
+function analyzePowerDistribution(
   pool: CharacterCard[],
 ): Record<number, { avgAtk: number; avgDef: number }> {
+  // Group by power level ranges instead of tiers
   const result: Record<number, { avgAtk: number; avgDef: number }> = {};
-  for (let t = 1; t <= 5; t++) {
-    const cards = pool.filter(c => c.tier === t);
+  for (let p = 1; p <= 12; p++) {
+    const cards = pool.filter(c => c.power === p);
     if (cards.length === 0) continue;
-    result[t] = {
-      avgAtk: +(cards.reduce((s, c) => s + c.dayAtk, 0) / cards.length).toFixed(1),
-      avgDef: +(cards.reduce((s, c) => s + c.dayDef, 0) / cards.length).toFixed(1),
+    result[p] = {
+      avgAtk: p,
+      avgDef: p, // single stat — power = atk = def
     };
   }
   return result;
