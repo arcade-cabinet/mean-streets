@@ -1,0 +1,29 @@
+{
+  "weapons": [
+    { "id": "eye-gouger",     "name": "Eye Gouger",      "effect": "blind",   "desc": "Target can't counterattack for 1 turn", "bonus": 1 },
+    { "id": "brass-knuckles", "name": "Brass Knuckles",  "effect": "damage",  "desc": "+2 power on direct attacks", "bonus": 2 },
+    { "id": "switchblade",    "name": "Switchblade",      "effect": "damage",  "desc": "+1 power, ignores precision rule", "bonus": 1 },
+    { "id": "zip-gun",        "name": "Zip Gun",          "effect": "range",   "desc": "Can attack any active position, not just adjacent", "bonus": 1 },
+    { "id": "crowbar",        "name": "Crowbar",          "effect": "damage",  "desc": "+3 power on direct attacks", "bonus": 3 },
+    { "id": "chain-whip",     "name": "Chain Whip",       "effect": "splash",  "desc": "Direct attack also hits adjacent position for 1 damage", "bonus": 0 },
+    { "id": "shiv",           "name": "Prison Shiv",      "effect": "damage",  "desc": "+1 power, attack from reserve", "bonus": 1 },
+    { "id": "molotov",        "name": "Molotov",          "effect": "area",    "desc": "Destroy all product on target position", "bonus": 0 },
+    { "id": "taser",          "name": "Taser",            "effect": "stun",    "desc": "Target crew skips next turn", "bonus": 0 },
+    { "id": "pipe-bomb",      "name": "Pipe Bomb",        "effect": "area",    "desc": "Deals 3 damage to target and both adjacent positions", "bonus": 3 },
+    { "id": "garrote",        "name": "Garrote",          "effect": "stealth", "desc": "Kill without triggering opponent's counterattack abilities", "bonus": 2 },
+    { "id": "sawed-off",      "name": "Sawed-Off",        "effect": "damage",  "desc": "+4 power but weapon is destroyed after use", "bonus": 4 },
+    { "id": "body-armor",     "name": "Body Armor",       "effect": "defense", "desc": "Crew survives first lethal hit with 1 HP", "bonus": 0 },
+    { "id": "radio",          "name": "Radio Scanner",    "effect": "intel",   "desc": "Reveal all opponent reserve positions", "bonus": 0 },
+    { "id": "lockpick",       "name": "Lockpick Set",     "effect": "theft",   "desc": "Steal weapon from adjacent enemy position", "bonus": 0 },
+    { "id": "bat",            "name": "Baseball Bat",     "effect": "damage",  "desc": "+2 power, destroy target's weapon on hit", "bonus": 2 },
+    { "id": "caltrops",       "name": "Caltrops",         "effect": "trap",    "desc": "Enemy crew moving to this position takes 2 damage", "bonus": 0 },
+    { "id": "scope",          "name": "Rifle Scope",      "effect": "range",   "desc": "Can attack opponent's reserve positions", "bonus": 1 },
+    { "id": "smoke-grenade",  "name": "Smoke Grenade",    "effect": "defense", "desc": "This position can't be targeted for 1 turn", "bonus": 0 },
+    { "id": "wire-cutter",    "name": "Wire Cutters",     "effect": "breach",  "desc": "Remove all cash from target position (seize the funds)", "bonus": 0 },
+    { "id": "knuckle-duster", "name": "Knuckle Duster",   "effect": "damage",  "desc": "+1 power, successful kill draws another weapon", "bonus": 1 },
+    { "id": "machete",        "name": "Machete",          "effect": "damage",  "desc": "+2 power, intimidate: adjacent enemies lose 1 power", "bonus": 2 },
+    { "id": "suppressor",     "name": "Suppressor",       "effect": "stealth", "desc": "Attack doesn't alert opponent (no counter next turn)", "bonus": 0 },
+    { "id": "flask",          "name": "Hip Flask",        "effect": "heal",    "desc": "Restore crew to full power once", "bonus": 0 },
+    { "id": "badge",          "name": "Fake Badge",       "effect": "flip",    "desc": "Funded attack flip threshold reduced by 2", "bonus": 0 }
+  ]
+}
