@@ -16,55 +16,75 @@ export interface CrewCard {
   power: number;       // center top — attack strength
   resistance: number;  // center bottom — damage absorption
   abilityText: string;
+  unlocked: boolean;
+  unlockCondition?: string;
+  locked: boolean;
 }
 
 export interface ProductCard {
   type: 'product';
   id: string;
   name: string;
-  effect: string;
-  effectDesc: string;
-  potency: number; // 1-5, multiplier for pushed attacks
+  category: string;
+  potency: number;
+  offenseAbility: string;
+  offenseAbilityText: string;
+  defenseAbility: string;
+  defenseAbilityText: string;
+  unlocked: boolean;
+  unlockCondition?: string;
+  locked: boolean;
 }
 
 export interface CashCard {
   type: 'cash';
   id: string;
-  denomination: number; // 1, 5, 10, 20, 100, 500, 1000
+  denomination: 100 | 1000;
 }
 
 export interface WeaponCard {
   type: 'weapon';
   id: string;
   name: string;
-  effect: string;
-  effectDesc: string;
-  bonus: number; // +damage or modifier
+  category: string;
+  bonus: number;
+  offenseAbility: string;
+  offenseAbilityText: string;
+  defenseAbility: string;
+  defenseAbilityText: string;
+  unlocked: boolean;
+  unlockCondition?: string;
+  locked: boolean;
 }
 
 export type GameCard = CrewCard | ProductCard | CashCard | WeaponCard;
 
 // ── Board State ──────────────────────────────────────────────
 
-/** A single street position — can be empty, yours, or seized. */
+/**
+ * A single street position with 6 quarter-card slots around the crew card.
+ *
+ * Layout:
+ *   [DRUG]  [PWR]  [WEAP]    ← top row: offensive modifiers
+ *   [CASH]   👊    [CASH]    ← center: gang symbol + currency
+ *   [DRUG]  [RES]  [WEAP]    ← bottom row: defensive modifiers
+ */
 export interface Position {
-  /** The crew card occupying this position (null = empty). */
   crew: CrewCard | null;
-  /** Cash stacked on this crew for funded/pushed attacks. */
-  cash: CashCard | null;
-  /** Top-left slot: drug in offensive position (buffs attacks). */
-  drugOffense: ProductCard | null;
-  /** Bottom-left slot: drug in defensive position (buffs when attacked). */
-  drugDefense: ProductCard | null;
-  /** Top-right slot: weapon in offensive position (bonus on attack). */
-  weaponOffense: WeaponCard | null;
-  /** Bottom-right slot: weapon in defensive position (bonus on defense). */
-  weaponDefense: WeaponCard | null;
-  /** Who controls this position. */
+  /** Top-left: drug offense (buffs attacks outward). */
+  drugTop: ProductCard | null;
+  /** Bottom-left: drug defense (buffs when attacked). */
+  drugBottom: ProductCard | null;
+  /** Top-right: weapon offense (bonus when attacking). */
+  weaponTop: WeaponCard | null;
+  /** Bottom-right: weapon defense (bonus when defending). */
+  weaponBottom: WeaponCard | null;
+  /** Center-left: cash offense (funds attacks, bribes, pushed ops). */
+  cashLeft: CashCard | null;
+  /** Center-right: cash defense (protects against flips/recruitment). */
+  cashRight: CashCard | null;
   owner: 'A' | 'B';
-  /** Is this position seized by the opponent? */
   seized: boolean;
-  /** Turns since crew was placed. 0 = just placed, can't act yet. */
   turnsActive: number;
 }
 
@@ -89,20 +109,21 @@ export interface AttackOutcome {
 
 // ── Player State ─────────────────────────────────────────────
 
+/** A quarter-size modifier card — weapon, drug, or cash. */
+export type ModifierCard = ProductCard | CashCard | WeaponCard;
+
 export interface PlayerState {
   board: PlayerBoard;
+  /** Full-size crew draw pile. */
   crewDraw: CrewCard[];
-  productDraw: ProductCard[];
-  cashDraw: CashCard[];
-  weaponDraw: WeaponCard[];
+  /** Quarter-size modifier draw pile (mixed weapons, drugs, cash). */
+  modifierDraw: ModifierCard[];
   hand: {
     crew: CrewCard[];
-    product: ProductCard[];
-    cash: CashCard[];
-    weapon: WeaponCard[];
+    modifiers: ModifierCard[];
   };
   discard: GameCard[];
-  positionsSeized: number; // how many of opponent's positions you hold
+  positionsSeized: number;
 }
 
 // ── Game State ───────────────────────────────────────────────
