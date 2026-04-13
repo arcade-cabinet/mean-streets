@@ -32,7 +32,7 @@ function emptyMetrics(): TurfMetrics {
     turns: 0, directAttacks: 0, fundedAttacks: 0, pushedAttacks: 0,
     kills: 0, flips: 0, seizures: 0, busts: 0, weaponsDrawn: 0,
     productPlayed: 0, cashPlayed: 0, crewPlaced: 0,
-    positionsReclaimed: 0, dieRolls: 0, passes: 0,
+    positionsReclaimed: 0, passes: 0,
     buildupRoundsA: 0, buildupRoundsB: 0, combatRounds: 0,
     totalActions: 0, firstStrike: null,
   };
@@ -277,10 +277,9 @@ function tryAction(state: TurfGameState, side: 'A' | 'B', action: string): boole
       const targetIdx = opp.board.active.findIndex(pos => pos.crew !== null);
       if (targetIdx < 0) return false;
       m.pushedAttacks++;
-      m.dieRolls++;
       const outcome = resolvePushedAttack(
         p.board.active[ready[0]], opp.board.active[targetIdx],
-        opp.board.active, state.config, state.rng,
+        opp.board.active, state.config,
       );
       handleOutcome(state, side, outcome, opp, targetIdx);
       return true;
@@ -292,10 +291,9 @@ function tryAction(state: TurfGameState, side: 'A' | 'B', action: string): boole
       const targetIdx = opp.board.active.findIndex(pos => pos.crew !== null);
       if (targetIdx < 0) return false;
       m.fundedAttacks++;
-      m.dieRolls++;
       const outcome = resolveFundedAttack(
         p.board.active[ready[0]], opp.board.active[targetIdx],
-        state.config, state.rng,
+        state.config,
       );
       handleOutcome(state, side, outcome, opp, targetIdx);
       return true;

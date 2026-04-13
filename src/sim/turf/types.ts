@@ -106,14 +106,12 @@ export interface TurfGameConfig {
   positionCount: number;        // 5
   reserveCount: number;         // 5
   maxRounds: number;            // safety cap
-  dieSize: number;              // 6
   precisionMult: number;        // 3.0
   crewDrawPerTurn: number;      // 1
   cashPerTurn: number;          // 1
   productPerPositions: number;  // draw 1 product per N positions held
   weaponOnKill: boolean;        // draw weapon on kill
   weaponOnSeize: boolean;       // draw weapon on seize
-  flipThreshold: number;        // die roll needed to flip (1-6 on d6)
   /** Max buildup rounds before combat starts automatically. */
   maxBuildupRounds: number;
   /** Actions per player per combat round. */
@@ -124,14 +122,12 @@ export const DEFAULT_TURF_CONFIG: TurfGameConfig = {
   positionCount: 5,
   reserveCount: 5,
   maxRounds: 100,
-  dieSize: 0,
   precisionMult: 3.0,
   crewDrawPerTurn: 1,
   cashPerTurn: 1,
   productPerPositions: 2,
   weaponOnKill: true,
   weaponOnSeize: true,
-  flipThreshold: 4,
   maxBuildupRounds: 10,
   actionsPerRound: 5,
 };
@@ -173,7 +169,6 @@ export interface TurfMetrics {
   cashPlayed: number;
   crewPlaced: number;
   positionsReclaimed: number;
-  dieRolls: number;
   passes: number;
   buildupRoundsA: number;
   buildupRoundsB: number;
