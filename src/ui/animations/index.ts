@@ -7,3 +7,4 @@ export {
   animateSeize,
   animateOutcome,
 } from './attackAnims';
+export { animateVictory, animateDefeat } from './endgameAnims';
