@@ -4,7 +4,7 @@ on:
   pull_request:
 
 jobs:
-  ci:
+  core:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -12,19 +12,52 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          cache: pnpm
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Type check
-        run: npx tsc --noEmit
+        run: pnpm exec tsc --noEmit
 
       - name: Lint
-        run: npx eslint .
+        run: pnpm run lint
 
       - name: Test
-        run: npx vitest run
+        run: pnpm run test:node
+
+      - name: DOM tests
+        run: pnpm run test:dom
 
       - name: Build
-        run: npx vite build
+        run: pnpm run build
+
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Browser tests
+        run: pnpm run test:browser
+
+      - name: E2E tests
+        run: pnpm run test:e2e

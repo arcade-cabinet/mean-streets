@@ -1,0 +1,59 @@
+{
+  "stateThresholds": {
+    "desperateDesperation": 0.6,
+    "aggressiveAggression": 0.6,
+    "aggressivePatienceMax": 0.4,
+    "buildingAggressionMax": 0.4,
+    "buildingPatienceMin": 0.5,
+    "defensivePatienceMin": 0.6,
+    "defensiveAggressionMax": 0.6,
+    "buildingTurnCap": 8
+  },
+  "strikeThresholds": {
+    "aggressionMin": 0.6,
+    "patienceMax": 0.3,
+    "desperationMin": 0.5,
+    "fundedReadyBuildupRounds": 3,
+    "forcedStrikeRounds": 8
+  },
+  "goalBias": {
+    "reclaim": 1.1,
+    "pushed_attack": 1.15,
+    "funded_attack": 1.05,
+    "direct_attack": 1.0,
+    "build_board": 0.95
+  },
+  "tacticalWeights": {
+    "attack": {
+      "killMargin": 1.2,
+      "seizeBonus": 3.5,
+      "flipBonus": 2.8,
+      "splashBonus": 0.9,
+      "cashEfficiency": 0.003,
+      "retaliationRisk": 0.45,
+      "lowResistanceBonus": 0.35
+    },
+    "placement": {
+      "offenseReady": 1.1,
+      "defenseReady": 1.0,
+      "cashDefenseMultiplier": 0.002,
+      "cashOffenseMultiplier": 0.002,
+      "seizedPenalty": 3,
+      "emptyModifierBonus": 0.4
+    }
+  },
+  "policyWeights": {
+    "minActionVisits": 2,
+    "minPreferredVisits": 4,
+    "confidenceSaturation": 6,
+    "valueMultiplier": 2.4,
+    "preferredBonus": 1
+  },
+  "goalFallbacks": {
+    "reclaim": ["reclaim", "arm_weapon", "place_crew", "stack_cash", "stack_product", "direct_attack", "funded_attack"],
+    "pushed_attack": ["pushed_attack", "funded_attack", "direct_attack", "reclaim", "arm_weapon", "place_crew", "stack_product", "stack_cash"],
+    "funded_attack": ["funded_attack", "direct_attack", "pushed_attack", "reclaim", "stack_cash", "arm_weapon", "place_crew", "stack_product"],
+    "direct_attack": ["direct_attack", "funded_attack", "pushed_attack", "reclaim", "arm_weapon", "place_crew", "stack_product", "stack_cash"],
+    "build_board": ["place_crew", "arm_weapon", "stack_product", "stack_cash", "reclaim", "direct_attack"]
+  }
+}

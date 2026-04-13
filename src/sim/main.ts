@@ -2,11 +2,11 @@
  * Mean Streets — Simulation CLI entry point.
  *
  * Usage:
- *   npm run sim                           # Run balance matrix
- *   npm run sim -- --autobalance          # Auto-generate and balance decks
- *   npm run sim -- --games 5000           # Custom game count
- *   npm run sim -- --iterations 15        # Max balance iterations
- *   npm run sim -- --gangs KNUCKLES,CHAINS # Specific gangs only
+ *   pnpm run sim                            # Run balance matrix
+ *   pnpm run sim -- --autobalance           # Auto-generate and balance decks
+ *   pnpm run sim -- --games 5000            # Custom game count
+ *   pnpm run sim -- --iterations 15         # Max balance iterations
+ *   pnpm run sim -- --gangs KNUCKLES,CHAINS # Specific gangs only
  */
 
 import { runBalanceMatrix } from './balance/matrix';

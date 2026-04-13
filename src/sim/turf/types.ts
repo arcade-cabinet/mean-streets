@@ -160,6 +160,101 @@ export const DEFAULT_TURF_CONFIG: TurfGameConfig = {
 
 export type GamePhase = 'buildup' | 'combat';
 
+export type TurfActionKind =
+  | 'reclaim'
+  | 'place_crew'
+  | 'arm_weapon'
+  | 'stack_product'
+  | 'stack_cash'
+  | 'direct_attack'
+  | 'funded_attack'
+  | 'pushed_attack'
+  | 'pass';
+
+export interface TurfAction {
+  kind: TurfActionKind;
+  side: 'A' | 'B';
+  attackerIdx?: number;
+  targetIdx?: number;
+  positionIdx?: number;
+  slot?: 'offense' | 'defense';
+  crewCardId?: string;
+  modifierCardId?: string;
+  cashCardId?: string;
+}
+
+export interface TurfObservation {
+  phase: GamePhase;
+  side: 'A' | 'B';
+  turnNumber: number;
+  ownCrewCount: number;
+  opponentCrewCount: number;
+  ownSeized: number;
+  opponentSeized: number;
+  ownReadyDirect: number;
+  ownReadyFunded: number;
+  ownReadyPushed: number;
+  handCrew: number;
+  handWeapons: number;
+  handProducts: number;
+  handCash: number;
+  ownPower: number;
+  ownDefense: number;
+  opponentPower: number;
+  opponentDefense: number;
+  stateKey: string;
+}
+
+export interface PlannerMemory {
+  lastGoal: string | null;
+  lastActionKind: TurfActionKind | null;
+  consecutivePasses: number;
+  failedPlans: number;
+  blockedLanes: Record<number, number>;
+  pressuredLanes: Record<number, number>;
+  laneRoles: Record<number, 'funded' | 'pushed'>;
+  focusLane: number | null;
+  focusRole: 'funded' | 'pushed' | null;
+}
+
+export interface PlannerTrace {
+  side: 'A' | 'B';
+  phase: GamePhase;
+  chosenGoal: string;
+  previousGoal: string | null;
+  switchedGoal: boolean;
+  stateKey: string;
+  legalActionCount: number;
+  chosenAction: TurfAction;
+  consideredGoals: Array<{ goal: string; score: number }>;
+  actionScores: Array<{ action: string; score: number }>;
+  policyUsed: boolean;
+  replanReason: string;
+}
+
+export interface PolicySample {
+  side: 'A' | 'B';
+  stateKey: string;
+  actionKey: string;
+  goal: string;
+  reward: number;
+}
+
+export interface TurfPolicyEntry {
+  stateKey: string;
+  bestActionKey: string;
+  value: number;
+  visits: number;
+  actions: Record<string, { value: number; visits: number }>;
+}
+
+export interface TurfPolicyArtifact {
+  version: 1;
+  generatedAt: string;
+  configVersion: string;
+  entries: Record<string, TurfPolicyEntry>;
+}
+
 export interface TurfGameState {
   config: TurfGameConfig;
   players: { A: PlayerState; B: PlayerState };
@@ -174,6 +269,9 @@ export interface TurfGameState {
   /** AI behavior state per player. */
   aiState: { A: string; B: string };
   aiTurnsInState: { A: number; B: number };
+  aiMemory: { A: PlannerMemory; B: PlannerMemory };
+  plannerTrace: PlannerTrace[];
+  policySamples: PolicySample[];
   rng: Rng;
   seed: number;
   winner: 'A' | 'B' | null;
@@ -196,11 +294,29 @@ export interface TurfMetrics {
   crewPlaced: number;
   positionsReclaimed: number;
   passes: number;
+  goalSwitches: number;
+  failedPlans: number;
+  stallTurns: number;
+  deadHandTurns: number;
+  laneConversions: number;
+  offensePlacements: number;
+  defensePlacements: number;
+  policyGuidedActions: number;
   buildupRoundsA: number;
   buildupRoundsB: number;
   combatRounds: number;
   totalActions: number;
   firstStrike: 'A' | 'B' | null;
+}
+
+export interface DeckTemplate {
+  crew: CrewCard[];
+  modifiers: ModifierCard[];
+}
+
+export interface DeckSnapshot {
+  crewIds: string[];
+  modifierIds: string[];
 }
 
 export interface TurfGameResult {
@@ -210,8 +326,14 @@ export interface TurfGameResult {
   turnCount: number;
   metrics: TurfMetrics;
   seed: number;
+  plannerTrace: PlannerTrace[];
+  policySamples?: PolicySample[];
   finalState: {
     seizedA: number; // positions seized on A's side by B
     seizedB: number; // positions seized on B's side by A
+  };
+  decks: {
+    A: DeckSnapshot;
+    B: DeckSnapshot;
   };
 }

@@ -20,8 +20,11 @@ domain: technical
 │              Game Engine (src/sim/turf/)          │
 │  Board, Attacks, Game Loop, Generators           │
 ├─────────────────────────────────────────────────┤
+│            Simulation Analysis (dev-only)        │
+│  Benchmarks, Sweeps, Effects, Locking, Reports   │
+├─────────────────────────────────────────────────┤
 │              Yuka.js AI                          │
-│  FuzzyModule → StateMachine → Action Priorities  │
+│  FuzzyModule → Think/Goals → Policy Learning     │
 ├─────────────────────────────────────────────────┤
 │           JSON Data (src/data/)                  │
 │  Card pools validated by Zod schemas             │
@@ -40,12 +43,19 @@ src/
       game.ts                   # Game loop: buildup + combat phases
       generators.ts             # Product/cash/weapon card generators
       ai-fuzzy.ts               # Yuka FuzzyModule (4 inputs → 3 outputs)
-      ai-states.ts              # State machine (BUILDING/AGGRESSIVE/DEFENSIVE/DESPERATE)
+      ai/                       # Active planner/policy package
       run.ts                    # CLI: npx tsx src/sim/turf/run.ts --games N
+    analysis/                   # Dev-only balance/statistics tooling
+      benchmarks.ts             # Seeded benchmark profiles + summaries
+      sweeps.ts                 # Deterministic forced-inclusion sweeps
+      effects.ts                # Welch/bootstrap effect estimation
+      locking.ts                # Lock lifecycle + recommendations
+      reports.ts                # JSON artifact writers
+      cli.ts                    # analysis:benchmark/sweep/lock entrypoint
     cards/                      # Card generation
       generator.ts              # 100-card crew generator from name pools
       schemas.ts                # Zod schemas for crew/archetype/affiliation
-      rng.ts                    # Seeded Mulberry32 PRNG
+      rng.ts                    # Seedrandom-backed deterministic PRNG
     engine/                     # Legacy gang-deck engine (deprecated)
     ai/                         # Legacy Yuka brain (deprecated, replaced by turf/ai-*)
     balance/                    # Legacy balance runner (deprecated)
@@ -57,11 +67,16 @@ src/
       weapon-categories.json    # 5 categories with abilities, bonusMod, name pools
       drug-categories.json      # 5 categories with abilities, potencyMod, name pools
     cards.json                  # Generated 100-card crew pool
-  components/                   # React UI (TODO)
+  platform/                     # Capacitor shell, device/layout services, SQLite persistence
+    AppShell.tsx                # Device/layout provider + safe-area shell
+    device.ts                   # Capacitor-backed device profile detection
+    layout.ts                   # Viewport/orientation/posture classification
+    persistence/                # Capacitor SQLite repositories
+  ui/                           # Production React UI
 docs/
-  plans/port-to-production.prq.md  # PRD with full task breakdown
   DESIGN.md                     # Game design document
   ARCHITECTURE.md               # This file
+  PRODUCTION.md                 # Release checklist and mobile/store criteria
 sim/
   engine.mjs                    # Original monolithic sim (deprecated)
   reports/                      # JSON balance reports from simulation runs
@@ -81,11 +96,11 @@ JSON pools (names, archetypes, affiliations, weapon-categories, drug-categories)
 ### Game Simulation
 ```
 Card pools
-  → Shared deck template (both players get identical cards)
+  → Independent deck templates (seeded PRNG)
   → Shuffle independently per player (seeded PRNG)
   → Deal initial hands (3 crew, modifiers)
   → Buildup phase (place, stack, fuzzy strike-timing)
-  → Combat phase (5 actions/round, state machine priorities)
+  → Combat phase (5 actions/round, Yuka goal arbitration + policy guidance)
   → Win check (5 positions seized)
   → Metrics collection → JSON report
 ```
@@ -96,10 +111,42 @@ Board state
   → Fuzzy inputs (crewStrength, threatLevel, resourceLevel, danger)
   → Yuka FuzzyModule defuzzification
   → aggression, patience, desperation (0-1)
-  → resolveState() → BUILDING | AGGRESSIVE | DEFENSIVE | DESPERATE
-  → getStatePriorities() → ordered action list
-  → tryAction() for each priority until one succeeds
+  → Goal evaluators (recover, finish, funded pressure, lane pressure, defense)
+  → Scored legal actions + policy artifact lookup
+  → Chosen action + planner trace
 ```
+
+### Analysis Pipeline
+```
+Seeded benchmark run
+  → Fixed seed + catalog seed + warmup policy training
+  → Deterministic benchmark summary
+  → Forced-inclusion sweeps across curated combinations
+  → Welch/bootstrap effect estimation
+  → Lock recommendation lifecycle
+  → JSON analysis artifacts + release gate
+```
+
+## Production Matrix
+
+| Surface | Status | Notes |
+|---------|--------|-------|
+| Turf rules engine (`src/sim/turf`) | Active production engine | Shared by runtime, sim, and analysis |
+| Legacy engine (`src/sim/engine`) | Deprecated | Excluded from release guarantees |
+| Dev balancing (`src/sim/analysis`) | Active | Release authority for locking and thresholds |
+| Web shell | Active dev/test target | Primary iteration surface, not the only release target |
+| Capacitor app shell | Active production target | Android and iOS projects are first-class |
+| Persistence | Active production target | Capacitor SQLite on native and web OPFS path |
+| Responsive layout system | Active production target | Device/posture-aware, not scale-only CSS |
+| LocalStorage persistence | Removed from product path | Test cleanup only, not a runtime backend |
+
+## Release Ownership
+
+- `src/sim/turf/`: deterministic rules, AI legality, replay safety
+- `src/sim/analysis/`: card locking, seeded benchmarks, release-gate metrics
+- `src/platform/`: device shell, safe areas, SQLite persistence, native parity
+- `src/ui/`: responsive presentation, accessibility, and POC-faithful visual system
+- `.github/workflows/`: build/test/release lanes for web and mobile readiness
 
 ## Key Design Decisions
 
@@ -107,7 +154,7 @@ Board state
 Each card is an entity with traits (Power, Resistance, Archetype, Affiliation). Relations model ownership (HeldBy, OwnedBy). Systems are pure functions testable without React. React hooks (useTrait, useQuery) provide precise re-rendering.
 
 ### Why Yuka.js?
-Fuzzy logic produces continuous-valued decisions (not binary if/else). The state machine creates distinct AI "personalities" during different game phases. Both systems are lightweight (~7KB for the goal module alone).
+Fuzzy logic produces continuous-valued context. Yuka goal arbitration and planner memory then turn that context into explainable tactical choices. Offline policy learning and Monte Carlo analysis reuse the same deterministic engine.
 
 ### Why Deterministic (No Dice)?
 Fixed action budgets (5/round) + stacking modifiers provide enough depth. Randomness from draw order only. Player agency over outcomes. Dice were removed after simulation proved balance holds without them.
@@ -123,6 +170,12 @@ npx tsx src/sim/turf/run.ts --games 10000
 ```
 
 Reports saved to `sim/reports/turf/` as JSON with metrics: win rate, stall rate, pass rate, actions per game, card type usage, seizures, flips, kills, etc.
+
+Dev-only analysis artifacts are saved to `sim/reports/analysis/` and include:
+- benchmark summaries
+- sweep outputs
+- per-card effect estimates
+- lock recommendations
 
 Seeds are tracked — any interesting game can be replayed exactly:
 ```bash

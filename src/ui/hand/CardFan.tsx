@@ -15,6 +15,7 @@ interface FanItem {
 interface CardFanProps {
   cards: FanItem[];
   renderCard: (card: unknown, index: number) => ReactNode;
+  presentation?: 'fan' | 'stack';
 }
 
 /** Maps a card position to a slight rotation in degrees (-3 to +3). */
@@ -24,13 +25,13 @@ function fanRotation(i: number, total: number): number {
   return ((i - mid) / mid) * 3;
 }
 
-export function CardFan({ cards, renderCard }: CardFanProps) {
+export function CardFan({ cards, renderCard, presentation = 'fan' }: CardFanProps) {
   const [hovered, setHovered] = useState<number | null>(null);
 
   return (
-    <div className="flex items-end px-2" style={{ minHeight: '96px' }}>
+    <div className={`flex px-2 ${presentation === 'fan' ? 'items-end' : 'items-stretch overflow-x-auto'}`} style={{ minHeight: '96px' }}>
       {cards.map((item, i) => {
-        const rotation = fanRotation(i, cards.length);
+        const rotation = presentation === 'fan' ? fanRotation(i, cards.length) : 0;
         const isHovered = hovered === i;
 
         return (
@@ -41,7 +42,7 @@ export function CardFan({ cards, renderCard }: CardFanProps) {
               transform: isHovered
                 ? `rotate(${rotation}deg) translateY(-8px) scale(1.05)`
                 : `rotate(${rotation}deg)`,
-              marginLeft: i === 0 ? 0 : '-8px',
+              marginLeft: i === 0 ? 0 : presentation === 'fan' ? '-8px' : '6px',
               zIndex: isHovered ? 50 : i,
               position: 'relative',
             }}

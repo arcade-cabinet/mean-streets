@@ -1,17 +1,14 @@
-import { useEffect, useRef } from 'react';
+import { useCallback } from 'react';
 
 interface ActionLogProps {
   entries: string[];
 }
 
 export function ActionLog({ entries }: ActionLogProps) {
-  const bottomRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [entries]);
-
   const visible = entries.slice(-5);
+  const scrollAnchorRef = useCallback((node: HTMLDivElement | null) => {
+    node?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
 
   return (
     <div
@@ -27,7 +24,7 @@ export function ActionLog({ entries }: ActionLogProps) {
           </p>
         ))
       )}
-      <div ref={bottomRef} />
+      <div key={visible.length} ref={scrollAnchorRef} />
     </div>
   );
 }

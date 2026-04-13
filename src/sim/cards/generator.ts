@@ -7,17 +7,10 @@ import namesPool from '../../data/pools/names.json';
 import archetypesPool from '../../data/pools/archetypes.json';
 import affiliationsPool from '../../data/pools/affiliations.json';
 import { CharacterCardSchema, type CharacterCard } from './schemas';
+import { createRng, type Rng } from './rng';
 
-function createRng(seed: number) {
-  let s = seed;
-  return () => {
-    s = (s * 1664525 + 1013904223) & 0x7fffffff;
-    return s / 0x7fffffff;
-  };
-}
-
-function pick<T>(arr: T[], rng: () => number): T {
-  return arr[Math.floor(rng() * arr.length)];
+function pick<T>(arr: T[], rng: Rng): T {
+  return arr[Math.floor(rng.next() * arr.length)];
 }
 
 function formatName(first: string, nick?: string, last?: string): string {
@@ -69,7 +62,7 @@ export function generateAllCards(seed = 42, starterCount = 25): CharacterCard[] 
 
   // Shuffle affiliation queue
   for (let i = affQueue.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
+    const j = Math.floor(rng.next() * (i + 1));
     [affQueue[i], affQueue[j]] = [affQueue[j], affQueue[i]];
   }
 
@@ -80,7 +73,7 @@ export function generateAllCards(seed = 42, starterCount = 25): CharacterCard[] 
     let attempts = 0;
     do {
       firstName = pick(allFirst, rng);
-      if (rng() < 0.6) {
+      if (rng.next() < 0.6) {
         nickname = pick(nicknames, rng);
         lastName = pick(allLast, rng);
       } else {
@@ -127,13 +120,13 @@ export function generateAllCards(seed = 42, starterCount = 25): CharacterCard[] 
   return cards;
 }
 
-function unlockCondition(idx: number, rng: () => number): string {
+function unlockCondition(idx: number, rng: Rng): string {
   const conds = [
-    `Win ${Math.floor(rng() * 5 + 3)} games`,
-    `Kill ${Math.floor(rng() * 10 + 5)} vanguards total`,
-    `Win a game in under ${Math.floor(rng() * 5 + 12)} turns`,
+    `Win ${Math.floor(rng.next() * 5 + 3)} games`,
+    `Kill ${Math.floor(rng.next() * 10 + 5)} vanguards total`,
+    `Win a game in under ${Math.floor(rng.next() * 5 + 12)} turns`,
     `Win using only 2 affiliations`,
-    `Trigger ${Math.floor(rng() * 5 + 3)} overdraw penalties`,
+    `Trigger ${Math.floor(rng.next() * 5 + 3)} overdraw penalties`,
     `Win without using reserves`,
     `Win with a deck containing 3+ affiliations`,
     `Win without sacrificing any cards`,

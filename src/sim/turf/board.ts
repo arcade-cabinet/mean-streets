@@ -7,6 +7,10 @@ import type {
   CashCard, WeaponCard, ModifierCard,
 } from './types';
 
+function isActionReady(pos: Position): boolean {
+  return !!pos.crew && (pos.turnsActive >= 1 || pos.drugTop?.category === 'stimulant');
+}
+
 export function emptyPosition(owner: 'A' | 'B'): Position {
   return {
     crew: null,
@@ -145,21 +149,21 @@ export function seizePosition(pos: Position) {
 /** Crew + offensive cash + offensive drug = push ready. */
 export function findPushReady(board: PlayerBoard): number[] {
   return board.active
-    .map((p, i) => (p.crew && p.drugTop && p.cashLeft && p.turnsActive >= 1) ? i : -1)
+    .map((p, i) => (isActionReady(p) && p.drugTop && p.cashLeft) ? i : -1)
     .filter(i => i >= 0);
 }
 
 /** Crew + offensive cash (no drug) = funded attack ready. */
 export function findFundedReady(board: PlayerBoard): number[] {
   return board.active
-    .map((p, i) => (p.crew && p.cashLeft && !p.drugTop && p.turnsActive >= 1) ? i : -1)
+    .map((p, i) => (isActionReady(p) && p.cashLeft && !p.drugTop) ? i : -1)
     .filter(i => i >= 0);
 }
 
 /** Crew ready for direct attack. */
 export function findDirectReady(board: PlayerBoard): number[] {
   return board.active
-    .map((p, i) => (p.crew && p.turnsActive >= 1) ? i : -1)
+    .map((p, i) => (isActionReady(p)) ? i : -1)
     .filter(i => i >= 0);
 }
 

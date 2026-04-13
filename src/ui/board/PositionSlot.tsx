@@ -13,7 +13,7 @@ export function PositionSlot({ position, index: _index, isPlayer, faceDown, onCl
   if (faceDown) {
     return (
       <div
-        className="w-36 h-44 rounded-lg border border-stone-700 bg-stone-800 flex items-center justify-center cursor-default shrink-0"
+        className="w-[188px] h-[252px] rounded-[22px] border border-stone-700 bg-stone-800 flex items-center justify-center cursor-default shrink-0"
         aria-label="Hidden opponent card"
       >
         <span className="text-stone-600 text-xs font-mono tracking-widest rotate-180">MEAN STREETS</span>
@@ -24,7 +24,7 @@ export function PositionSlot({ position, index: _index, isPlayer, faceDown, onCl
   if (position.seized) {
     return (
       <div
-        className="relative w-36 h-44 shrink-0 cursor-pointer"
+        className="relative w-[188px] h-[252px] shrink-0 cursor-pointer"
         onClick={onClick}
         role="button"
         tabIndex={0}
@@ -44,7 +44,7 @@ export function PositionSlot({ position, index: _index, isPlayer, faceDown, onCl
   if (!position.crew) {
     return (
       <div
-        className={`w-36 h-44 rounded-lg border-2 border-dashed border-stone-700 flex items-center justify-center bg-stone-900/40 shrink-0 ${onClick ? 'cursor-pointer hover:border-amber-700 hover:bg-stone-800/40 transition-colors' : 'cursor-default'}`}
+        className={`w-[188px] h-[252px] rounded-[22px] border-2 border-dashed border-stone-700 flex items-center justify-center bg-stone-900/40 shrink-0 ${onClick ? 'cursor-pointer hover:border-amber-700 hover:bg-stone-800/40 transition-colors' : 'cursor-default'}`}
         onClick={onClick}
         role={onClick ? 'button' : undefined}
         tabIndex={onClick ? 0 : undefined}

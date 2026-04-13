@@ -22,5 +22,5 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": ["src"],
-  "exclude": ["src/sim"]
+  "exclude": ["src/sim", "src/**/*.test.ts", "src/**/*.test.tsx"]
 }

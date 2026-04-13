@@ -36,6 +36,32 @@ Build Deck (25 crew + 25 modifiers from collection)
     → Earn unlocks, build new decks
 ```
 
+## Production Targets
+
+| Target | Requirement |
+|--------|-------------|
+| Web | Primary development, simulation, and QA surface |
+| Android | Store-ready Capacitor target |
+| iOS | Store-ready Capacitor target |
+| Persistence | Shared SQLite-backed repositories across web and native |
+| Accessibility | Pointer drag/drop plus tap-to-arm/tap-to-place interaction path |
+| Responsive UX | Explicit portrait, landscape, tablet, and fold-aware layout variants |
+
+## Implementation Matrix
+
+| System | Status | Production Expectation |
+|--------|--------|------------------------|
+| Deck flow | Implemented | `Menu -> DeckBuilder -> Buildup -> Combat -> GameOver` |
+| Modifier deck legality | Implemented | 25 modifiers with category minimums enforced |
+| Deterministic sim | Implemented | Seeded draw-order randomness only |
+| Planner/policy AI | Active | Same engine powers runtime and simulation |
+| Visual identity | In progress | Must align fully to `public/poc.html` before release |
+| Category abilities | In progress | Visible rules must be fully resolved or hidden |
+| Archetype abilities | In progress | Visible rules must be fully resolved or hidden |
+| Persistence/profile | In progress | SQLite-backed, no localStorage product path |
+| Unlock progression | In progress | Backed by profile state, not placeholder UI |
+| Native/mobile UX | In progress | Touch-safe, safe-area aware, store-ready |
+
 ## Card Design
 
 ### Crew Card Layout

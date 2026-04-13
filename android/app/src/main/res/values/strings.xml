@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Mean Streets</string>
+    <string name="title_activity_main">Mean Streets</string>
+    <string name="package_name">com.arcadecabinet.meanstreets</string>
+    <string name="custom_url_scheme">com.arcadecabinet.meanstreets</string>
+</resources>

@@ -31,7 +31,7 @@ function cardName(c: AnyCard): string {
   if ('displayName' in c) return c.displayName;
   if ('name' in c) return c.name;
   if ('denomination' in c) return `Cash $${c.denomination}`;
-  return c.id;
+  return 'Unknown card';
 }
 
 function cardUnlocked(c: AnyCard): boolean {
@@ -50,6 +50,13 @@ function cardColor(c: AnyCard): string {
   return 'text-stone-300';
 }
 
+function cardType(c: AnyCard): 'crew' | 'weapon' | 'product' | 'cash' {
+  if ('power' in c) return 'crew';
+  if ('bonus' in c) return 'weapon';
+  if ('potency' in c) return 'product';
+  return 'cash';
+}
+
 export function CollectionGrid({ crewCards, modifiers, selectedIds, onToggle, activeTab, onTabChange }: CollectionGridProps) {
   const allCards: AnyCard[] = [...crewCards, ...modifiers];
   const visible = allCards.filter(c => {
@@ -62,12 +69,13 @@ export function CollectionGrid({ crewCards, modifiers, selectedIds, onToggle, ac
   });
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full" data-testid="collection-grid">
       <div className="flex gap-1 p-2 border-b border-stone-700">
         {TABS.map(tab => (
           <button
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
+            data-testid={`tab-${tab.id}`}
             className={`px-3 py-1 text-xs font-bold rounded uppercase tracking-wider transition-colors
               ${activeTab === tab.id
                 ? 'bg-amber-600 text-stone-900'
@@ -89,6 +97,8 @@ export function CollectionGrid({ crewCards, modifiers, selectedIds, onToggle, ac
               title={!unlocked && hint ? `Locked: ${hint}` : cardName(card)}
               disabled={!unlocked}
               onClick={() => onToggle(card)}
+              data-testid={`collection-card-${card.id}`}
+              data-card-type={cardType(card)}
               className={`text-left p-2 rounded border transition-all
                 ${!unlocked
                   ? 'border-stone-700 bg-stone-900 opacity-40 cursor-not-allowed'

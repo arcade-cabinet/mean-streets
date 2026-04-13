@@ -11,6 +11,7 @@ import { createRng, randomSeed } from '../sim/cards/rng';
 import { generateAllCards } from '../sim/cards/generator';
 import { generateWeapons, generateDrugs, generateCash } from '../sim/turf/generators';
 import { createBoard } from '../sim/turf/board';
+import { emptyMetrics } from '../sim/turf/environment';
 import { GameState, PlayerA, PlayerB, ActionBudget, ScreenTrait } from './traits';
 
 function buildDeck(
@@ -55,6 +56,7 @@ function initPlayerState(
 export function createGameWorld(
   config: TurfGameConfig = DEFAULT_TURF_CONFIG,
   seed?: number,
+  playerDeck?: { crew: CrewCard[]; modifiers: ModifierCard[] },
 ): World {
   const gameSeed = seed ?? randomSeed();
   const rng = createRng(gameSeed);
@@ -75,9 +77,11 @@ export function createGameWorld(
       locked: c.locked,
     }));
 
-  const deck = buildDeck(crewPool, rng);
-  const playerA = initPlayerState('A', config, deck, rng);
-  const playerB = initPlayerState('B', config, deck, rng);
+  const defaultDeck = buildDeck(crewPool, rng);
+  const playerADeck = playerDeck ?? defaultDeck;
+  const playerBDeck = buildDeck(crewPool, rng);
+  const playerA = initPlayerState('A', config, playerADeck, rng);
+  const playerB = initPlayerState('B', config, playerBDeck, rng);
 
   const world = createWorld();
 
@@ -92,18 +96,17 @@ export function createGameWorld(
     hasStruck: { A: false, B: false },
     aiState: { A: 'BUILDING', B: 'BUILDING' },
     aiTurnsInState: { A: 0, B: 0 },
+    aiMemory: {
+      A: { lastGoal: null, lastActionKind: null, consecutivePasses: 0, failedPlans: 0, blockedLanes: {}, pressuredLanes: {}, laneRoles: {}, focusLane: null, focusRole: null },
+      B: { lastGoal: null, lastActionKind: null, consecutivePasses: 0, failedPlans: 0, blockedLanes: {}, pressuredLanes: {}, laneRoles: {}, focusLane: null, focusRole: null },
+    },
+    plannerTrace: [],
+    policySamples: [],
     rng,
     seed: gameSeed,
     winner: null,
     endReason: null,
-    metrics: {
-      turns: 0, directAttacks: 0, fundedAttacks: 0, pushedAttacks: 0,
-      kills: 0, flips: 0, seizures: 0, busts: 0, weaponsDrawn: 0,
-      productPlayed: 0, cashPlayed: 0, crewPlaced: 0,
-      positionsReclaimed: 0, passes: 0,
-      buildupRoundsA: 0, buildupRoundsB: 0, combatRounds: 0,
-      totalActions: 0, firstStrike: null,
-    },
+    metrics: emptyMetrics(),
   };
 
   world.spawn(

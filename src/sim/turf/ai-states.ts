@@ -4,9 +4,8 @@
  * Transitions driven by fuzzy logic evaluation.
  */
 
-// @ts-expect-error — Yuka has no TypeScript declarations
-import { State, StateMachine } from 'yuka';
 import type { FuzzyEval } from './ai-fuzzy';
+import { TURF_AI_CONFIG } from './ai-config';
 
 export type AiState = 'BUILDING' | 'AGGRESSIVE' | 'DEFENSIVE' | 'DESPERATE';
 
@@ -19,21 +18,38 @@ export interface AiContext {
 
 /** Determine which state to be in based on fuzzy outputs. */
 export function resolveState(fuzzy: FuzzyEval, currentState: AiState, turnsInState: number): AiState {
+  const thresholds = TURF_AI_CONFIG.stateThresholds;
+
   // Desperation overrides everything
-  if (fuzzy.desperation > 0.6) return 'DESPERATE';
+  if (fuzzy.desperation > thresholds.desperateDesperation) return 'DESPERATE';
 
   // High aggression + low patience = aggressive
-  if (fuzzy.aggression > 0.6 && fuzzy.patience < 0.4) return 'AGGRESSIVE';
+  if (
+    fuzzy.aggression > thresholds.aggressiveAggression
+    && fuzzy.patience < thresholds.aggressivePatienceMax
+  ) {
+    return 'AGGRESSIVE';
+  }
 
   // Low aggression + high patience = building
-  if (fuzzy.aggression < 0.4 && fuzzy.patience > 0.5) return 'BUILDING';
+  if (
+    fuzzy.aggression < thresholds.buildingAggressionMax
+    && fuzzy.patience > thresholds.buildingPatienceMin
+  ) {
+    return 'BUILDING';
+  }
 
   // High patience + moderate aggression = defensive
-  if (fuzzy.patience > 0.6 && fuzzy.aggression < 0.6) return 'DEFENSIVE';
+  if (
+    fuzzy.patience > thresholds.defensivePatienceMin
+    && fuzzy.aggression < thresholds.defensiveAggressionMax
+  ) {
+    return 'DEFENSIVE';
+  }
 
   // Moderate everything = stay in current state (hysteresis)
   // But if we've been in BUILDING too long, switch to aggressive
-  if (currentState === 'BUILDING' && turnsInState > 8) return 'AGGRESSIVE';
+  if (currentState === 'BUILDING' && turnsInState > thresholds.buildingTurnCap) return 'AGGRESSIVE';
 
   return currentState;
 }

@@ -1,12 +1,5 @@
-/**
- * DraggableCard — wraps a card component and makes it draggable via native HTML5 drag events.
- * On invalid drop, GSAP snaps the ghost image back (browser handles ghost automatically).
- */
-
 import type { ReactNode } from 'react';
-import { useRef } from 'react';
 import { useDrag } from './DragContext';
-import type { DragPayload } from './DragContext';
 
 interface DraggableCardProps {
   type: 'crew' | 'modifier';
@@ -17,26 +10,24 @@ interface DraggableCardProps {
 export function DraggableCard({ type, cardIndex, children }: DraggableCardProps) {
   const { dragging, setDragging } = useDrag();
   const isDragging = dragging?.type === type && dragging?.cardIndex === cardIndex;
-  const wrapperRef = useRef<HTMLDivElement>(null);
 
-  function handleDragStart(e: React.DragEvent<HTMLDivElement>) {
-    const payload: DragPayload = { type, cardIndex };
-    e.dataTransfer.setData('text/plain', JSON.stringify(payload));
-    e.dataTransfer.effectAllowed = 'move';
-    setDragging(payload);
-  }
-
-  function handleDragEnd() {
-    setDragging(null);
+  function handleToggle() {
+    setDragging(isDragging ? null : { type, cardIndex });
   }
 
   return (
     <div
-      ref={wrapperRef}
-      draggable
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      className={`cursor-grab select-none transition-opacity ${isDragging ? 'opacity-50' : 'opacity-100'}`}
+      role="button"
+      tabIndex={0}
+      aria-pressed={isDragging}
+      onClick={handleToggle}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          handleToggle();
+        }
+      }}
+      className={`cursor-pointer select-none transition-opacity ${isDragging ? 'opacity-70 ring-2 ring-amber-400 ring-offset-2 ring-offset-stone-950 rounded-2xl' : 'opacity-100'}`}
     >
       {children}
     </div>

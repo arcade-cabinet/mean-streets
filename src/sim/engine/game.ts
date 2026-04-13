@@ -93,8 +93,6 @@ export function createGame(config: GameConfigData): GameState {
 export function executeTurn(state: GameState): boolean {
   const side = state.turnSide;
   const opSide: 'A' | 'B' = side === 'A' ? 'B' : 'A';
-  const player = state.players[side];
-  const opponent = state.players[opSide];
 
   state.turnNumber++;
   state.metrics.turns++;
@@ -130,10 +128,6 @@ function executeDecision(
   opSide: 'A' | 'B',
   decision: AiDecision,
 ): void {
-  const player = state.players[side];
-  const opponent = state.players[opSide];
-  const m = state.metrics;
-
   switch (decision.action) {
     case 'attack':
       executeAttack(state, side, opSide, decision.cardIndices);

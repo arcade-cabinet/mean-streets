@@ -1,9 +1,3 @@
-/**
- * DropTarget — wraps a board position and handles crew/modifier drops.
- * Visual feedback: green glow for valid, red for invalid.
- * Modifier drops use drop Y-position relative to the element to pick orientation.
- */
-
 import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { Position } from '../../sim/turf/types';
@@ -21,14 +15,6 @@ interface DropTargetProps {
 
 type DropValidity = 'none' | 'valid' | 'invalid';
 
-function parsePayload(e: React.DragEvent): DragPayload | null {
-  try {
-    return JSON.parse(e.dataTransfer.getData('text/plain')) as DragPayload;
-  } catch {
-    return null;
-  }
-}
-
 function isValidDrop(payload: DragPayload, position: Position): boolean {
   if (payload.type === 'crew') return !position.crew && !position.seized;
   if (payload.type === 'modifier') return !!position.crew && !position.seized;
@@ -36,49 +22,53 @@ function isValidDrop(payload: DragPayload, position: Position): boolean {
 }
 
 function resolveOrientation(
-  e: React.DragEvent<HTMLDivElement>,
+  clientY: number,
   el: HTMLDivElement,
 ): 'offense' | 'defense' {
   const rect = el.getBoundingClientRect();
-  const relativeY = e.clientY - rect.top;
+  const relativeY = clientY - rect.top;
   return relativeY < rect.height / 2 ? 'offense' : 'defense';
 }
 
 export function DropTarget({ positionIdx, position, onCrewDrop, onModifierDrop, children }: DropTargetProps) {
-  const { dragging } = useDrag();
+  const { dragging, setDragging } = useDrag();
   const [validity, setValidity] = useState<DropValidity>('none');
   const containerRef = useRef<HTMLDivElement>(null);
 
   const showOrientationOverlay = validity !== 'none' && dragging?.type === 'modifier';
 
-  function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
+  function handlePointerEnter() {
     if (!dragging) return;
     const valid = isValidDrop(dragging, position);
-    if (valid) {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      setValidity('valid');
-    } else {
-      setValidity('invalid');
-    }
+    setValidity(valid ? 'valid' : 'invalid');
   }
 
-  function handleDragLeave() {
+  function handlePointerLeave() {
     setValidity('none');
   }
 
-  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
-    e.preventDefault();
+  function handlePointerUp(event: React.PointerEvent<HTMLDivElement>) {
     setValidity('none');
-    const payload = parsePayload(e);
+    const payload = dragging;
     if (!payload || !isValidDrop(payload, position)) return;
 
     if (payload.type === 'crew') {
       onCrewDrop(positionIdx);
     } else if (payload.type === 'modifier' && containerRef.current) {
-      const orientation = resolveOrientation(e, containerRef.current);
+      const orientation = resolveOrientation(event.clientY, containerRef.current);
       onModifierDrop(positionIdx, payload.cardIndex, orientation);
     }
+    setDragging(null);
+  }
+
+  function handleClick() {
+    if (!dragging || !isValidDrop(dragging, position)) return;
+    if (dragging.type === 'crew') {
+      onCrewDrop(positionIdx);
+    } else {
+      onModifierDrop(positionIdx, dragging.cardIndex, 'offense');
+    }
+    setDragging(null);
   }
 
   const borderClass =
@@ -92,9 +82,10 @@ export function DropTarget({ positionIdx, position, onCrewDrop, onModifierDrop, 
     <div
       ref={containerRef}
       className={`relative rounded-lg transition-shadow ${borderClass}`}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
+      onPointerEnter={handlePointerEnter}
+      onPointerLeave={handlePointerLeave}
+      onPointerUp={handlePointerUp}
+      onClick={handleClick}
     >
       <OrientationOverlay visible={showOrientationOverlay} />
       {children}

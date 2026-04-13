@@ -1,28 +1,57 @@
+import heroImage from '../../assets/hero.png';
+import { useAppShell } from '../../platform';
+
 interface MainMenuScreenProps {
   onNewGame: () => void;
+  onSettings: () => void;
 }
 
-export function MainMenuScreen({ onNewGame }: MainMenuScreenProps) {
-  return (
-    <div className="h-screen bg-stone-950 flex flex-col items-center justify-center gap-6">
-      <div className="flex flex-col items-center gap-2">
-        <h1
-          className="text-amber-500 font-bold tracking-[0.3em] text-6xl uppercase select-none"
-          style={{ filter: 'url(#ragged-edge)' }}
-        >
-          MEAN STREETS
-        </h1>
-        <p className="text-stone-400 text-sm tracking-widest uppercase">
-          A Tactical Turf War
-        </p>
-      </div>
+interface MenuButtonProps {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  tone?: 'primary' | 'secondary';
+  testId: string;
+}
 
-      <button
-        onClick={onNewGame}
-        className="bg-amber-700 hover:bg-amber-600 text-stone-900 font-bold px-8 py-3 rounded tracking-widest uppercase transition-all shadow-lg shadow-amber-900/40"
-      >
-        NEW GAME
-      </button>
+function MenuButton({ label, onClick, disabled = false, tone = 'secondary', testId }: MenuButtonProps) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      data-testid={testId}
+      className={`menu-button ${tone === 'primary' ? 'menu-button-primary' : ''} ${disabled ? 'menu-button-disabled' : ''}`}
+    >
+      <span className="menu-button-label">{label}</span>
+    </button>
+  );
+}
+
+export function MainMenuScreen({
+  onNewGame,
+  onSettings,
+}: MainMenuScreenProps) {
+  const { layout } = useAppShell();
+
+  return (
+    <div className="menu-shell" data-testid="main-menu-screen" data-menu-variant={layout.menuVariant}>
+      <div className="menu-backdrop" style={{ backgroundImage: `url(${heroImage})` }} />
+      <div className="menu-grain" />
+
+      <section className={`menu-content menu-content-${layout.menuVariant}`}>
+        <div className="menu-copy">
+          <p className="menu-kicker">Southside Tactical Card War</p>
+          <h1 className="menu-title">MEAN STREETS</h1>
+          <p className="menu-subtitle">
+            Stack heat, push product, and seize the block in a deterministic turf war with no dice and no coin flips.
+          </p>
+        </div>
+
+        <div className={`menu-actions menu-actions-${layout.menuVariant}`}>
+          <MenuButton label="New Game" onClick={onNewGame} tone="primary" testId="new-game-button" />
+          <MenuButton label="Settings" onClick={onSettings} testId="settings-button" />
+        </div>
+      </section>
     </div>
   );
 }

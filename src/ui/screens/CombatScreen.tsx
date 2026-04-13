@@ -1,21 +1,21 @@
 /**
- * CombatScreen — main gameplay screen for the combat phase.
- * Player gets 5 actions per round; after exhaustion the AI takes its turn.
+ * CombatScreen — responsive combat layout with side rail or bottom hand depending on posture.
  */
 
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import type { World } from 'koota';
 import { useQueryFirst, useTrait } from 'koota/react';
-import type { AttackOutcome } from '../../sim/turf/types';
-import { seizedCount, findDirectReady, findFundedReady, findPushReady } from '../../sim/turf/board';
+import { useAppShell } from '../../platform';
 import { endRoundAction, placeCrewAction, placeModifierAction } from '../../ecs/actions';
-import { usePlayerBoard, useActionBudget } from '../../ecs/hooks';
+import { useActionBudget, usePlayerBoard } from '../../ecs/hooks';
 import { GameState } from '../../ecs/traits';
+import { findDirectReady, findFundedReady, findPushReady, seizedCount } from '../../sim/turf/board';
+import type { AttackOutcome } from '../../sim/turf/types';
 import { BoardLayout } from '../board';
+import { ActionMenu, AttackSelector } from '../combat';
+import { DragProvider, DropTarget } from '../dnd';
 import { PlayerHand } from '../hand';
 import { GameHUD } from '../hud';
-import { DragProvider, DropTarget } from '../dnd';
-import { ActionMenu, AttackSelector } from '../combat';
 
 type ActionMode = 'direct' | 'funded' | 'pushed' | 'stack' | null;
 
@@ -28,6 +28,7 @@ interface CombatScreenProps {
 }
 
 export function CombatScreen({ world, onGameOver }: CombatScreenProps) {
+  const { layout } = useAppShell();
   const [actionMode, setActionMode] = useState<ActionMode>(null);
   const [aiThinking, setAiThinking] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
@@ -39,11 +40,12 @@ export function CombatScreen({ world, onGameOver }: CombatScreenProps) {
   const opponentPositions = usePlayerBoard('B');
 
   const turnNumber = gs?.turnNumber ?? 0;
+  const sideHand = layout.handPlacement === 'side';
 
-  function showFlash(msg: string, durationMs = 1400) {
+  const showFlash = useCallback((msg: string, durationMs = 1400) => {
     setFlash(msg);
     setTimeout(() => setFlash(null), durationMs);
-  }
+  }, []);
 
   function checkWinCondition() {
     const opponentBoard = { active: opponentPositions, reserve: [] };
@@ -66,7 +68,7 @@ export function CombatScreen({ world, onGameOver }: CombatScreenProps) {
       setAiThinking(false);
       showFlash(`Round ${turnNumber + 1}`);
     }, AI_DELAY_MS);
-  }, [world, turnNumber]);
+  }, [world, turnNumber, showFlash]);
 
   function handleActionComplete(_outcome: AttackOutcome | null) {
     setActionMode(null);
@@ -93,116 +95,118 @@ export function CombatScreen({ world, onGameOver }: CombatScreenProps) {
     placeCrewAction(world, posIdx);
   }, [world]);
 
-  const handleModifierDrop = useCallback(
-    (posIdx: number, cardIdx: number, orientation: 'offense' | 'defense') => {
-      placeModifierAction(world, posIdx, cardIdx, orientation);
-    },
-    [world],
-  );
+  const handleModifierDrop = useCallback((posIdx: number, cardIdx: number, orientation: 'offense' | 'defense') => {
+    placeModifierAction(world, posIdx, cardIdx, orientation);
+  }, [world]);
 
   const playerBoard = { active: playerPositions, reserve: [] };
   const hasDirectReady = findDirectReady(playerBoard).length > 0;
   const hasFundedReady = findFundedReady(playerBoard).length > 0;
   const hasPushReady = findPushReady(playerBoard).length > 0;
-
   const isAttacking = actionMode === 'direct' || actionMode === 'funded' || actionMode === 'pushed';
+
+  const actionMenu = (
+    <ActionMenu
+      selected={actionMode}
+      onSelect={handleSelect}
+      onPass={handlePass}
+      actionsRemaining={budget.remaining}
+      hasDirectReady={hasDirectReady}
+      hasFundedReady={hasFundedReady}
+      hasPushReady={hasPushReady}
+      orientation={sideHand ? 'vertical' : 'horizontal'}
+    />
+  );
 
   return (
     <DragProvider>
-      <div className="flex flex-col h-screen bg-stone-950 text-stone-100 overflow-hidden">
+      <div className={`game-screen ${sideHand ? 'game-screen-side' : 'game-screen-bottom'}`} data-testid="combat-screen">
         <GameHUD />
 
-        <div className="flex-1 flex flex-col items-center justify-center px-4 pb-36 gap-3 relative">
-          {/* Flash notification */}
-          {flash && (
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
-              <span className="px-6 py-2 bg-amber-500 text-stone-900 font-bold text-lg tracking-widest rounded shadow-lg animate-pulse">
-                {flash}
-              </span>
-            </div>
-          )}
-
-          {/* AI thinking overlay */}
-          {aiThinking && (
-            <div className="absolute inset-0 bg-stone-950/60 z-40 flex items-center justify-center">
-              <span className="text-stone-300 text-sm font-mono tracking-widest animate-pulse">
-                OPPONENT THINKING...
-              </span>
-            </div>
-          )}
-
-          {/* Board — attack selector wraps it when attacking */}
-          {isAttacking && actionMode ? (
-            <AttackSelector
-              world={world}
-              attackType={actionMode as 'direct' | 'funded' | 'pushed'}
-              playerPositions={playerPositions}
-              opponentPositions={opponentPositions}
-              onComplete={handleActionComplete}
-              onCancel={handleActionCancel}
-            />
-          ) : (
-            <div className="flex flex-col gap-2 w-full">
-              <div className="flex gap-2 justify-center flex-wrap">
-                {opponentPositions.map((pos, i) => (
-                  <div key={i} className="opacity-80">
-                    <BoardLayout
-                      playerPositions={[]}
-                      opponentPositions={[pos]}
-                      phase="combat"
-                      roundNumber={turnNumber}
-                    />
-                  </div>
-                ))}
+        <div className="game-shell">
+          <div className="game-board-area">
+            {flash && (
+              <div className="game-flash">
+                <span className="game-flash-pill">{flash}</span>
               </div>
+            )}
 
-              <div className="flex gap-2 justify-center flex-wrap">
-                {playerPositions.map((pos, i) => (
-                  actionMode === 'stack' ? (
-                    <DropTarget
-                      key={i}
-                      positionIdx={i}
-                      position={pos}
-                      onCrewDrop={handleCrewDrop}
-                      onModifierDrop={handleModifierDrop}
-                    >
+            {aiThinking && (
+              <div className="game-overlay">
+                <span className="text-stone-300 text-sm font-mono tracking-widest animate-pulse">
+                  OPPONENT THINKING...
+                </span>
+              </div>
+            )}
+
+            {isAttacking && actionMode ? (
+              <AttackSelector
+                world={world}
+                attackType={actionMode}
+                playerPositions={playerPositions}
+                opponentPositions={opponentPositions}
+                onComplete={handleActionComplete}
+                onCancel={handleActionCancel}
+              />
+            ) : (
+              <div className="flex flex-col gap-2 w-full">
+                <div className="flex gap-2 justify-center flex-wrap">
+                  {opponentPositions.map((pos, i) => (
+                    <div key={i} className="opacity-80">
                       <BoardLayout
-                        playerPositions={[pos]}
-                        opponentPositions={[]}
-                        phase="combat"
-                        roundNumber={turnNumber}
-                      />
-                    </DropTarget>
-                  ) : (
-                    <div key={i}>
-                      <BoardLayout
-                        playerPositions={[pos]}
-                        opponentPositions={[]}
+                        playerPositions={[]}
+                        opponentPositions={[pos]}
                         phase="combat"
                         roundNumber={turnNumber}
                       />
                     </div>
-                  )
-                ))}
-              </div>
-            </div>
-          )}
+                  ))}
+                </div>
 
-          {/* Action menu */}
-          {!isAttacking && (
-            <ActionMenu
-              selected={actionMode}
-              onSelect={handleSelect}
-              onPass={handlePass}
-              actionsRemaining={budget.remaining}
-              hasDirectReady={hasDirectReady}
-              hasFundedReady={hasFundedReady}
-              hasPushReady={hasPushReady}
-            />
+                <div className="flex gap-2 justify-center flex-wrap">
+                  {playerPositions.map((pos, i) => (
+                    actionMode === 'stack' ? (
+                      <DropTarget
+                        key={i}
+                        positionIdx={i}
+                        position={pos}
+                        onCrewDrop={handleCrewDrop}
+                        onModifierDrop={handleModifierDrop}
+                      >
+                        <BoardLayout
+                          playerPositions={[pos]}
+                          opponentPositions={[]}
+                          phase="combat"
+                          roundNumber={turnNumber}
+                        />
+                      </DropTarget>
+                    ) : (
+                      <div key={i}>
+                        <BoardLayout
+                          playerPositions={[pos]}
+                          opponentPositions={[]}
+                          phase="combat"
+                          roundNumber={turnNumber}
+                        />
+                      </div>
+                    )
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {!sideHand && !isAttacking && <div className="game-toolbar">{actionMenu}</div>}
+          </div>
+
+          {sideHand && (
+            <aside className="game-side-rail">
+              {!isAttacking && actionMenu}
+              <PlayerHand placement="side" presentation={layout.handPresentation} />
+            </aside>
           )}
         </div>
 
-        <PlayerHand />
+        {!sideHand && <PlayerHand placement="bottom" presentation={layout.handPresentation} />}
       </div>
     </DragProvider>
   );

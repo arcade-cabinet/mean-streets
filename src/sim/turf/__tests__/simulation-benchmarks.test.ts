@@ -1,0 +1,31 @@
+import { describe, expect, it } from 'vitest';
+import { TURF_SIM_CONFIG } from '../ai';
+import { runSeededBenchmark } from '../benchmark';
+
+type BenchmarkProfileName = keyof typeof TURF_SIM_CONFIG.benchmarkProfiles;
+
+function assertBenchmarkThresholds(profile: BenchmarkProfileName): void {
+  const thresholds = TURF_SIM_CONFIG.benchmarkThresholds[profile];
+  const { summary } = runSeededBenchmark(profile);
+
+  expect(summary.winRateA).toBeGreaterThanOrEqual(thresholds.winRateMin);
+  expect(summary.winRateA).toBeLessThanOrEqual(thresholds.winRateMax);
+  expect(summary.firstMoverWinRate).toBeGreaterThanOrEqual(thresholds.firstMoverMin);
+  expect(summary.firstMoverWinRate).toBeLessThanOrEqual(thresholds.firstMoverMax);
+  expect(summary.timeoutRate).toBeLessThanOrEqual(thresholds.timeoutRateMax);
+  expect(summary.medianTurns).toBeGreaterThanOrEqual(thresholds.medianTurnsMin);
+  expect(summary.medianTurns).toBeLessThanOrEqual(thresholds.medianTurnsMax);
+  expect(summary.p90Turns).toBeLessThanOrEqual(thresholds.p90TurnsMax);
+  expect(summary.failedPlans).toBeLessThanOrEqual(thresholds.failedPlansMax);
+  expect(summary.fundedAttacks).toBeGreaterThanOrEqual(thresholds.fundedAttacksMin);
+  expect(summary.pushedAttacks).toBeGreaterThanOrEqual(thresholds.pushedAttacksMin);
+  expect(summary.policyGuidedActions).toBeGreaterThanOrEqual(thresholds.policyGuidedMin);
+}
+
+describe('seeded simulation benchmarks', () => {
+  for (const profile of ['smoke', 'ci'] as const satisfies BenchmarkProfileName[]) {
+    it(`${profile} profile stays within deterministic acceptance ranges`, () => {
+      assertBenchmarkThresholds(profile);
+    });
+  }
+});

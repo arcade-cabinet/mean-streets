@@ -11,6 +11,7 @@ interface ActionMenuProps {
   hasDirectReady: boolean;
   hasFundedReady: boolean;
   hasPushReady: boolean;
+  orientation?: 'horizontal' | 'vertical';
 }
 
 interface ActionButtonProps {
@@ -27,6 +28,7 @@ function ActionButton({ label, action, selected, disabled, onSelect }: ActionBut
     <button
       onClick={() => !disabled && onSelect(action)}
       disabled={disabled}
+      data-testid={`action-${action}`}
       className={`px-4 py-2 rounded text-xs font-bold tracking-widest uppercase transition-all border
         ${isSelected
           ? 'bg-amber-500 text-stone-900 border-amber-400 shadow-lg shadow-amber-900/50'
@@ -48,12 +50,13 @@ export function ActionMenu({
   hasDirectReady,
   hasFundedReady,
   hasPushReady,
+  orientation = 'horizontal',
 }: ActionMenuProps) {
   const exhausted = actionsRemaining <= 0;
 
   return (
-    <div className="flex items-center gap-2 px-4 py-2 bg-stone-800 border border-stone-700 rounded">
-      <span className="text-stone-500 text-xs font-mono mr-2">
+    <div className={`game-action-menu ${orientation === 'vertical' ? 'game-action-menu-vertical' : 'game-action-menu-horizontal'}`}>
+      <span className={`text-stone-500 text-xs font-mono ${orientation === 'horizontal' ? 'mr-2' : ''}`}>
         ACT <span className="text-amber-300 font-bold">{actionsRemaining}</span>
       </span>
 
@@ -62,10 +65,11 @@ export function ActionMenu({
       <ActionButton label="Pushed" action="pushed" selected={selected} disabled={exhausted || !hasPushReady} onSelect={onSelect} />
       <ActionButton label="Stack" action="stack" selected={selected} disabled={exhausted} onSelect={onSelect} />
 
-      <div className="w-px bg-stone-700 self-stretch mx-1" />
+      <div className={orientation === 'vertical' ? 'h-px bg-stone-700 my-1' : 'w-px bg-stone-700 self-stretch mx-1'} />
 
       <button
         onClick={onPass}
+        data-testid="action-pass"
         className="px-4 py-2 rounded text-xs font-bold tracking-widest uppercase transition-all border bg-stone-800 border-stone-700 text-stone-400 hover:bg-stone-700 hover:text-stone-200"
       >
         Pass

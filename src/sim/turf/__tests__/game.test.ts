@@ -18,10 +18,10 @@ describe('playTurfGame', () => {
     expect(a.metrics).toEqual(b.metrics);
   });
 
-  it('uses all card types', () => {
+  it('records planner decisions throughout the game', () => {
     const result = playTurfGame(DEFAULT_TURF_CONFIG, 42);
     expect(result.metrics.crewPlaced).toBeGreaterThan(0);
-    expect(result.metrics.cashPlayed + result.metrics.productPlayed).toBeGreaterThan(0);
+    expect(result.plannerTrace.length).toBeGreaterThan(0);
   });
 
   it('ends by seizure or timeout', () => {

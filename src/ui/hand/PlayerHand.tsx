@@ -28,7 +28,12 @@ function CrewTile({ card }: { card: CrewCard }) {
   );
 }
 
-export function PlayerHand() {
+interface PlayerHandProps {
+  placement?: 'bottom' | 'side';
+  presentation?: 'fan' | 'stack';
+}
+
+export function PlayerHand({ placement = 'bottom', presentation = 'fan' }: PlayerHandProps) {
   const { crew, modifiers } = useHand('A');
 
   const crewFanItems = crew.map((card, i) => ({
@@ -52,24 +57,24 @@ export function PlayerHand() {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-stone-900/95 backdrop-blur border-t border-stone-700 z-40">
-      <div className="flex items-stretch gap-2 px-3 py-2">
+    <div className={placement === 'side' ? 'game-hand game-hand-side' : 'game-hand game-hand-bottom'}>
+      <div className={`flex gap-2 ${placement === 'side' ? 'flex-col h-full p-3' : 'items-stretch px-3 py-2'}`}>
         {/* Crew section */}
         <div className="flex flex-col min-w-0">
           <span className="text-stone-400 text-[10px] uppercase tracking-widest font-semibold mb-1">
             Crew: {crew.length}/25
           </span>
-          <CardFan cards={crewFanItems} renderCard={renderCrewCard} />
+          <CardFan cards={crewFanItems} renderCard={renderCrewCard} presentation={presentation} />
         </div>
 
-        <div className="w-px bg-stone-700 self-stretch mx-1" />
+        <div className={placement === 'side' ? 'h-px bg-stone-700 my-1' : 'w-px bg-stone-700 self-stretch mx-1'} />
 
         {/* Modifier section */}
         <div className="flex flex-col min-w-0">
           <span className="text-stone-400 text-[10px] uppercase tracking-widest font-semibold mb-1">
             Mods: {modifiers.length}/25
           </span>
-          <CardFan cards={modFanItems} renderCard={renderModCard} />
+          <CardFan cards={modFanItems} renderCard={renderModCard} presentation={presentation} />
         </div>
       </div>
     </div>
