@@ -15,9 +15,9 @@ import { createRng, randomSeed } from '../cards/rng';
 import { generateAllCards } from '../cards/generator';
 import { generateProducts, generateCash, generateWeapons } from './generators';
 import {
-  createBoard, findEmptyActive, placeCrew, stackProduct,
-  stackCash, armCrew, seizedCount, findPushReady,
-  findFundedReady, findDirectReady, findNeedsStacking,
+  createBoard, findEmptyActive, placeCrew,
+  stackCash, stackDrug, armCrew,
+  seizedCount, findPushReady, findFundedReady, findDirectReady,
   positionPower, positionDefense, seizePosition, tickPositions,
 } from './board';
 import {
@@ -94,7 +94,9 @@ function createGame(config: TurfGameConfig, seed: number): TurfGameState {
   const crewPool: CrewCard[] = allCards.map(c => ({
     type: 'crew' as const, id: c.id, displayName: c.displayName,
     archetype: c.archetype, affiliation: c.affiliation,
-    power: c.power, abilityText: c.abilityText,
+    power: c.power,
+    resistance: Math.max(1, c.power - 1), // resistance slightly lower than power
+    abilityText: c.abilityText,
   }));
 
   // Shared deck — both players get identical card pools, shuffled independently
@@ -188,11 +190,11 @@ function aiBuildupTurn(state: TurfGameState, side: 'A' | 'B'): void {
     }
   }
 
-  // Stack product on crew
+  // Stack drug on crew (offense slot)
   if (p.hand.product.length > 0) {
-    const target = p.board.active.findIndex(pos => pos.crew && !pos.product);
+    const target = p.board.active.findIndex(pos => pos.crew && !pos.drugOffense);
     if (target >= 0) {
-      stackProduct(p.board, target, p.hand.product.pop()!);
+      stackDrug(p.board, target, p.hand.product.pop()!, 'offense');
       m.productPlayed++;
       return;
     }
@@ -208,11 +210,11 @@ function aiBuildupTurn(state: TurfGameState, side: 'A' | 'B'): void {
     }
   }
 
-  // Arm with weapons
+  // Arm with weapons (offense slot)
   if (p.hand.weapon.length > 0) {
-    const target = p.board.active.findIndex(pos => pos.crew && !pos.weapon);
+    const target = p.board.active.findIndex(pos => pos.crew && !pos.weaponOffense);
     if (target >= 0) {
-      armCrew(p.board, target, p.hand.weapon.pop()!);
+      armCrew(p.board, target, p.hand.weapon.pop()!, 'offense');
       return;
     }
   }
@@ -301,22 +303,42 @@ function tryAction(state: TurfGameState, side: 'A' | 'B', action: string): boole
 
     case 'arm_weapon': {
       if (p.hand.weapon.length === 0) return false;
-      const unarmed = p.board.active.findIndex(
-        pos => pos.crew && !pos.weapon && !pos.seized && pos.turnsActive >= 1,
+      // Prefer offensive slot, fall back to defensive
+      let unarmed = p.board.active.findIndex(
+        pos => pos.crew && !pos.weaponOffense && !pos.seized && pos.turnsActive >= 1,
       );
-      if (unarmed < 0) return false;
-      armCrew(p.board, unarmed, p.hand.weapon.pop()!);
-      m.weaponsDrawn++;
-      return true;
+      if (unarmed >= 0) {
+        armCrew(p.board, unarmed, p.hand.weapon.pop()!, 'offense');
+        m.weaponsDrawn++;
+        return true;
+      }
+      unarmed = p.board.active.findIndex(
+        pos => pos.crew && !pos.weaponDefense && !pos.seized && pos.turnsActive >= 1,
+      );
+      if (unarmed >= 0) {
+        armCrew(p.board, unarmed, p.hand.weapon.pop()!, 'defense');
+        m.weaponsDrawn++;
+        return true;
+      }
+      return false;
     }
 
     case 'stack_product': {
       if (p.hand.product.length === 0) return false;
-      const target = p.board.active.findIndex(pos => pos.crew && !pos.product && !pos.seized);
-      if (target < 0) return false;
-      stackProduct(p.board, target, p.hand.product.pop()!);
-      m.productPlayed++;
-      return true;
+      // Prefer offensive slot, fall back to defensive
+      let target = p.board.active.findIndex(pos => pos.crew && !pos.drugOffense && !pos.seized);
+      if (target >= 0) {
+        stackDrug(p.board, target, p.hand.product.pop()!, 'offense');
+        m.productPlayed++;
+        return true;
+      }
+      target = p.board.active.findIndex(pos => pos.crew && !pos.drugDefense && !pos.seized);
+      if (target >= 0) {
+        stackDrug(p.board, target, p.hand.product.pop()!, 'defense');
+        m.productPlayed++;
+        return true;
+      }
+      return false;
     }
 
     case 'stack_cash': {

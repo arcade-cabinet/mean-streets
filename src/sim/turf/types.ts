@@ -13,7 +13,8 @@ export interface CrewCard {
   displayName: string;
   archetype: string;
   affiliation: string;
-  power: number;
+  power: number;       // center top — attack strength
+  resistance: number;  // center bottom — damage absorption
   abilityText: string;
 }
 
@@ -49,12 +50,16 @@ export type GameCard = CrewCard | ProductCard | CashCard | WeaponCard;
 export interface Position {
   /** The crew card occupying this position (null = empty). */
   crew: CrewCard | null;
-  /** Product stacked on this crew (null = none). */
-  product: ProductCard | null;
-  /** Cash stacked on this crew (null = none). */
+  /** Cash stacked on this crew for funded/pushed attacks. */
   cash: CashCard | null;
-  /** Weapon armed on this crew (null = none). */
-  weapon: WeaponCard | null;
+  /** Top-left slot: drug in offensive position (buffs attacks). */
+  drugOffense: ProductCard | null;
+  /** Bottom-left slot: drug in defensive position (buffs when attacked). */
+  drugDefense: ProductCard | null;
+  /** Top-right slot: weapon in offensive position (bonus on attack). */
+  weaponOffense: WeaponCard | null;
+  /** Bottom-right slot: weapon in defensive position (bonus on defense). */
+  weaponDefense: WeaponCard | null;
   /** Who controls this position. */
   owner: 'A' | 'B';
   /** Is this position seized by the opponent? */

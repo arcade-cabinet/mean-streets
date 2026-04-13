@@ -1,0 +1,45 @@
+{
+  "timestamp": "2026-04-13T04:19:02.596Z",
+  "config": {
+    "positionCount": 5,
+    "reserveCount": 5,
+    "maxRounds": 100,
+    "precisionMult": 3,
+    "crewDrawPerTurn": 1,
+    "cashPerTurn": 1,
+    "productPerPositions": 2,
+    "weaponOnKill": true,
+    "weaponOnSeize": true,
+    "maxBuildupRounds": 10,
+    "actionsPerRound": 5
+  },
+  "games": 10000,
+  "winRateA": 50.5,
+  "firstMoverWinRate": 50.5,
+  "seizureWinRate": 94.1,
+  "timeoutRate": 5.9,
+  "avgTurns": 19.4,
+  "medianTurns": 14,
+  "p10Turns": 13,
+  "p90Turns": 15,
+  "avgMetrics": {
+    "directAttacks": 43.7,
+    "fundedAttacks": 1.8,
+    "pushedAttacks": 1.7,
+    "kills": 10.7,
+    "flips": 3,
+    "seizures": 13.2,
+    "busts": 0.6,
+    "weaponsDrawn": 18.2,
+    "crewPlaced": 16.3,
+    "productPlayed": 16,
+    "cashPlayed": 19.2,
+    "positionsReclaimed": 6.3,
+    "passes": 24.6
+  },
+  "issues": [
+    "Timeout rate 5.9% exceeds 5%",
+    "Pass rate 126.8%"
+  ],
+  "outlierSeeds": []
+}
