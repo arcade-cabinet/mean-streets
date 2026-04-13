@@ -14,20 +14,40 @@ The POC was designed through 8 iterative pivots documented in `Gemini-Conversati
 
 ## Tech Stack Decision
 
-**React + GSAP + Tone.js** (NOT a game engine like Phaser/PixiJS)
+**React + Koota ECS + GSAP + Tone.js** (NOT a game engine like Phaser/PixiJS/LittleJS)
 
-Rationale: This is a UI-heavy card game with ~5-60 DOM elements, not a sprite-heavy arcade game. The POC already uses CSS/SVG filters for its noir aesthetic, DOM drag-and-drop, and Tailwind for layout. A canvas-based game engine would force abandoning all of that and reimplementing in GLSL/WebGL. React with GSAP Draggable gives us physics-based card dragging, GSAP Timelines give us sequenced deal/combat animations, and SVG filters stay native.
+### Why NOT a game engine?
+
+Phaser, PixiJS, and LittleJS all render to `<canvas>`. That means:
+- SVG filters (noise, distortion, film grain) — the entire noir aesthetic — are gone
+- Tailwind CSS utilities are gone; you code visual styles programmatically
+- Native browser text, web fonts, and accessibility are degraded
+- Drag-and-drop becomes engine-specific instead of DOM events + GSAP Draggable
+- Layout is a CSS/flexbox problem, not a physics engine problem
+
+GSAP Draggable gives inertia, bounds, throw physics, and snapping on DOM elements — exactly what card dragging needs. Card fan layout is arc math computed by Koota systems.
+
+### Why Koota instead of Zustand?
+
+Koota (pmndrs ECS library) models every card as an entity with traits. Reference implementation exists at `~/src/reference-codebases/koota/examples/cards/`.
+
+- **Card identity is intrinsic** — entities, not IDs in arrays
+- **Relations model card ownership** — `HeldBy(hand)` with `OrderedCards` for hand ordering, `IsVanguard` tag for active fighter
+- **Systems are pure functions** — combat resolution, AI decisions, layout — all testable without React
+- **60fps animation without React re-renders** — systems write CSS transforms directly to DOM refs via `syncToDOM` pattern
+- **Suit abilities as queryable traits** — `world.query(Card, KnuckleSuit)` vs big switch statements
+- **React binds precisely** — `useTrait(card, HP)` re-renders only that card when HP changes; `useQuery(IsVanguard)` re-renders only when vanguard changes
 
 | Concern | Library | Why |
 |---------|---------|-----|
 | UI Framework | React 19 + TypeScript | Already the POC framework; component model fits card games |
 | Build Tool | Vite 6 | Fast dev server, native TS, tree-shaking, static site output |
 | Styling | Tailwind CSS 4 | Already used in POC; utility-first fits rapid visual iteration |
+| Game State + Logic | Koota (ECS) | Entity-per-card architecture, relations for hand/vanguard, systems for mechanics |
 | Animation | GSAP 3.x (free) | Draggable plugin for card drag, FLIP for zone transitions, Timeline for dealing sequences |
 | Audio - Music | Tone.js | Synthesized noir jazz loops, beat-synced SFX |
 | Audio - SFX | Howler.js | Simple one-shot sounds (card slap, impact, whoosh) |
 | Icons | Lucide React | Already used in POC for suit/UI icons |
-| State Management | Zustand | Lightweight, TypeScript-first, no boilerplate |
 | Testing | Vitest + @vitest/browser | Unit + browser integration tests |
 | Linting | ESLint 9 + typescript-eslint | Type-aware linting |
 | Formatting | Prettier | Consistent formatting |
@@ -43,14 +63,16 @@ Rationale: This is a UI-heavy card game with ~5-60 DOM elements, not a sprite-he
 - [ ] P0-5: Create CD workflow (deploy to GitHub Pages on push to main)
 - [ ] P0-6: Enable GitHub Pages for the repository
 
-### Phase 2: Core Game Architecture (Port from POC)
+### Phase 2: Core Game Architecture (Koota ECS — Port from POC)
 
-- [ ] P1-1: Create game types and constants (suits, ranks, card, game state)
-- [ ] P1-2: Port deck utilities (shuffle, buildDeck, generateId)
-- [ ] P1-3: Port game state machine (phases: MENU, COIN_TOSS, DEALING, BATTLE, PROMOTE, VICTORY, GAMEOVER)
-- [ ] P1-4: Port combat engine (validatePlay, playCard, executeDraw, overdraw logic)
-- [ ] P1-5: Port AI opponent logic (precision kills, shiv targeting, sacrifice healing, hustle decisions)
-- [ ] P1-6: Create Zustand game store integrating all state and actions
+- [ ] P1-1: Define Koota traits (Card, HP, Shield, Suit, Rank, Position, Rotation, Scale, Dragging, IsVanguard, IsFaceDown, IsDealing, Ref) and relations (HeldBy, OrderedCards)
+- [ ] P1-2: Define world traits (GamePhase, Turn, Deck, DiscardPile, Notice, CoinState) and createWorld
+- [ ] P1-3: Port deck utilities as Koota actions (shuffle, buildDeck, dealCards)
+- [ ] P1-4: Port game state machine as system (phase transitions: MENU, COIN_TOSS, DEALING, BATTLE, PROMOTE, VICTORY, GAMEOVER)
+- [ ] P1-5: Port combat engine as systems (validatePlay, applyDamage, executeSuitAbility, processOverdraw, checkVanguardDeath, awardKillBounty)
+- [ ] P1-6: Build AI opponent with Yuka.js GOAP (goal-oriented action planning, not reactive if/else)
+- [ ] P1-7: Create game actions via createActions (playCard, promoteVanguard, passTurn, hustle, startGame)
+- [ ] P1-8: Create frame loop component (system pipeline execution order)
 
 ### Phase 3: UI Components (Port from POC)
 
@@ -223,13 +245,22 @@ P2-9 -> P5-* (docs describe what exists)
 - dependabot.yml configured for npm ecosystem, weekly, group minor/patch
 - AI tool config files reference CLAUDE.md
 
+## Security: No POC Patterns in Production
+
+The POC cuts corners that are NOT acceptable in the production port:
+
+- **NO innerHTML or unsafe HTML injection** — the POC injects CSS via inline style tags with raw HTML. The port MUST use proper CSS files, CSS modules, or Tailwind classes exclusively. All keyframe animations go in `.css` files.
+- **NO raw string interpolation into DOM** — all rendering through React JSX only.
+- **NO unvalidated external input** — even though this is a client-only game, sanitize any future user input (player names, etc.)
+- **Content Security Policy** — the built site should work with a strict CSP (no `unsafe-inline` for scripts).
+
 ## Technical Notes
 
 - The POC file is `public/public.html` (not `poc.html`)
 - The Gemini conversation documents 8 major design pivots; the final mechanics in the POC are canonical
 - Suit icons in POC use Unicode characters but suit names are custom (KNUCKLE, SHIV, CROW, CHAIN)
 - Suit colors: KNUCKLE/CROW are dark (text-stone-900), SHIV/CHAIN are red (text-red-900)
-- CSS animations are currently injected inline via style tags and must be extracted to proper CSS files
+- CSS animations in POC are injected inline and MUST be extracted to proper CSS files in the port
 - The POC has a dealing alternation logic that uses tossWinner for deal order
 - Card rank values: A=1, 2-10=face value, J=11, Q=12, K=13
 - Reference codebases available at ~/src/reference-codebases/ including: phaser, template-react-ts, konva, react-konva, LittleJS
