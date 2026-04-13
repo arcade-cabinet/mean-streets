@@ -115,10 +115,16 @@ Yuka.js fuzzy logic (crewStrength, threatLevel, resourceLevel, danger → aggres
 - [ ] Run simulation to verify balance holds after the unified modifier refactor
 
 ### Phase 1: Fix Simulation Engine
-- [ ] Rewrite game.ts for unified modifier system
-- [ ] Update ai-fuzzy.ts for unified hand
-- [ ] Run 10k balance test, verify 50/50
-- [ ] Commit clean
+- [x] Rewrite game.ts for unified modifier system
+- [x] Update ai-fuzzy.ts for unified hand
+- [x] Rewrite board.ts for 6 quarter-card slots
+- [x] Rewrite attacks.ts for new position field names
+- [x] Expand weapon pool to 50 (5 categories x 10)
+- [x] Expand drug pool to 50 (5 categories x 10)
+- [x] Simplify cash to $100/$1000
+- [x] Crew cards: independent resistance, locked field, 25 starters
+- [x] Run 10k balance test — 50.2/49.8% win rate, all metrics passing
+- [x] Commit clean
 
 ### Phase 2: Project Foundation
 - [ ] CI workflow (.github/workflows/ci.yml) — lint, typecheck, test, build on PRs
