@@ -1,149 +1,118 @@
 /**
  * Attack resolution — direct, funded, pushed.
- * No dice. Outcomes from card power/resistance + drug/weapon modifiers.
- *
- * Quarter-card positioning:
- *   Top-left drug = offensive (buffs attack)
- *   Bottom-left drug = defensive (buffs when attacked)
- *   Top-right weapon = offensive (bonus on attack)
- *   Bottom-right weapon = defensive (bonus on defense)
+ * Drug/weapon/cash positioning determines offense vs defense.
  */
 
 import type { Position, AttackOutcome, TurfGameConfig } from './types';
-import { positionPower, positionDefense, clearPosition } from './board';
+import { positionPower, positionDefense, offensiveCash, defensiveCash, clearPosition } from './board';
 
 export function canPrecisionAttack(
-  attackerPower: number,
-  targetDefense: number,
-  precisionMult: number,
-  ignoresPrecision: boolean,
+  atkPower: number, defPower: number, mult: number, ignores: boolean,
 ): boolean {
-  if (ignoresPrecision) return true;
-  return attackerPower <= targetDefense * precisionMult;
+  return ignores || atkPower <= defPower * mult;
 }
 
-/**
- * DIRECT ATTACK: attacker power vs defender defense.
- * Offensive drugs/weapons boost attack. Defensive drugs/weapons boost defense.
- */
-export function resolveDirectAttack(
-  attacker: Position,
-  defender: Position,
-): AttackOutcome {
+/** DIRECT: attacker power vs defender defense. */
+export function resolveDirectAttack(attacker: Position, defender: Position): AttackOutcome {
   const atk = positionPower(attacker);
   const def = positionDefense(defender);
 
   if (atk >= def) {
     const name = defender.crew?.displayName ?? 'target';
     clearPosition(defender);
-    // Consume offensive drug on use
-    if (attacker.drugOffense) attacker.drugOffense = null;
+    if (attacker.drugTop) attacker.drugTop = null; // consumed
     return {
       type: 'kill', targetIndices: [], lostCards: [], gainedCards: [],
       description: `${attacker.crew!.displayName} kills ${name} (${atk} vs ${def})`,
     };
   }
 
-  // Partial damage: reduce defender's resistance
   const dmg = Math.max(1, atk - Math.floor(def / 2));
   defender.crew!.resistance = Math.max(1, defender.crew!.resistance - dmg);
-  if (attacker.drugOffense) attacker.drugOffense = null;
+  if (attacker.drugTop) attacker.drugTop = null;
   return {
     type: 'miss', targetIndices: [], lostCards: [], gainedCards: [],
     description: `${attacker.crew!.displayName} wounds target (${atk} vs ${def})`,
   };
 }
 
-/**
- * FUNDED ATTACK: crew + cash. Flip attempt.
- * Cash value vs target resistance, modified by affiliation + offensive drug.
- */
+/** FUNDED: crew + offensive cash. Flip attempt. Defensive cash resists. */
 export function resolveFundedAttack(
-  attacker: Position,
-  defender: Position,
-  _config: TurfGameConfig,
+  attacker: Position, defender: Position, _config: TurfGameConfig,
 ): AttackOutcome {
-  const cashValue = attacker.cash?.denomination ?? 0;
+  const atkCash = offensiveCash(attacker);
+  const defCash = defensiveCash(defender);
   const targetRes = defender.crew?.resistance ?? 99;
   const isSameAff = attacker.crew!.affiliation === defender.crew!.affiliation;
   const isFreelancer = defender.crew!.affiliation === 'freelance';
 
-  let threshold = targetRes;
+  let threshold = targetRes + defCash;
   if (isFreelancer) threshold = Math.floor(threshold * 0.5);
   if (isSameAff) threshold = Math.floor(threshold * 0.7);
-  if (attacker.drugOffense) {
-    threshold = Math.max(1, threshold - attacker.drugOffense.potency);
-    attacker.drugOffense = null;
+  if (attacker.drugTop) {
+    threshold = Math.max(1, threshold - attacker.drugTop.potency);
+    attacker.drugTop = null;
   }
 
-  if (cashValue >= threshold) {
+  if (atkCash >= threshold) {
     const flipped = defender.crew!;
-    const flippedWeaponO = defender.weaponOffense;
-    const flippedWeaponD = defender.weaponDefense;
     clearPosition(defender);
-    attacker.cash = null;
+    attacker.cashLeft = null;
     return {
-      type: 'flip', targetIndices: [], lostCards: [],
-      gainedCards: [flipped, ...(flippedWeaponO ? [flippedWeaponO] : []), ...(flippedWeaponD ? [flippedWeaponD] : [])],
-      description: `${attacker.crew!.displayName} flips ${flipped.displayName} ($${cashValue} vs ${threshold})`,
+      type: 'flip', targetIndices: [], lostCards: [], gainedCards: [flipped],
+      description: `${attacker.crew!.displayName} flips ${flipped.displayName} ($${atkCash} vs ${threshold})`,
     };
   }
 
-  attacker.cash = null;
+  attacker.cashLeft = null;
   return {
-    type: 'busted', targetIndices: [], lostCards: [attacker.cash!].filter(Boolean), gainedCards: [],
-    description: `${attacker.crew!.displayName} failed to flip ($${cashValue} < ${threshold})`,
+    type: 'busted', targetIndices: [], lostCards: [], gainedCards: [],
+    description: `Failed flip ($${atkCash} < ${threshold})`,
   };
 }
 
-/**
- * PUSHED ATTACK: crew + offensive drug + cash.
- * Drug potency + cash vs target defense. Splash to adjacent.
- */
+/** PUSHED: crew + offensive drug + offensive cash. Splash capable. */
 export function resolvePushedAttack(
-  attacker: Position,
-  defender: Position,
-  defenderBoard: Position[],
-  _config: TurfGameConfig,
+  attacker: Position, defender: Position,
+  defBoard: Position[], _config: TurfGameConfig,
 ): AttackOutcome {
-  const potency = attacker.drugOffense?.potency ?? 1;
-  const cashValue = attacker.cash?.denomination ?? 0;
-  const pushPower = potency + Math.floor(cashValue / 10);
+  const potency = attacker.drugTop?.potency ?? 1;
+  const cash = offensiveCash(attacker);
+  const pushPower = potency + Math.floor(cash / 10);
   const defPower = positionDefense(defender);
 
   if (pushPower >= defPower) {
     const flipped = [defender.crew!];
     clearPosition(defender);
-    const adjIndices = findAdjacent(defenderBoard, defender);
-    const splash = Math.min(potency - 1, adjIndices.length);
+    const adj = findAdjacent(defBoard, defender);
+    const splash = Math.min(potency - 1, adj.length);
     for (let i = 0; i < splash; i++) {
-      const adj = defenderBoard[adjIndices[i]];
-      if (adj.crew) adj.crew.resistance = Math.max(1, adj.crew.resistance - potency);
+      const a = defBoard[adj[i]];
+      if (a.crew) a.crew.resistance = Math.max(1, a.crew.resistance - potency);
     }
-    attacker.drugOffense = null;
-    attacker.cash = null;
+    attacker.drugTop = null;
+    attacker.cashLeft = null;
     return {
-      type: 'flip', targetIndices: adjIndices.slice(0, splash), lostCards: [],
-      gainedCards: flipped,
-      description: `PUSHED: takes down target + weakens ${splash} adjacent`,
+      type: 'flip', targetIndices: adj.slice(0, splash), lostCards: [],
+      gainedCards: flipped, description: `PUSH: target down + ${splash} weakened`,
     };
   }
 
   if (pushPower >= Math.floor(defPower / 2)) {
     defender.crew!.resistance = Math.max(1, defender.crew!.resistance - potency);
-    attacker.drugOffense = null;
-    attacker.cash = null;
+    attacker.drugTop = null;
+    attacker.cashLeft = null;
     return {
       type: 'sick', targetIndices: [], lostCards: [], gainedCards: [],
-      description: `PUSHED: target weakened by ${potency}`,
+      description: `PUSH: target weakened by ${potency}`,
     };
   }
 
-  attacker.drugOffense = null;
-  attacker.cash = null;
+  attacker.drugTop = null;
+  attacker.cashLeft = null;
   return {
     type: 'seized', targetIndices: [], lostCards: [], gainedCards: [],
-    description: `BUSTED: push failed`,
+    description: `PUSH: busted`,
   };
 }
 

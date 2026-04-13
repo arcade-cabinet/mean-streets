@@ -1,21 +1,18 @@
 /**
- * Board management — positions, stacking, seizure.
- * Each position has a crew card + up to 4 quarter-card slots:
- *   top-left: drug (offense), bottom-left: drug (defense)
- *   top-right: weapon (offense), bottom-right: weapon (defense)
- * Plus a cash card for funded/pushed attacks.
+ * Board management — 6 quarter-card slots around each crew card.
  */
 
 import type {
-  Position, PlayerBoard,
-  CrewCard, ProductCard, CashCard, WeaponCard,
+  Position, PlayerBoard, CrewCard, ProductCard,
+  CashCard, WeaponCard, ModifierCard,
 } from './types';
 
 export function emptyPosition(owner: 'A' | 'B'): Position {
   return {
-    crew: null, cash: null,
-    drugOffense: null, drugDefense: null,
-    weaponOffense: null, weaponDefense: null,
+    crew: null,
+    drugTop: null, drugBottom: null,
+    weaponTop: null, weaponBottom: null,
+    cashLeft: null, cashRight: null,
     owner, seized: false, turnsActive: 0,
   };
 }
@@ -49,119 +46,126 @@ export function placeCrew(board: PlayerBoard, idx: number, crew: CrewCard): bool
   return true;
 }
 
-export function stackCash(board: PlayerBoard, idx: number, cash: CashCard): boolean {
-  const pos = board.active[idx];
-  if (!pos || !pos.crew || pos.cash !== null) return false;
-  pos.cash = cash;
-  return true;
-}
-
-/** Place drug on a crew — caller chooses offense (top) or defense (bottom). */
-export function stackDrug(
-  board: PlayerBoard, idx: number, drug: ProductCard, slot: 'offense' | 'defense',
+/**
+ * Place a quarter-size modifier card onto a crew position.
+ * Routes to the correct slot based on card type and chosen orientation.
+ */
+export function placeModifier(
+  board: PlayerBoard, idx: number, card: ModifierCard, slot: 'offense' | 'defense',
 ): boolean {
   const pos = board.active[idx];
   if (!pos || !pos.crew) return false;
-  if (slot === 'offense') {
-    if (pos.drugOffense) return false;
-    pos.drugOffense = drug;
-  } else {
-    if (pos.drugDefense) return false;
-    pos.drugDefense = drug;
+
+  switch (card.type) {
+    case 'product':
+      if (slot === 'offense') {
+        if (pos.drugTop) return false;
+        pos.drugTop = card;
+      } else {
+        if (pos.drugBottom) return false;
+        pos.drugBottom = card;
+      }
+      return true;
+
+    case 'weapon':
+      if (slot === 'offense') {
+        if (pos.weaponTop) return false;
+        pos.weaponTop = card;
+      } else {
+        if (pos.weaponBottom) return false;
+        pos.weaponBottom = card;
+      }
+      return true;
+
+    case 'cash':
+      if (slot === 'offense') {
+        if (pos.cashLeft) return false;
+        pos.cashLeft = card;
+      } else {
+        if (pos.cashRight) return false;
+        pos.cashRight = card;
+      }
+      return true;
+
+    default:
+      return false;
   }
-  return true;
 }
 
-/** Place weapon — caller chooses offense (top) or defense (bottom). */
-export function armCrew(
-  board: PlayerBoard, idx: number, weapon: WeaponCard, slot: 'offense' | 'defense',
-): boolean {
-  const pos = board.active[idx];
-  if (!pos || !pos.crew) return false;
-  if (slot === 'offense') {
-    if (pos.weaponOffense) return false;
-    pos.weaponOffense = weapon;
-  } else {
-    if (pos.weaponDefense) return false;
-    pos.weaponDefense = weapon;
-  }
-  return true;
-}
-
-/** Effective ATTACK power: crew power + offensive drug + offensive weapon. */
+/** Effective ATTACK power: crew power + top weapon + top drug. */
 export function positionPower(pos: Position): number {
   if (!pos.crew) return 0;
   let power = pos.crew.power;
-  // Bare-fist penalty if no offensive weapon
-  if (!pos.weaponOffense) {
-    power = Math.max(1, power - 2);
-  } else {
-    power += pos.weaponOffense.bonus;
-  }
-  if (pos.drugOffense) power += pos.drugOffense.potency;
+  if (pos.weaponTop) power += pos.weaponTop.bonus;
+  else power = Math.max(1, power - 2); // bare-fist penalty
+  if (pos.drugTop) power += pos.drugTop.potency;
   return power;
 }
 
-/** Effective DEFENSE: crew resistance + defensive drug + defensive weapon. */
+/** Effective DEFENSE: crew resistance + bottom weapon + bottom drug. */
 export function positionDefense(pos: Position): number {
   if (!pos.crew) return 0;
   let def = pos.crew.resistance;
-  if (pos.weaponDefense) def += pos.weaponDefense.bonus;
-  if (pos.drugDefense) def += pos.drugDefense.potency;
+  if (pos.weaponBottom) def += pos.weaponBottom.bonus;
+  if (pos.drugBottom) def += pos.drugBottom.potency;
   return def;
+}
+
+/** Offensive cash value (center-left). */
+export function offensiveCash(pos: Position): number {
+  return pos.cashLeft?.denomination ?? 0;
+}
+
+/** Defensive cash value (center-right). */
+export function defensiveCash(pos: Position): number {
+  return pos.cashRight?.denomination ?? 0;
 }
 
 export function clearPosition(pos: Position): Array<CrewCard | ProductCard | CashCard | WeaponCard> {
   const cards: Array<CrewCard | ProductCard | CashCard | WeaponCard> = [];
   if (pos.crew) cards.push(pos.crew);
-  if (pos.cash) cards.push(pos.cash);
-  if (pos.drugOffense) cards.push(pos.drugOffense);
-  if (pos.drugDefense) cards.push(pos.drugDefense);
-  if (pos.weaponOffense) cards.push(pos.weaponOffense);
-  if (pos.weaponDefense) cards.push(pos.weaponDefense);
+  if (pos.drugTop) cards.push(pos.drugTop);
+  if (pos.drugBottom) cards.push(pos.drugBottom);
+  if (pos.weaponTop) cards.push(pos.weaponTop);
+  if (pos.weaponBottom) cards.push(pos.weaponBottom);
+  if (pos.cashLeft) cards.push(pos.cashLeft);
+  if (pos.cashRight) cards.push(pos.cashRight);
   pos.crew = null;
-  pos.cash = null;
-  pos.drugOffense = null;
-  pos.drugDefense = null;
-  pos.weaponOffense = null;
-  pos.weaponDefense = null;
+  pos.drugTop = pos.drugBottom = null;
+  pos.weaponTop = pos.weaponBottom = null;
+  pos.cashLeft = pos.cashRight = null;
   return cards;
 }
 
-export function seizePosition(pos: Position): Array<CrewCard | ProductCard | CashCard | WeaponCard> {
-  const cards = clearPosition(pos);
+export function seizePosition(pos: Position) {
+  clearPosition(pos);
   pos.seized = true;
-  return cards;
 }
 
-/** Has crew + cash + offensive drug = ready for pushed attack. */
+/** Crew + offensive cash + offensive drug = push ready. */
 export function findPushReady(board: PlayerBoard): number[] {
   return board.active
-    .map((p, i) => (p.crew && p.drugOffense && p.cash && p.turnsActive >= 1) ? i : -1)
+    .map((p, i) => (p.crew && p.drugTop && p.cashLeft && p.turnsActive >= 1) ? i : -1)
     .filter(i => i >= 0);
 }
 
-/** Has crew + cash (no drug) = ready for funded attack. */
+/** Crew + offensive cash (no drug) = funded attack ready. */
 export function findFundedReady(board: PlayerBoard): number[] {
   return board.active
-    .map((p, i) => (p.crew && p.cash && !p.drugOffense && p.turnsActive >= 1) ? i : -1)
+    .map((p, i) => (p.crew && p.cashLeft && !p.drugTop && p.turnsActive >= 1) ? i : -1)
     .filter(i => i >= 0);
 }
 
-/** Has crew ready for direct attack. */
+/** Crew ready for direct attack. */
 export function findDirectReady(board: PlayerBoard): number[] {
   return board.active
     .map((p, i) => (p.crew && p.turnsActive >= 1) ? i : -1)
     .filter(i => i >= 0);
 }
 
-/** Positions that could use more stacking. */
-export function findNeedsStacking(board: PlayerBoard): number[] {
-  return board.active
-    .map((p, i) => {
-      if (!p.crew || p.seized) return -1;
-      if (!p.weaponOffense || !p.drugOffense || !p.cash) return i;
-      return -1;
-    })
-    .filter(i => i >= 0);
+/** Has any empty modifier slot. */
+export function hasEmptySlot(pos: Position): boolean {
+  if (!pos.crew || pos.seized) return false;
+  return !pos.drugTop || !pos.drugBottom || !pos.weaponTop ||
+    !pos.weaponBottom || !pos.cashLeft || !pos.cashRight;
 }

@@ -1,22 +1,19 @@
 /**
- * Turf war game loop with buildup phase.
- *
- * Both players build up before combat. Either can strike at any time.
- * The moment someone strikes, buildup ends for both.
- * Win by seizing all 5 opponent positions.
+ * Turf war game loop — buildup + combat phases.
+ * Unified modifier API: all quarter-cards in hand.modifiers / modifierDraw.
  */
 
 import type {
   TurfGameState, TurfGameConfig, TurfGameResult,
-  TurfMetrics, PlayerState, CrewCard, ProductCard, CashCard, WeaponCard,
+  TurfMetrics, PlayerState, CrewCard, ModifierCard,
+  ProductCard, CashCard, WeaponCard,
 } from './types';
 import { DEFAULT_TURF_CONFIG } from './types';
 import { createRng, randomSeed } from '../cards/rng';
 import { generateAllCards } from '../cards/generator';
-import { generateProducts, generateCash, generateWeapons } from './generators';
+import { generateWeapons, generateDrugs, generateCash } from './generators';
 import {
-  createBoard, findEmptyActive, placeCrew,
-  stackCash, stackDrug, armCrew,
+  createBoard, findEmptyActive, placeCrew, placeModifier,
   seizedCount, findPushReady, findFundedReady, findDirectReady,
   positionPower, positionDefense, seizePosition, tickPositions,
 } from './board';
@@ -38,22 +35,23 @@ function emptyMetrics(): TurfMetrics {
   };
 }
 
-/** Shared deck template — identical card selection for both players. */
 interface DeckTemplate {
   crew: CrewCard[];
-  products: ProductCard[];
-  cash: CashCard[];
-  weapons: WeaponCard[];
+  modifiers: ModifierCard[];
 }
 
-/** Generate one shared deck, give both players identical copies shuffled differently. */
 function buildSharedDeck(crewPool: CrewCard[], rng: ReturnType<typeof createRng>): DeckTemplate {
-  const crew = rng.shuffle([...crewPool]).slice(0, 15);
-  const products = rng.shuffle([...generateProducts(rng)]).slice(0, 8);
-  const { cards: cashCards } = generateCash();
-  const cash = rng.shuffle([...cashCards]).slice(0, 10);
-  const weapons = rng.shuffle([...generateWeapons()]).slice(0, 8);
-  return { crew, products, cash, weapons };
+  const weaponPool = generateWeapons(rng);
+  const drugPool = generateDrugs(rng);
+  const cashPool = generateCash();
+
+  const crew = rng.shuffle([...crewPool]).slice(0, 25);
+  const weapons = rng.shuffle([...weaponPool.filter(w => w.unlocked)]).slice(0, 8);
+  const drugs = rng.shuffle([...drugPool.filter(d => d.unlocked)]).slice(0, 8);
+  const cash = rng.shuffle([...cashPool]).slice(0, 9);
+  const modifiers = rng.shuffle([...weapons, ...drugs, ...cash] as ModifierCard[]);
+
+  return { crew, modifiers };
 }
 
 function initPlayer(
@@ -62,26 +60,20 @@ function initPlayer(
   template: DeckTemplate,
   rng: ReturnType<typeof createRng>,
 ): PlayerState {
-  // Deep copy the template so each player has independent card instances
   const crewDeck = rng.shuffle(template.crew.map(c => ({ ...c })));
-  const productDeck = rng.shuffle(template.products.map(p => ({ ...p })));
-  const cashDeck = rng.shuffle(template.cash.map(c => ({ ...c })));
-  const weaponDeck = rng.shuffle(template.weapons.map(w => ({ ...w })));
+  const modifierDeck = rng.shuffle(
+    template.modifiers.map(m => ({ ...m })) as ModifierCard[],
+  );
 
-  // Both players start with same hand size: 3 crew, 1 product, 2 cash
   const hand = {
     crew: crewDeck.splice(0, 3),
-    product: productDeck.splice(0, 1),
-    cash: cashDeck.splice(0, 2),
-    weapon: [] as WeaponCard[],
+    modifiers: modifierDeck.splice(0, 3) as ModifierCard[],
   };
 
   return {
     board: createBoard(side, config.positionCount, config.reserveCount),
     crewDraw: crewDeck,
-    productDraw: productDeck,
-    cashDraw: cashDeck,
-    weaponDraw: weaponDeck,
+    modifierDraw: modifierDeck,
     hand,
     discard: [],
     positionsSeized: 0,
@@ -90,16 +82,22 @@ function initPlayer(
 
 function createGame(config: TurfGameConfig, seed: number): TurfGameState {
   const rng = createRng(seed);
-  const allCards = generateAllCards(seed, 100);
-  const crewPool: CrewCard[] = allCards.map(c => ({
-    type: 'crew' as const, id: c.id, displayName: c.displayName,
-    archetype: c.archetype, affiliation: c.affiliation,
-    power: c.power,
-    resistance: Math.max(1, c.power - 1), // resistance slightly lower than power
-    abilityText: c.abilityText,
-  }));
+  const allCards = generateAllCards(seed, 25);
+  const crewPool: CrewCard[] = allCards
+    .filter(c => c.unlocked)
+    .map(c => ({
+      type: 'crew' as const,
+      id: c.id,
+      displayName: c.displayName,
+      archetype: c.archetype,
+      affiliation: c.affiliation,
+      power: c.power,
+      resistance: c.resistance,
+      abilityText: c.abilityText,
+      unlocked: c.unlocked,
+      locked: c.locked,
+    }));
 
-  // Shared deck — both players get identical card pools, shuffled independently
   const template = buildSharedDeck(crewPool, rng);
 
   return {
@@ -108,9 +106,8 @@ function createGame(config: TurfGameConfig, seed: number): TurfGameState {
       A: initPlayer('A', config, template, rng),
       B: initPlayer('B', config, template, rng),
     },
-    // Simultaneous turns — no first mover. Both act each round.
-    turnSide: 'A', // tracks whose sub-turn it is within a round
-    firstPlayer: 'A', // no longer meaningful — both act simultaneously
+    turnSide: 'A',
+    firstPlayer: 'A',
     turnNumber: 0,
     phase: 'buildup',
     buildupTurns: { A: 0, B: 0 },
@@ -123,34 +120,56 @@ function createGame(config: TurfGameConfig, seed: number): TurfGameState {
   };
 }
 
-// ── Draw Phase ───────────────────────────────────────────────
+// ── Helpers: filter hand by modifier type ──────────────────
 
-function drawPhase(state: TurfGameState, side: 'A' | 'B'): void {
-  const p = state.players[side];
+function handWeapons(p: PlayerState): WeaponCard[] {
+  return p.hand.modifiers.filter((m): m is WeaponCard => m.type === 'weapon');
+}
+
+function handDrugs(p: PlayerState): ProductCard[] {
+  return p.hand.modifiers.filter((m): m is ProductCard => m.type === 'product');
+}
+
+function handCash(p: PlayerState): CashCard[] {
+  return p.hand.modifiers.filter((m): m is CashCard => m.type === 'cash');
+}
+
+function removeFromHand(p: PlayerState, card: ModifierCard): void {
+  const idx = p.hand.modifiers.indexOf(card);
+  if (idx >= 0) p.hand.modifiers.splice(idx, 1);
+}
+
+let bonusCashCounter = 0;
+
+function awardCash(p: PlayerState): void {
+  bonusCashCounter++;
+  const bonus: CashCard = {
+    type: 'cash',
+    id: `cash-bonus-${bonusCashCounter}`,
+    denomination: 100,
+  };
+  p.hand.modifiers.push(bonus);
+}
+
+// ── Draw Phase ──────────────────────────────────────────────
+
+function drawPhase(_state: TurfGameState, side: 'A' | 'B'): void {
+  const p = _state.players[side];
   if (p.crewDraw.length > 0 && p.hand.crew.length < 5) {
     p.hand.crew.push(p.crewDraw.pop()!);
   }
-  if (p.cashDraw.length > 0 && p.hand.cash.length < 5) {
-    p.hand.cash.push(p.cashDraw.pop()!);
-  }
-  const held = p.board.active.filter(pos => pos.crew && !pos.seized).length;
-  if (held >= state.config.productPerPositions && p.productDraw.length > 0) {
-    p.hand.product.push(p.productDraw.pop()!);
+  if (p.modifierDraw.length > 0 && p.hand.modifiers.length < 7) {
+    p.hand.modifiers.push(p.modifierDraw.pop()!);
   }
 }
 
-// ── AI: Strike Timing Decision ───────────────────────────────
+// ── AI: Strike Timing ───────────────────────────────────────
 
-/**
- * During buildup, AI uses fuzzy logic to decide when to strike.
- * Evaluates board state, resources, and threat to determine readiness.
- */
 function shouldStrike(state: TurfGameState, side: 'A' | 'B'): boolean {
   const p = state.players[side];
   const buildTurns = state.buildupTurns[side];
   const fuzzy = evaluateFuzzy(state, side);
 
-  // Update AI state based on fuzzy evaluation
   const currentState = state.aiState[side] as AiState;
   const newState = resolveState(fuzzy, currentState, state.aiTurnsInState[side]);
   if (newState !== currentState) {
@@ -158,23 +177,17 @@ function shouldStrike(state: TurfGameState, side: 'A' | 'B'): boolean {
     state.aiTurnsInState[side] = 0;
   }
 
-  // Strike if:
-  // 1. Fuzzy aggression is high and patience is low
   if (fuzzy.aggression > 0.6 && fuzzy.patience < 0.3) return true;
-  // 2. Desperation is high (must act now)
   if (fuzzy.desperation > 0.5) return true;
-  // 3. Have a stacked attack ready
   if (findPushReady(p.board).length > 0) return true;
   if (findFundedReady(p.board).length > 0 && buildTurns >= 3) return true;
-  // 4. Been building too long
   if (buildTurns >= 8) return true;
-  // 5. Nothing left to build
-  if (p.hand.crew.length === 0 && p.hand.product.length === 0 && p.hand.cash.length === 0) return true;
+  if (p.hand.crew.length === 0 && p.hand.modifiers.length === 0) return true;
 
   return false;
 }
 
-// ── AI: Buildup Actions ──────────────────────────────────────
+// ── AI: Buildup Actions ─────────────────────────────────────
 
 function aiBuildupTurn(state: TurfGameState, side: 'A' | 'B'): void {
   const p = state.players[side];
@@ -190,44 +203,35 @@ function aiBuildupTurn(state: TurfGameState, side: 'A' | 'B'): void {
     }
   }
 
-  // Stack drug on crew (offense slot)
-  if (p.hand.product.length > 0) {
-    const target = p.board.active.findIndex(pos => pos.crew && !pos.drugOffense);
-    if (target >= 0) {
-      stackDrug(p.board, target, p.hand.product.pop()!, 'offense');
-      m.productPlayed++;
-      return;
-    }
-  }
-
-  // Stack cash on crew
-  if (p.hand.cash.length > 0) {
-    const target = p.board.active.findIndex(pos => pos.crew && !pos.cash);
-    if (target >= 0) {
-      stackCash(p.board, target, p.hand.cash.pop()!);
-      m.cashPlayed++;
-      return;
-    }
-  }
-
-  // Arm with weapons (offense slot)
-  if (p.hand.weapon.length > 0) {
-    const target = p.board.active.findIndex(pos => pos.crew && !pos.weaponOffense);
-    if (target >= 0) {
-      armCrew(p.board, target, p.hand.weapon.pop()!, 'offense');
-      return;
+  // Place a modifier on a crew position (prefer offense slots first)
+  const mod = p.hand.modifiers[0];
+  if (mod) {
+    for (let i = 0; i < p.board.active.length; i++) {
+      const pos = p.board.active[i];
+      if (!pos.crew || pos.seized) continue;
+      if (placeModifier(p.board, i, mod, 'offense')) {
+        removeFromHand(p, mod);
+        if (mod.type === 'product') m.productPlayed++;
+        else if (mod.type === 'cash') m.cashPlayed++;
+        else if (mod.type === 'weapon') m.weaponsDrawn++;
+        return;
+      }
+      if (placeModifier(p.board, i, mod, 'defense')) {
+        removeFromHand(p, mod);
+        if (mod.type === 'product') m.productPlayed++;
+        else if (mod.type === 'cash') m.cashPlayed++;
+        else if (mod.type === 'weapon') m.weaponsDrawn++;
+        return;
+      }
     }
   }
 }
 
-// ── AI: Combat Actions ───────────────────────────────────────
+// ── AI: Combat Actions ──────────────────────────────────────
 
 function aiCombatTurn(state: TurfGameState, side: 'A' | 'B'): void {
-  const p = state.players[side];
-  const opp = state.players[side === 'A' ? 'B' : 'A'];
   const m = state.metrics;
 
-  // Update AI state via fuzzy logic
   const fuzzy = evaluateFuzzy(state, side);
   const currentState = state.aiState[side] as AiState;
   const newState = resolveState(fuzzy, currentState, state.aiTurnsInState[side]);
@@ -237,10 +241,8 @@ function aiCombatTurn(state: TurfGameState, side: 'A' | 'B'): void {
   }
   state.aiTurnsInState[side]++;
 
-  // Get priority order from state machine
   const priorities = getStatePriorities(newState);
 
-  // Execute first viable action in priority order
   for (const action of priorities) {
     if (tryAction(state, side, action)) return;
   }
@@ -248,7 +250,6 @@ function aiCombatTurn(state: TurfGameState, side: 'A' | 'B'): void {
   m.passes++;
 }
 
-/** Try to execute a single action type. Returns true if action was taken. */
 function tryAction(state: TurfGameState, side: 'A' | 'B', action: string): boolean {
   const p = state.players[side];
   const opp = state.players[side === 'A' ? 'B' : 'A'];
@@ -257,20 +258,25 @@ function tryAction(state: TurfGameState, side: 'A' | 'B', action: string): boole
   switch (action) {
     case 'reclaim': {
       const seizedIdx = p.board.active.findIndex(pos => pos.seized);
-      if (seizedIdx >= 0 && p.hand.crew.length > 0 && p.hand.cash.length > 0) {
-        const crew = p.hand.crew.pop()!;
-        p.hand.cash.pop()!; // costs cash
-        const weakCrew = { ...crew, power: Math.max(1, Math.floor(crew.power / 2)) };
-        p.board.active[seizedIdx].seized = false;
-        p.board.active[seizedIdx].crew = weakCrew;
-        p.board.active[seizedIdx].turnsActive = 0;
-        opp.positionsSeized = Math.max(0, opp.positionsSeized - 1);
-        m.positionsReclaimed++;
-        m.crewPlaced++;
-        m.cashPlayed++;
-        return true;
-      }
-      return false;
+      if (seizedIdx < 0) return false;
+      if (p.hand.crew.length === 0) return false;
+      const cash = handCash(p);
+      if (cash.length === 0) return false;
+      const crew = p.hand.crew.pop()!;
+      removeFromHand(p, cash[0]);
+      const weakCrew: CrewCard = {
+        ...crew,
+        power: Math.max(1, Math.floor(crew.power / 2)),
+        resistance: Math.max(1, Math.floor(crew.resistance / 2)),
+      };
+      p.board.active[seizedIdx].seized = false;
+      p.board.active[seizedIdx].crew = weakCrew;
+      p.board.active[seizedIdx].turnsActive = 0;
+      opp.positionsSeized = Math.max(0, opp.positionsSeized - 1);
+      m.positionsReclaimed++;
+      m.crewPlaced++;
+      m.cashPlayed++;
+      return true;
     }
 
     case 'pushed_attack': {
@@ -302,52 +308,63 @@ function tryAction(state: TurfGameState, side: 'A' | 'B', action: string): boole
     }
 
     case 'arm_weapon': {
-      if (p.hand.weapon.length === 0) return false;
-      // Prefer offensive slot, fall back to defensive
-      let unarmed = p.board.active.findIndex(
-        pos => pos.crew && !pos.weaponOffense && !pos.seized && pos.turnsActive >= 1,
-      );
-      if (unarmed >= 0) {
-        armCrew(p.board, unarmed, p.hand.weapon.pop()!, 'offense');
-        m.weaponsDrawn++;
-        return true;
-      }
-      unarmed = p.board.active.findIndex(
-        pos => pos.crew && !pos.weaponDefense && !pos.seized && pos.turnsActive >= 1,
-      );
-      if (unarmed >= 0) {
-        armCrew(p.board, unarmed, p.hand.weapon.pop()!, 'defense');
-        m.weaponsDrawn++;
-        return true;
+      const weapons = handWeapons(p);
+      if (weapons.length === 0) return false;
+      for (let i = 0; i < p.board.active.length; i++) {
+        const pos = p.board.active[i];
+        if (!pos.crew || pos.seized || pos.turnsActive < 1) continue;
+        if (!pos.weaponTop && placeModifier(p.board, i, weapons[0], 'offense')) {
+          removeFromHand(p, weapons[0]);
+          m.weaponsDrawn++;
+          return true;
+        }
+        if (!pos.weaponBottom && placeModifier(p.board, i, weapons[0], 'defense')) {
+          removeFromHand(p, weapons[0]);
+          m.weaponsDrawn++;
+          return true;
+        }
       }
       return false;
     }
 
     case 'stack_product': {
-      if (p.hand.product.length === 0) return false;
-      // Prefer offensive slot, fall back to defensive
-      let target = p.board.active.findIndex(pos => pos.crew && !pos.drugOffense && !pos.seized);
-      if (target >= 0) {
-        stackDrug(p.board, target, p.hand.product.pop()!, 'offense');
-        m.productPlayed++;
-        return true;
-      }
-      target = p.board.active.findIndex(pos => pos.crew && !pos.drugDefense && !pos.seized);
-      if (target >= 0) {
-        stackDrug(p.board, target, p.hand.product.pop()!, 'defense');
-        m.productPlayed++;
-        return true;
+      const drugs = handDrugs(p);
+      if (drugs.length === 0) return false;
+      for (let i = 0; i < p.board.active.length; i++) {
+        const pos = p.board.active[i];
+        if (!pos.crew || pos.seized) continue;
+        if (!pos.drugTop && placeModifier(p.board, i, drugs[0], 'offense')) {
+          removeFromHand(p, drugs[0]);
+          m.productPlayed++;
+          return true;
+        }
+        if (!pos.drugBottom && placeModifier(p.board, i, drugs[0], 'defense')) {
+          removeFromHand(p, drugs[0]);
+          m.productPlayed++;
+          return true;
+        }
       }
       return false;
     }
 
     case 'stack_cash': {
-      if (p.hand.cash.length === 0) return false;
-      const target = p.board.active.findIndex(pos => pos.crew && !pos.cash && !pos.seized);
-      if (target < 0) return false;
-      stackCash(p.board, target, p.hand.cash.pop()!);
-      m.cashPlayed++;
-      return true;
+      const cash = handCash(p);
+      if (cash.length === 0) return false;
+      for (let i = 0; i < p.board.active.length; i++) {
+        const pos = p.board.active[i];
+        if (!pos.crew || pos.seized) continue;
+        if (!pos.cashLeft && placeModifier(p.board, i, cash[0], 'offense')) {
+          removeFromHand(p, cash[0]);
+          m.cashPlayed++;
+          return true;
+        }
+        if (!pos.cashRight && placeModifier(p.board, i, cash[0], 'defense')) {
+          removeFromHand(p, cash[0]);
+          m.cashPlayed++;
+          return true;
+        }
+      }
+      return false;
     }
 
     case 'direct_attack': {
@@ -399,12 +416,10 @@ function handleOutcome(
 
   if (outcome.type === 'kill') {
     m.kills++;
-    // Draw weapon on kill
-    if (state.config.weaponOnKill && p.weaponDraw.length > 0) {
-      p.hand.weapon.push(p.weaponDraw.pop()!);
-      m.weaponsDrawn++;
-    }
-    // Seize the cleared position
+    awardCash(p);
+    const hasFence = p.board.active.some(pos => pos.crew?.archetype === 'fence');
+    if (hasFence) awardCash(p);
+
     if (!opp.board.active[targetIdx].crew) {
       seizePosition(opp.board.active[targetIdx]);
       m.seizures++;
@@ -412,10 +427,11 @@ function handleOutcome(
     }
   } else if (outcome.type === 'flip') {
     m.flips += outcome.gainedCards.length;
+    awardCash(p);
     for (const card of outcome.gainedCards) {
       if (card.type === 'crew') {
         const emptyIdx = findEmptyActive(p.board);
-        if (emptyIdx >= 0) placeCrew(p.board, emptyIdx, card);
+        if (emptyIdx >= 0) placeCrew(p.board, emptyIdx, card as CrewCard);
       }
     }
     if (!opp.board.active[targetIdx].crew) {
@@ -428,7 +444,7 @@ function handleOutcome(
   }
 }
 
-// ── Win Check ────────────────────────────────────────────────
+// ── Win Check ───────────────────────────────────────────────
 
 function checkWin(state: TurfGameState): boolean {
   for (const side of ['A', 'B'] as const) {
@@ -442,19 +458,14 @@ function checkWin(state: TurfGameState): boolean {
   return false;
 }
 
-// ── Main Loop — Round-Based with Action Budgets ──────────────
+// ── Main Loop ───────────────────────────────────────────────
 
-/**
- * Phase 1: Buildup (up to maxBuildupRounds). Both players build simultaneously.
- *          Either can end buildup early by striking. Auto-ends at max.
- * Phase 2: Combat. Each round, both players get actionsPerRound actions.
- *          Draws cost an action. Round ends when both exhaust actions.
- */
 export function playTurfGame(
   config: TurfGameConfig = DEFAULT_TURF_CONFIG,
   seed?: number,
 ): TurfGameResult {
   const gameSeed = seed ?? randomSeed();
+  bonusCashCounter = 0;
   const state = createGame(config, gameSeed);
   let roundNumber = 0;
 
@@ -489,7 +500,6 @@ export function playTurfGame(
     aiBuildupTurn(state, second);
   }
 
-  // Force combat if buildup maxed out
   if (state.phase === 'buildup') {
     state.phase = 'combat';
     state.metrics.buildupRoundsA = state.buildupTurns.A;
@@ -507,11 +517,9 @@ export function playTurfGame(
     drawPhase(state, 'A');
     drawPhase(state, 'B');
 
-    // Each player gets actionsPerRound actions this round
     let actionsA = config.actionsPerRound;
     let actionsB = config.actionsPerRound;
 
-    // Interleave actions with randomized initiative each pair
     while ((actionsA > 0 || actionsB > 0) && !state.winner) {
       const aGoesFirst = state.rng.next() < 0.5;
 
