@@ -64,14 +64,18 @@ console.log(`  Median Turns:      ${medianTurns}`);
 console.log(`  10th/90th pctile:  ${p10Turns} / ${p90Turns}`);
 
 // Buildup stats
-const avgBuildupA = +(results.reduce((s, r) => s + r.metrics.buildupTurnsA, 0) / n).toFixed(1);
-const avgBuildupB = +(results.reduce((s, r) => s + r.metrics.buildupTurnsB, 0) / n).toFixed(1);
+const avgBuildupA = +(results.reduce((s, r) => s + r.metrics.buildupRoundsA, 0) / n).toFixed(1);
+const avgBuildupB = +(results.reduce((s, r) => s + r.metrics.buildupRoundsB, 0) / n).toFixed(1);
+const avgCombatRounds = +(results.reduce((s, r) => s + r.metrics.combatRounds, 0) / n).toFixed(1);
+const avgTotalActions = +(results.reduce((s, r) => s + r.metrics.totalActions, 0) / n).toFixed(1);
 const firstStrikeA = results.filter(r => r.metrics.firstStrike === 'A').length;
 const firstStrikeB = results.filter(r => r.metrics.firstStrike === 'B').length;
 
-console.log('\n── BUILDUP PHASE ──');
-console.log(`  Avg Buildup A:     ${avgBuildupA} turns`);
-console.log(`  Avg Buildup B:     ${avgBuildupB} turns`);
+console.log('\n── ROUND STRUCTURE ──');
+console.log(`  Avg Buildup A:     ${avgBuildupA} rounds`);
+console.log(`  Avg Buildup B:     ${avgBuildupB} rounds`);
+console.log(`  Avg Combat Rounds: ${avgCombatRounds}`);
+console.log(`  Avg Total Actions: ${avgTotalActions}`);
 console.log(`  First Strike A:    ${(firstStrikeA / n * 100).toFixed(1)}%`);
 console.log(`  First Strike B:    ${(firstStrikeB / n * 100).toFixed(1)}%`);
 

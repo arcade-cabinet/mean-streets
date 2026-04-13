@@ -103,23 +103,27 @@ export interface PlayerState {
 // ── Game State ───────────────────────────────────────────────
 
 export interface TurfGameConfig {
-  positionCount: number;      // 5
-  reserveCount: number;       // 5
-  maxTurns: number;           // 200
-  dieSize: number;            // 6
-  precisionMult: number;      // 3.0
-  crewDrawPerTurn: number;    // 1
-  cashPerTurn: number;        // 1
-  productPerPositions: number; // draw 1 product per N positions held
-  weaponOnKill: boolean;      // draw weapon on kill
-  weaponOnSeize: boolean;     // draw weapon on seize
-  flipThreshold: number;      // die roll needed to flip (1-6 on d6)
+  positionCount: number;        // 5
+  reserveCount: number;         // 5
+  maxRounds: number;            // safety cap
+  dieSize: number;              // 6
+  precisionMult: number;        // 3.0
+  crewDrawPerTurn: number;      // 1
+  cashPerTurn: number;          // 1
+  productPerPositions: number;  // draw 1 product per N positions held
+  weaponOnKill: boolean;        // draw weapon on kill
+  weaponOnSeize: boolean;       // draw weapon on seize
+  flipThreshold: number;        // die roll needed to flip (1-6 on d6)
+  /** Max buildup rounds before combat starts automatically. */
+  maxBuildupRounds: number;
+  /** Actions per player per combat round. */
+  actionsPerRound: number;
 }
 
 export const DEFAULT_TURF_CONFIG: TurfGameConfig = {
   positionCount: 5,
   reserveCount: 5,
-  maxTurns: 200,
+  maxRounds: 100,
   dieSize: 6,
   precisionMult: 3.0,
   crewDrawPerTurn: 1,
@@ -127,7 +131,9 @@ export const DEFAULT_TURF_CONFIG: TurfGameConfig = {
   productPerPositions: 2,
   weaponOnKill: true,
   weaponOnSeize: true,
-  flipThreshold: 4, // roll 4+ to flip on funded attack
+  flipThreshold: 4,
+  maxBuildupRounds: 10,
+  actionsPerRound: 5,
 };
 
 export type GamePhase = 'buildup' | 'combat';
@@ -169,8 +175,10 @@ export interface TurfMetrics {
   positionsReclaimed: number;
   dieRolls: number;
   passes: number;
-  buildupTurnsA: number;
-  buildupTurnsB: number;
+  buildupRoundsA: number;
+  buildupRoundsB: number;
+  combatRounds: number;
+  totalActions: number;
   firstStrike: 'A' | 'B' | null;
 }
 

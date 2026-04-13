@@ -33,7 +33,8 @@ function emptyMetrics(): TurfMetrics {
     kills: 0, flips: 0, seizures: 0, busts: 0, weaponsDrawn: 0,
     productPlayed: 0, cashPlayed: 0, crewPlaced: 0,
     positionsReclaimed: 0, dieRolls: 0, passes: 0,
-    buildupTurnsA: 0, buildupTurnsB: 0, firstStrike: null,
+    buildupRoundsA: 0, buildupRoundsB: 0, combatRounds: 0,
+    totalActions: 0, firstStrike: null,
   };
 }
 
@@ -421,11 +422,13 @@ function checkWin(state: TurfGameState): boolean {
   return false;
 }
 
-// ── Main Loop — Simultaneous Rounds ──────────────────────────
+// ── Main Loop — Round-Based with Action Budgets ──────────────
 
 /**
- * Both players act SIMULTANEOUSLY each round. No first mover.
- * Each round: tick → draw → decide → resolve both at once.
+ * Phase 1: Buildup (up to maxBuildupRounds). Both players build simultaneously.
+ *          Either can end buildup early by striking. Auto-ends at max.
+ * Phase 2: Combat. Each round, both players get actionsPerRound actions.
+ *          Draws cost an action. Round ends when both exhaust actions.
  */
 export function playTurfGame(
   config: TurfGameConfig = DEFAULT_TURF_CONFIG,
@@ -433,47 +436,74 @@ export function playTurfGame(
 ): TurfGameResult {
   const gameSeed = seed ?? randomSeed();
   const state = createGame(config, gameSeed);
+  let roundNumber = 0;
 
-  while (!state.winner && state.turnNumber < config.maxTurns) {
+  // ── BUILDUP PHASE ──
+  while (state.phase === 'buildup' && roundNumber < config.maxBuildupRounds) {
+    roundNumber++;
     state.turnNumber++;
     state.metrics.turns++;
+    state.buildupTurns.A++;
+    state.buildupTurns.B++;
 
-    // Tick BOTH boards simultaneously
     tickPositions(state.players.A.board);
     tickPositions(state.players.B.board);
-
-    // Draw phase for BOTH
     drawPhase(state, 'A');
     drawPhase(state, 'B');
 
-    // Randomize action order each round — eliminates structural bias
+    const aStrikes = shouldStrike(state, 'A');
+    const bStrikes = shouldStrike(state, 'B');
+
+    if (aStrikes || bStrikes) {
+      state.phase = 'combat';
+      state.metrics.buildupRoundsA = state.buildupTurns.A;
+      state.metrics.buildupRoundsB = state.buildupTurns.B;
+      state.metrics.firstStrike = (aStrikes && bStrikes) ? null
+        : aStrikes ? 'A' : 'B';
+      break;
+    }
+
     const first = state.rng.next() < 0.5 ? 'A' : 'B';
     const second: 'A' | 'B' = first === 'A' ? 'B' : 'A';
+    aiBuildupTurn(state, first);
+    aiBuildupTurn(state, second);
+  }
 
-    if (state.phase === 'buildup') {
-      state.buildupTurns.A++;
-      state.buildupTurns.B++;
+  // Force combat if buildup maxed out
+  if (state.phase === 'buildup') {
+    state.phase = 'combat';
+    state.metrics.buildupRoundsA = state.buildupTurns.A;
+    state.metrics.buildupRoundsB = state.buildupTurns.B;
+  }
 
-      const aStrikes = shouldStrike(state, 'A');
-      const bStrikes = shouldStrike(state, 'B');
+  // ── COMBAT PHASE ──
+  while (!state.winner && roundNumber < config.maxRounds) {
+    roundNumber++;
+    state.metrics.combatRounds++;
+    state.metrics.turns++;
 
-      if (aStrikes || bStrikes) {
-        state.phase = 'combat';
-        state.metrics.buildupTurnsA = state.buildupTurns.A;
-        state.metrics.buildupTurnsB = state.buildupTurns.B;
-        state.metrics.firstStrike = (aStrikes && bStrikes) ? null
-          : aStrikes ? 'A' : 'B';
+    tickPositions(state.players.A.board);
+    tickPositions(state.players.B.board);
+    drawPhase(state, 'A');
+    drawPhase(state, 'B');
 
-        aiCombatTurn(state, first);
-        if (!state.winner) aiCombatTurn(state, second);
+    // Each player gets actionsPerRound actions this round
+    let actionsA = config.actionsPerRound;
+    let actionsB = config.actionsPerRound;
+
+    // Interleave actions with randomized initiative each pair
+    while ((actionsA > 0 || actionsB > 0) && !state.winner) {
+      const aGoesFirst = state.rng.next() < 0.5;
+
+      if (aGoesFirst) {
+        if (actionsA > 0) { aiCombatTurn(state, 'A'); actionsA--; state.metrics.totalActions++; }
+        if (actionsB > 0 && !state.winner) { aiCombatTurn(state, 'B'); actionsB--; state.metrics.totalActions++; }
       } else {
-        aiBuildupTurn(state, first);
-        aiBuildupTurn(state, second);
+        if (actionsB > 0) { aiCombatTurn(state, 'B'); actionsB--; state.metrics.totalActions++; }
+        if (actionsA > 0 && !state.winner) { aiCombatTurn(state, 'A'); actionsA--; state.metrics.totalActions++; }
       }
-    } else {
-      // Combat — randomized order each round
-      aiCombatTurn(state, first);
-      if (!state.winner) aiCombatTurn(state, second);
+
+      if (checkWin(state)) break;
     }
 
     if (checkWin(state)) break;
@@ -489,8 +519,8 @@ export function playTurfGame(
   return {
     winner: state.winner,
     endReason: state.endReason!,
-    firstPlayer: 'A', // no first player in simultaneous
-    turnCount: state.turnNumber,
+    firstPlayer: 'A',
+    turnCount: roundNumber,
     metrics: state.metrics,
     seed: gameSeed,
     finalState: {
