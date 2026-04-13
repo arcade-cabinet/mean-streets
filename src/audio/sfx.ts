@@ -38,16 +38,16 @@ export function playSFX(event: string): void {
       noiseSynth.triggerAttackRelease('16n');
       break;
     case 'flip':
-      metalSynth.triggerAttackRelease('32n');
+      metalSynth.triggerAttackRelease(200, '32n');
       break;
     case 'seize':
       impactSynth.triggerAttackRelease('E1', '4n');
       break;
     case 'cash':
-      metalSynth.triggerAttackRelease('16n');
+      metalSynth.triggerAttackRelease(800, '16n');
       break;
     case 'round-start':
-      metalSynth.triggerAttackRelease('8n');
+      metalSynth.triggerAttackRelease(400, '8n');
       break;
     case 'strike':
       impactSynth.triggerAttackRelease('C1', '2n');

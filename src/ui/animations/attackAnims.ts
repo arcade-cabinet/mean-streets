@@ -78,6 +78,8 @@ export function animateOutcome(
     case 'miss':    return attackerEl ? animateMiss(attackerEl)   : Promise.resolve();
     case 'busted':  return attackerEl ? animateMiss(attackerEl)   : Promise.resolve();
     case 'seized':  return targetEl   ? animateSeize(targetEl)    : Promise.resolve();
-    default:        return Promise.resolve();
+    default:
+      if (adjacentEls?.length) return animateSplash(adjacentEls);
+      return Promise.resolve();
   }
 }
