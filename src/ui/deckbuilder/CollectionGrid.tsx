@@ -1,8 +1,8 @@
-import type { ModifierCard, WeaponCard, ProductCard, CashCard } from '../../sim/turf/types';
+import type { ModifierCard } from '../../sim/turf/types';
 import type { CharacterCard } from '../../sim/cards/schemas';
 
 export type TabId = 'all' | 'crew' | 'weapons' | 'drugs' | 'cash';
-type AnyCard = CharacterCard | WeaponCard | ProductCard | CashCard;
+export type AnyCard = CharacterCard | ModifierCard;
 
 interface CollectionGridProps {
   crewCards: CharacterCard[];

@@ -5,7 +5,7 @@ import { generateWeapons, generateDrugs, generateCash } from '../../sim/turf/gen
 import type { CrewCard, ModifierCard } from '../../sim/turf/types';
 import type { CharacterCard } from '../../sim/cards/schemas';
 import { CollectionGrid, DeckSummary } from '../deckbuilder';
-import type { TabId } from '../deckbuilder';
+import type { TabId, AnyCard } from '../deckbuilder';
 
 interface DeckBuilderScreenProps {
   onStartGame: (deck: { crew: CrewCard[]; modifiers: ModifierCard[] }) => void;
@@ -52,7 +52,7 @@ export function DeckBuilderScreen({ onStartGame }: DeckBuilderScreenProps) {
   const modCount = selectedModifiers.length;
   const canStart = crewCount === CREW_GOAL && modCount === MOD_GOAL;
 
-  function handleToggle(card: { id: string; type?: string } & Record<string, unknown>) {
+  function handleToggle(card: AnyCard) {
     const isCrew = 'power' in card && 'resistance' in card;
     setSelectedIds(prev => {
       const next = new Set(prev);
