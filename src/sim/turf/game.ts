@@ -8,7 +8,7 @@
 
 import type {
   TurfGameState, TurfGameConfig, TurfGameResult,
-  TurfMetrics, PlayerState, CrewCard,
+  TurfMetrics, PlayerState, CrewCard, ProductCard, CashCard, WeaponCard,
 } from './types';
 import { DEFAULT_TURF_CONFIG } from './types';
 import { createRng, randomSeed } from '../cards/rng';
@@ -37,28 +37,42 @@ function emptyMetrics(): TurfMetrics {
   };
 }
 
+/** Shared deck template — identical card selection for both players. */
+interface DeckTemplate {
+  crew: CrewCard[];
+  products: ProductCard[];
+  cash: CashCard[];
+  weapons: WeaponCard[];
+}
+
+/** Generate one shared deck, give both players identical copies shuffled differently. */
+function buildSharedDeck(crewPool: CrewCard[], rng: ReturnType<typeof createRng>): DeckTemplate {
+  const crew = rng.shuffle([...crewPool]).slice(0, 15);
+  const products = rng.shuffle([...generateProducts(rng)]).slice(0, 8);
+  const { cards: cashCards } = generateCash();
+  const cash = rng.shuffle([...cashCards]).slice(0, 10);
+  const weapons = rng.shuffle([...generateWeapons()]).slice(0, 8);
+  return { crew, products, cash, weapons };
+}
+
 function initPlayer(
   side: 'A' | 'B',
   config: TurfGameConfig,
-  crewPool: CrewCard[],
+  template: DeckTemplate,
   rng: ReturnType<typeof createRng>,
-  isSecond: boolean,
 ): PlayerState {
-  const shuffledCrew = rng.shuffle([...crewPool]);
-  const crewDeck = shuffledCrew.slice(0, 15);
-  const products = generateProducts(rng);
-  const productDeck = rng.shuffle([...products]).slice(0, 8);
-  const { cards: cashCards } = generateCash();
-  const cashDeck = rng.shuffle([...cashCards]).slice(0, 10);
-  const weapons = generateWeapons();
-  const weaponDeck = rng.shuffle([...weapons]).slice(0, 8);
+  // Deep copy the template so each player has independent card instances
+  const crewDeck = rng.shuffle(template.crew.map(c => ({ ...c })));
+  const productDeck = rng.shuffle(template.products.map(p => ({ ...p })));
+  const cashDeck = rng.shuffle(template.cash.map(c => ({ ...c })));
+  const weaponDeck = rng.shuffle(template.weapons.map(w => ({ ...w })));
 
-  const crewCount = isSecond ? 4 : 3;
+  // Both players start with same hand size: 3 crew, 1 product, 2 cash
   const hand = {
-    crew: crewDeck.splice(0, crewCount),
+    crew: crewDeck.splice(0, 3),
     product: productDeck.splice(0, 1),
     cash: cashDeck.splice(0, 2),
-    weapon: [] as typeof weapons,
+    weapon: [] as WeaponCard[],
   };
 
   return {
@@ -82,16 +96,18 @@ function createGame(config: TurfGameConfig, seed: number): TurfGameState {
     power: c.power, abilityText: c.abilityText,
   }));
 
-  const first: 'A' | 'B' = rng.next() < 0.5 ? 'A' : 'B';
+  // Shared deck — both players get identical card pools, shuffled independently
+  const template = buildSharedDeck(crewPool, rng);
 
   return {
     config,
     players: {
-      A: initPlayer('A', config, crewPool, rng, first !== 'A'),
-      B: initPlayer('B', config, crewPool, rng, first !== 'B'),
+      A: initPlayer('A', config, template, rng),
+      B: initPlayer('B', config, template, rng),
     },
-    turnSide: first,
-    firstPlayer: first,
+    // Simultaneous turns — no first mover. Both act each round.
+    turnSide: 'A', // tracks whose sub-turn it is within a round
+    firstPlayer: 'A', // no longer meaningful — both act simultaneously
     turnNumber: 0,
     phase: 'buildup',
     buildupTurns: { A: 0, B: 0 },
@@ -405,8 +421,12 @@ function checkWin(state: TurfGameState): boolean {
   return false;
 }
 
-// ── Main Loop ────────────────────────────────────────────────
+// ── Main Loop — Simultaneous Rounds ──────────────────────────
 
+/**
+ * Both players act SIMULTANEOUSLY each round. No first mover.
+ * Each round: tick → draw → decide → resolve both at once.
+ */
 export function playTurfGame(
   config: TurfGameConfig = DEFAULT_TURF_CONFIG,
   seed?: number,
@@ -417,42 +437,46 @@ export function playTurfGame(
   while (!state.winner && state.turnNumber < config.maxTurns) {
     state.turnNumber++;
     state.metrics.turns++;
-    const side = state.turnSide;
 
-    // Tick positions (increment turnsActive for crew placement cooldown)
-    tickPositions(state.players[side].board);
+    // Tick BOTH boards simultaneously
+    tickPositions(state.players.A.board);
+    tickPositions(state.players.B.board);
 
-    // Draw phase (always happens)
-    drawPhase(state, side);
+    // Draw phase for BOTH
+    drawPhase(state, 'A');
+    drawPhase(state, 'B');
+
+    // Randomize action order each round — eliminates structural bias
+    const first = state.rng.next() < 0.5 ? 'A' : 'B';
+    const second: 'A' | 'B' = first === 'A' ? 'B' : 'A';
 
     if (state.phase === 'buildup') {
-      state.buildupTurns[side]++;
+      state.buildupTurns.A++;
+      state.buildupTurns.B++;
 
-      // Check if this player wants to strike
-      if (shouldStrike(state, side)) {
-        state.hasStruck[side] = true;
-        state.metrics.firstStrike = state.metrics.firstStrike ?? side;
+      const aStrikes = shouldStrike(state, 'A');
+      const bStrikes = shouldStrike(state, 'B');
 
-        // If EITHER player has struck, combat begins
-        if (state.hasStruck.A || state.hasStruck.B) {
-          state.phase = 'combat';
-          state.metrics.buildupTurnsA = state.buildupTurns.A;
-          state.metrics.buildupTurnsB = state.buildupTurns.B;
-        }
+      if (aStrikes || bStrikes) {
+        state.phase = 'combat';
+        state.metrics.buildupTurnsA = state.buildupTurns.A;
+        state.metrics.buildupTurnsB = state.buildupTurns.B;
+        state.metrics.firstStrike = (aStrikes && bStrikes) ? null
+          : aStrikes ? 'A' : 'B';
 
-        // Execute the strike as a combat action
-        aiCombatTurn(state, side);
+        aiCombatTurn(state, first);
+        if (!state.winner) aiCombatTurn(state, second);
       } else {
-        // Still building
-        aiBuildupTurn(state, side);
+        aiBuildupTurn(state, first);
+        aiBuildupTurn(state, second);
       }
     } else {
-      // Combat phase
-      aiCombatTurn(state, side);
+      // Combat — randomized order each round
+      aiCombatTurn(state, first);
+      if (!state.winner) aiCombatTurn(state, second);
     }
 
     if (checkWin(state)) break;
-    state.turnSide = state.turnSide === 'A' ? 'B' : 'A';
   }
 
   if (!state.winner) {
@@ -465,7 +489,7 @@ export function playTurfGame(
   return {
     winner: state.winner,
     endReason: state.endReason!,
-    firstPlayer: state.firstPlayer,
+    firstPlayer: 'A', // no first player in simultaneous
     turnCount: state.turnNumber,
     metrics: state.metrics,
     seed: gameSeed,

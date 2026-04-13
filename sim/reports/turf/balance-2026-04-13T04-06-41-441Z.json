@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-04-13T04:06:41.433Z",
+  "config": {
+    "positionCount": 5,
+    "reserveCount": 5,
+    "maxTurns": 200,
+    "dieSize": 6,
+    "precisionMult": 3,
+    "crewDrawPerTurn": 1,
+    "cashPerTurn": 1,
+    "productPerPositions": 2,
+    "weaponOnKill": true,
+    "weaponOnSeize": true,
+    "flipThreshold": 4
+  },
+  "games": 10000,
+  "winRateA": 50.8,
+  "firstMoverWinRate": 50.8,
+  "seizureWinRate": 100,
+  "timeoutRate": 0,
+  "avgTurns": 37.4,
+  "medianTurns": 37,
+  "p10Turns": 34,
+  "p90Turns": 41,
+  "avgMetrics": {
+    "directAttacks": 17,
+    "fundedAttacks": 0.6,
+    "pushedAttacks": 4.1,
+    "kills": 12.6,
+    "flips": 3.2,
+    "seizures": 14.6,
+    "busts": 1.4,
+    "weaponsDrawn": 18.5,
+    "crewPlaced": 17.7,
+    "productPlayed": 15.1,
+    "cashPlayed": 19.8,
+    "positionsReclaimed": 6.7,
+    "passes": 1
+  },
+  "issues": [],
+  "outlierSeeds": [
+    2050604223,
+    988467528,
+    1788216193,
+    129542063
+  ]
+}
