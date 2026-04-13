@@ -10,10 +10,10 @@ import {
   findDirectReady,
   findFundedReady,
   findPushReady,
-  canPrecisionAttack,
   positionPower,
   positionDefense,
 } from '../../sim/turf/board';
+import { canPrecisionAttack } from '../../sim/turf/attacks';
 import {
   directAttackAction,
   fundedAttackAction,
