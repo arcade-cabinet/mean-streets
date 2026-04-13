@@ -124,7 +124,7 @@ export const DEFAULT_TURF_CONFIG: TurfGameConfig = {
   positionCount: 5,
   reserveCount: 5,
   maxRounds: 100,
-  dieSize: 6,
+  dieSize: 0,
   precisionMult: 3.0,
   crewDrawPerTurn: 1,
   cashPerTurn: 1,
