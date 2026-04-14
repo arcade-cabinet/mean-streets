@@ -74,7 +74,11 @@ describe('App flow', () => {
           `drug=${selectedDrugCount}/3 cash=${selectedCashCount}/3`,
         );
       }
-      await userEvent.click(startGameButton);
+      startGameButton.scrollIntoView({ block: 'center', inline: 'center' });
+      await settleBrowser();
+      // Use a native dispatch so the DOM event fires even if the button is
+      // partially outside the playwright click hit-target box on CI viewports.
+      startGameButton.click();
       await settleBrowser();
 
       const buildup = await waitForSelector('[data-testid="buildup-screen"]', 10000);
