@@ -53,6 +53,31 @@ select {
   border: 0;
 }
 
+/* Display logo. Scales with menu variant. */
+.menu-logo {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.55));
+}
+
+.menu-logo-stacked {
+  top: max(24px, calc(env(safe-area-inset-top) + 24px));
+  left: 50%;
+  transform: translateX(-50%);
+  width: clamp(180px, 40vw, 280px);
+  max-height: 30vh;
+  object-fit: contain;
+}
+
+.menu-logo-split {
+  top: max(32px, calc(env(safe-area-inset-top) + 32px));
+  left: max(48px, calc(env(safe-area-inset-left) + 48px));
+  width: clamp(200px, 22vw, 320px);
+  max-height: 28vh;
+  object-fit: contain;
+}
+
 .menu-backdrop,
 .menu-grain {
   position: absolute;
