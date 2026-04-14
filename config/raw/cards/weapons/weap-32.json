@@ -1,0 +1,17 @@
+{
+  "id": "weap-32",
+  "type": "weapon",
+  "name": "Throwing Knife",
+  "category": "ranged",
+  "bonus": [
+    1
+  ],
+  "offenseAbility": "REACH",
+  "offenseAbilityText": "Can target any enemy position, not just front-line.",
+  "defenseAbility": "OVERWATCH",
+  "defenseAbilityText": "Deal bonus damage to any crew placed on adjacent positions.",
+  "unlocked": true,
+  "unlockCondition": null,
+  "locked": false,
+  "draft": true
+}

@@ -1,0 +1,18 @@
+{
+  "id": "card-076",
+  "type": "crew",
+  "displayName": "Santos \"Whiskey\" Gutierrez",
+  "archetype": "enforcer",
+  "affiliation": "neon_snakes",
+  "power": [
+    9
+  ],
+  "resistance": [
+    7
+  ],
+  "abilityText": "+3 damage against cards from a rival affiliation",
+  "unlocked": false,
+  "unlockCondition": "Trigger 5 overdraw penalties on opponents",
+  "locked": false,
+  "draft": true
+}

@@ -1,0 +1,18 @@
+{
+  "id": "card-014",
+  "type": "crew",
+  "displayName": "Chin \"Snitch\" Kwon",
+  "archetype": "snitch",
+  "affiliation": "cobalt_syndicate",
+  "power": [
+    3
+  ],
+  "resistance": [
+    4
+  ],
+  "abilityText": "On play: opponent must reveal 1 random card from their hand for the rest of the round",
+  "unlocked": true,
+  "unlockCondition": null,
+  "locked": false,
+  "draft": true
+}

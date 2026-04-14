@@ -1,0 +1,18 @@
+{
+  "id": "card-064",
+  "type": "crew",
+  "displayName": "Chin \"Enforcer\" Romano",
+  "archetype": "enforcer",
+  "affiliation": "iron_devils",
+  "power": [
+    7
+  ],
+  "resistance": [
+    8
+  ],
+  "abilityText": "+3 damage against cards from a rival affiliation",
+  "unlocked": false,
+  "unlockCondition": "Win a game in under 10 turns",
+  "locked": false,
+  "draft": true
+}

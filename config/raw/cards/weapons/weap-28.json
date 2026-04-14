@@ -1,0 +1,17 @@
+{
+  "id": "weap-28",
+  "type": "weapon",
+  "name": "Flashbang",
+  "category": "explosive",
+  "bonus": [
+    4
+  ],
+  "offenseAbility": "BLAST",
+  "offenseAbilityText": "Splash bonus damage to adjacent positions.",
+  "defenseAbility": "DETERRENT",
+  "defenseAbilityText": "Attackers must exceed defense by bonus extra to kill.",
+  "unlocked": false,
+  "unlockCondition": "Win a game using only bladed weapons",
+  "locked": false,
+  "draft": true
+}

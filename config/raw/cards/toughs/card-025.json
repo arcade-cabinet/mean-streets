@@ -1,0 +1,18 @@
+{
+  "id": "card-025",
+  "type": "crew",
+  "displayName": "Kim \"Dusty\" Matsuda",
+  "archetype": "bruiser",
+  "affiliation": "southside_saints",
+  "power": [
+    4
+  ],
+  "resistance": [
+    4
+  ],
+  "abilityText": "Deals +2 damage when attacking a target with lower ATK than this card",
+  "unlocked": false,
+  "unlockCondition": "Win a game using only cards from 2 affiliations",
+  "locked": false,
+  "draft": true
+}

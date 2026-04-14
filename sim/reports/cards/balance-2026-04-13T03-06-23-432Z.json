@@ -1,0 +1,202 @@
+{
+  "timestamp": "2026-04-13T03:06:23.425Z",
+  "config": {
+    "precisionMult": 3,
+    "handMax": 5,
+    "dieSize": 6,
+    "nightShiftEvery": 2,
+    "maxTurns": 200,
+    "deckSize": 20,
+    "activeSize": 6,
+    "reserveSize": 3
+  },
+  "poolSize": 100,
+  "overall": {
+    "games": 10000,
+    "winRateA": 51.2,
+    "firstMoverWinRate": 48.9,
+    "stallRate": 0,
+    "avgTurns": 21.5,
+    "medianTurns": 22,
+    "avgPassRate": 16.2,
+    "avgPrecisionLockRate": 13.7,
+    "avgAttacks": 14.5,
+    "avgSacrifices": 1.2,
+    "avgHustles": 0.3,
+    "avgDieRolls": 1.9,
+    "avgDieHitRate": 75.9,
+    "avgVanguardDeaths": 14.1,
+    "avgOverdraw": 1.91,
+    "avgShieldSaves": 0,
+    "avgNightShifts": 6.3,
+    "avgDeckConflicts": 2.27,
+    "avgDeckSynergies": 3.02
+  },
+  "archetypes": [
+    {
+      "archetype": "bruiser",
+      "totalPlayed": 9,
+      "avgWinContribution": 0,
+      "avgAtk": 8.6,
+      "avgDef": 3
+    },
+    {
+      "archetype": "snitch",
+      "totalPlayed": 9,
+      "avgWinContribution": 0,
+      "avgAtk": 4.4,
+      "avgDef": 3.3
+    },
+    {
+      "archetype": "lookout",
+      "totalPlayed": 9,
+      "avgWinContribution": 0,
+      "avgAtk": 6.6,
+      "avgDef": 5.4
+    },
+    {
+      "archetype": "enforcer",
+      "totalPlayed": 9,
+      "avgWinContribution": 0,
+      "avgAtk": 7.3,
+      "avgDef": 3.9
+    },
+    {
+      "archetype": "hustler",
+      "totalPlayed": 8,
+      "avgWinContribution": 0,
+      "avgAtk": 5.3,
+      "avgDef": 3.6
+    },
+    {
+      "archetype": "medic",
+      "totalPlayed": 8,
+      "avgWinContribution": 0,
+      "avgAtk": 5.3,
+      "avgDef": 6
+    },
+    {
+      "archetype": "arsonist",
+      "totalPlayed": 8,
+      "avgWinContribution": 0,
+      "avgAtk": 6.8,
+      "avgDef": 1.5
+    },
+    {
+      "archetype": "ghost",
+      "totalPlayed": 8,
+      "avgWinContribution": 0,
+      "avgAtk": 5,
+      "avgDef": 2.8
+    },
+    {
+      "archetype": "fixer",
+      "totalPlayed": 8,
+      "avgWinContribution": 0,
+      "avgAtk": 5.8,
+      "avgDef": 4.3
+    },
+    {
+      "archetype": "wheelman",
+      "totalPlayed": 8,
+      "avgWinContribution": 0,
+      "avgAtk": 8,
+      "avgDef": 4.3
+    },
+    {
+      "archetype": "shark",
+      "totalPlayed": 8,
+      "avgWinContribution": 0,
+      "avgAtk": 6.4,
+      "avgDef": 2.5
+    },
+    {
+      "archetype": "fence",
+      "totalPlayed": 8,
+      "avgWinContribution": 0,
+      "avgAtk": 4.4,
+      "avgDef": 3.4
+    }
+  ],
+  "affiliations": [
+    {
+      "affiliation": "kings_row",
+      "totalInDecks": 9,
+      "avgConflicts": 0
+    },
+    {
+      "affiliation": "jade_dragon",
+      "totalInDecks": 9,
+      "avgConflicts": 0
+    },
+    {
+      "affiliation": "reapers",
+      "totalInDecks": 9,
+      "avgConflicts": 0
+    },
+    {
+      "affiliation": "black_market",
+      "totalInDecks": 9,
+      "avgConflicts": 0
+    },
+    {
+      "affiliation": "southside_saints",
+      "totalInDecks": 9,
+      "avgConflicts": 0
+    },
+    {
+      "affiliation": "freelance",
+      "totalInDecks": 10,
+      "avgConflicts": 0
+    },
+    {
+      "affiliation": "los_diablos",
+      "totalInDecks": 9,
+      "avgConflicts": 0
+    },
+    {
+      "affiliation": "iron_devils",
+      "totalInDecks": 9,
+      "avgConflicts": 0
+    },
+    {
+      "affiliation": "neon_snakes",
+      "totalInDecks": 9,
+      "avgConflicts": 0
+    },
+    {
+      "affiliation": "dead_rabbits",
+      "totalInDecks": 9,
+      "avgConflicts": 0
+    },
+    {
+      "affiliation": "cobalt_syndicate",
+      "totalInDecks": 9,
+      "avgConflicts": 0
+    }
+  ],
+  "tierDistribution": {
+    "1": {
+      "avgAtk": 3,
+      "avgDef": 1.9
+    },
+    "2": {
+      "avgAtk": 4.7,
+      "avgDef": 2.9
+    },
+    "3": {
+      "avgAtk": 6.2,
+      "avgDef": 3.4
+    },
+    "4": {
+      "avgAtk": 8.2,
+      "avgDef": 4.5
+    },
+    "5": {
+      "avgAtk": 8.8,
+      "avgDef": 5.7
+    }
+  },
+  "issues": [],
+  "recommendations": []
+}

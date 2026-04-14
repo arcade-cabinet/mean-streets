@@ -1,0 +1,18 @@
+{
+  "id": "card-012",
+  "type": "crew",
+  "displayName": "Santos \"Bolt\" Kelly",
+  "archetype": "fence",
+  "affiliation": "dead_rabbits",
+  "power": [
+    2
+  ],
+  "resistance": [
+    4
+  ],
+  "abilityText": "On sacrifice: draw 2 cards instead of healing",
+  "unlocked": true,
+  "unlockCondition": null,
+  "locked": false,
+  "draft": true
+}

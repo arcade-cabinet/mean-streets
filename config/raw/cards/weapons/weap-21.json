@@ -1,0 +1,17 @@
+{
+  "id": "weap-21",
+  "type": "weapon",
+  "name": "Thermite Charge",
+  "category": "explosive",
+  "bonus": [
+    2
+  ],
+  "offenseAbility": "BLAST",
+  "offenseAbilityText": "Splash bonus damage to adjacent positions.",
+  "defenseAbility": "DETERRENT",
+  "defenseAbilityText": "Attackers must exceed defense by bonus extra to kill.",
+  "unlocked": true,
+  "unlockCondition": null,
+  "locked": false,
+  "draft": true
+}

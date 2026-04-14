@@ -1,0 +1,18 @@
+{
+  "id": "card-089",
+  "type": "crew",
+  "displayName": "Diego \"Lefty\" Castillo",
+  "archetype": "hustler",
+  "affiliation": "cobalt_syndicate",
+  "power": [
+    10
+  ],
+  "resistance": [
+    10
+  ],
+  "abilityText": "On play: swap 1 card from your hand with 1 from your reserves",
+  "unlocked": false,
+  "unlockCondition": "Deal 38 total damage in a single game",
+  "locked": false,
+  "draft": true
+}

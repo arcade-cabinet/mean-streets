@@ -1,0 +1,17 @@
+{
+  "id": "drug-18",
+  "type": "product",
+  "name": "Heavy Haze",
+  "category": "sedative",
+  "potency": [
+    5
+  ],
+  "offenseAbility": "SUPPRESS",
+  "offenseAbilityText": "Target crew's power reduced by potency for 2 rounds.",
+  "defenseAbility": "NUMB",
+  "defenseAbilityText": "Crew ignores first potency points of damage per round.",
+  "unlocked": false,
+  "unlockCondition": "Survive 5 killing blows using painkillers",
+  "locked": false,
+  "draft": true
+}

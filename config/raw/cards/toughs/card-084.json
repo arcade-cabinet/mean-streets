@@ -1,0 +1,18 @@
+{
+  "id": "card-084",
+  "type": "crew",
+  "displayName": "Rico \"Fats\" Liu",
+  "archetype": "fence",
+  "affiliation": "jade_dragon",
+  "power": [
+    8
+  ],
+  "resistance": [
+    9
+  ],
+  "abilityText": "On sacrifice: draw 2 cards instead of healing",
+  "unlocked": false,
+  "unlockCondition": "Win a game in under 14 turns",
+  "locked": false,
+  "draft": true
+}

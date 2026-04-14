@@ -1,0 +1,17 @@
+{
+  "id": "drug-48",
+  "type": "product",
+  "name": "Black Burn",
+  "category": "narcotic",
+  "potency": [
+    1
+  ],
+  "offenseAbility": "BERSERK",
+  "offenseAbilityText": "Crew power boosted by potency but takes 1 self-damage after attacking.",
+  "defenseAbility": "PAINKILLERS",
+  "defenseAbilityText": "Crew survives next potency killing blows at 1 resistance instead of dying.",
+  "unlocked": false,
+  "unlockCondition": "Win a game in under 16 rounds",
+  "locked": false,
+  "draft": true
+}

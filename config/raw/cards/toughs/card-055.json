@@ -1,0 +1,18 @@
+{
+  "id": "card-055",
+  "type": "crew",
+  "displayName": "Rosa \"Arsonist\" Morales",
+  "archetype": "arsonist",
+  "affiliation": "iron_devils",
+  "power": [
+    7
+  ],
+  "resistance": [
+    5
+  ],
+  "abilityText": "On attack: also deals 1 damage to the card behind the vanguard (next in line)",
+  "unlocked": false,
+  "unlockCondition": "Win a game using only cards from 2 affiliations",
+  "locked": false,
+  "draft": true
+}

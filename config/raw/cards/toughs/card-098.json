@@ -1,0 +1,18 @@
+{
+  "id": "card-098",
+  "type": "crew",
+  "displayName": "Jackie \"Flint\" DeLuca",
+  "archetype": "snitch",
+  "affiliation": "iron_devils",
+  "power": [
+    8
+  ],
+  "resistance": [
+    10
+  ],
+  "abilityText": "On play: opponent must reveal 1 random card from their hand for the rest of the round",
+  "unlocked": false,
+  "unlockCondition": "Win with a deck containing 3+ affiliations",
+  "locked": false,
+  "draft": true
+}

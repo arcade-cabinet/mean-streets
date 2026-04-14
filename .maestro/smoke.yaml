@@ -1,0 +1,8 @@
+---
+- launchApp
+- assertVisible:
+    id: "main-menu-screen"
+- assertVisible: "New Game"
+- tapOn:
+    id: "new-game-button"
+- assertVisible: "Build The Crew"

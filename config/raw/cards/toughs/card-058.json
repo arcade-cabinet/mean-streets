@@ -1,0 +1,18 @@
+{
+  "id": "card-058",
+  "type": "crew",
+  "displayName": "Billy \"Copper\" Watanabe",
+  "archetype": "wheelman",
+  "affiliation": "iron_devils",
+  "power": [
+    6
+  ],
+  "resistance": [
+    7
+  ],
+  "abilityText": "On play: swap your vanguard with any card in your active hand (vanguard goes to hand at current HP)",
+  "unlocked": false,
+  "unlockCondition": "Win with a deck containing 3+ affiliations",
+  "locked": false,
+  "draft": true
+}

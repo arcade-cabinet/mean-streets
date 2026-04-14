@@ -1,0 +1,18 @@
+{
+  "id": "card-073",
+  "type": "crew",
+  "displayName": "Bao \"Wire\" Suzuki",
+  "archetype": "bruiser",
+  "affiliation": "cobalt_syndicate",
+  "power": [
+    9
+  ],
+  "resistance": [
+    6
+  ],
+  "abilityText": "Deals +2 damage when attacking a target with lower ATK than this card",
+  "unlocked": false,
+  "unlockCondition": "Kill 9 vanguards total",
+  "locked": false,
+  "draft": true
+}

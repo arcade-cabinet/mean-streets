@@ -1,0 +1,18 @@
+{
+  "id": "card-003",
+  "type": "crew",
+  "displayName": "Zhao \"Lookout\" Sullivan",
+  "archetype": "lookout",
+  "affiliation": "reapers",
+  "power": [
+    3
+  ],
+  "resistance": [
+    3
+  ],
+  "abilityText": "On play: peek at the top 2 cards of your own deck, reorder them",
+  "unlocked": true,
+  "unlockCondition": null,
+  "locked": false,
+  "draft": true
+}

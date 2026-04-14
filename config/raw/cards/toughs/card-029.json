@@ -1,0 +1,18 @@
+{
+  "id": "card-029",
+  "type": "crew",
+  "displayName": "Gino \"Hustler\" Nguyen",
+  "archetype": "hustler",
+  "affiliation": "kings_row",
+  "power": [
+    5
+  ],
+  "resistance": [
+    4
+  ],
+  "abilityText": "On play: swap 1 card from your hand with 1 from your reserves",
+  "unlocked": false,
+  "unlockCondition": "Deal 33 total damage in a single game",
+  "locked": false,
+  "draft": true
+}

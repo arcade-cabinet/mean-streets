@@ -1,0 +1,18 @@
+{
+  "id": "card-006",
+  "type": "crew",
+  "displayName": "Sonny \"Hammer\" Castillo",
+  "archetype": "medic",
+  "affiliation": "freelance",
+  "power": [
+    1
+  ],
+  "resistance": [
+    5
+  ],
+  "abilityText": "When sacrificed to heal: heals double the normal amount",
+  "unlocked": true,
+  "unlockCondition": null,
+  "locked": false,
+  "draft": true
+}

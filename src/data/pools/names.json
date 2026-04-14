@@ -1,0 +1,51 @@
+{
+  "western": {
+    "first": [
+      "Jimmy", "Tommy", "Bobby", "Danny", "Vinnie", "Eddie", "Frank", "Ray",
+      "Tony", "Sal", "Mickey", "Paulie", "Rocco", "Gino", "Nicky", "Joey",
+      "Donnie", "Louie", "Sonny", "Jackie", "Billy", "Richie", "Freddy", "Mikey",
+      "Benny", "Teddy", "Sammy", "Frankie", "Charlie", "Vito"
+    ],
+    "last": [
+      "Malone", "Sullivan", "Doyle", "Murphy", "Kelly", "Walsh", "Burns",
+      "Quinn", "Brennan", "Duffy", "O'Brien", "Flanagan", "Russo", "Moretti",
+      "Caruso", "DeLuca", "Rizzo", "Ferraro", "Romano", "Conti"
+    ]
+  },
+  "eastern": {
+    "first": [
+      "Chin", "Wei", "Kenji", "Hiro", "Jin", "Yuki", "Ryu", "Tak",
+      "Sato", "Ken", "Lee", "Wong", "Chan", "Lin", "Park", "Kim",
+      "Han", "Zhao", "Fang", "Tao", "Akira", "Koji", "Shin", "Min",
+      "Bao", "Dao", "Long", "Feng", "Kai", "Sung"
+    ],
+    "last": [
+      "Chung", "Nakamura", "Tanaka", "Watanabe", "Yamamoto", "Chen",
+      "Huang", "Liu", "Wu", "Yang", "Kwon", "Nguyen", "Tran", "Pham",
+      "Suzuki", "Takahashi", "Matsuda", "Ishida", "Morimoto", "Hayashi"
+    ]
+  },
+  "hispanic": {
+    "first": [
+      "Marco", "Rosa", "Carlos", "Elena", "Diego", "Sofia", "Hector",
+      "Maria", "Luis", "Ana", "Javier", "Carmen", "Miguel", "Isabella",
+      "Rafael", "Lucia", "Alejandro", "Valentina", "Emilio", "Gabriela",
+      "Rico", "Lola", "Santos", "Paz", "Ramon", "Cruz", "Mateo", "Camila",
+      "Oscar", "Ines"
+    ],
+    "last": [
+      "Reyes", "Morales", "Vargas", "Fuentes", "Delgado", "Herrera",
+      "Mendoza", "Gutierrez", "Salazar", "Vega", "Castillo", "Rojas",
+      "Ortega", "Navarro", "Aguilar", "Guerrero", "Ramos", "Silva",
+      "Torres", "Diaz"
+    ]
+  },
+  "nicknames": [
+    "Fats", "Slim", "Red", "Lefty", "Two-Tone", "Bones", "Ice",
+    "Snake", "Razor", "Nails", "Copper", "Smoke", "Patch", "Scar",
+    "Lucky", "Knuckles", "Shades", "Whiskey", "Grim", "Torch",
+    "Needles", "Dusty", "Crow", "Ghost", "Switch", "Chains", "Brick",
+    "Wire", "Spike", "Dagger", "Hammer", "Anvil", "Rust", "Flint",
+    "Cinder", "Storm", "Blade", "Bolt", "Ash", "Thorn"
+  ]
+}

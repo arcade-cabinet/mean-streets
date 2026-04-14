@@ -1,0 +1,18 @@
+{
+  "id": "card-047",
+  "type": "crew",
+  "displayName": "Hector \"Lefty\" Herrera",
+  "archetype": "shark",
+  "affiliation": "freelance",
+  "power": [
+    5
+  ],
+  "resistance": [
+    4
+  ],
+  "abilityText": "+1 damage for every point of damage already on the enemy vanguard",
+  "unlocked": false,
+  "unlockCondition": "Win without using any reserves",
+  "locked": false,
+  "draft": true
+}

@@ -1,0 +1,18 @@
+{
+  "id": "card-034",
+  "type": "crew",
+  "displayName": "Jin \"Grim\" Pham",
+  "archetype": "wheelman",
+  "affiliation": "jade_dragon",
+  "power": [
+    4
+  ],
+  "resistance": [
+    4
+  ],
+  "abilityText": "On play: swap your vanguard with any card in your active hand (vanguard goes to hand at current HP)",
+  "unlocked": false,
+  "unlockCondition": "Win a game in under 10 turns",
+  "locked": false,
+  "draft": true
+}

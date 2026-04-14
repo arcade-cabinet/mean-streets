@@ -1,0 +1,18 @@
+{
+  "id": "card-054",
+  "type": "crew",
+  "displayName": "Kim \"Medic\" Aguilar",
+  "archetype": "medic",
+  "affiliation": "los_diablos",
+  "power": [
+    6
+  ],
+  "resistance": [
+    7
+  ],
+  "abilityText": "When sacrificed to heal: heals double the normal amount",
+  "unlocked": false,
+  "unlockCondition": "Win a game in under 11 turns",
+  "locked": false,
+  "draft": true
+}

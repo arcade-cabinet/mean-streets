@@ -1,0 +1,18 @@
+{
+  "id": "card-043",
+  "type": "crew",
+  "displayName": "Mickey \"Lucky\" Ishida",
+  "archetype": "arsonist",
+  "affiliation": "cobalt_syndicate",
+  "power": [
+    8
+  ],
+  "resistance": [
+    5
+  ],
+  "abilityText": "On attack: also deals 1 damage to the card behind the vanguard (next in line)",
+  "unlocked": false,
+  "unlockCondition": "Kill 12 vanguards total",
+  "locked": false,
+  "draft": true
+}

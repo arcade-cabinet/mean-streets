@@ -1,0 +1,18 @@
+{
+  "id": "card-040",
+  "type": "crew",
+  "displayName": "Javier \"Dagger\" Nguyen",
+  "archetype": "enforcer",
+  "affiliation": "neon_snakes",
+  "power": [
+    6
+  ],
+  "resistance": [
+    4
+  ],
+  "abilityText": "+3 damage against cards from a rival affiliation",
+  "unlocked": false,
+  "unlockCondition": "Win a game on the first night phase",
+  "locked": false,
+  "draft": true
+}

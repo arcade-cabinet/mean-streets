@@ -1,0 +1,129 @@
+{
+  "version": "2026-04-13-goap-policy-v1",
+  "training": {
+    "warmupGames": 512,
+    "epsilonStart": 0.2,
+    "epsilonMin": 0.02,
+    "epsilonDecay": 0.992,
+    "alpha": 0.08
+  },
+  "targets": {
+    "timeoutRateMax": 0.05,
+    "passRatePerTurnMax": 0.2,
+    "stallTurnsMax": 0.12,
+    "firstMoverAdvantageMax": 0.55
+  },
+  "lockThresholds": {
+    "stableRunDeltaMax": 0.02,
+    "usageZScoreMax": 1,
+    "plannerFailureRateMax": 0.15
+  },
+  "benchmarkProfiles": {
+    "smoke": {
+      "games": 128,
+      "catalogSeed": 42,
+      "runSeed": 12345
+    },
+    "ci": {
+      "games": 512,
+      "catalogSeed": 42,
+      "runSeed": 12345
+    },
+    "release": {
+      "games": 5000,
+      "catalogSeed": 42,
+      "runSeed": 12345
+    }
+  },
+  "benchmarkThresholds": {
+    "smoke": {
+      "winRateMin": 0.42,
+      "winRateMax": 0.58,
+      "firstMoverMin": 0.42,
+      "firstMoverMax": 0.58,
+      "timeoutRateMax": 0.01,
+      "medianTurnsMin": 6,
+      "medianTurnsMax": 8,
+      "p90TurnsMax": 9,
+      "failedPlansMax": 1.3,
+      "fundedAttacksMin": 0.2,
+      "pushedAttacksMin": 0.8,
+      "policyGuidedMin": 0
+    },
+    "ci": {
+      "winRateMin": 0.42,
+      "winRateMax": 0.58,
+      "firstMoverMin": 0.42,
+      "firstMoverMax": 0.58,
+      "timeoutRateMax": 0.005,
+      "medianTurnsMin": 6,
+      "medianTurnsMax": 8,
+      "p90TurnsMax": 8,
+      "failedPlansMax": 1.2,
+      "fundedAttacksMin": 0.3,
+      "pushedAttacksMin": 1,
+      "policyGuidedMin": 0.15
+    },
+    "release": {
+      "winRateMin": 0.45,
+      "winRateMax": 0.55,
+      "firstMoverMin": 0.45,
+      "firstMoverMax": 0.55,
+      "timeoutRateMax": 0.001,
+      "medianTurnsMin": 6,
+      "medianTurnsMax": 8,
+      "p90TurnsMax": 8,
+      "failedPlansMax": 1.3,
+      "fundedAttacksMin": 0.4,
+      "pushedAttacksMin": 1.1,
+      "policyGuidedMin": 1.5
+    }
+  },
+  "analysisProfiles": {
+    "quick": {
+      "profile": "smoke",
+      "bootstrapSamples": 200,
+      "minimumSweepSamples": 24
+    },
+    "standard": {
+      "profile": "ci",
+      "bootstrapSamples": 500,
+      "minimumSweepSamples": 96
+    },
+    "release": {
+      "profile": "release",
+      "bootstrapSamples": 1000,
+      "minimumSweepSamples": 256
+    }
+  },
+  "statisticalThresholds": {
+    "alpha": 0.05,
+    "effectDeltaMax": 0.05,
+    "turnDeltaMax": 0.75,
+    "volatilityMax": 0.06,
+    "interactionRiskMax": 0.08
+  },
+  "sweepProfiles": {
+    "crew_weapon": {
+      "crewCount": 12,
+      "weaponCount": 10,
+      "drugCount": 0
+    },
+    "crew_drug": {
+      "crewCount": 12,
+      "weaponCount": 0,
+      "drugCount": 10
+    },
+    "weapon_drug": {
+      "crewCount": 0,
+      "weaponCount": 10,
+      "drugCount": 10
+    },
+    "crew_weapon_drug": {
+      "crewCount": 8,
+      "weaponCount": 6,
+      "drugCount": 6
+    }
+  },
+  "convergenceSlices": 5
+}

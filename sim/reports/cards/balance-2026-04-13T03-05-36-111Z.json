@@ -1,0 +1,206 @@
+{
+  "timestamp": "2026-04-13T03:05:36.105Z",
+  "config": {
+    "precisionMult": 3,
+    "handMax": 5,
+    "dieSize": 6,
+    "nightShiftEvery": 2,
+    "maxTurns": 200,
+    "deckSize": 20,
+    "activeSize": 6,
+    "reserveSize": 3
+  },
+  "poolSize": 100,
+  "overall": {
+    "games": 5000,
+    "winRateA": 58.7,
+    "firstMoverWinRate": 30.1,
+    "stallRate": 0,
+    "avgTurns": 17.3,
+    "medianTurns": 17,
+    "avgPassRate": 3.6,
+    "avgPrecisionLockRate": 12,
+    "avgAttacks": 14,
+    "avgSacrifices": 0.9,
+    "avgHustles": 0,
+    "avgDieRolls": 1.3,
+    "avgDieHitRate": 89,
+    "avgVanguardDeaths": 13.8,
+    "avgOverdraw": 8.56,
+    "avgShieldSaves": 0,
+    "avgNightShifts": 6.3,
+    "avgDeckConflicts": 2.23,
+    "avgDeckSynergies": 3
+  },
+  "archetypes": [
+    {
+      "archetype": "bruiser",
+      "totalPlayed": 9,
+      "avgWinContribution": 0,
+      "avgAtk": 8.6,
+      "avgDef": 3
+    },
+    {
+      "archetype": "snitch",
+      "totalPlayed": 9,
+      "avgWinContribution": 0,
+      "avgAtk": 4.4,
+      "avgDef": 3.3
+    },
+    {
+      "archetype": "lookout",
+      "totalPlayed": 9,
+      "avgWinContribution": 0,
+      "avgAtk": 6.6,
+      "avgDef": 5.4
+    },
+    {
+      "archetype": "enforcer",
+      "totalPlayed": 9,
+      "avgWinContribution": 0,
+      "avgAtk": 7.3,
+      "avgDef": 3.9
+    },
+    {
+      "archetype": "hustler",
+      "totalPlayed": 8,
+      "avgWinContribution": 0,
+      "avgAtk": 5.3,
+      "avgDef": 3.6
+    },
+    {
+      "archetype": "medic",
+      "totalPlayed": 8,
+      "avgWinContribution": 0,
+      "avgAtk": 5.3,
+      "avgDef": 6
+    },
+    {
+      "archetype": "arsonist",
+      "totalPlayed": 8,
+      "avgWinContribution": 0,
+      "avgAtk": 6.8,
+      "avgDef": 1.5
+    },
+    {
+      "archetype": "ghost",
+      "totalPlayed": 8,
+      "avgWinContribution": 0,
+      "avgAtk": 5,
+      "avgDef": 2.8
+    },
+    {
+      "archetype": "fixer",
+      "totalPlayed": 8,
+      "avgWinContribution": 0,
+      "avgAtk": 5.8,
+      "avgDef": 4.3
+    },
+    {
+      "archetype": "wheelman",
+      "totalPlayed": 8,
+      "avgWinContribution": 0,
+      "avgAtk": 8,
+      "avgDef": 4.3
+    },
+    {
+      "archetype": "shark",
+      "totalPlayed": 8,
+      "avgWinContribution": 0,
+      "avgAtk": 6.4,
+      "avgDef": 2.5
+    },
+    {
+      "archetype": "fence",
+      "totalPlayed": 8,
+      "avgWinContribution": 0,
+      "avgAtk": 4.4,
+      "avgDef": 3.4
+    }
+  ],
+  "affiliations": [
+    {
+      "affiliation": "kings_row",
+      "totalInDecks": 9,
+      "avgConflicts": 0
+    },
+    {
+      "affiliation": "jade_dragon",
+      "totalInDecks": 9,
+      "avgConflicts": 0
+    },
+    {
+      "affiliation": "reapers",
+      "totalInDecks": 9,
+      "avgConflicts": 0
+    },
+    {
+      "affiliation": "black_market",
+      "totalInDecks": 9,
+      "avgConflicts": 0
+    },
+    {
+      "affiliation": "southside_saints",
+      "totalInDecks": 9,
+      "avgConflicts": 0
+    },
+    {
+      "affiliation": "freelance",
+      "totalInDecks": 10,
+      "avgConflicts": 0
+    },
+    {
+      "affiliation": "los_diablos",
+      "totalInDecks": 9,
+      "avgConflicts": 0
+    },
+    {
+      "affiliation": "iron_devils",
+      "totalInDecks": 9,
+      "avgConflicts": 0
+    },
+    {
+      "affiliation": "neon_snakes",
+      "totalInDecks": 9,
+      "avgConflicts": 0
+    },
+    {
+      "affiliation": "dead_rabbits",
+      "totalInDecks": 9,
+      "avgConflicts": 0
+    },
+    {
+      "affiliation": "cobalt_syndicate",
+      "totalInDecks": 9,
+      "avgConflicts": 0
+    }
+  ],
+  "tierDistribution": {
+    "1": {
+      "avgAtk": 3,
+      "avgDef": 1.9
+    },
+    "2": {
+      "avgAtk": 4.7,
+      "avgDef": 2.9
+    },
+    "3": {
+      "avgAtk": 6.2,
+      "avgDef": 3.4
+    },
+    "4": {
+      "avgAtk": 8.2,
+      "avgDef": 4.5
+    },
+    "5": {
+      "avgAtk": 8.8,
+      "avgDef": 5.7
+    }
+  },
+  "issues": [
+    "First mover advantage 30.1%"
+  ],
+  "recommendations": [
+    "Adjust second player bonus"
+  ]
+}

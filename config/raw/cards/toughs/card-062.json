@@ -1,0 +1,18 @@
+{
+  "id": "card-062",
+  "type": "crew",
+  "displayName": "Marco \"Snitch\" Ishida",
+  "archetype": "snitch",
+  "affiliation": "jade_dragon",
+  "power": [
+    6
+  ],
+  "resistance": [
+    7
+  ],
+  "abilityText": "On play: opponent must reveal 1 random card from their hand for the rest of the round",
+  "unlocked": false,
+  "unlockCondition": "Win 1 games with a full Freelance deck",
+  "locked": false,
+  "draft": true
+}

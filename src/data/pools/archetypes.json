@@ -1,0 +1,136 @@
+{
+  "archetypes": [
+    {
+      "id": "bruiser",
+      "title": "Bruiser",
+      "description": "Raw power. No precision restriction.",
+      "ability": "OVERWHELM",
+      "abilityText": "Ignores precision rule. Can attack any target regardless of HP.",
+      "targets": "vanguard",
+      "timing": "on_attack",
+      "powerMod": 1,
+      "resistanceMod": 1
+    },
+    {
+      "id": "snitch",
+      "title": "Snitch",
+      "description": "Reveals opponent secrets.",
+      "ability": "RAT_OUT",
+      "abilityText": "On play: reveal opponent's top 3 draw pile cards.",
+      "targets": "draw_pile",
+      "timing": "on_play",
+      "powerMod": -1,
+      "resistanceMod": 0
+    },
+    {
+      "id": "lookout",
+      "title": "Lookout",
+      "description": "Accesses the reserves.",
+      "ability": "SCOUT",
+      "abilityText": "On play: swap this card with any card in your reserves.",
+      "targets": "reserves",
+      "timing": "on_play",
+      "powerMod": 0,
+      "resistanceMod": 0
+    },
+    {
+      "id": "enforcer",
+      "title": "Enforcer",
+      "description": "Hits rival affiliations harder.",
+      "ability": "VENDETTA",
+      "abilityText": "Deals double damage to cards from a rival affiliation.",
+      "targets": "vanguard",
+      "timing": "on_attack",
+      "powerMod": 0,
+      "resistanceMod": 1
+    },
+    {
+      "id": "ghost",
+      "title": "Ghost",
+      "description": "Strikes from the shadows.",
+      "ability": "PHANTOM_STRIKE",
+      "abilityText": "Can attack directly from reserves without being drawn first.",
+      "targets": "vanguard",
+      "timing": "on_attack",
+      "powerMod": -1,
+      "resistanceMod": -1
+    },
+    {
+      "id": "arsonist",
+      "title": "Arsonist",
+      "description": "Collateral damage guaranteed.",
+      "ability": "SCORCHED_EARTH",
+      "abilityText": "On attack: also deals 2 damage to opponent's top draw pile card.",
+      "targets": "draw_pile",
+      "timing": "on_attack",
+      "powerMod": 0,
+      "resistanceMod": 0
+    },
+    {
+      "id": "shark",
+      "title": "Shark",
+      "description": "Preys on weakness.",
+      "ability": "BLOOD_FRENZY",
+      "abilityText": "Damage +1 for each card fewer the opponent has than you.",
+      "targets": "vanguard",
+      "timing": "on_attack",
+      "powerMod": -1,
+      "resistanceMod": -1
+    },
+    {
+      "id": "fence",
+      "title": "Fence",
+      "description": "Converts anything to value.",
+      "ability": "HOT_SWAP",
+      "abilityText": "On sacrifice: draw 2 cards instead of healing.",
+      "targets": "self",
+      "timing": "on_sacrifice",
+      "powerMod": 0,
+      "resistanceMod": 0
+    },
+    {
+      "id": "medic",
+      "title": "Medic",
+      "description": "Keeps fighters alive.",
+      "ability": "PATCH_UP",
+      "abilityText": "On sacrifice: heal double. Can heal from reserves.",
+      "targets": "self",
+      "timing": "on_sacrifice",
+      "powerMod": -1,
+      "resistanceMod": 2
+    },
+    {
+      "id": "wheelman",
+      "title": "Wheelman",
+      "description": "Extracts and repositions.",
+      "ability": "EXTRACTION",
+      "abilityText": "On play: swap vanguard with any card in your hand.",
+      "targets": "self",
+      "timing": "on_play",
+      "powerMod": 0,
+      "resistanceMod": 0
+    },
+    {
+      "id": "hustler",
+      "title": "Hustler",
+      "description": "Takes what isn't his.",
+      "ability": "PICKPOCKET",
+      "abilityText": "On attack: steal 1 random card from opponent's hand.",
+      "targets": "hand",
+      "timing": "on_attack",
+      "powerMod": -1,
+      "resistanceMod": -1
+    },
+    {
+      "id": "sniper",
+      "title": "Sniper",
+      "description": "Picks targets precisely.",
+      "ability": "CALLED_SHOT",
+      "abilityText": "Can target any card in opponent's hand, not just vanguard.",
+      "targets": "hand",
+      "timing": "on_attack",
+      "powerMod": -1,
+      "resistanceMod": -1
+    }
+  ]
+}

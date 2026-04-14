@@ -1,0 +1,18 @@
+{
+  "id": "card-066",
+  "type": "crew",
+  "displayName": "Chan \"Medic\" Liu",
+  "archetype": "medic",
+  "affiliation": "cobalt_syndicate",
+  "power": [
+    6
+  ],
+  "resistance": [
+    10
+  ],
+  "abilityText": "When sacrificed to heal: heals double the normal amount",
+  "unlocked": false,
+  "unlockCondition": "Trigger 6 overdraw penalties on opponents",
+  "locked": false,
+  "draft": true
+}

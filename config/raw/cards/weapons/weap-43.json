@@ -1,0 +1,17 @@
+{
+  "id": "weap-43",
+  "type": "weapon",
+  "name": "Chloroform Rag",
+  "category": "stealth",
+  "bonus": [
+    1
+  ],
+  "offenseAbility": "AMBUSH",
+  "offenseAbilityText": "No counter-damage when attacking. Attacker takes zero retaliation.",
+  "defenseAbility": "EVASION",
+  "defenseAbilityText": "First bonus attacks against this position miss entirely.",
+  "unlocked": true,
+  "unlockCondition": null,
+  "locked": false,
+  "draft": true
+}

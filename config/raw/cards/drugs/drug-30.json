@@ -1,0 +1,17 @@
+{
+  "id": "drug-30",
+  "type": "product",
+  "name": "Crystal Dream",
+  "category": "hallucinogen",
+  "potency": [
+    3
+  ],
+  "offenseAbility": "CONFUSE",
+  "offenseAbilityText": "Funded flip threshold reduced by potency.",
+  "defenseAbility": "PARANOIA",
+  "defenseAbilityText": "Funded flips against this crew cost potency extra cash.",
+  "unlocked": false,
+  "unlockCondition": "Win 6 games",
+  "locked": false,
+  "draft": true
+}

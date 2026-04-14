@@ -1,0 +1,18 @@
+{
+  "id": "card-036",
+  "type": "crew",
+  "displayName": "Paulie \"Patch\" Diaz",
+  "archetype": "fence",
+  "affiliation": "black_market",
+  "power": [
+    3
+  ],
+  "resistance": [
+    4
+  ],
+  "abilityText": "On sacrifice: draw 2 cards instead of healing",
+  "unlocked": false,
+  "unlockCondition": "Trigger 5 overdraw penalties on opponents",
+  "locked": false,
+  "draft": true
+}

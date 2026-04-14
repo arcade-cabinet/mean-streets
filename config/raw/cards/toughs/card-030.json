@@ -1,0 +1,18 @@
+{
+  "id": "card-030",
+  "type": "crew",
+  "displayName": "Lin \"Flint\" Rizzo",
+  "archetype": "medic",
+  "affiliation": "southside_saints",
+  "power": [
+    1
+  ],
+  "resistance": [
+    8
+  ],
+  "abilityText": "When sacrificed to heal: heals double the normal amount",
+  "unlocked": false,
+  "unlockCondition": "Win a game on the first night phase",
+  "locked": false,
+  "draft": true
+}

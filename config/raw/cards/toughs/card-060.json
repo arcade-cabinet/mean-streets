@@ -1,0 +1,18 @@
+{
+  "id": "card-060",
+  "type": "crew",
+  "displayName": "Ines \"Fence\" Delgado",
+  "archetype": "fence",
+  "affiliation": "dead_rabbits",
+  "power": [
+    5
+  ],
+  "resistance": [
+    7
+  ],
+  "abilityText": "On sacrifice: draw 2 cards instead of healing",
+  "unlocked": false,
+  "unlockCondition": "Win a game on the first night phase",
+  "locked": false,
+  "draft": true
+}

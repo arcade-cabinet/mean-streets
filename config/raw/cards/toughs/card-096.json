@@ -1,0 +1,18 @@
+{
+  "id": "card-096",
+  "type": "crew",
+  "displayName": "Valentina \"Razor\" Caruso",
+  "archetype": "fence",
+  "affiliation": "black_market",
+  "power": [
+    8
+  ],
+  "resistance": [
+    9
+  ],
+  "abilityText": "On sacrifice: draw 2 cards instead of healing",
+  "unlocked": false,
+  "unlockCondition": "Trigger 6 overdraw penalties on opponents",
+  "locked": false,
+  "draft": true
+}

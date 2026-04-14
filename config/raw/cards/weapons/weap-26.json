@@ -1,0 +1,17 @@
+{
+  "id": "weap-26",
+  "type": "weapon",
+  "name": "Pipe Bomb",
+  "category": "explosive",
+  "bonus": [
+    3
+  ],
+  "offenseAbility": "BLAST",
+  "offenseAbilityText": "Splash bonus damage to adjacent positions.",
+  "defenseAbility": "DETERRENT",
+  "defenseAbilityText": "Attackers must exceed defense by bonus extra to kill.",
+  "unlocked": false,
+  "unlockCondition": "Win a game using only bladed weapons",
+  "locked": false,
+  "draft": true
+}

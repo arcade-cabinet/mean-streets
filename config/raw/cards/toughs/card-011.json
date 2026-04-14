@@ -1,0 +1,18 @@
+{
+  "id": "card-011",
+  "type": "crew",
+  "displayName": "Paulie \"Lefty\" Reyes",
+  "archetype": "shark",
+  "affiliation": "neon_snakes",
+  "power": [
+    4
+  ],
+  "resistance": [
+    1
+  ],
+  "abilityText": "+1 damage for every point of damage already on the enemy vanguard",
+  "unlocked": true,
+  "unlockCondition": null,
+  "locked": false,
+  "draft": true
+}

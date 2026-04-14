@@ -1,0 +1,18 @@
+{
+  "id": "card-086",
+  "type": "crew",
+  "displayName": "Sonny \"Snitch\" Takahashi",
+  "archetype": "snitch",
+  "affiliation": "iron_devils",
+  "power": [
+    8
+  ],
+  "resistance": [
+    10
+  ],
+  "abilityText": "On play: opponent must reveal 1 random card from their hand for the rest of the round",
+  "unlocked": false,
+  "unlockCondition": "Trigger 7 overdraw penalties on opponents",
+  "locked": false,
+  "draft": true
+}

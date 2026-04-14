@@ -1,0 +1,18 @@
+{
+  "id": "card-008",
+  "type": "crew",
+  "displayName": "Rocco \"Ghost\" Murphy",
+  "archetype": "ghost",
+  "affiliation": "los_diablos",
+  "power": [
+    5
+  ],
+  "resistance": [
+    2
+  ],
+  "abilityText": "After attacking: cannot be targeted for the opponent's next turn",
+  "unlocked": true,
+  "unlockCondition": null,
+  "locked": false,
+  "draft": true
+}

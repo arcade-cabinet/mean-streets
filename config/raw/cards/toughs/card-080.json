@@ -1,0 +1,18 @@
+{
+  "id": "card-080",
+  "type": "crew",
+  "displayName": "Hector \"Ghost\" Morales",
+  "archetype": "ghost",
+  "affiliation": "kings_row",
+  "power": [
+    8
+  ],
+  "resistance": [
+    6
+  ],
+  "abilityText": "After attacking: cannot be targeted for the opponent's next turn",
+  "unlocked": false,
+  "unlockCondition": "Win a game on the first night phase",
+  "locked": false,
+  "draft": true
+}

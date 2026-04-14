@@ -1,0 +1,17 @@
+{
+  "id": "weap-16",
+  "type": "weapon",
+  "name": "Claw Hammer",
+  "category": "blunt",
+  "bonus": [
+    4
+  ],
+  "offenseAbility": "SHATTER",
+  "offenseAbilityText": "On kill, destroys one random modifier on target position.",
+  "defenseAbility": "BRACE",
+  "defenseAbilityText": "Absorb first bonus points of damage before resistance takes hits.",
+  "unlocked": false,
+  "unlockCondition": "Win 5 games",
+  "locked": false,
+  "draft": true
+}

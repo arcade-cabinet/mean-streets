@@ -1,0 +1,17 @@
+{
+  "id": "drug-04",
+  "type": "product",
+  "name": "Flash Rush",
+  "category": "stimulant",
+  "potency": [
+    2
+  ],
+  "offenseAbility": "RUSH",
+  "offenseAbilityText": "Crew acts immediately after placement, no setup turn cooldown.",
+  "defenseAbility": "REFLEXES",
+  "defenseAbilityText": "Crew counter-attacks for potency damage when hit.",
+  "unlocked": true,
+  "unlockCondition": null,
+  "locked": false,
+  "draft": true
+}

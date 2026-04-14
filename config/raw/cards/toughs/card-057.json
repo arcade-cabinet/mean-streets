@@ -1,0 +1,18 @@
+{
+  "id": "card-057",
+  "type": "crew",
+  "displayName": "Isabella \"Rust\" Kwon",
+  "archetype": "fixer",
+  "affiliation": "jade_dragon",
+  "power": [
+    4
+  ],
+  "resistance": [
+    6
+  ],
+  "abilityText": "On play: change one card in your active stack's affiliation to match this card's for the round",
+  "unlocked": false,
+  "unlockCondition": "Win without using any reserves",
+  "locked": false,
+  "draft": true
+}

@@ -1,0 +1,17 @@
+{
+  "id": "weap-45",
+  "type": "weapon",
+  "name": "Syringe",
+  "category": "stealth",
+  "bonus": [
+    1
+  ],
+  "offenseAbility": "AMBUSH",
+  "offenseAbilityText": "No counter-damage when attacking. Attacker takes zero retaliation.",
+  "defenseAbility": "EVASION",
+  "defenseAbilityText": "First bonus attacks against this position miss entirely.",
+  "unlocked": false,
+  "unlockCondition": "Kill 7 enemies total",
+  "locked": false,
+  "draft": true
+}

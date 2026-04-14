@@ -1,0 +1,17 @@
+{
+  "id": "weap-18",
+  "type": "weapon",
+  "name": "Nail Bat",
+  "category": "blunt",
+  "bonus": [
+    5
+  ],
+  "offenseAbility": "SHATTER",
+  "offenseAbilityText": "On kill, destroys one random modifier on target position.",
+  "defenseAbility": "BRACE",
+  "defenseAbilityText": "Absorb first bonus points of damage before resistance takes hits.",
+  "unlocked": false,
+  "unlockCondition": "Win a game using only bladed weapons",
+  "locked": false,
+  "draft": true
+}

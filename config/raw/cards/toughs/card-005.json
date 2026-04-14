@@ -1,0 +1,18 @@
+{
+  "id": "card-005",
+  "type": "crew",
+  "displayName": "Kim \"Shades\" Burns",
+  "archetype": "hustler",
+  "affiliation": "southside_saints",
+  "power": [
+    2
+  ],
+  "resistance": [
+    5
+  ],
+  "abilityText": "On play: swap 1 card from your hand with 1 from your reserves",
+  "unlocked": true,
+  "unlockCondition": null,
+  "locked": false,
+  "draft": true
+}

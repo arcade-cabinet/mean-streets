@@ -1,0 +1,17 @@
+{
+  "id": "drug-50",
+  "type": "product",
+  "name": "Dark Nod",
+  "category": "narcotic",
+  "potency": [
+    1
+  ],
+  "offenseAbility": "BERSERK",
+  "offenseAbilityText": "Crew power boosted by potency but takes 1 self-damage after attacking.",
+  "defenseAbility": "PAINKILLERS",
+  "defenseAbilityText": "Crew survives next potency killing blows at 1 resistance instead of dying.",
+  "unlocked": false,
+  "unlockCondition": "Flip 10 enemies total",
+  "locked": false,
+  "draft": true
+}
