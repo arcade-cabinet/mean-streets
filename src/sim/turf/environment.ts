@@ -783,6 +783,57 @@ export function stepAction(state: TurfGameState, action: TurfAction): TurfStepRe
       if (!crew || !placeCrew(player.board, action.positionIdx, crew)) throw new Error('Illegal place_crew action');
       state.metrics.crewPlaced++;
       reward += 1;
+
+      // Structural archetype on-play effects (D3):
+      //  - Snitch RAT_OUT: peek-ish advantage, modelled here as a
+      //    free-card draw from own modifier pile (we gain info/tempo).
+      //  - Lookout SCOUT: treats reserves as sortable — immediately
+      //    cycles one reserve crew into hand if a slot is open.
+      //  - Wheelman EXTRACTION: on play, can swap self into any empty
+      //    active lane — the environment already places to the chosen
+      //    lane, so this fires a +0.3 reward to bias placement scoring.
+      //  - Fence HOT_SWAP: triggers on-sacrifice only; no hook here.
+      //  - Hustler PICKPOCKET: on-attack effect; handled at attack time.
+      //  - Sniper/Ghost/Arsonist/Shark/Enforcer: handled in attacks.ts.
+      if (crew.archetype === 'snitch') {
+        // Draw one extra modifier if any exist in the draw pile.
+        if (player.modifierDraw.length > 0) {
+          const extra = player.modifierDraw.shift();
+          if (extra) {
+            player.hand.modifiers.push(extra);
+          }
+        }
+        reward += 0.25;
+      } else if (crew.archetype === 'lookout') {
+        // No structural reserve-cycle yet; small placement reward to
+        // reflect the tempo advantage the ability conveys.
+        reward += 0.2;
+      } else if (crew.archetype === 'wheelman') {
+        reward += 0.3;
+      } else if (crew.archetype === 'medic') {
+        // PATCH_UP: restore 1 resistance to an adjacent damaged ally.
+        if (action.positionIdx !== undefined) {
+          const idx = action.positionIdx;
+          for (const adjIdx of [idx - 1, idx + 1]) {
+            const adj = player.board.active[adjIdx];
+            if (adj?.crew && adj.crew.resistance < 12) {
+              adj.crew.resistance = Math.min(12, adj.crew.resistance + 1);
+              reward += 0.15;
+              break;
+            }
+          }
+        }
+      } else if (crew.archetype === 'fence') {
+        // HOT_SWAP (abridged): convert a cash card from hand into a
+        // modifier draw so tempo swing on play mirrors the intent.
+        const cashIdx = player.hand.modifiers.findIndex((c) => c.type === 'cash');
+        if (cashIdx >= 0 && player.modifierDraw.length > 0) {
+          player.hand.modifiers.splice(cashIdx, 1);
+          const extra = player.modifierDraw.shift();
+          if (extra) player.hand.modifiers.push(extra);
+          reward += 0.2;
+        }
+      }
       break;
     }
 
