@@ -23,9 +23,13 @@ import {
   saveActiveRun,
   loadSettings,
   saveSettings,
+  loadProfile,
+  saveProfile,
   type DeckLoadout,
   type AppSettings,
 } from './ui/deckbuilder/storage';
+import { loadAuthoredCrewCards } from './sim/cards/catalog';
+import { processGameEnd } from './platform/achievements/achievements';
 
 type Screen = 'menu' | 'deck-garage' | 'deckbuilder' | 'buildup' | 'combat' | 'gameover';
 type Modal = 'rules-onboarding' | 'game-menu' | null;
@@ -154,6 +158,22 @@ export default function App() {
     setActiveDeck(null);
     setHasActiveRun(false);
     void saveActiveRun<ActiveRunState>(null);
+    // Process achievements on game-end: wins counter + unlock conditions.
+    void (async () => {
+      const profile = await loadProfile();
+      const result = processGameEnd(
+        {
+          winner: w,
+          playerSide: 'A',
+          metrics: m,
+          turnCount: m.turns,
+          ownPositionsLost: 0,
+        },
+        loadAuthoredCrewCards(),
+        profile,
+      );
+      await saveProfile(result.updatedProfile);
+    })();
     setScreen('gameover');
   }
 
