@@ -121,6 +121,17 @@ describe('generateDrugs', () => {
     const unlocked = drugs.filter(d => d.unlocked).length;
     expect(unlocked).toBe(20);
   });
+
+  it('keeps unlocked hallucinogens above the dead-low starter floor', () => {
+    const rng = createRng(42);
+    const drugs = generateDrugs(rng);
+    const unlockedHallucinogens = drugs
+      .filter((d) => d.category === 'hallucinogen' && d.unlocked)
+      .map((d) => d.potency);
+
+    expect(unlockedHallucinogens).toHaveLength(4);
+    expect(unlockedHallucinogens.every((potency) => potency >= 2)).toBe(true);
+  });
 });
 
 describe('generateCash', () => {

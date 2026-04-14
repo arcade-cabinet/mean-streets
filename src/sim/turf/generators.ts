@@ -126,7 +126,11 @@ export function generateDrugs(rng: Rng): ProductCard[] {
       } while (usedNames.has(name) && attempts < 50);
       usedNames.add(name);
 
-      const potency = calcBonus(i, potencyRange.min, potencyRange.max, cat.potencyMod);
+      let potency = calcBonus(i, potencyRange.min, potencyRange.max, cat.potencyMod);
+      // Keep the starter hallucinogen lane from opening with three dead-low cards.
+      if (cat.id === 'hallucinogen' && i < UNLOCKED_PER_CATEGORY) {
+        potency = Math.max(2, potency);
+      }
       const isUnlocked = i < UNLOCKED_PER_CATEGORY;
 
       cards.push({
