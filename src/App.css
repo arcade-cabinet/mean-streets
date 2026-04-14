@@ -3653,12 +3653,21 @@ select {
   height: 230px;
 }
 
-/* Desktop wide: generous content widths, explicit max-width so the
-   playfield does not stretch into empty edges on 4K monitors. */
+/* Wide content cap: applies at the tablet-landscape breakpoint and
+   up. Prevents the playfield from stretching into empty edges on 4K
+   monitors.
+   NOTE: Playwright's "desktop-chromium" project uses a 1280x720
+   viewport which classifies as tablet-landscape (shortestSide 720 <
+   900), so we key on tablet-landscape + desktop-wide together. */
+[data-layout='tablet-landscape'] .app-shell,
 [data-layout='desktop-wide'] .app-shell {
   --desktop-content-max: 1440px;
 }
 
+[data-layout='tablet-landscape'] .menu-content,
+[data-layout='tablet-landscape'] .deckbuilder-screen,
+[data-layout='tablet-landscape'] .buildup-screen,
+[data-layout='tablet-landscape'] .combat-screen,
 [data-layout='desktop-wide'] .menu-content,
 [data-layout='desktop-wide'] .deckbuilder-screen,
 [data-layout='desktop-wide'] .buildup-screen,
