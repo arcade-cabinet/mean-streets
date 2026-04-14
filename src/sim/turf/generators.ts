@@ -127,9 +127,12 @@ export function generateDrugs(rng: Rng): ProductCard[] {
       usedNames.add(name);
 
       let potency = calcBonus(i, potencyRange.min, potencyRange.max, cat.potencyMod);
+      if (cat.id === 'stimulant' && i === 0) {
+        potency = Math.max(2, potency);
+      }
       // Keep the starter hallucinogen lane from opening with three dead-low cards.
       if (cat.id === 'hallucinogen' && i < UNLOCKED_PER_CATEGORY) {
-        potency = Math.max(2, potency);
+        potency = Math.max(3, potency);
       }
       const isUnlocked = i < UNLOCKED_PER_CATEGORY;
 

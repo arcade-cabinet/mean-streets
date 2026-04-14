@@ -9,9 +9,9 @@
     "affiliation": "kings_row",
     "tier": 1,
     "dayAtk": 5,
-    "dayDef": 1,
+    "dayDef": 2,
     "nightAtk": 5,
-    "nightDef": 1,
+    "nightDef": 2,
     "ability": "OVERWHELM",
     "abilityDesc": "Deals +2 damage when attacking a target with lower ATK than this card",
     "unlocked": true

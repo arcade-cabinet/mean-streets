@@ -12,7 +12,7 @@ describe('loadAuthoredCrewCards', () => {
       archetype: 'bruiser',
       affiliation: 'kings_row',
       power: 5,
-      resistance: 1,
+      resistance: 2,
       abilityText:
         'Deals +2 damage when attacking a target with lower ATK than this card',
       unlocked: true,

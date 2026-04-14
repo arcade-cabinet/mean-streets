@@ -130,7 +130,16 @@ describe('generateDrugs', () => {
       .map((d) => d.potency);
 
     expect(unlockedHallucinogens).toHaveLength(4);
-    expect(unlockedHallucinogens.every((potency) => potency >= 2)).toBe(true);
+    expect(unlockedHallucinogens.every((potency) => potency >= 3)).toBe(true);
+  });
+
+  it('keeps the first unlocked stimulant above the dead-low starter floor', () => {
+    const rng = createRng(42);
+    const firstUnlockedStimulant = generateDrugs(rng).find(
+      (d) => d.category === 'stimulant' && d.unlocked,
+    );
+
+    expect(firstUnlockedStimulant?.potency).toBeGreaterThanOrEqual(2);
   });
 });
 
