@@ -26,6 +26,7 @@
     "analysis:lock:persist": "tsx src/sim/analysis/cli.ts lock --profile standard --persist",
     "analysis:autobalance": "tsx src/sim/analysis/cli.ts autobalance --profile standard",
     "analysis:autobalance:dry": "tsx src/sim/analysis/cli.ts autobalance --profile quick --dry-run",
+    "analysis:runner-contract": "tsx src/sim/analysis/cli.ts runner-contract --profile ci",
     "cap:sync": "pnpm run build && pnpm exec cap sync",
     "cap:open:android": "pnpm exec cap open android",
     "cap:open:ios": "pnpm exec cap open ios",

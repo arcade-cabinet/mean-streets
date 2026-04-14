@@ -783,6 +783,89 @@ async function main(): Promise<void> {
     return;
   }
 
+  if (command === 'runner-contract') {
+    const profile = (getArg('--profile') ?? 'ci') as 'smoke' | 'ci' | 'release';
+    logPhase(`runner-contract profile=${profile}`);
+    const run = runSeededBenchmark(profile, { includeBalance: false });
+    const s = run.summary;
+
+    function rate(taken: number, turns: number): number {
+      return turns > 0 ? taken / turns : 0;
+    }
+
+    const stages = {
+      reserveStart: {
+        turns: s.runnerReserveOpportunityTurns,
+        taken: s.runnerReserveOpportunityTaken,
+        missed: s.runnerReserveOpportunityMissed,
+        rate: rate(s.runnerReserveOpportunityTaken, s.runnerReserveOpportunityTurns),
+      },
+      equip: {
+        turns: s.runnerEquipOpportunityTurns,
+        taken: s.runnerEquipOpportunityTaken,
+        missed: s.runnerEquipOpportunityMissed,
+        rate: rate(s.runnerEquipOpportunityTaken, s.runnerEquipOpportunityTurns),
+      },
+      deploy: {
+        turns: s.runnerDeployOpportunityTurns,
+        taken: s.runnerDeployOpportunityTaken,
+        missed: s.runnerDeployOpportunityMissed,
+        rate: rate(s.runnerDeployOpportunityTaken, s.runnerDeployOpportunityTurns),
+      },
+      payload: {
+        turns: s.runnerPayloadOpportunityTurns,
+        taken: s.runnerPayloadOpportunityTaken,
+        missed: s.runnerPayloadOpportunityMissed,
+        rate: rate(s.runnerPayloadOpportunityTaken, s.runnerPayloadOpportunityTurns),
+      },
+    };
+
+    console.log('\nRunner Contract (four-stage diagnostic)');
+    for (const [name, stage] of Object.entries(stages)) {
+      console.log(
+        `  ${name.padEnd(14)}  turns=${stage.turns.toFixed(2)}  taken=${stage.taken.toFixed(2)}  missed=${stage.missed.toFixed(2)}  rate=${stage.rate.toFixed(4)}`,
+      );
+    }
+
+    const notes: string[] = [];
+    if (stages.reserveStart.rate < 0.5) {
+      notes.push(
+        `reserve-start rate ${stages.reserveStart.rate.toFixed(4)} below 0.5 — planner either isn't generating reserve-crew placements or scoring them too low`,
+      );
+    }
+    if (stages.equip.rate < 0.5) {
+      notes.push(
+        `equip rate ${stages.equip.rate.toFixed(4)} below 0.5 — planner has backpacks but isn't attaching them to reserves`,
+      );
+    }
+    if (stages.deploy.rate < 0.5) {
+      notes.push(
+        `deploy rate ${stages.deploy.rate.toFixed(4)} below 0.5 — runners are equipped but not promoted to active`,
+      );
+    }
+    if (stages.payload.rate < 0.5) {
+      notes.push(
+        `payload rate ${stages.payload.rate.toFixed(4)} below 0.5 — runners are active but not dispensing payload`,
+      );
+    }
+    if (notes.length === 0) {
+      notes.push('all four stages above 0.5 — contract is healthy');
+    }
+
+    console.log('\nNotes');
+    for (const n of notes) console.log(`  - ${n}`);
+
+    const path = writeAnalysisJson('runner-contract', `runner-contract-${profile}.json`, {
+      generatedAt: new Date().toISOString(),
+      profile,
+      stages,
+      notes,
+      summary: createBenchmarkReport(run),
+    });
+    console.log(path);
+    return;
+  }
+
   if (command === 'autobalance') {
     const profile = (getArg('--profile') ?? 'standard') as
       | 'quick'
