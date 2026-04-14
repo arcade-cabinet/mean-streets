@@ -157,5 +157,11 @@
     "placeReserveCrewResistanceWeight": 1.05,
     "placeCrewCrewResistanceWeight": 0.9,
     "placeCrewDesperationWeight": 2.0
+  },
+  "archetypeBonuses": {
+    "sniperCalledShotDamage": 1,
+    "arsonistScorchedEarthDamage": 1,
+    "ghostPhantomStrikeDefensePierce": 2,
+    "enforcerVendettaMultiplier": 2
   }
 }

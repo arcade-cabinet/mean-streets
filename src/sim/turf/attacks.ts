@@ -5,6 +5,9 @@
 
 import type { Position, AttackOutcome, TurfGameConfig } from './types';
 import { positionPower, positionDefense, offensiveCash, defensiveCash, clearPosition } from './board';
+import { TURF_SIM_CONFIG } from './ai/config';
+
+const ARCHETYPE_BONUSES = TURF_SIM_CONFIG.archetypeBonuses;
 
 export function canPrecisionAttack(
   atkPower: number, defPower: number, mult: number, ignores: boolean,
@@ -102,15 +105,17 @@ function attackerBonusDamage(
     notes.push(`BLOOD_FRENZY ${diff}`);
   }
   if (attacker.crew?.archetype === 'sniper') {
-    // CALLED_SHOT: sniper always lands at least +1 damage — represents
+    // CALLED_SHOT: sniper always lands at least +N damage — represents
     // the archetype's precision accuracy even without a ranged weapon.
-    amount += 1;
-    notes.push('CALLED_SHOT 1');
+    const n = ARCHETYPE_BONUSES.sniperCalledShotDamage;
+    amount += n;
+    notes.push(`CALLED_SHOT ${n}`);
   }
   if (attacker.crew?.archetype === 'arsonist') {
-    // SCORCHED_EARTH: arsonist attacks deal +1 collateral damage.
-    amount += 1;
-    notes.push('SCORCHED_EARTH 1');
+    // SCORCHED_EARTH: arsonist attacks deal +N collateral damage.
+    const n = ARCHETYPE_BONUSES.arsonistScorchedEarthDamage;
+    amount += n;
+    notes.push(`SCORCHED_EARTH ${n}`);
   }
   return { amount, notes };
 }
@@ -119,11 +124,12 @@ function attackerIgnoreDefense(attacker: Position): { amount: number; notes: str
   const notes: string[] = [];
   let amount = 0;
   if (attacker.crew?.archetype === 'ghost') {
-    // PHANTOM_STRIKE: ghost bypasses 2 points of the defender's defense
+    // PHANTOM_STRIKE: ghost bypasses N points of the defender's defense
     // threshold. The full "attack from reserve" mechanic would need an
     // engine action refactor; this is the combat-resolution half.
-    amount += 2;
-    notes.push('PHANTOM_STRIKE -2 def');
+    const n = ARCHETYPE_BONUSES.ghostPhantomStrikeDefensePierce;
+    amount += n;
+    notes.push(`PHANTOM_STRIKE -${n} def`);
   }
   return { amount, notes };
 }
@@ -194,8 +200,9 @@ export function resolveDirectAttack(
     notes.push(...bonus.notes);
   }
   if (attacker.crew?.archetype === 'enforcer' && context?.targetIsAtWar) {
-    dmg *= 2;
-    notes.push('VENDETTA x2');
+    const mult = ARCHETYPE_BONUSES.enforcerVendettaMultiplier;
+    dmg *= mult;
+    notes.push(`VENDETTA x${mult}`);
   }
   notes.push(...applySuppression(attacker, defender));
   notes.push(...applyCounterDamage(attacker, defender));
