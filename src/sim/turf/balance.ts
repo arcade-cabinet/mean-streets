@@ -1,4 +1,5 @@
-import { readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
 import type { ProductCard, TurfGameResult, WeaponCard, CrewCard } from './types';
 import type { TurfCardPools } from './catalog';
 
@@ -189,6 +190,11 @@ export function loadBalanceHistory(path: string): BalanceHistory {
   } catch {
     return { version: HISTORY_VERSION, cards: {} };
   }
+}
+
+export function saveBalanceHistory(path: string, history: BalanceHistory): void {
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, `${JSON.stringify(history, null, 2)}\n`, 'utf8');
 }
 
 function buildSideDecks(results: TurfGameResult[]): SideDeck[] {

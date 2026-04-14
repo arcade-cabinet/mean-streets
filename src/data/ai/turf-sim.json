@@ -105,24 +105,24 @@
   },
   "sweepProfiles": {
     "crew_weapon": {
-      "crewCount": 4,
-      "weaponCount": 4,
+      "crewCount": 12,
+      "weaponCount": 10,
       "drugCount": 0
     },
     "crew_drug": {
-      "crewCount": 4,
+      "crewCount": 12,
       "weaponCount": 0,
-      "drugCount": 4
+      "drugCount": 10
     },
     "weapon_drug": {
       "crewCount": 0,
-      "weaponCount": 4,
-      "drugCount": 4
+      "weaponCount": 10,
+      "drugCount": 10
     },
     "crew_weapon_drug": {
-      "crewCount": 3,
-      "weaponCount": 3,
-      "drugCount": 3
+      "crewCount": 8,
+      "weaponCount": 6,
+      "drugCount": 6
     }
   },
   "convergenceSlices": 5

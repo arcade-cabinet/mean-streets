@@ -94,7 +94,7 @@ describe('analysis layer', () => {
     const weaponCategories = weaponIds.map(id => pools.weapons.find(card => card.id === id)?.category);
     const drugCategories = drugIds.map(id => pools.drugs.find(card => card.id === id)?.category);
 
-    expect(new Set(weaponCategories).size).toBe(4);
-    expect(new Set(drugCategories).size).toBe(4);
-  }, 30000);
+    expect(new Set(weaponCategories).size).toBe(5);
+    expect(new Set(drugCategories).size).toBe(5);
+  }, 120000);
 });

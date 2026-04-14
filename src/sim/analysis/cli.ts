@@ -1,4 +1,6 @@
+import { join } from 'node:path';
 import { generateTurfCardPools } from '../turf/catalog';
+import { saveBalanceHistory } from '../turf/balance';
 import type { CardEffectEstimate } from './effects';
 import {
   createBenchmarkReport,
@@ -10,6 +12,8 @@ import {
   writeAnalysisJson,
 } from './index';
 import type { LockRecommendation } from './locking';
+
+const BALANCE_HISTORY_PATH = join(process.cwd(), 'sim', 'reports', 'turf', 'balance-history.json');
 
 interface CardDescriptor {
   label: string;
@@ -661,6 +665,10 @@ async function main(): Promise<void> {
     printUnstableRecommendations(locks.recommendations, descriptors);
     printUnstableFamilySummary(unstableFamilySummary);
     printUnstablePairingSummary(unstablePairingSummary, descriptors);
+    if (process.argv.includes('--persist') && baseline.balance) {
+      saveBalanceHistory(BALANCE_HISTORY_PATH, baseline.balance.history);
+      console.log(`[analysis] balance-history persisted -> ${BALANCE_HISTORY_PATH}`);
+    }
     console.log(path);
     return;
   }

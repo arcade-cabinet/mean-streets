@@ -33,7 +33,8 @@ pnpm run test:e2e           # Playwright end-to-end
 pnpm run test:visual        # Playwright visual fixture capture
 pnpm run test:release       # Release gate (requires RELEASE_GATING=1)
 pnpm run analysis:benchmark # Rerun balance benchmark → sim/reports/analysis/
-pnpm run analysis:lock      # Curated sweep + balance locking pass
+pnpm run analysis:lock      # Curated sweep + balance locking pass (read-only)
+pnpm run analysis:lock:persist # Same, but writes sim/reports/turf/balance-history.json
 pnpm run cap:sync           # Build + sync web assets to Capacitor
 ```
 
@@ -75,4 +76,4 @@ pnpm run cap:sync           # Build + sync web assets to Capacitor
 
 - Category abilities (LACERATE, PARRY, RUSH, etc.) are tracked on cards but not yet fully resolved in combat — `attacks.ts` uses raw bonus/potency only.
 - Archetype abilities are partially implemented — only Bruiser's precision-ignore is active in `attacks.ts`.
-- Release gate (`test:release`) additionally requires every card in `balance-history.json` to be in the `locked` state; not all cards are locked yet. Continue feeding stable benchmark runs into the history to progress toward full lock.
+- Release gate (`test:release`) currently requires ≥70% of the balance catalog to be `locked`. Progress by running `pnpm run analysis:lock:persist` — stable runs feed back into `sim/reports/turf/balance-history.json`. Raise `LOCK_COVERAGE_MIN` in `src/sim/turf/__tests__/release-gate.test.ts` once more cards stabilize.
