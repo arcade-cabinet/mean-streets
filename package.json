@@ -28,6 +28,7 @@
     "analysis:autobalance:dry": "tsx src/sim/analysis/cli.ts autobalance --profile quick --dry-run",
     "analysis:runner-contract": "tsx src/sim/analysis/cli.ts runner-contract --profile ci",
     "cap:sync": "pnpm run build && pnpm exec cap sync",
+    "assets:generate": "pnpm exec capacitor-assets generate --iconBackgroundColor '#090909' --iconBackgroundColorDark '#090909' --splashBackgroundColor '#090909' --splashBackgroundColorDark '#090909'",
     "cap:open:android": "pnpm exec cap open android",
     "cap:open:ios": "pnpm exec cap open ios",
     "cap:run:android": "pnpm exec cap run android",
