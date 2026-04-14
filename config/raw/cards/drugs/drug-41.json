@@ -4,7 +4,8 @@
   "name": "Numb Fix",
   "category": "narcotic",
   "potency": [
-    1
+    1,
+    2
   ],
   "offenseAbility": "BERSERK",
   "offenseAbilityText": "Crew power boosted by potency but takes 1 self-damage after attacking.",

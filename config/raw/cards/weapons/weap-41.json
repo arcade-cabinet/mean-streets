@@ -4,7 +4,8 @@
   "name": "Silenced Pistol",
   "category": "stealth",
   "bonus": [
-    1
+    1,
+    2
   ],
   "offenseAbility": "AMBUSH",
   "offenseAbilityText": "No counter-damage when attacking. Attacker takes zero retaliation.",

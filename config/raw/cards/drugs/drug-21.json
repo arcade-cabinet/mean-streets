@@ -4,7 +4,8 @@
   "name": "Spiral Pulse",
   "category": "hallucinogen",
   "potency": [
-    3
+    3,
+    4
   ],
   "offenseAbility": "CONFUSE",
   "offenseAbilityText": "Funded flip threshold reduced by potency.",

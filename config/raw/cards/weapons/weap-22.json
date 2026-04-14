@@ -4,7 +4,8 @@
   "name": "Molotov Cocktail",
   "category": "explosive",
   "bonus": [
-    2
+    2,
+    3
   ],
   "offenseAbility": "BLAST",
   "offenseAbilityText": "Splash bonus damage to adjacent positions.",

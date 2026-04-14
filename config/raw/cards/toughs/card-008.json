@@ -8,7 +8,8 @@
     5
   ],
   "resistance": [
-    2
+    2,
+    3
   ],
   "abilityText": "After attacking: cannot be targeted for the opponent's next turn",
   "unlocked": true,
