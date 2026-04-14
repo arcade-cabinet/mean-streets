@@ -2,7 +2,7 @@
   "version": 1,
   "cards": {
     "card-001": {
-      "consecutiveStableRuns": 43,
+      "consecutiveStableRuns": 44,
       "locked": true
     },
     "card-002": {
@@ -26,7 +26,7 @@
       "locked": true
     },
     "card-007": {
-      "consecutiveStableRuns": 49,
+      "consecutiveStableRuns": 50,
       "locked": true
     },
     "card-008": {
@@ -38,7 +38,7 @@
       "locked": false
     },
     "card-010": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 2,
       "locked": true
     },
     "card-011": {
@@ -82,7 +82,7 @@
       "locked": true
     },
     "card-021": {
-      "consecutiveStableRuns": 44,
+      "consecutiveStableRuns": 45,
       "locked": true
     },
     "card-022": {
@@ -106,7 +106,7 @@
       "locked": true
     },
     "card-027": {
-      "consecutiveStableRuns": 44,
+      "consecutiveStableRuns": 45,
       "locked": true
     },
     "card-028": {
@@ -138,15 +138,15 @@
       "locked": true
     },
     "card-035": {
-      "consecutiveStableRuns": 24,
+      "consecutiveStableRuns": 25,
       "locked": true
     },
     "card-036": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 2,
       "locked": true
     },
     "card-037": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 2,
       "locked": true
     },
     "card-038": {
@@ -158,11 +158,11 @@
       "locked": false
     },
     "card-040": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 2,
       "locked": true
     },
     "card-041": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 2,
       "locked": true
     },
     "card-042": {
@@ -186,7 +186,7 @@
       "locked": false
     },
     "card-047": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 2,
       "locked": true
     },
     "card-048": {
@@ -234,7 +234,7 @@
       "locked": true
     },
     "card-059": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 2,
       "locked": true
     },
     "card-060": {
@@ -254,7 +254,7 @@
       "locked": true
     },
     "card-064": {
-      "consecutiveStableRuns": 44,
+      "consecutiveStableRuns": 45,
       "locked": true
     },
     "card-065": {
@@ -266,11 +266,11 @@
       "locked": false
     },
     "card-067": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 2,
       "locked": true
     },
     "card-068": {
-      "consecutiveStableRuns": 45,
+      "consecutiveStableRuns": 46,
       "locked": true
     },
     "card-069": {
@@ -318,11 +318,11 @@
       "locked": true
     },
     "card-080": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 2,
       "locked": true
     },
     "card-081": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 2,
       "locked": true
     },
     "card-082": {
@@ -338,7 +338,7 @@
       "locked": true
     },
     "card-085": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 2,
       "locked": true
     },
     "card-086": {
@@ -362,7 +362,7 @@
       "locked": true
     },
     "card-091": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 2,
       "locked": true
     },
     "card-092": {
@@ -386,7 +386,7 @@
       "locked": true
     },
     "card-097": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 2,
       "locked": true
     },
     "card-098": {
@@ -394,7 +394,7 @@
       "locked": false
     },
     "card-099": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 2,
       "locked": true
     },
     "card-100": {
@@ -578,7 +578,7 @@
       "locked": false
     },
     "weap-45": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 2,
       "locked": true
     },
     "weap-46": {
@@ -598,7 +598,7 @@
       "locked": true
     },
     "weap-50": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 2,
       "locked": true
     },
     "drug-01": {
