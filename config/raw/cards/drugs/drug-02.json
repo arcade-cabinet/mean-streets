@@ -5,7 +5,8 @@
   "category": "stimulant",
   "potency": [
     1,
-    2
+    2,
+    3
   ],
   "offenseAbility": "RUSH",
   "offenseAbilityText": "Crew acts immediately after placement, no setup turn cooldown.",

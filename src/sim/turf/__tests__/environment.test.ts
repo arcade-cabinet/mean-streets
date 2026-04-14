@@ -205,15 +205,14 @@ describe('turf environment', () => {
     const equipAction = enumerateLegalActions(state, 'A').find(action => action.kind === 'equip_backpack');
     expect(equipAction).toBeTruthy();
     stepAction(state, equipAction!);
-    expect(state.players.A.board.reserve[0].backpack?.id).toBe('pack-a');
-    expect(state.players.A.board.reserve[0].runner).toBe(true);
 
-    const deployAction = enumerateLegalActions(state, 'A').find(action => action.kind === 'deploy_runner');
-    expect(deployAction).toBeTruthy();
-    stepAction(state, deployAction!);
+    // RULES.md §7: equipping a backpack to a reserve grants a FREE
+    // swap into active. The runner now sits in the first empty
+    // active slot, not on the reserve row.
     expect(state.players.A.board.active[0].crew?.id).toBe('runner-seed');
     expect(state.players.A.board.active[0].backpack?.id).toBe('pack-a');
     expect(state.players.A.board.active[0].runner).toBe(true);
+    expect(state.players.A.board.reserve[0].crew).toBeNull();
   });
 
   it('deploys payload from an active runner backpack into board slots', () => {
@@ -226,8 +225,9 @@ describe('turf environment', () => {
     state.players.A.hand.backpacks = [backpack('pack-b')];
 
     stepAction(state, enumerateLegalActions(state, 'A').find(action => action.kind === 'place_reserve_crew')!);
+    // equip already lands the runner in active via the §7 free swap;
+    // no separate deploy_runner step needed.
     stepAction(state, enumerateLegalActions(state, 'A').find(action => action.kind === 'equip_backpack')!);
-    stepAction(state, enumerateLegalActions(state, 'A').find(action => action.kind === 'deploy_runner')!);
 
     const payloadAction = enumerateLegalActions(state, 'A').find(action => action.kind === 'deploy_payload' && action.slot === 'offense');
     expect(payloadAction).toBeTruthy();

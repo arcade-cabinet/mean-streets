@@ -5,7 +5,8 @@
   "category": "steroid",
   "potency": [
     3,
-    4
+    4,
+    5
   ],
   "offenseAbility": "BULK",
   "offenseAbilityText": "Crew gets +potency power for attacks.",

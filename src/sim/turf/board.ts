@@ -81,6 +81,85 @@ export function markRunner(position: Position, active: boolean): void {
   position.runner = active && Boolean(position.backpack) && position.payloadRemaining > 0;
 }
 
+/**
+ * RULES.md §7: equipping a backpack to a reserve tough grants ONE
+ * free swap into active (no turn penalty). Returns the active index
+ * the runner landed on, or -1 if no swap happened.
+ */
+export function freeSwapEquippedRunner(
+  board: PlayerBoard,
+  reserveIdx: number,
+): number {
+  const reserve = board.reserve[reserveIdx];
+  if (!reserve?.crew || !reserve.backpack || !reserve.runner) return -1;
+  const activeIdx = findEmptyActive(board);
+  if (activeIdx < 0) return -1;
+  if (deployRunner(board, reserveIdx, activeIdx)) return activeIdx;
+  return -1;
+}
+
+/**
+ * RULES.md §7: retreat of a runner back to reserve costs the turn
+ * (no free-swap on the way back). Returns true if retreat succeeded
+ * and `consumed` indicates whether the action consumed the actor's
+ * turn budget — the caller should subtract 1 from the actor's
+ * remaining actions.
+ */
+export function retreatRunner(
+  board: PlayerBoard,
+  activeIdx: number,
+): { retreated: boolean; reserveIdx: number; consumed: boolean } {
+  const active = board.active[activeIdx];
+  if (!active?.crew || !active.backpack) {
+    return { retreated: false, reserveIdx: -1, consumed: false };
+  }
+  // Find an empty reserve slot or the slot the runner originally came from.
+  const reserveIdx = board.reserve.findIndex((p) => p.crew === null && !p.seized);
+  if (reserveIdx < 0) return { retreated: false, reserveIdx: -1, consumed: false };
+  const reserve = board.reserve[reserveIdx];
+  // Move everything wholesale (reverse of deployRunner).
+  reserve.crew = active.crew;
+  reserve.drugTop = active.drugTop;
+  reserve.drugBottom = active.drugBottom;
+  reserve.weaponTop = active.weaponTop;
+  reserve.weaponBottom = active.weaponBottom;
+  reserve.cashLeft = active.cashLeft;
+  reserve.cashRight = active.cashRight;
+  reserve.backpack = active.backpack;
+  reserve.runner = active.runner;
+  reserve.payloadRemaining = active.payloadRemaining;
+  reserve.turnsActive = 0;
+
+  active.crew = null;
+  active.drugTop = null;
+  active.drugBottom = null;
+  active.weaponTop = null;
+  active.weaponBottom = null;
+  active.cashLeft = null;
+  active.cashRight = null;
+  active.backpack = null;
+  active.runner = false;
+  active.payloadRemaining = 0;
+  active.turnsActive = 0;
+
+  return { retreated: true, reserveIdx, consumed: true };
+}
+
+/**
+ * RULES.md §7: seize of a runner transfers backpack + remaining
+ * contents to the attacker. Returns the captured backpack so the
+ * caller (combat resolver) can attach it to the attacker's lane or
+ * stash it on the attacker's player state.
+ */
+export function captureRunnerOnSeize(defender: Position): BackpackCard | null {
+  if (!defender.backpack || !defender.runner) return null;
+  const captured = defender.backpack;
+  defender.backpack = null;
+  defender.runner = false;
+  defender.payloadRemaining = 0;
+  return captured;
+}
+
 export function deployRunner(board: PlayerBoard, reserveIdx: number, activeIdx: number): boolean {
   const reserve = board.reserve[reserveIdx];
   const active = board.active[activeIdx];

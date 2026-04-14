@@ -2,6 +2,7 @@ import { createRng } from '../cards/rng';
 import { generateTurfCardPools, type TurfCardPools } from './catalog';
 import { buildAutoDeck, type AutoDeckPolicy } from './deck-builder';
 import {
+  captureRunnerOnSeize,
   createBoard,
   deployRunner,
   equipBackpack,
@@ -9,6 +10,7 @@ import {
   findEmptyActive,
   findFundedReady,
   findPushReady,
+  freeSwapEquippedRunner,
   offensiveCash,
   placeCrew,
   placeReserveCrew,
@@ -729,6 +731,13 @@ function resolveOutcome(
     state.metrics.kills++;
     reward += 2;
     awardCash(player);
+    // RULES.md §7: seizing a runner transfers the backpack to the
+    // attacker. Capture before clearing the position.
+    const capturedOnKill = captureRunnerOnSeize(opponent.board.active[targetIdx]);
+    if (capturedOnKill) {
+      player.hand.backpacks.push(capturedOnKill);
+      reward += 1.5;
+    }
     if (!opponent.board.active[targetIdx].crew) {
       seizePosition(opponent.board.active[targetIdx]);
       player.positionsSeized++;
@@ -748,6 +757,11 @@ function resolveOutcome(
           reward += 1;
         }
       }
+    }
+    const capturedOnFlip = captureRunnerOnSeize(opponent.board.active[targetIdx]);
+    if (capturedOnFlip) {
+      player.hand.backpacks.push(capturedOnFlip);
+      reward += 1.5;
     }
     if (!opponent.board.active[targetIdx].crew) {
       seizePosition(opponent.board.active[targetIdx]);
@@ -858,6 +872,18 @@ export function stepAction(state: TurfGameState, action: TurfAction): TurfStepRe
       }
       state.metrics.backpacksEquipped++;
       reward += 1.15;
+      // RULES.md §7: equipping a backpack to a reserve grants a free
+      // swap into active. Honor the rule by trying to land the runner
+      // immediately into an empty active slot. The action does NOT
+      // count as a separate deploy action — the player still has its
+      // turn budget intact.
+      if (action.reserveIdx !== undefined) {
+        const landed = freeSwapEquippedRunner(player.board, action.reserveIdx);
+        if (landed >= 0) {
+          state.metrics.runnerDeployments++;
+          reward += 0.6; // reward the combo, less than a deliberate deploy
+        }
+      }
       break;
     }
 

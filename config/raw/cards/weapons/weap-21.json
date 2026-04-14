@@ -8,7 +8,8 @@
     3,
     4,
     5,
-    6
+    6,
+    7
   ],
   "offenseAbility": "BLAST",
   "offenseAbilityText": "Splash bonus damage to adjacent positions.",
