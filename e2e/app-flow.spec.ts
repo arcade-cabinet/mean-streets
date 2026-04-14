@@ -2,11 +2,12 @@ import { expect, test } from '@playwright/test';
 import type { Locator, Page, TestInfo } from '@playwright/test';
 
 async function activate(target: Locator, testInfo: TestInfo) {
+  await target.scrollIntoViewIfNeeded().catch(() => undefined);
   if (testInfo.project.use.hasTouch) {
-    await target.tap();
+    await target.tap({ force: true });
     return;
   }
-  await target.click();
+  await target.click({ force: true });
 }
 
 async function buildDeck(page: Page, testInfo: TestInfo) {
