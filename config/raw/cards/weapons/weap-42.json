@@ -6,7 +6,8 @@
   "bonus": [
     1,
     2,
-    3
+    3,
+    4
   ],
   "offenseAbility": "AMBUSH",
   "offenseAbilityText": "No counter-damage when attacking. Attacker takes zero retaliation.",

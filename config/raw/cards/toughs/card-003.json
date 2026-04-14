@@ -10,7 +10,8 @@
   "resistance": [
     3,
     4,
-    5
+    5,
+    6
   ],
   "abilityText": "On play: peek at the top 2 cards of your own deck, reorder them",
   "unlocked": true,
