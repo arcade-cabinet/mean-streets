@@ -1,5 +1,6 @@
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { TURF_SIM_CONFIG } from '../turf/ai/config';
 import { generateTurfCardPools } from '../turf/catalog';
 import { saveBalanceHistory } from '../turf/balance';
 import type { CardEffectEstimate } from './effects';
@@ -779,6 +780,81 @@ async function main(): Promise<void> {
     });
     printFocusedEffects(focusedEffects, descriptors);
     printUnstablePairingSummary(pairingSummary, descriptors);
+    console.log(path);
+    return;
+  }
+
+  if (command === 'backpack-quota') {
+    const profile = (getArg('--profile') ?? 'ci') as 'smoke' | 'ci' | 'release';
+    const minQ = Number.parseInt(getArg('--min') ?? '3', 10);
+    const maxQ = Number.parseInt(getArg('--max') ?? '10', 10);
+
+    interface QuotaSample {
+      quota: number;
+      winRateA: number;
+      passRatePerTurn: number;
+      medianTurns: number;
+      runnerOpportunityUseRate: number;
+      runnerReserveStartUseRate: number;
+      reserveCrewPlacements: number;
+      backpacksEquipped: number;
+    }
+
+    const samples: QuotaSample[] = [];
+
+    logPhase(`backpack-quota profile=${profile} sweeping ${minQ}..${maxQ}`);
+    for (let q = minQ; q <= maxQ; q++) {
+      // Override the deck-builder TOTAL_BACKPACKS at runtime by editing
+      // the shared TURF_SIM_CONFIG.deckBuilder reference. Restored after
+      // each iteration so subsequent commands see the original value.
+      type DeckBuilderCfg = { totalBackpacks: number };
+      const cfg = (TURF_SIM_CONFIG as { deckBuilder: DeckBuilderCfg }).deckBuilder;
+      const originalQuota = cfg.totalBackpacks;
+      cfg.totalBackpacks = q;
+      try {
+        const run = runSeededBenchmark(profile, { includeBalance: false });
+        const s = run.summary;
+        samples.push({
+          quota: q,
+          winRateA: s.winRateA,
+          passRatePerTurn: s.passRatePerTurn,
+          medianTurns: s.medianTurns,
+          runnerOpportunityUseRate: s.runnerOpportunityUseRate,
+          runnerReserveStartUseRate: s.runnerReserveStartUseRate,
+          reserveCrewPlacements: s.reserveCrewPlacements,
+          backpacksEquipped: s.backpacksEquipped,
+        });
+      } finally {
+        cfg.totalBackpacks = originalQuota;
+      }
+    }
+
+    console.log('\nBackpack Quota Sweep');
+    console.log('  quota | winA   | medTurns | passT  | reserve | equip  | runnerUse | resStart');
+    console.log('  ------+--------+----------+--------+---------+--------+-----------+---------');
+    for (const s of samples) {
+      console.log(
+        `  ${String(s.quota).padStart(5)} | ${s.winRateA.toFixed(3)} |   ${String(s.medianTurns).padStart(4)}   | ${s.passRatePerTurn.toFixed(3)} |  ${s.reserveCrewPlacements.toFixed(2)}  |  ${s.backpacksEquipped.toFixed(2)} |   ${s.runnerOpportunityUseRate.toFixed(3)}  |  ${s.runnerReserveStartUseRate.toFixed(3)}`,
+      );
+    }
+
+    // Pick the quota with the closest-to-50% win rate AND non-zero
+    // backpacks equipped.
+    const best = samples
+      .filter((s) => s.backpacksEquipped > 0)
+      .reduce(
+        (acc, s) => (Math.abs(s.winRateA - 0.5) < Math.abs(acc.winRateA - 0.5) ? s : acc),
+        samples[0]!,
+      );
+    console.log(`\nRecommended quota: ${best.quota}  (winA ${best.winRateA.toFixed(3)}, equip ${best.backpacksEquipped.toFixed(2)})`);
+
+    const path = writeAnalysisJson('backpack-quota', `backpack-quota-${profile}.json`, {
+      generatedAt: new Date().toISOString(),
+      profile,
+      range: { min: minQ, max: maxQ },
+      samples,
+      recommended: best.quota,
+    });
     console.log(path);
     return;
   }

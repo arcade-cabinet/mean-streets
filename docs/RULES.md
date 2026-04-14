@@ -77,6 +77,14 @@ simulation tuning (target: each backpack carries ~3–4 quarter-cards on
 average). Players can unlock **additional backpack slots** permanently
 through achievements, just like unlocking additional cash denominations.
 
+**Current N: 12** (configurable via `TURF_SIM_CONFIG.deckBuilder.totalBackpacks`).
+Sweep results (`pnpm run analysis:backpack-quota --profile ci`) show
+that N in the 3..10 range produces identical game-length and equip
+metrics — the engine consumes only ~2 backpacks per game in current
+balance, so the quota above ~3 is effectively a deckbuilding quality-
+of-life knob rather than a balance lever. Revisit when AI runner usage
+climbs past 1 backpack/game on average.
+
 ### Pre-Packing Rule
 
 **All quarter-cards start the game inside backpacks.** During deckbuilding

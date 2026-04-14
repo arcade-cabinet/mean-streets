@@ -27,6 +27,7 @@
     "analysis:autobalance": "tsx src/sim/analysis/cli.ts autobalance --profile standard",
     "analysis:autobalance:dry": "tsx src/sim/analysis/cli.ts autobalance --profile quick --dry-run",
     "analysis:runner-contract": "tsx src/sim/analysis/cli.ts runner-contract --profile ci",
+    "analysis:backpack-quota": "tsx src/sim/analysis/cli.ts backpack-quota --profile ci --min 3 --max 10",
     "cap:sync": "pnpm run build && pnpm exec cap sync",
     "assets:generate": "bash scripts/generate-mobile-icons.sh",
     "cap:open:android": "pnpm exec cap open android",

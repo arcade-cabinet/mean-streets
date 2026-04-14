@@ -6,7 +6,8 @@
   "bonus": [
     1,
     2,
-    3
+    3,
+    4
   ],
   "offenseAbility": "REACH",
   "offenseAbilityText": "Can target any enemy position, not just front-line.",
