@@ -42,6 +42,9 @@ sim/reports/turf/balance-*.json
 # Generated web assets (rebuilt on postinstall)
 public/assets/sql-wasm.wasm
 
+# Compiled card catalog (rebuilt from config/raw/ on postinstall/prebuild/predev)
+config/compiled/
+
 # Mobile native build output
 android/.gradle/
 android/app/build/
