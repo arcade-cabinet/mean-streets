@@ -60,25 +60,32 @@ React 19, TypeScript, Vite 8, Koota ECS, Yuka.js AI, Capacitor 8, Capacitor SQLi
 ## Project Structure
 
 ```
+config/
+  raw/cards/           # Authored per-card JSON (dev source of truth)
+  compiled/            # Build-time outputs (gitignored)
 src/
   platform/            # Capacitor shell, layout/device services, SQLite persistence
   sim/
     turf/              # Active game engine
     analysis/          # Dev-only balancing and lock-state tooling
-    cards/             # Authored crew loader, legacy generators, seeded PRNG, schemas
+    cards/             # Card catalog loaders, seeded PRNG, Zod schemas
+  ecs/                 # Koota ECS bridge between sim and React
   ui/                  # Production React UI
 docs/
-  DESIGN.md            # Locked gameplay design
+  DESIGN.md            # Vision and identity
+  RULES.md             # Authoritative gameplay mechanics
   ARCHITECTURE.md      # Technical architecture
   PRODUCTION.md        # Release checklist and remaining work
+  VISUAL_REVIEW.md     # Visual fixture workflow
 ```
 
 ## Source Of Truth
 
-- [docs/DESIGN.md](/Users/jbogaty/src/arcade-cabinet/mean-streets/docs/DESIGN.md)
-- [docs/ARCHITECTURE.md](/Users/jbogaty/src/arcade-cabinet/mean-streets/docs/ARCHITECTURE.md)
-- [docs/PRODUCTION.md](/Users/jbogaty/src/arcade-cabinet/mean-streets/docs/PRODUCTION.md)
-- [docs/VISUAL_REVIEW.md](/Users/jbogaty/src/arcade-cabinet/mean-streets/docs/VISUAL_REVIEW.md)
+- [docs/DESIGN.md](./docs/DESIGN.md) — vision and identity
+- [docs/RULES.md](./docs/RULES.md) — authoritative gameplay mechanics
+- [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) — technical architecture
+- [docs/PRODUCTION.md](./docs/PRODUCTION.md) — release checklist + implementation status
+- [docs/VISUAL_REVIEW.md](./docs/VISUAL_REVIEW.md) — visual review workflow
 
 ## Analysis Output
 

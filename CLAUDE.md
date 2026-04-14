@@ -8,11 +8,18 @@ status: current
 
 ## What This Is
 
-A gritty tactical turf war card game. 25 crew + 25 modifiers per deck, 5v5 position seizure, simultaneous rounds, no dice. See `docs/DESIGN.md` for full game design and `docs/ARCHITECTURE.md` for technical architecture.
+A gritty tactical turf war card game. 25 toughs + up to 25 quarter-cards packed into backpacks per deck, 5v5 position seizure, simultaneous rounds, no dice.
+
+**Doc pillars** — each file owns exactly one area:
+- `docs/DESIGN.md` — vision, identity, philosophy, pivot history
+- `docs/RULES.md` — authoritative gameplay mechanics (cards, phases, attacks, backpacks, runners)
+- `docs/ARCHITECTURE.md` — technical stack, directory layout, data flow
+- `docs/PRODUCTION.md` — release readiness, platform targets, blockers, implementation status
+- `docs/VISUAL_REVIEW.md` — how to run and review visual fixtures
 
 ## Critical Rules
 
-1. **The game design is LOCKED IN.** Do not reinvent mechanics. The PRD at `docs/plans/port-to-production.prq.md` is the source of truth.
+1. **The game design is LOCKED IN.** `docs/RULES.md` is the authoritative source of truth for mechanics — do not reinvent them. Release status tracks in `docs/PRODUCTION.md`.
 2. **Balance is simulation-proven.** Any rule change must be validated with `pnpm run analysis:benchmark` before committing. Changes to `src/sim/turf/**` that shift thresholds must update `src/data/ai/turf-sim.json`.
 3. **No dice, no coin flip.** Outcomes are deterministic. Only randomness is draw order.
 4. **The simulation engine runs WITHOUT React.** Pure TypeScript, testable independently.
@@ -51,7 +58,8 @@ pnpm run cap:sync           # Build + sync web assets to Capacitor
 - `src/test/` — Shared test helpers (render-browser, browser-helpers)
 - `e2e/` — Playwright specs (app-flow, visual-fixtures)
 - `.maestro/` — Maestro mobile smoke tests
-- `docs/` — Design, architecture, PRD, plans
+- `docs/` — Vision, rules, architecture, production, visual review (see "Doc pillars" at the top)
+- `config/raw/cards/` — Per-card authored JSON (dev source of truth; compiled to `config/compiled/` for runtime)
 - `sim/reports/turf/balance-history.json` — **Tracked**: source of truth for card lock state
 
 ## Key Types

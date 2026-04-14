@@ -1,84 +1,140 @@
 ---
 title: Production Checklist
-updated: 2026-04-13
+updated: 2026-04-14
 status: current
 domain: release
 ---
 
 # Production Checklist
 
-## Source Of Truth
+This document owns **release readiness**. It is the single tracker for
+what blocks the game from shipping, what platforms it targets, and where
+each system sits on the path to launch. Vision lives in
+[DESIGN.md](./DESIGN.md), mechanics in [RULES.md](./RULES.md), tech in
+[ARCHITECTURE.md](./ARCHITECTURE.md).
 
-- `docs/DESIGN.md` defines the locked gameplay rules.
-- `docs/ARCHITECTURE.md` defines the active technical stack.
-- This document is the single execution tracker for remaining production work.
+## Release Targets
 
-## Remaining Work
+| Target       | Requirement                                        |
+|--------------|----------------------------------------------------|
+| Web          | Primary development, simulation, and QA surface    |
+| Android      | Store-ready Capacitor build                        |
+| iOS          | Store-ready Capacitor build                        |
+| Persistence  | Capacitor SQLite, shared web ↔ native              |
+| Accessibility| Pointer drag/drop **and** tap-to-arm / tap-to-place|
+| Layout       | Portrait, landscape, tablet, fold-aware            |
 
-### 1. Rules Completion
+## Implementation Status
 
-- Replace the loose modifier draw model with the backpack / runner rules now defined in `docs/DESIGN.md`.
-- Rebase deckbuilding, buildup, combat, and simulation on backpack kits as the only coherent modifier delivery path.
-- Satisfy the runner opening contract from `docs/DESIGN.md` without breaking the seeded benchmark envelope. Current diagnostics show the stable AI misses the reserve-start stage completely.
-- Finish visible weapon, drug, and archetype ability resolution in the active runtime/sim path.
-- Ensure the runtime app uses the same decision/state transitions as seeded simulation.
+Tracks every system named in the other docs. When `Status` is anything
+other than `Ready`, the release is blocked.
 
-### 2. Mobile Productization
+### Rules Engine
 
-- Finish SQLite-backed profile, unlock, and active-run persistence.
-- Make Continue real on top of persisted run state.
-- Finalize native shell assets, metadata, and simulator/emulator smoke flows.
+| System                                | Status         |
+|---------------------------------------|----------------|
+| Turf war simulation (buildup + combat)| Ready          |
+| Seeded draw order, deterministic      | Ready          |
+| 3 attack types (direct/funded/pushed) | Ready          |
+| Per-category weapon abilities         | Partial (stats resolved, ability text not yet enforced in combat) |
+| Per-category drug abilities           | Partial        |
+| Archetype abilities                   | Partial (only Bruiser precision-ignore active) |
+| Backpack as mechanical container      | Pending refactor (currently 30 authored kits) |
+| Runner free-swap                      | Partial (sim engine only, UI work pending) |
+| Pocket vs backpack-gated slot model   | Pending slot rename (see RULES §2) |
+| Seizure transfers backpack + payload  | Pending        |
+| Empty-backpack pickup / redistribution| Pending        |
 
-### 3. Responsive + Visual Finish
+### Authoring And Tuning
 
-- Complete responsive layout adaptations for portrait, landscape, tablet, and fold-aware variants.
-- Bring the final visual system fully in line with `public/poc.html`.
-- Use the exported screenshot workflow in `docs/VISUAL_REVIEW.md` to review menu, garage, deckbuilder, buildup, and combat captures against the POC before approving final polish.
-- Keep accessibility parity between drag/drop and tap-to-arm placement flows.
+| System                                | Status         |
+|---------------------------------------|----------------|
+| Tough cards authored as per-card files| In progress (Task 19 done)|
+| Weapons authored as per-card files    | In progress (Task 20 done)|
+| Drugs authored as per-card files      | In progress (Task 20 done)|
+| special.json for backpack + cash      | Pending        |
+| Zod schema with tuning-history arrays | Pending (Task 22)|
+| raw/ → compiled/ build step           | Pending (Task 23)|
+| Autobalance loop with auto-commit     | Pending (Task 24)|
+| Runtime loaders read compiled output  | Pending (Task 25)|
+| Achievement-driven unlocks            | Pending (creative pass)|
 
-### 4. Release Governance
+### UI / UX
 
-- Stabilize browser/E2E/native suites on top of the current async shell/persistence path.
-- Drive the dev analysis layer until every balance-relevant card is in `locked` state.
-- Keep benchmark, sweep, and lock reports aligned to the runner economy by tracking reserve placements, backpack equips, runner deployments, and payload deployments alongside attack-family metrics.
-- Treat runner opening contract diagnostics as release-facing evidence:
-  - overall runner opportunity use rate
-  - reserve-start use rate
-  - stage-level misses
-- Keep generated reports and native/test artifacts out of source control.
+| System                                | Status         |
+|---------------------------------------|----------------|
+| Screen router (menu → game-over)      | Ready          |
+| Drag-and-drop + tap-to-arm            | Ready          |
+| Gritty noir SVG filter system         | Ready          |
+| Responsive layouts (portrait/tablet)  | In progress    |
+| Visual system vs `public/poc.html`    | In progress    |
+| Runner symbol overlay on toughs       | Pending        |
+| Pocket vs backpack-gated slot visuals | Pending        |
+
+### Platform / Mobile
+
+| System                                | Status         |
+|---------------------------------------|----------------|
+| Capacitor app shell (Android + iOS)   | In progress    |
+| SQLite profile + unlock persistence   | In progress    |
+| Continue / load-game on saved state   | In progress    |
+| Native icons / splash / store metadata| In progress    |
+| Maestro smoke flows                   | In progress    |
+
+### CI / Release Governance
+
+| System                                | Status         |
+|---------------------------------------|----------------|
+| CI: lint + typecheck + test:node+dom  | Ready          |
+| CI: browser tests + e2e (4 profiles)  | Ready          |
+| CI: release gate (coverage ≥ 70%)     | Ready          |
+| CD: deploy to GitHub Pages            | Ready          |
+| Release benchmark profile             | Ready          |
+| Lock coverage ≥ 70% in balance-history| Ready (75% current)|
+| Lock coverage = 100%                  | Pending autobalance loop|
+| Runner opening contract satisfied     | Failing (sim diagnostics show reserve-start misses)|
+| Concurrency guard on Pages deploy     | Ready          |
 
 ## Release Blockers
 
-- `pnpm run build` is green.
-- `pnpm run test:node` is green.
-- `pnpm run test:dom` is green.
-- Browser and E2E suites are green across responsive targets.
-- Native Android and iOS Capacitor projects sync and boot.
-- Maestro smoke flows pass on at least one Android and one iOS simulator/emulator.
-- `pnpm run test:release` is green.
-- All balance-relevant cards are in `locked` state from the analysis layer.
-- Runner opening contract is no longer failing at reserve start under the accepted release benchmark profile.
+These are all required for a store-ready launch:
 
-## Product Completion
-
-- Runtime visuals fully match the noir / black / dark-red direction from `public/poc.html`.
-- Runtime rule model uses backpacks/runners instead of loose quarter-card draws.
-- All user-visible card rules are implemented in the active sim/runtime path.
-- Continue/save/profile/unlock state are persisted through Capacitor SQLite.
-- No product-critical path depends on localStorage.
-- Touch interaction supports drag/drop and tap-to-arm/tap-to-place accessibility flow.
-- Portrait, landscape, tablet, and fold-aware layouts are approved.
+- [x] `pnpm run build` green
+- [x] `pnpm run test` (node + DOM) green
+- [x] `pnpm run test:browser` green
+- [x] `pnpm run test:e2e` green across all four device profiles
+- [x] `pnpm run test:release` green (currently 75% lock coverage)
+- [ ] 100% of the balance catalog in `locked` state
+- [ ] Backpack / runner refactor complete (see RULES §6–7)
+- [ ] Runner opening contract no longer fails at reserve-start
+- [ ] Visible weapon / drug / archetype abilities fully resolved in combat
+- [ ] SQLite profile + unlock persistence working end-to-end
+- [ ] Continue / load-game functional on persisted state
+- [ ] No product path depends on localStorage
+- [ ] Runtime visuals match `public/poc.html` direction
+- [ ] Native Android + iOS Capacitor projects sync, boot, and pass Maestro smoke
+- [ ] Touch UX supports drag/drop **and** tap-to-arm / tap-to-place
+- [ ] Portrait / landscape / tablet / fold-aware layouts approved
 
 ## Release Artifacts
 
-- Seeded benchmark report
-- Sweep report
-- Lock report
-  Includes `summary.totalCards`, state counts, and `summary.runnerReserveStartRiskCards`
+Each release ships with:
+
+- Seeded benchmark report (`sim/reports/analysis/benchmarks/`)
+- Sweep report (`sim/reports/analysis/sweeps/`)
+- Lock report with `summary.totalCards`, state counts, and
+  `summary.runnerReserveStartRiskCards`
 - Progress sidecars for long-running focus/lock analysis
-  `sim/reports/analysis/focus/*.progress.json` and `sim/reports/analysis/locks/*.progress.json`
+  (`*.progress.json`)
 - Runner-economy summary inside benchmark/sweep artifacts
-- Runner opening contract summary with reserve/equip/deploy/payload stage usage
+- Runner opening contract summary with reserve/equip/deploy/payload
+  stage usage
 - Replay-seed shortlist for outliers
-- Native build instructions
-- Store metadata, icons, and splash assets
+- Native build notes, store metadata, icons, splash assets
+
+## Ship / Re-tune Policy
+
+Once a card is shipped in `locked` state, its stats never change. Future
+balance work ships as **net-new expansions** (additional cards, not
+revisions). This is the Brawl Stars model: every shipped identity stays
+authoritative.

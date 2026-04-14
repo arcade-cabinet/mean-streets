@@ -2,14 +2,16 @@
 
 ## Source Of Truth
 
-- Gameplay rules: `docs/DESIGN.md`
+- Vision and identity: `docs/DESIGN.md`
+- Gameplay rules (authoritative): `docs/RULES.md`
 - Technical architecture: `docs/ARCHITECTURE.md`
 - Release checklist and remaining work: `docs/PRODUCTION.md`
+- Visual review workflow: `docs/VISUAL_REVIEW.md`
 
 ## Project Expectations
 
 - This is a deterministic turf-war card game. No dice, coin flips, or mid-game randomness outside seeded draw order.
-- The active engine is `src/sim/turf/`. Legacy engine code under `src/sim/engine/` is deprecated and must not be treated as production authority.
+- The active engine is `src/sim/turf/`. The legacy `src/sim/engine/` and `src/sim/balance/` paths were removed — do not resurrect them.
 - Balancing and release gating live in `src/sim/analysis/`.
 - Mobile app stores are the release target. Web is the primary development and testing surface.
 - Product persistence is SQLite-backed through the Capacitor layer. Do not add localStorage as a product backend.
