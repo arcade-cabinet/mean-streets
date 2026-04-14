@@ -3539,3 +3539,59 @@ select {
     grid-template-columns: 1fr;
   }
 }
+
+/* ────────────────────────────────────────────────────────────── */
+/* G2 — landscape + tablet + desktop-wide refinements              */
+/* ────────────────────────────────────────────────────────────── */
+
+/* Tablet landscape (iPad Pro 11" landscape etc.): widen the content
+   column and relax vertical padding so combat/buildup rows breathe. */
+[data-layout='tablet-landscape'] .menu-content,
+[data-layout='tablet-landscape'] .deckbuilder-screen,
+[data-layout='tablet-landscape'] .buildup-screen,
+[data-layout='tablet-landscape'] .combat-screen {
+  --tablet-ls-content-max: min(1120px, 92vw);
+  padding-inline: clamp(24px, 4vw, 48px);
+}
+
+[data-layout='tablet-landscape'] .crew-card-shell {
+  width: 168px;
+  height: 224px;
+}
+
+[data-layout='tablet-landscape'] .menu-logo-split {
+  width: clamp(240px, 18vw, 320px);
+}
+
+/* Tablet portrait (iPad portrait): keep single column but allow
+   wider deckbuilder collection grid and larger cards. */
+[data-layout='tablet-portrait'] .deckbuilder-screen {
+  padding-inline: clamp(24px, 5vw, 56px);
+}
+
+[data-layout='tablet-portrait'] .crew-card-shell {
+  width: 172px;
+  height: 230px;
+}
+
+/* Desktop wide: generous content widths, explicit max-width so the
+   playfield does not stretch into empty edges on 4K monitors. */
+[data-layout='desktop-wide'] .app-shell {
+  --desktop-content-max: 1440px;
+}
+
+[data-layout='desktop-wide'] .menu-content,
+[data-layout='desktop-wide'] .deckbuilder-screen,
+[data-layout='desktop-wide'] .buildup-screen,
+[data-layout='desktop-wide'] .combat-screen {
+  max-width: var(--desktop-content-max, 1440px);
+  margin-inline: auto;
+}
+
+/* Fold-aware: when a device exposes two viewport segments,
+   reserve the centre hinge gutter and keep interactive content
+   out of the fold seam. */
+[data-layout='unfolded'] .app-shell {
+  --fold-gutter: 16px;
+  padding-inline: var(--fold-gutter);
+}
