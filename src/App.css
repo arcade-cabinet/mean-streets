@@ -32,7 +32,10 @@ select {
 
 .menu-shell {
   position: relative;
-  min-height: 100%;
+  min-height: 100vh;
+  /* Fall back to small-viewport height where supported for mobile
+     browsers that shift their URL bar. */
+  min-height: 100svh;
   overflow: hidden;
   background:
     var(--surface-menu-shell),
@@ -65,8 +68,10 @@ select {
   top: max(24px, calc(env(safe-area-inset-top) + 24px));
   left: 50%;
   transform: translateX(-50%);
-  width: clamp(180px, 40vw, 280px);
-  max-height: 30vh;
+  width: clamp(160px, 38vw, 240px);
+  /* Cap by both viewport height and width so landscape phones do
+     not stretch the logo into the menu buttons. */
+  max-height: min(28vh, 220px);
   object-fit: contain;
 }
 
@@ -113,6 +118,10 @@ select {
 
 .menu-content-stacked {
   align-items: stretch;
+  /* Reserve vertical space for the absolutely-positioned logo above
+     (see .menu-logo-stacked: top 24px + max-height 30vh). */
+  padding-top: calc(30vh + 48px);
+  justify-content: flex-start;
 }
 
 .menu-topbar {
@@ -1582,10 +1591,23 @@ select {
     padding: 2rem 1rem;
   }
 
+  /* Stacked variant has the logo pinned above — push content below
+     the logo's reserved space (see .menu-logo-stacked max-height). */
+  .menu-content-stacked {
+    padding-top: calc(28vh + 64px);
+  }
+
   .menu-actions {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     width: min(100%, 36rem);
     justify-self: center;
+  }
+
+  /* Stacked variant: 1 column — LATER in cascade so it overrides the
+     generic .menu-actions 2-column above. */
+  .menu-actions.menu-actions-stacked {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
   }
 
   .deckbuilder-header {
