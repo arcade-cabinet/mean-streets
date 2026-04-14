@@ -1544,11 +1544,16 @@ select {
   color: #f3e4cb;
   font-size: 0.56rem;
   font-weight: 800;
-  line-height: 1.08;
+  line-height: 1.14;
   text-align: center;
-  white-space: nowrap;
+  /* Two-line clamp so long display names ("Paulo 'Lanza' Diaz") wrap
+     once inside the hand tile instead of ellipsizing too early. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .hand-crew-archetype {
