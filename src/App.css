@@ -335,6 +335,14 @@ select {
   min-height: 100%;
   display: grid;
   grid-template-rows: auto 1fr 1fr auto;
+  /* Hard width + overflow guard: prevents any runaway flex/grid child
+     from widening the viewport. Grid tracks fall back to 0 minimum
+     via minmax(0, 1fr). */
+  width: 100%;
+  max-width: 100vw;
+  min-width: 0;
+  overflow-x: hidden;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
   padding: 1.1rem;
   background:
@@ -556,6 +564,7 @@ select {
   justify-content: space-between;
   gap: 1rem;
   align-items: flex-start;
+  min-width: 0;
 }
 
 .deckbuilder-actions,
@@ -569,11 +578,13 @@ select {
 }
 
 .deckbuilder-actions {
+  display: flex;
   flex-direction: column;
   align-items: flex-end;
   align-content: flex-start;
   gap: 0.65rem;
   max-width: 46rem;
+  min-width: 0;
 }
 
 .deckbuilder-actions-top,
@@ -1651,7 +1662,11 @@ select {
 
   .deckbuilder-shell,
   .deckbuilder-shell-split {
-    grid-template-columns: 1fr;
+    /* minmax(0, 1fr) ensures the grid track can shrink when a child
+       tries to push wider than the viewport; plain "1fr" lets the
+       track expand to fit a wide flex container, which was making
+       .deckbuilder-actions explode to 20000+px on mobile. */
+    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto auto auto auto;
   }
 
