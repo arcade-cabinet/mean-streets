@@ -1,0 +1,18 @@
+{
+  "id": "card-051",
+  "type": "crew",
+  "displayName": "Paulie \"Lookout\" Chen",
+  "archetype": "lookout",
+  "affiliation": "black_market",
+  "power": [
+    5
+  ],
+  "resistance": [
+    7
+  ],
+  "abilityText": "On play: peek at the top 2 cards of your own deck, reorder them",
+  "unlocked": false,
+  "unlockCondition": "Win 6 games",
+  "locked": false,
+  "draft": true
+}

@@ -1,0 +1,18 @@
+{
+  "id": "card-018",
+  "type": "crew",
+  "displayName": "Richie \"Two-Tone\" Walsh",
+  "archetype": "medic",
+  "affiliation": "neon_snakes",
+  "power": [
+    2
+  ],
+  "resistance": [
+    5
+  ],
+  "abilityText": "When sacrificed to heal: heals double the normal amount",
+  "unlocked": true,
+  "unlockCondition": null,
+  "locked": false,
+  "draft": true
+}

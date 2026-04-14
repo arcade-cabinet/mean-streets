@@ -1,0 +1,18 @@
+{
+  "id": "card-077",
+  "type": "crew",
+  "displayName": "Ray \"Slim\" Yang",
+  "archetype": "hustler",
+  "affiliation": "southside_saints",
+  "power": [
+    6
+  ],
+  "resistance": [
+    9
+  ],
+  "abilityText": "On play: swap 1 card from your hand with 1 from your reserves",
+  "unlocked": false,
+  "unlockCondition": "Win without using any reserves",
+  "locked": false,
+  "draft": true
+}

@@ -1,0 +1,17 @@
+{
+  "id": "drug-38",
+  "type": "product",
+  "name": "Brute Surge",
+  "category": "steroid",
+  "potency": [
+    5
+  ],
+  "offenseAbility": "BULK",
+  "offenseAbilityText": "Crew gets +potency power for attacks.",
+  "defenseAbility": "FORTIFY",
+  "defenseAbilityText": "Crew gets +potency resistance.",
+  "unlocked": false,
+  "unlockCondition": "Use 14 drugs in total across games",
+  "locked": false,
+  "draft": true
+}

@@ -1,0 +1,17 @@
+{
+  "id": "drug-28",
+  "type": "product",
+  "name": "Neon Lens",
+  "category": "hallucinogen",
+  "potency": [
+    3
+  ],
+  "offenseAbility": "CONFUSE",
+  "offenseAbilityText": "Funded flip threshold reduced by potency.",
+  "defenseAbility": "PARANOIA",
+  "defenseAbilityText": "Funded flips against this crew cost potency extra cash.",
+  "unlocked": false,
+  "unlockCondition": "Win a game using only stimulants",
+  "locked": false,
+  "draft": true
+}

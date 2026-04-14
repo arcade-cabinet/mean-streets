@@ -1,0 +1,18 @@
+{
+  "id": "card-001",
+  "type": "crew",
+  "displayName": "Ana \"Thorn\" Reyes",
+  "archetype": "bruiser",
+  "affiliation": "kings_row",
+  "power": [
+    5
+  ],
+  "resistance": [
+    2
+  ],
+  "abilityText": "Deals +2 damage when attacking a target with lower ATK than this card",
+  "unlocked": true,
+  "unlockCondition": null,
+  "locked": false,
+  "draft": true
+}

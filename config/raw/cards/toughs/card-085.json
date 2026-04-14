@@ -1,0 +1,18 @@
+{
+  "id": "card-085",
+  "type": "crew",
+  "displayName": "Rocco \"Ghost\" Caruso",
+  "archetype": "bruiser",
+  "affiliation": "freelance",
+  "power": [
+    10
+  ],
+  "resistance": [
+    7
+  ],
+  "abilityText": "Deals +2 damage when attacking a target with lower ATK than this card",
+  "unlocked": false,
+  "unlockCondition": "Win a game using only cards from 2 affiliations",
+  "locked": false,
+  "draft": true
+}

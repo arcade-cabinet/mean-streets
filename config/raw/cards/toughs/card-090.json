@@ -1,0 +1,18 @@
+{
+  "id": "card-090",
+  "type": "crew",
+  "displayName": "Min \"Bolt\" Walsh",
+  "archetype": "medic",
+  "affiliation": "neon_snakes",
+  "power": [
+    7
+  ],
+  "resistance": [
+    11
+  ],
+  "abilityText": "When sacrificed to heal: heals double the normal amount",
+  "unlocked": false,
+  "unlockCondition": "Win a game on the first night phase",
+  "locked": false,
+  "draft": true
+}

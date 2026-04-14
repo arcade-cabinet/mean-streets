@@ -1,0 +1,17 @@
+{
+  "id": "weap-06",
+  "type": "weapon",
+  "name": "Stiletto",
+  "category": "bladed",
+  "bonus": [
+    2
+  ],
+  "offenseAbility": "LACERATE",
+  "offenseAbilityText": "Target bleeds, losing 1 resistance per round for bonus rounds.",
+  "defenseAbility": "PARRY",
+  "defenseAbilityText": "Attacker takes bonus counter-damage.",
+  "unlocked": false,
+  "unlockCondition": "Win a game in under 12 rounds",
+  "locked": false,
+  "draft": true
+}

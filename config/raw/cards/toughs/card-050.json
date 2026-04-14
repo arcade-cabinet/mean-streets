@@ -1,0 +1,18 @@
+{
+  "id": "card-050",
+  "type": "crew",
+  "displayName": "Akira \"Snitch\" Chung",
+  "archetype": "snitch",
+  "affiliation": "dead_rabbits",
+  "power": [
+    5
+  ],
+  "resistance": [
+    7
+  ],
+  "abilityText": "On play: opponent must reveal 1 random card from their hand for the rest of the round",
+  "unlocked": false,
+  "unlockCondition": "Win a game on the first night phase",
+  "locked": false,
+  "draft": true
+}

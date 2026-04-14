@@ -1,0 +1,17 @@
+{
+  "id": "weap-05",
+  "type": "weapon",
+  "name": "Cleaver",
+  "category": "bladed",
+  "bonus": [
+    2
+  ],
+  "offenseAbility": "LACERATE",
+  "offenseAbilityText": "Target bleeds, losing 1 resistance per round for bonus rounds.",
+  "defenseAbility": "PARRY",
+  "defenseAbilityText": "Attacker takes bonus counter-damage.",
+  "unlocked": false,
+  "unlockCondition": "Win a game using only bladed weapons",
+  "locked": false,
+  "draft": true
+}

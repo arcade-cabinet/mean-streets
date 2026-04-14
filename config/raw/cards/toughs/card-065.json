@@ -1,0 +1,18 @@
+{
+  "id": "card-065",
+  "type": "crew",
+  "displayName": "Marco \"Blade\" Brennan",
+  "archetype": "hustler",
+  "affiliation": "reapers",
+  "power": [
+    8
+  ],
+  "resistance": [
+    6
+  ],
+  "abilityText": "On play: swap 1 card from your hand with 1 from your reserves",
+  "unlocked": false,
+  "unlockCondition": "Win a game using only cards from 2 affiliations",
+  "locked": false,
+  "draft": true
+}

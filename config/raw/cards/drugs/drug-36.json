@@ -1,0 +1,17 @@
+{
+  "id": "drug-36",
+  "type": "product",
+  "name": "Mammoth Bulk",
+  "category": "steroid",
+  "potency": [
+    4
+  ],
+  "offenseAbility": "BULK",
+  "offenseAbilityText": "Crew gets +potency power for attacks.",
+  "defenseAbility": "FORTIFY",
+  "defenseAbilityText": "Crew gets +potency resistance.",
+  "unlocked": false,
+  "unlockCondition": "Win a game using only stimulants",
+  "locked": false,
+  "draft": true
+}

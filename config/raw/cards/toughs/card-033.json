@@ -1,0 +1,18 @@
+{
+  "id": "card-033",
+  "type": "crew",
+  "displayName": "Sung \"Fixer\" Matsuda",
+  "archetype": "fixer",
+  "affiliation": "black_market",
+  "power": [
+    2
+  ],
+  "resistance": [
+    4
+  ],
+  "abilityText": "On play: change one card in your active stack's affiliation to match this card's for the round",
+  "unlocked": false,
+  "unlockCondition": "Kill 10 vanguards total",
+  "locked": false,
+  "draft": true
+}

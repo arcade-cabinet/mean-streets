@@ -1,0 +1,18 @@
+{
+  "id": "card-072",
+  "type": "crew",
+  "displayName": "Akira \"Scar\" Takahashi",
+  "archetype": "fence",
+  "affiliation": "black_market",
+  "power": [
+    6
+  ],
+  "resistance": [
+    7
+  ],
+  "abilityText": "On sacrifice: draw 2 cards instead of healing",
+  "unlocked": false,
+  "unlockCondition": "Win 3 games with a full Freelance deck",
+  "locked": false,
+  "draft": true
+}

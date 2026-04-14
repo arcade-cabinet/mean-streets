@@ -1,0 +1,18 @@
+{
+  "id": "card-061",
+  "type": "crew",
+  "displayName": "Jackie \"Bruiser\" Kwon",
+  "archetype": "bruiser",
+  "affiliation": "dead_rabbits",
+  "power": [
+    8
+  ],
+  "resistance": [
+    6
+  ],
+  "abilityText": "Deals +2 damage when attacking a target with lower ATK than this card",
+  "unlocked": false,
+  "unlockCondition": "Win 6 games",
+  "locked": false,
+  "draft": true
+}

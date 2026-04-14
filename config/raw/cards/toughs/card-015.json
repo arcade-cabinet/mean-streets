@@ -1,0 +1,18 @@
+{
+  "id": "card-015",
+  "type": "crew",
+  "displayName": "Ken \"Red\" Morales",
+  "archetype": "lookout",
+  "affiliation": "freelance",
+  "power": [
+    2
+  ],
+  "resistance": [
+    4
+  ],
+  "abilityText": "On play: peek at the top 2 cards of your own deck, reorder them",
+  "unlocked": true,
+  "unlockCondition": null,
+  "locked": false,
+  "draft": true
+}

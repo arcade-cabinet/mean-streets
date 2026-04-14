@@ -1,0 +1,17 @@
+{
+  "id": "drug-10",
+  "type": "product",
+  "name": "Lightning Zip",
+  "category": "stimulant",
+  "potency": [
+    3
+  ],
+  "offenseAbility": "RUSH",
+  "offenseAbilityText": "Crew acts immediately after placement, no setup turn cooldown.",
+  "defenseAbility": "REFLEXES",
+  "defenseAbilityText": "Crew counter-attacks for potency damage when hit.",
+  "unlocked": false,
+  "unlockCondition": "Flip 9 enemies total",
+  "locked": false,
+  "draft": true
+}

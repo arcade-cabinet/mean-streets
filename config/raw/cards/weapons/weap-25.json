@@ -1,0 +1,17 @@
+{
+  "id": "weap-25",
+  "type": "weapon",
+  "name": "Gas Can",
+  "category": "explosive",
+  "bonus": [
+    3
+  ],
+  "offenseAbility": "BLAST",
+  "offenseAbilityText": "Splash bonus damage to adjacent positions.",
+  "defenseAbility": "DETERRENT",
+  "defenseAbilityText": "Attackers must exceed defense by bonus extra to kill.",
+  "unlocked": false,
+  "unlockCondition": "Win a game in under 12 rounds",
+  "locked": false,
+  "draft": true
+}

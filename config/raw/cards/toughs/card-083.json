@@ -1,0 +1,18 @@
+{
+  "id": "card-083",
+  "type": "crew",
+  "displayName": "Sal \"Wire\" Diaz",
+  "archetype": "shark",
+  "affiliation": "black_market",
+  "power": [
+    8
+  ],
+  "resistance": [
+    7
+  ],
+  "abilityText": "+1 damage for every point of damage already on the enemy vanguard",
+  "unlocked": false,
+  "unlockCondition": "Kill 14 vanguards total",
+  "locked": false,
+  "draft": true
+}

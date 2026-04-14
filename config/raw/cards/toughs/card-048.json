@@ -1,0 +1,18 @@
+{
+  "id": "card-048",
+  "type": "crew",
+  "displayName": "Lucia \"Fence\" Tanaka",
+  "archetype": "fence",
+  "affiliation": "kings_row",
+  "power": [
+    6
+  ],
+  "resistance": [
+    6
+  ],
+  "abilityText": "On sacrifice: draw 2 cards instead of healing",
+  "unlocked": false,
+  "unlockCondition": "Win with a deck containing 3+ affiliations",
+  "locked": false,
+  "draft": true
+}

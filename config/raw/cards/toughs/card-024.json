@@ -1,0 +1,18 @@
+{
+  "id": "card-024",
+  "type": "crew",
+  "displayName": "Gabriela \"Smoke\" Hayashi",
+  "archetype": "fence",
+  "affiliation": "neon_snakes",
+  "power": [
+    5
+  ],
+  "resistance": [
+    4
+  ],
+  "abilityText": "On sacrifice: draw 2 cards instead of healing",
+  "unlocked": false,
+  "unlockCondition": "Win a game in under 13 turns",
+  "locked": false,
+  "draft": true
+}

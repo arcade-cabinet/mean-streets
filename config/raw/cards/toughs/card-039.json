@@ -1,0 +1,18 @@
+{
+  "id": "card-039",
+  "type": "crew",
+  "displayName": "Bobby \"Whiskey\" Kelly",
+  "archetype": "lookout",
+  "affiliation": "cobalt_syndicate",
+  "power": [
+    4
+  ],
+  "resistance": [
+    6
+  ],
+  "abilityText": "On play: peek at the top 2 cards of your own deck, reorder them",
+  "unlocked": false,
+  "unlockCondition": "Deal 43 total damage in a single game",
+  "locked": false,
+  "draft": true
+}

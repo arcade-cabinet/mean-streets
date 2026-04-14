@@ -1,0 +1,18 @@
+{
+  "id": "card-016",
+  "type": "crew",
+  "displayName": "Wong \"Enforcer\" Wu",
+  "archetype": "enforcer",
+  "affiliation": "jade_dragon",
+  "power": [
+    3
+  ],
+  "resistance": [
+    3
+  ],
+  "abilityText": "+3 damage against cards from a rival affiliation",
+  "unlocked": true,
+  "unlockCondition": null,
+  "locked": false,
+  "draft": true
+}

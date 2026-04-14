@@ -1,0 +1,18 @@
+{
+  "id": "card-035",
+  "type": "crew",
+  "displayName": "Chan \"Lucky\" Mendoza",
+  "archetype": "shark",
+  "affiliation": "dead_rabbits",
+  "power": [
+    3
+  ],
+  "resistance": [
+    3
+  ],
+  "abilityText": "+1 damage for every point of damage already on the enemy vanguard",
+  "unlocked": false,
+  "unlockCondition": "Win a game using only cards from 2 affiliations",
+  "locked": false,
+  "draft": true
+}

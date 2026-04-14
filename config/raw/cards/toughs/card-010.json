@@ -1,0 +1,18 @@
+{
+  "id": "card-010",
+  "type": "crew",
+  "displayName": "Mateo \"Chains\" Ishida",
+  "archetype": "wheelman",
+  "affiliation": "los_diablos",
+  "power": [
+    5
+  ],
+  "resistance": [
+    2
+  ],
+  "abilityText": "On play: swap your vanguard with any card in your active hand (vanguard goes to hand at current HP)",
+  "unlocked": true,
+  "unlockCondition": null,
+  "locked": false,
+  "draft": true
+}

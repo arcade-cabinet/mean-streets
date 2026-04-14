@@ -1,0 +1,17 @@
+{
+  "id": "drug-14",
+  "type": "product",
+  "name": "Midnight Mist",
+  "category": "sedative",
+  "potency": [
+    4
+  ],
+  "offenseAbility": "SUPPRESS",
+  "offenseAbilityText": "Target crew's power reduced by potency for 2 rounds.",
+  "defenseAbility": "NUMB",
+  "defenseAbilityText": "Crew ignores first potency points of damage per round.",
+  "unlocked": true,
+  "unlockCondition": null,
+  "locked": false,
+  "draft": true
+}

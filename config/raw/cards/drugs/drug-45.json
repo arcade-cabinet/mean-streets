@@ -1,0 +1,17 @@
+{
+  "id": "drug-45",
+  "type": "product",
+  "name": "Blank Out",
+  "category": "narcotic",
+  "potency": [
+    1
+  ],
+  "offenseAbility": "BERSERK",
+  "offenseAbilityText": "Crew power boosted by potency but takes 1 self-damage after attacking.",
+  "defenseAbility": "PAINKILLERS",
+  "defenseAbilityText": "Crew survives next potency killing blows at 1 resistance instead of dying.",
+  "unlocked": false,
+  "unlockCondition": "Win a game using only stimulants",
+  "locked": false,
+  "draft": true
+}

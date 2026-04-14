@@ -1,0 +1,18 @@
+{
+  "id": "card-053",
+  "type": "crew",
+  "displayName": "Mateo \"Hustler\" Herrera",
+  "archetype": "hustler",
+  "affiliation": "iron_devils",
+  "power": [
+    6
+  ],
+  "resistance": [
+    7
+  ],
+  "abilityText": "On play: swap 1 card from your hand with 1 from your reserves",
+  "unlocked": false,
+  "unlockCondition": "Kill 11 vanguards total",
+  "locked": false,
+  "draft": true
+}

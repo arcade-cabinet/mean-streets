@@ -1,0 +1,18 @@
+{
+  "id": "card-041",
+  "type": "crew",
+  "displayName": "Oscar \"Hustler\" Tran",
+  "archetype": "hustler",
+  "affiliation": "kings_row",
+  "power": [
+    7
+  ],
+  "resistance": [
+    6
+  ],
+  "abilityText": "On play: swap 1 card from your hand with 1 from your reserves",
+  "unlocked": false,
+  "unlockCondition": "Win 7 games",
+  "locked": false,
+  "draft": true
+}

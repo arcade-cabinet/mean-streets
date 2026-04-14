@@ -1,0 +1,18 @@
+{
+  "id": "card-087",
+  "type": "crew",
+  "displayName": "Frank \"Switch\" Yang",
+  "archetype": "lookout",
+  "affiliation": "dead_rabbits",
+  "power": [
+    8
+  ],
+  "resistance": [
+    11
+  ],
+  "abilityText": "On play: peek at the top 2 cards of your own deck, reorder them",
+  "unlocked": false,
+  "unlockCondition": "Win without using any reserves",
+  "locked": false,
+  "draft": true
+}

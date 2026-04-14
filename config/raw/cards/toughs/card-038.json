@@ -1,0 +1,18 @@
+{
+  "id": "card-038",
+  "type": "crew",
+  "displayName": "Tak \"Snitch\" Ferraro",
+  "archetype": "snitch",
+  "affiliation": "reapers",
+  "power": [
+    4
+  ],
+  "resistance": [
+    3
+  ],
+  "abilityText": "On play: opponent must reveal 1 random card from their hand for the rest of the round",
+  "unlocked": false,
+  "unlockCondition": "Win with a deck containing 3+ affiliations",
+  "locked": false,
+  "draft": true
+}

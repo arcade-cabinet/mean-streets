@@ -1,0 +1,18 @@
+{
+  "id": "card-004",
+  "type": "crew",
+  "displayName": "Sammy \"Enforcer\" Ramos",
+  "archetype": "enforcer",
+  "affiliation": "black_market",
+  "power": [
+    3
+  ],
+  "resistance": [
+    3
+  ],
+  "abilityText": "+3 damage against cards from a rival affiliation",
+  "unlocked": true,
+  "unlockCondition": null,
+  "locked": false,
+  "draft": true
+}

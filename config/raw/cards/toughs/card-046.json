@@ -1,0 +1,18 @@
+{
+  "id": "card-046",
+  "type": "crew",
+  "displayName": "Sato \"Wheelman\" Matsuda",
+  "archetype": "wheelman",
+  "affiliation": "los_diablos",
+  "power": [
+    8
+  ],
+  "resistance": [
+    5
+  ],
+  "abilityText": "On play: swap your vanguard with any card in your active hand (vanguard goes to hand at current HP)",
+  "unlocked": false,
+  "unlockCondition": "Trigger 5 overdraw penalties on opponents",
+  "locked": false,
+  "draft": true
+}

@@ -1,0 +1,17 @@
+{
+  "id": "drug-39",
+  "type": "product",
+  "name": "Raw Crush",
+  "category": "steroid",
+  "potency": [
+    5
+  ],
+  "offenseAbility": "BULK",
+  "offenseAbilityText": "Crew gets +potency power for attacks.",
+  "defenseAbility": "FORTIFY",
+  "defenseAbilityText": "Crew gets +potency resistance.",
+  "unlocked": false,
+  "unlockCondition": "Flip 10 enemies total",
+  "locked": false,
+  "draft": true
+}

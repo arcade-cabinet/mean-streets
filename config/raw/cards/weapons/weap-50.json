@@ -1,0 +1,17 @@
+{
+  "id": "weap-50",
+  "type": "weapon",
+  "name": "Taser",
+  "category": "stealth",
+  "bonus": [
+    1
+  ],
+  "offenseAbility": "AMBUSH",
+  "offenseAbilityText": "No counter-damage when attacking. Attacker takes zero retaliation.",
+  "defenseAbility": "EVASION",
+  "defenseAbilityText": "First bonus attacks against this position miss entirely.",
+  "unlocked": false,
+  "unlockCondition": "Seize 16 positions total",
+  "locked": false,
+  "draft": true
+}

@@ -1,0 +1,18 @@
+{
+  "id": "card-070",
+  "type": "crew",
+  "displayName": "Danny \"Wheelman\" Sullivan",
+  "archetype": "wheelman",
+  "affiliation": "kings_row",
+  "power": [
+    8
+  ],
+  "resistance": [
+    7
+  ],
+  "abilityText": "On play: swap your vanguard with any card in your active hand (vanguard goes to hand at current HP)",
+  "unlocked": false,
+  "unlockCondition": "Win a game on the first night phase",
+  "locked": false,
+  "draft": true
+}

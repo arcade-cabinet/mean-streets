@@ -1,0 +1,18 @@
+{
+  "id": "card-075",
+  "type": "crew",
+  "displayName": "Rosa \"Scar\" Mendoza",
+  "archetype": "lookout",
+  "affiliation": "reapers",
+  "power": [
+    7
+  ],
+  "resistance": [
+    7
+  ],
+  "abilityText": "On play: peek at the top 2 cards of your own deck, reorder them",
+  "unlocked": false,
+  "unlockCondition": "Win a game using only cards from 2 affiliations",
+  "locked": false,
+  "draft": true
+}

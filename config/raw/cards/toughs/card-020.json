@@ -1,0 +1,18 @@
+{
+  "id": "card-020",
+  "type": "crew",
+  "displayName": "Gabriela \"Ghost\" Vargas",
+  "archetype": "ghost",
+  "affiliation": "freelance",
+  "power": [
+    3
+  ],
+  "resistance": [
+    2
+  ],
+  "abilityText": "After attacking: cannot be targeted for the opponent's next turn",
+  "unlocked": true,
+  "unlockCondition": null,
+  "locked": false,
+  "draft": true
+}

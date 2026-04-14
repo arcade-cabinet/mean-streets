@@ -1,0 +1,18 @@
+{
+  "id": "card-063",
+  "type": "crew",
+  "displayName": "Sung \"Lookout\" Kwon",
+  "archetype": "lookout",
+  "affiliation": "cobalt_syndicate",
+  "power": [
+    7
+  ],
+  "resistance": [
+    9
+  ],
+  "abilityText": "On play: peek at the top 2 cards of your own deck, reorder them",
+  "unlocked": false,
+  "unlockCondition": "Kill 14 vanguards total",
+  "locked": false,
+  "draft": true
+}

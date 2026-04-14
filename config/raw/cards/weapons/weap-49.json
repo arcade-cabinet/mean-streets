@@ -1,0 +1,17 @@
+{
+  "id": "weap-49",
+  "type": "weapon",
+  "name": "Ice Pick",
+  "category": "stealth",
+  "bonus": [
+    1
+  ],
+  "offenseAbility": "AMBUSH",
+  "offenseAbilityText": "No counter-damage when attacking. Attacker takes zero retaliation.",
+  "defenseAbility": "EVASION",
+  "defenseAbilityText": "First bonus attacks against this position miss entirely.",
+  "unlocked": false,
+  "unlockCondition": "Win 7 games",
+  "locked": false,
+  "draft": true
+}

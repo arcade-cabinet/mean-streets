@@ -1,0 +1,18 @@
+{
+  "id": "card-026",
+  "type": "crew",
+  "displayName": "Yuki \"Cinder\" Burns",
+  "archetype": "snitch",
+  "affiliation": "freelance",
+  "power": [
+    3
+  ],
+  "resistance": [
+    4
+  ],
+  "abilityText": "On play: opponent must reveal 1 random card from their hand for the rest of the round",
+  "unlocked": false,
+  "unlockCondition": "Trigger 4 overdraw penalties on opponents",
+  "locked": false,
+  "draft": true
+}

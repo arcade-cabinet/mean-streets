@@ -1,0 +1,17 @@
+{
+  "id": "weap-11",
+  "type": "weapon",
+  "name": "Baseball Bat",
+  "category": "blunt",
+  "bonus": [
+    3
+  ],
+  "offenseAbility": "SHATTER",
+  "offenseAbilityText": "On kill, destroys one random modifier on target position.",
+  "defenseAbility": "BRACE",
+  "defenseAbilityText": "Absorb first bonus points of damage before resistance takes hits.",
+  "unlocked": true,
+  "unlockCondition": null,
+  "locked": false,
+  "draft": true
+}

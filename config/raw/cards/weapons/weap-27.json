@@ -1,0 +1,17 @@
+{
+  "id": "weap-27",
+  "type": "weapon",
+  "name": "Smoke Bomb",
+  "category": "explosive",
+  "bonus": [
+    3
+  ],
+  "offenseAbility": "BLAST",
+  "offenseAbilityText": "Splash bonus damage to adjacent positions.",
+  "defenseAbility": "DETERRENT",
+  "defenseAbilityText": "Attackers must exceed defense by bonus extra to kill.",
+  "unlocked": false,
+  "unlockCondition": "Win with all 5 weapon categories in your deck",
+  "locked": false,
+  "draft": true
+}

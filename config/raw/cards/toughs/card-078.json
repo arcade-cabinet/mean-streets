@@ -1,0 +1,18 @@
+{
+  "id": "card-078",
+  "type": "crew",
+  "displayName": "Lin \"Medic\" Ferraro",
+  "archetype": "medic",
+  "affiliation": "kings_row",
+  "power": [
+    6
+  ],
+  "resistance": [
+    9
+  ],
+  "abilityText": "When sacrificed to heal: heals double the normal amount",
+  "unlocked": false,
+  "unlockCondition": "Win with a deck containing 3+ affiliations",
+  "locked": false,
+  "draft": true
+}

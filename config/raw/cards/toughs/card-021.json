@@ -1,0 +1,18 @@
+{
+  "id": "card-021",
+  "type": "crew",
+  "displayName": "Gino \"Red\" Salazar",
+  "archetype": "fixer",
+  "affiliation": "neon_snakes",
+  "power": [
+    4
+  ],
+  "resistance": [
+    4
+  ],
+  "abilityText": "On play: change one card in your active stack's affiliation to match this card's for the round",
+  "unlocked": false,
+  "unlockCondition": "Win 3 games",
+  "locked": false,
+  "draft": true
+}

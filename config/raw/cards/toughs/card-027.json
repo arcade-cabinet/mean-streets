@@ -1,0 +1,18 @@
+{
+  "id": "card-027",
+  "type": "crew",
+  "displayName": "Richie \"Lookout\" Brennan",
+  "archetype": "lookout",
+  "affiliation": "southside_saints",
+  "power": [
+    2
+  ],
+  "resistance": [
+    7
+  ],
+  "abilityText": "On play: peek at the top 2 cards of your own deck, reorder them",
+  "unlocked": false,
+  "unlockCondition": "Win without using any reserves",
+  "locked": false,
+  "draft": true
+}
