@@ -51,11 +51,30 @@ describe('App flow', () => {
 
     await buildValidDeck();
     const startGameButton = await waitForEnabled('[data-testid="start-game-button"]', 5000);
-    expect(startGameButton?.disabled).toBe(false);
-    await userEvent.click(startGameButton!);
+    if (startGameButton?.disabled !== false) {
+      const selectedCrewCount = document.querySelectorAll('button[data-card-type="crew"].deck-card-selected').length;
+      const selectedWeaponCount = document.querySelectorAll('button[data-card-type="weapon"].deck-card-selected').length;
+      const selectedDrugCount = document.querySelectorAll('button[data-card-type="product"].deck-card-selected').length;
+      const selectedCashCount = document.querySelectorAll('button[data-card-type="cash"].deck-card-selected').length;
+      throw new Error(
+        `start-game-button still disabled after buildValidDeck. ` +
+        `crew=${selectedCrewCount}/25 weapon=${selectedWeaponCount}/19 ` +
+        `drug=${selectedDrugCount}/3 cash=${selectedCashCount}/3`,
+      );
+    }
+    await userEvent.click(startGameButton);
     await settleBrowser();
 
-    expect(await waitForSelector('[data-testid="buildup-screen"]', 10000)).not.toBeNull();
+    const buildup = await waitForSelector('[data-testid="buildup-screen"]', 10000);
+    if (!buildup) {
+      const visibleScreens: string[] = [];
+      document.querySelectorAll('[data-testid$="-screen"]').forEach((el) => {
+        visibleScreens.push(el.getAttribute('data-testid') ?? '?');
+      });
+      throw new Error(
+        `buildup-screen did not mount after start click. visible screens=[${visibleScreens.join(',')}] body length=${document.body.textContent?.length ?? 0}`,
+      );
+    }
     expect(document.body.textContent).toContain('The Street');
   });
 
