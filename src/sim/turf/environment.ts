@@ -25,7 +25,26 @@ import {
   resolveDirectAttack,
   resolveFundedAttack,
   resolvePushedAttack,
+  type AttackContext,
 } from './attacks';
+import affiliationsPool from '../../data/pools/affiliations.json';
+
+const AT_WAR_MAP: Map<string, Set<string>> = (() => {
+  const map = new Map<string, Set<string>>();
+  for (const affiliation of affiliationsPool.affiliations) {
+    map.set(affiliation.id, new Set(affiliation.atWarWith ?? []));
+  }
+  return map;
+})();
+
+function isAtWar(attackerAffiliation: string, defenderAffiliation: string): boolean {
+  const enemies = AT_WAR_MAP.get(attackerAffiliation);
+  return enemies?.has(defenderAffiliation) ?? false;
+}
+
+function countCrew(positions: { crew: unknown }[]): number {
+  return positions.filter((p) => p.crew !== null).length;
+}
 import type {
   CashCard,
   CrewCard,
@@ -859,8 +878,13 @@ export function stepAction(state: TurfGameState, action: TurfAction): TurfStepRe
       const attacker = player.board.active[action.attackerIdx];
       const target = opponent.board.active[action.targetIdx];
       if (!attacker.crew || !target.crew) throw new Error(`Illegal ${action.kind} action`);
+      const attackContext: AttackContext = {
+        ownCardsInPlay: countCrew(player.board.active),
+        opponentCardsInPlay: countCrew(opponent.board.active),
+        targetIsAtWar: isAtWar(attacker.crew.affiliation, target.crew.affiliation),
+      };
       const outcome = action.kind === 'direct_attack'
-        ? resolveDirectAttack(attacker, target)
+        ? resolveDirectAttack(attacker, target, attackContext)
         : action.kind === 'funded_attack'
           ? resolveFundedAttack(attacker, target, state.config)
           : resolvePushedAttack(attacker, target, opponent.board.active, state.config);

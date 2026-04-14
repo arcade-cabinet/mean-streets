@@ -78,7 +78,10 @@ function defensiveDamageReduction(defender: Position): number {
   return reduction;
 }
 
-function attackerBonusDamage(attacker: Position): { amount: number; notes: string[] } {
+function attackerBonusDamage(
+  attacker: Position,
+  context?: AttackContext,
+): { amount: number; notes: string[] } {
   const notes: string[] = [];
   let amount = 0;
   if (attacker.weaponTop?.category === 'ranged') {
@@ -89,7 +92,32 @@ function attackerBonusDamage(attacker: Position): { amount: number; notes: strin
     amount += attacker.drugTop.potency;
     notes.push(`BULK ${attacker.drugTop.potency}`);
   }
+  if (
+    attacker.crew?.archetype === 'shark' &&
+    context &&
+    context.opponentCardsInPlay < context.ownCardsInPlay
+  ) {
+    const diff = context.ownCardsInPlay - context.opponentCardsInPlay;
+    amount += diff;
+    notes.push(`BLOOD_FRENZY ${diff}`);
+  }
+  if (
+    attacker.crew?.archetype === 'enforcer' &&
+    context?.targetIsAtWar === true
+  ) {
+    // VENDETTA: double final damage against a rival affiliation.
+    // Applied as a multiplier hook in the caller — we mark intent here.
+  }
   return { amount, notes };
+}
+
+export interface AttackContext {
+  /** Number of active cards on the attacker's side (board). */
+  ownCardsInPlay: number;
+  /** Number of active cards on the defender's side (board). */
+  opponentCardsInPlay: number;
+  /** True when the defender's affiliation is in the attacker's atWarWith list. */
+  targetIsAtWar?: boolean;
 }
 
 function joinDescription(base: string, notes: string[]): string {
@@ -98,7 +126,11 @@ function joinDescription(base: string, notes: string[]): string {
 }
 
 /** DIRECT: attacker power vs defender defense. */
-export function resolveDirectAttack(attacker: Position, defender: Position): AttackOutcome {
+export function resolveDirectAttack(
+  attacker: Position,
+  defender: Position,
+  context?: AttackContext,
+): AttackOutcome {
   if (defenderEvades(defender)) {
     return {
       type: 'miss', targetIndices: [], lostCards: [], gainedCards: [],
@@ -136,10 +168,14 @@ export function resolveDirectAttack(attacker: Position, defender: Position): Att
     dmg += attacker.weaponTop.bonus;
     notes.push(`LACERATE ${attacker.weaponTop.bonus}`);
   }
-  const bonus = attackerBonusDamage(attacker);
+  const bonus = attackerBonusDamage(attacker, context);
   if (bonus.amount > 0) {
     dmg += bonus.amount;
     notes.push(...bonus.notes);
+  }
+  if (attacker.crew?.archetype === 'enforcer' && context?.targetIsAtWar) {
+    dmg *= 2;
+    notes.push('VENDETTA x2');
   }
   notes.push(...applySuppression(attacker, defender));
   notes.push(...applyCounterDamage(attacker, defender));
