@@ -1,0 +1,89 @@
+name: Autobalance
+
+on:
+  schedule:
+    # Mondays at 04:00 UTC — pre-standup drift-detection run.
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+    inputs:
+      iterations:
+        description: 'Autobalance iterations'
+        default: '5'
+        required: false
+      profile:
+        description: 'Sweep profile (quick|standard)'
+        default: 'standard'
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  autobalance:
+    runs-on: ubuntu-latest
+    env:
+      AUTOBALANCE_PROFILE: ${{ github.event.inputs.profile || 'standard' }}
+      AUTOBALANCE_ITERATIONS: ${{ github.event.inputs.iterations || '5' }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 10.33.0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Configure git identity
+        run: |
+          git config user.name "autobalance-bot"
+          git config user.email "autobalance-bot@users.noreply.github.com"
+
+      - name: Validate autobalance inputs
+        run: |
+          case "${AUTOBALANCE_PROFILE}" in
+            quick|standard|release) ;;
+            *) echo "Invalid profile: ${AUTOBALANCE_PROFILE}"; exit 1;;
+          esac
+          if ! [[ "${AUTOBALANCE_ITERATIONS}" =~ ^[0-9]+$ ]]; then
+            echo "Invalid iterations: ${AUTOBALANCE_ITERATIONS}"; exit 1
+          fi
+
+      - name: Run autobalance iterations
+        run: |
+          pnpm exec tsx src/sim/analysis/cli.ts autobalance \
+            --profile "${AUTOBALANCE_PROFILE}" \
+            --iterations "${AUTOBALANCE_ITERATIONS}"
+
+      - name: Check for balance drift
+        id: drift
+        run: |
+          if [[ $(git rev-list --count HEAD ^origin/main 2>/dev/null || echo 0) -gt 0 ]]; then
+            echo "drift=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "drift=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open drift-detection PR
+        if: steps.drift.outputs.drift == 'true'
+        uses: peter-evans/create-pull-request@c5a7806660adbe173f04e3e038b0ccdcd758773c # v6
+        with:
+          branch: autobalance/drift-${{ github.run_id }}
+          title: 'chore(balance): weekly drift detection'
+          body: |
+            Autobalance weekly run detected instability in the card catalog
+            and proposed tuning edits. Review the per-iteration commits and
+            either merge as-is or close this PR if the direction is off.
+
+            Informational drift signal — do not auto-merge.
+          labels: balance-drift
+          draft: false
+          commit-message: 'chore(balance): weekly drift detection'

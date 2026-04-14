@@ -1,4 +1,5 @@
 import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { generateTurfCardPools } from '../turf/catalog';
 import { saveBalanceHistory } from '../turf/balance';
 import type { CardEffectEstimate } from './effects';
@@ -12,6 +13,12 @@ import {
   writeAnalysisJson,
 } from './index';
 import type { LockRecommendation } from './locking';
+import {
+  commitAutobalanceIteration,
+  gitWorkingTreeClean,
+  runAutobalanceIteration,
+  type AutobalanceEdit,
+} from './autobalance';
 
 const BALANCE_HISTORY_PATH = join(process.cwd(), 'sim', 'reports', 'turf', 'balance-history.json');
 
@@ -773,6 +780,99 @@ async function main(): Promise<void> {
     printFocusedEffects(focusedEffects, descriptors);
     printUnstablePairingSummary(pairingSummary, descriptors);
     console.log(path);
+    return;
+  }
+
+  if (command === 'autobalance') {
+    const profile = (getArg('--profile') ?? 'standard') as
+      | 'quick'
+      | 'standard'
+      | 'release';
+    const baselineProfile =
+      profile === 'release'
+        ? 'release'
+        : profile === 'standard'
+          ? 'ci'
+          : 'smoke';
+    const iterations = Number.parseInt(getArg('--iterations') ?? '1', 10);
+    const noCommit = process.argv.includes('--no-commit');
+    const dryRun = process.argv.includes('--dry-run');
+    const maxEditsArg = getArg('--max-edits');
+    const maxEdits = maxEditsArg ? Number.parseInt(maxEditsArg, 10) : undefined;
+
+    logPhase(
+      `autobalance profile=${profile} iterations=${iterations} commit=${!noCommit} dryRun=${dryRun}`,
+    );
+
+    if (!dryRun && !noCommit) {
+      const clean = gitWorkingTreeClean();
+      if (!clean.clean) {
+        console.error(
+          '[autobalance] refusing to run: working tree has uncommitted changes. Stash or commit first, or pass --dry-run / --no-commit.',
+        );
+        if (clean.details) console.error(clean.details);
+        process.exit(2);
+      }
+    }
+
+    const allEdits: AutobalanceEdit[] = [];
+    for (let iter = 1; iter <= iterations; iter++) {
+      logPhase(`iteration ${iter}/${iterations}: benchmark + sweeps`);
+      const baseline = runSeededBenchmark(baselineProfile, { includeBalance: true });
+      const crewWeapon = runCuratedSweep('crew_weapon', profile, baseline.summary.catalogSeed).permutations;
+      const crewDrug = runCuratedSweep('crew_drug', profile, baseline.summary.catalogSeed).permutations;
+      const weaponDrug = runCuratedSweep('weapon_drug', profile, baseline.summary.catalogSeed).permutations;
+      const crewWeaponDrug = runCuratedSweep('crew_weapon_drug', profile, baseline.summary.catalogSeed).permutations;
+      const sweeps = [...crewWeapon, ...crewDrug, ...weaponDrug, ...crewWeaponDrug];
+      const effects = estimateCardEffects(baseline, sweeps, profile);
+      const locks = deriveLockRecommendations(effects);
+      const summary = summarizeLockRecommendations(locks);
+      printLockSummary(summary);
+
+      const result = runAutobalanceIteration(locks, effects, { dryRun, maxEdits });
+      console.log(`[autobalance] iter ${iter}: edits=${result.edits.length} clamped=${result.clamped.length} skipped=${result.skipped.length}`);
+      for (const edit of result.edits) {
+        console.log(
+          `  ${edit.cardId}  ${edit.stat} ${edit.from}→${edit.to}  (${edit.direction})  -- ${edit.reason}`,
+        );
+      }
+
+      if (result.edits.length === 0) {
+        console.log('[autobalance] catalog stable — stopping iteration loop.');
+        break;
+      }
+
+      if (!dryRun) {
+        // Recompile so the next iteration's sim sees the new values.
+        logPhase('recompiling card catalog');
+        const compile = spawnSync('node', ['scripts/compile-cards.mjs'], {
+          cwd: process.cwd(),
+          encoding: 'utf8',
+          stdio: 'inherit',
+        });
+        if (compile.status !== 0) {
+          throw new Error('compile-cards.mjs failed');
+        }
+      }
+
+      if (!dryRun && !noCommit) {
+        const commit = commitAutobalanceIteration(result.edits, { iteration: iter });
+        if (commit.committed) {
+          console.log(`[autobalance] committed iter ${iter} -> ${commit.sha}`);
+        } else if (commit.stderr) {
+          console.log(`[autobalance] commit skipped: ${commit.stderr.trim()}`);
+        }
+      }
+      allEdits.push(...result.edits);
+    }
+    writeAnalysisJson('autobalance', `autobalance-${profile}.json`, {
+      completedAt: new Date().toISOString(),
+      profile,
+      baselineProfile,
+      iterations,
+      totalEdits: allEdits.length,
+      edits: allEdits,
+    });
     return;
   }
 
