@@ -53,7 +53,7 @@ describe('App flow', () => {
     await userEvent.click(startGameButton!);
     await settleBrowser();
 
-    expect(document.querySelector('[data-testid="buildup-screen"]')).not.toBeNull();
+    expect(await waitForSelector('[data-testid="buildup-screen"]', 5000)).not.toBeNull();
     expect(document.body.textContent).toContain('The Street');
   });
 
