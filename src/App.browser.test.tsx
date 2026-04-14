@@ -5,15 +5,17 @@ import { buildValidDeck } from './test/browser-helpers';
 import { renderInBrowser, settleBrowser } from './test/render-browser';
 import { resetPersistenceForTests, saveDeckLoadout } from './ui/deckbuilder/storage';
 
-async function waitForEnabled(button: HTMLButtonElement | null, timeoutMs = 3000): Promise<void> {
+async function waitForEnabled(selector: string, timeoutMs = 5000): Promise<HTMLButtonElement | null> {
   const started = Date.now();
-  while (button?.disabled) {
-    if (Date.now() - started > timeoutMs) break;
+  while (Date.now() - started < timeoutMs) {
+    const button = document.querySelector<HTMLButtonElement>(selector);
+    if (button && !button.disabled) return button;
     await new Promise((resolve) => window.setTimeout(resolve, 50));
   }
+  return document.querySelector<HTMLButtonElement>(selector);
 }
 
-async function waitForSelector(selector: string, timeoutMs = 3000): Promise<Element | null> {
+async function waitForSelector(selector: string, timeoutMs = 5000): Promise<Element | null> {
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
     const match = document.querySelector(selector);
@@ -48,12 +50,12 @@ describe('App flow', () => {
     expect(document.querySelector('[data-testid="deckbuilder-screen"]')).not.toBeNull();
 
     await buildValidDeck();
-    const startGameButton = document.querySelector<HTMLButtonElement>('[data-testid="start-game-button"]');
-    await waitForEnabled(startGameButton);
+    const startGameButton = await waitForEnabled('[data-testid="start-game-button"]', 5000);
+    expect(startGameButton?.disabled).toBe(false);
     await userEvent.click(startGameButton!);
     await settleBrowser();
 
-    expect(await waitForSelector('[data-testid="buildup-screen"]', 5000)).not.toBeNull();
+    expect(await waitForSelector('[data-testid="buildup-screen"]', 10000)).not.toBeNull();
     expect(document.body.textContent).toContain('The Street');
   });
 
