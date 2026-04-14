@@ -14,5 +14,6 @@
   "unlocked": false,
   "unlockCondition": "Win a game on the first night phase",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "tagline": "Out before the sirens turn the corner."
 }

@@ -14,5 +14,6 @@
   "unlocked": false,
   "unlockCondition": "Win a game in under 11 turns",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "tagline": "Does the work no one thanks you for."
 }

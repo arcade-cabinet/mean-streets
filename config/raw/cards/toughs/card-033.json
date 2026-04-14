@@ -14,5 +14,6 @@
   "unlocked": false,
   "unlockCondition": "Kill 10 vanguards total",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "tagline": "Cleans up what others leave behind."
 }

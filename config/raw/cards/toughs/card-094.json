@@ -14,5 +14,6 @@
   "unlocked": false,
   "unlockCondition": "Win a game in under 10 turns",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "tagline": "Out before the sirens turn the corner."
 }

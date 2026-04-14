@@ -14,5 +14,6 @@
   "unlocked": true,
   "unlockCondition": null,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "tagline": "Handles the paperwork nobody writes down."
 }
