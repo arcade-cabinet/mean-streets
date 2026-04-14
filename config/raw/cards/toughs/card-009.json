@@ -12,7 +12,8 @@
   ],
   "resistance": [
     4,
-    5
+    5,
+    6
   ],
   "abilityText": "On play: change one card in your active stack's affiliation to match this card's for the round",
   "unlocked": true,
