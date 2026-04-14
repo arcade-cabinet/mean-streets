@@ -1,25 +1,24 @@
 import { userEvent } from 'vitest/browser';
 
-function queryEnabledCards(selector: string): HTMLButtonElement[] {
-  return Array.from(document.querySelectorAll<HTMLButtonElement>(selector))
-    .filter((button) => !button.disabled);
+/**
+ * Click the next N enabled, unselected cards matching `selector`, re-querying
+ * the DOM between clicks. The collection re-renders between clicks (selected
+ * cards pick up the `deck-card-selected` class) so the initial NodeList goes
+ * stale quickly; re-querying each iteration avoids clicking detached nodes
+ * and skips ones that are already selected.
+ */
+async function clickN(selector: string, count: number): Promise<void> {
+  for (let i = 0; i < count; i++) {
+    const next = Array.from(document.querySelectorAll<HTMLButtonElement>(selector))
+      .find((button) => !button.disabled && !button.classList.contains('deck-card-selected'));
+    if (!next) return;
+    await userEvent.click(next);
+  }
 }
 
 export async function buildValidDeck(): Promise<void> {
-  const crewCards = queryEnabledCards('button[data-card-type="crew"]');
-  const weaponCards = queryEnabledCards('button[data-card-type="weapon"]');
-  const drugCards = queryEnabledCards('button[data-card-type="product"]');
-  const cashCards = queryEnabledCards('button[data-card-type="cash"]');
-
-  for (const card of crewCards.slice(0, 25)) {
-    await userEvent.click(card);
-  }
-
-  for (const card of [
-    ...weaponCards.slice(0, 19),
-    ...drugCards.slice(0, 3),
-    ...cashCards.slice(0, 3),
-  ]) {
-    await userEvent.click(card);
-  }
+  await clickN('button[data-card-type="crew"]', 25);
+  await clickN('button[data-card-type="weapon"]', 19);
+  await clickN('button[data-card-type="product"]', 3);
+  await clickN('button[data-card-type="cash"]', 3);
 }
