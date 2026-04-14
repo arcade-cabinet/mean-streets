@@ -66,14 +66,30 @@ function applySuppression(attacker: Position, defender: Position): string[] {
 function defensiveThresholdBonus(defender: Position): number {
   let bonus = 0;
   if (defender.weaponBottom?.category === 'explosive') bonus += defender.weaponBottom.bonus;
+  if (defender.weaponBottom?.category === 'ranged') bonus += defender.weaponBottom.bonus;
   return bonus;
 }
 
 function defensiveDamageReduction(defender: Position): number {
   let reduction = 0;
   if (defender.drugBottom?.category === 'sedative') reduction += defender.drugBottom.potency;
+  if (defender.drugBottom?.category === 'steroid') reduction += defender.drugBottom.potency;
   if (defender.weaponBottom?.category === 'blunt') reduction += defender.weaponBottom.bonus;
   return reduction;
+}
+
+function attackerBonusDamage(attacker: Position): { amount: number; notes: string[] } {
+  const notes: string[] = [];
+  let amount = 0;
+  if (attacker.weaponTop?.category === 'ranged') {
+    amount += attacker.weaponTop.bonus;
+    notes.push(`REACH ${attacker.weaponTop.bonus}`);
+  }
+  if (attacker.drugTop?.category === 'steroid') {
+    amount += attacker.drugTop.potency;
+    notes.push(`BULK ${attacker.drugTop.potency}`);
+  }
+  return { amount, notes };
 }
 
 function joinDescription(base: string, notes: string[]): string {
@@ -119,6 +135,11 @@ export function resolveDirectAttack(attacker: Position, defender: Position): Att
   if (attacker.weaponTop?.category === 'bladed') {
     dmg += attacker.weaponTop.bonus;
     notes.push(`LACERATE ${attacker.weaponTop.bonus}`);
+  }
+  const bonus = attackerBonusDamage(attacker);
+  if (bonus.amount > 0) {
+    dmg += bonus.amount;
+    notes.push(...bonus.notes);
   }
   notes.push(...applySuppression(attacker, defender));
   notes.push(...applyCounterDamage(attacker, defender));

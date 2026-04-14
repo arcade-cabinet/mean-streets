@@ -118,4 +118,57 @@ describe('attack category abilities', () => {
     expect(outcome.description).toContain('REFLEXES 1');
     expect(attacker.crew?.resistance).toBe(4);
   });
+
+  it('REACH: ranged weapon offense adds bonus damage', () => {
+    const attacker = position('A', makeCrew({ displayName: 'Sniper', power: 4 }));
+    attacker.weaponTop = makeWeapon('ranged', 3, 'top');
+    const defender = position('B', makeCrew({ displayName: 'Tank', resistance: 10 }));
+
+    const outcome = resolveDirectAttack(attacker, defender);
+
+    expect(outcome.description).toContain('REACH 3');
+  });
+
+  it('OVERWATCH: ranged weapon defense raises the kill threshold', () => {
+    const attackerArmed = position('A', makeCrew({ displayName: 'Charge', power: 6 }));
+    attackerArmed.weaponTop = makeWeapon('blunt', 3, 'top');
+    const bareDefender = position('B', makeCrew({ displayName: 'Exposed', resistance: 8 }));
+    const outcomeBare = resolveDirectAttack(attackerArmed, bareDefender);
+    expect(outcomeBare.type).toBe('kill'); // atk 9 >= def 8
+
+    const attackerAgain = position('A', makeCrew({ displayName: 'Charge', power: 6 }));
+    attackerAgain.weaponTop = makeWeapon('blunt', 3, 'top');
+    const overwatchDefender = position('B', makeCrew({ displayName: 'Nest', resistance: 8 }));
+    overwatchDefender.weaponBottom = makeWeapon('ranged', 3, 'bottom');
+
+    const outcomeOver = resolveDirectAttack(attackerAgain, overwatchDefender);
+    // With OVERWATCH +3 defense threshold, atk 9 < def 11 → no kill
+    expect(outcomeOver.type).not.toBe('kill');
+  });
+
+  it('BULK: steroid offense adds bonus damage', () => {
+    const attacker = position('A', makeCrew({ displayName: 'Bulk', power: 4 }));
+    attacker.drugTop = makeDrug('steroid', 2);
+    const defender = position('B', makeCrew({ displayName: 'Stone', resistance: 10 }));
+
+    const outcome = resolveDirectAttack(attacker, defender);
+
+    expect(outcome.description).toContain('BULK 2');
+  });
+
+  it('FORTIFY: steroid defense reduces incoming damage to zero', () => {
+    const attacker = position('A', makeCrew({ displayName: 'Puncher', power: 4 }));
+    attacker.weaponTop = makeWeapon('blunt', 1, 'top');
+    const defender = position('B', makeCrew({ displayName: 'Wall', resistance: 5 }));
+    defender.drugBottom = makeDrug('steroid', 3);
+
+    const resBefore = defender.crew?.resistance ?? 0;
+    const outcome = resolveDirectAttack(attacker, defender);
+    const resAfter = defender.crew?.resistance ?? 0;
+
+    // atk = 4 + 1 = 5, def floor/2 = 2, raw dmg = 3; FORTIFY 3 reduces to 0 → miss
+    expect(resAfter).toBe(resBefore);
+    expect(outcome.type).toBe('miss');
+    expect(outcome.description).toContain('shrugs off');
+  });
 });
