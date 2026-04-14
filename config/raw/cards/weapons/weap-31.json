@@ -5,7 +5,8 @@
   "category": "ranged",
   "bonus": [
     1,
-    2
+    2,
+    3
   ],
   "offenseAbility": "REACH",
   "offenseAbilityText": "Can target any enemy position, not just front-line.",

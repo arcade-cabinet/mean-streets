@@ -5,7 +5,8 @@
   "category": "explosive",
   "bonus": [
     2,
-    3
+    3,
+    4
   ],
   "offenseAbility": "BLAST",
   "offenseAbilityText": "Splash bonus damage to adjacent positions.",

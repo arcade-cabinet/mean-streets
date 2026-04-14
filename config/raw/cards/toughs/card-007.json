@@ -9,7 +9,8 @@
   ],
   "resistance": [
     2,
-    3
+    3,
+    4
   ],
   "abilityText": "On attack: also deals 1 damage to the card behind the vanguard (next in line)",
   "unlocked": true,

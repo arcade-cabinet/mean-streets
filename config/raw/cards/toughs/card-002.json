@@ -9,7 +9,8 @@
   ],
   "resistance": [
     3,
-    4
+    4,
+    5
   ],
   "abilityText": "On play: opponent must reveal 1 random card from their hand for the rest of the round",
   "unlocked": true,

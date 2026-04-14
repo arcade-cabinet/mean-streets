@@ -5,7 +5,8 @@
   "category": "hallucinogen",
   "potency": [
     3,
-    4
+    4,
+    5
   ],
   "offenseAbility": "CONFUSE",
   "offenseAbilityText": "Funded flip threshold reduced by potency.",

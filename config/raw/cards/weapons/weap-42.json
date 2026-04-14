@@ -5,7 +5,8 @@
   "category": "stealth",
   "bonus": [
     1,
-    2
+    2,
+    3
   ],
   "offenseAbility": "AMBUSH",
   "offenseAbilityText": "No counter-damage when attacking. Attacker takes zero retaliation.",

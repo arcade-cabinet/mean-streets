@@ -9,7 +9,8 @@
   ],
   "resistance": [
     5,
-    6
+    6,
+    7
   ],
   "abilityText": "When sacrificed to heal: heals double the normal amount",
   "unlocked": true,

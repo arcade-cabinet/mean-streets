@@ -5,7 +5,8 @@
   "category": "narcotic",
   "potency": [
     1,
-    2
+    2,
+    3
   ],
   "offenseAbility": "BERSERK",
   "offenseAbilityText": "Crew power boosted by potency but takes 1 self-damage after attacking.",
