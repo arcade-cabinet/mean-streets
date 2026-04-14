@@ -50,11 +50,14 @@ test('menu, new-game, deck build, save, and load flow works on the live app', as
   await enterDeckWorkshop(page, testInfo);
   await buildDeck(page, testInfo);
   await page.getByTestId('deck-name-input').fill('Night Shift');
-  await expect(page.getByTestId('save-deck-button')).toBeEnabled();
-  await activate(page.getByTestId('save-deck-button'), testInfo);
+  await page.getByTestId('deck-name-input').blur();
+  const saveButton = page.getByTestId('save-deck-button');
+  await expect(saveButton).toBeEnabled();
+  await activate(saveButton, testInfo);
 
-  await expect(page.getByTestId('start-game-button')).toBeEnabled();
-  await activate(page.getByTestId('start-game-button'), testInfo);
+  const startButton = page.getByTestId('start-game-button');
+  await expect(startButton).toBeEnabled();
+  await activate(startButton, testInfo);
 
   await expect(page.getByTestId('buildup-screen')).toBeVisible();
   await page.goto('/');
