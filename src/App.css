@@ -1946,6 +1946,25 @@ select {
 
 .deck-quarter-name {
   text-align: left;
+  /* Two-line ellipsis for cells in the quarter-card rails so long
+     names ("Karambit", "Courier Cache") don't clip the last chars. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.2;
+}
+
+.deck-card-meta {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.2;
 }
 
 .deck-tab {
@@ -2043,9 +2062,14 @@ select {
   font-size: 0.72rem;
   font-weight: 800;
   line-height: 1.2;
-  white-space: nowrap;
+  /* Allow up to 2 lines so long crew names like
+     "Zhao 'Lookout' Sullivan" don't clip. Extra lines ellipsize. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .collection-card-title-crew { color: #e8cfad; }
