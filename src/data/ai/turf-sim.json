@@ -125,5 +125,37 @@
       "drugCount": 6
     }
   },
-  "convergenceSlices": 5
+  "convergenceSlices": 5,
+  "deckBuilder": {
+    "totalCrew": 25,
+    "totalModifiers": 25,
+    "totalBackpacks": 12,
+    "minWeapons": 3,
+    "minDrugs": 3,
+    "weaponBudgetBase": 3,
+    "weaponBudgetMaxExtra": 8,
+    "drugBudgetBase": 2,
+    "preferredCashBase": 3,
+    "biasDefault": 0.5,
+    "explorationDefault": 0.35
+  },
+  "balance": {
+    "lockDeltaThreshold": 0.02,
+    "recommendationDeltaThreshold": 0.035,
+    "minCardSample": 30,
+    "minPairSample": 20,
+    "historyVersion": 1,
+    "consecutiveStableRunsToLock": 3,
+    "usageZScoreStabilityMax": 1
+  },
+  "aiScoring": {
+    "runnerOpenerBuildupBonus": 6.5,
+    "runnerOpenerCombatBonus": 3.5,
+    "runnerOpenerModerateBonus": 0.8,
+    "placeReserveBase": 0.4,
+    "placeReserveCrewPowerWeight": 0.85,
+    "placeReserveCrewResistanceWeight": 1.05,
+    "placeCrewCrewResistanceWeight": 0.9,
+    "placeCrewDesperationWeight": 2.0
+  }
 }

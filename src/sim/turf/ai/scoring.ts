@@ -13,7 +13,7 @@ import type {
   TurfObservation,
   TurfPolicyArtifact,
 } from '../types';
-import { TURF_AI_CONFIG } from './config';
+import { TURF_AI_CONFIG, TURF_SIM_CONFIG } from './config';
 import { getPolicyValue, isPolicyPreferredAction } from './policy';
 
 export interface ActionScore {
@@ -50,35 +50,33 @@ export function scoreAction(
       const crew = player.hand.crew.find(card => card.id === action.crewCardId);
       if (!crew) return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
       const lanePressure = observation.opponentCrewCount - observation.ownCrewCount;
-      score = crew.power + (crew.resistance * 0.9) + lanePressure + (fuzzy.desperation * 2);
+      const scoringCfg = TURF_SIM_CONFIG.aiScoring;
+      score = crew.power + (crew.resistance * scoringCfg.placeCrewCrewResistanceWeight) + lanePressure + (fuzzy.desperation * scoringCfg.placeCrewDesperationWeight);
       break;
     }
 
     case 'place_reserve_crew': {
       const crew = player.hand.crew.find(card => card.id === action.crewCardId);
       if (!crew) return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
-      score = (crew.power * 0.85) + (crew.resistance * 1.05) + 0.4 + fuzzy.desperation;
+      const scoringCfg = TURF_SIM_CONFIG.aiScoring;
+      score = (crew.power * scoringCfg.placeReserveCrewPowerWeight)
+        + (crew.resistance * scoringCfg.placeReserveCrewResistanceWeight)
+        + scoringCfg.placeReserveBase
+        + fuzzy.desperation;
 
       // RUNNER OPENING (RULES.md §7): when we hold a backpack in hand and
       // have no reserve crew yet, stage a runner by placing a reserve
-      // crew first. This is the first stage of the four-stage contract;
-      // without this bump the planner always picks active placement and
-      // the contract never fires.
+      // crew first. This is the first stage of the four-stage contract.
       const hasBackpackInHand = player.hand.backpacks.length > 0;
       const hasReserveCrewAlready = player.board.reserve.some((pos) => pos.crew !== null);
       const hasAnyRunnerEquipped = player.board.reserve.some((pos) => pos.crew !== null && pos.backpack !== null);
       const hasEmptyActiveToFill = player.board.active.some((pos) => pos.crew === null && !pos.seized);
 
       if (hasBackpackInHand && !hasAnyRunnerEquipped && !hasReserveCrewAlready) {
-        // Strong bias: we need the first reserve placement to open the
-        // equip → deploy → payload chain. Overpowers the usual
-        // active-placement bias while early-game lanes are still free.
         const buildupPhase = state.phase === 'buildup';
-        score += buildupPhase ? 6.5 : 3.5;
+        score += buildupPhase ? scoringCfg.runnerOpenerBuildupBonus : scoringCfg.runnerOpenerCombatBonus;
       } else if (hasBackpackInHand && !hasAnyRunnerEquipped && hasEmptyActiveToFill) {
-        // We already have one reserve but no equipped runner yet —
-        // maintain moderate pressure on placing more reserves.
-        score += 0.8;
+        score += scoringCfg.runnerOpenerModerateBonus;
       }
       break;
     }
