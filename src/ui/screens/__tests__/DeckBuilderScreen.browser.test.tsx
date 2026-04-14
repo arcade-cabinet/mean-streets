@@ -54,6 +54,29 @@ describe('DeckBuilderScreen', () => {
     expect(saved.some((deck) => deck.name === 'Night Shift')).toBe(true);
   });
 
+  it('shows documented modifier minimums and only enables start for legal decks', async () => {
+    cleanup = (await renderInBrowser(
+      <DeckBuilderScreen
+        onBack={vi.fn()}
+        onStartGame={vi.fn()}
+      />,
+    )).unmount;
+
+    const startButton = document.querySelector<HTMLButtonElement>('[data-testid="start-game-button"]');
+    expect(startButton?.disabled).toBe(true);
+    expect(document.querySelector('[data-testid="modifier-rule-weapons"]')?.textContent).toContain('Weapons 0/3');
+    expect(document.querySelector('[data-testid="modifier-rule-drugs"]')?.textContent).toContain('Drugs 0/3');
+    expect(document.querySelector('[data-testid="modifier-rule-cash"]')?.textContent).toContain('Cash 0/3');
+
+    await buildValidDeck();
+    await waitForEnabled(startButton);
+
+    expect(document.querySelector('[data-testid="modifier-rule-weapons"]')?.textContent).toContain('Weapons 19/3');
+    expect(document.querySelector('[data-testid="modifier-rule-drugs"]')?.textContent).toContain('Drugs 3/3');
+    expect(document.querySelector('[data-testid="modifier-rule-cash"]')?.textContent).toContain('Cash 3/3');
+    expect(startButton?.disabled).toBe(false);
+  });
+
   it('auto build persists kit ids into the saved deck loadout', async () => {
     cleanup = (await renderInBrowser(
       <DeckBuilderScreen

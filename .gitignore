@@ -1,25 +1,48 @@
+# Dependencies
 node_modules/
+
+# npm artifacts (pnpm-only repo — never commit npm/yarn lockfiles)
+package-lock.json
+npm-debug.log*
+yarn.lock
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.pnpm-store/
+.npmrc.local
+
+# Build output
 dist/
 .vite/
+*.tsbuildinfo
+coverage/
+
+# Environment
 *.local
-.DS_Store
-.claude/
-.remember/
 .env
 .env.*
 !.env.example
-coverage/
-*.tsbuildinfo
-package-lock.json
-npm-debug.log*
-.npmrc.local
+.DS_Store
+
+# Claude Code / editor state
+.claude/
+.remember/
+
+# Test output
 test-results/
 playwright-report/
 maestro-report/
 artifacts/visual-review/
+
+# Simulation ephemera (keep balance-history.json — it is the release-gate source of truth)
 sim/reports/analysis/
-sim/reports/turf/*.json
+sim/reports/turf/balance-*.json
+!sim/reports/turf/balance-history.json
+
+# Generated web assets (rebuilt on postinstall)
 public/assets/sql-wasm.wasm
+
+# Mobile native build output
 android/.gradle/
 android/app/build/
 android/build/
@@ -27,3 +50,5 @@ android/local.properties
 ios/App/App/public/
 ios/DerivedData/
 ios/build/
+ios/App/Pods/
+ios/App/App.xcworkspace/xcuserdata/

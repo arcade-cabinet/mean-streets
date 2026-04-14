@@ -1,6 +1,6 @@
 ---
 title: Codex Instructions
-updated: 2026-04-13
+updated: 2026-04-14
 status: current
 ---
 
@@ -13,7 +13,7 @@ A gritty tactical turf war card game. 25 crew + 25 modifiers per deck, 5v5 posit
 ## Critical Rules
 
 1. **The game design is LOCKED IN.** Do not reinvent mechanics. `docs/DESIGN.md` is the gameplay source of truth and `docs/PRODUCTION.md` is the release tracker.
-2. **Balance is simulation-proven.** Any rule change must be validated with `npx tsx src/sim/turf/run.ts --games 10000` before committing.
+2. **Balance is simulation-proven.** Any rule change must be validated with `pnpm run analysis:benchmark` (optionally `analysis:lock`) before committing.
 3. **No dice, no coin flip.** Outcomes are deterministic. Only randomness is draw order.
 4. **The simulation engine runs WITHOUT React.** Pure TypeScript, testable independently.
 5. **The product path is mobile-first.** Web is the development/test harness; persistence and interaction choices must still make sense in Capacitor iOS/Android.
@@ -37,7 +37,7 @@ pnpm run cap:sync
 
 - `src/sim/turf/` — Active game engine (types, board, attacks, game loop, AI)
 - `src/sim/analysis/` — Dev-only benchmarking, sweep, effect, and lock-state tooling
-- `src/sim/cards/` — Authored crew loader, legacy generator, schemas, seeded PRNG
+- `src/sim/cards/` — Authored crew loader, schemas, seeded PRNG
 - `src/platform/` — Capacitor shell, responsive layout classification, SQLite persistence
 - `src/data/pools/` — JSON card data (names, archetypes, affiliations, products, weapons)
 - `src/data/cards.json` — Authored 100-card crew pool used by runtime and analysis
