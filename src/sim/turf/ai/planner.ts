@@ -183,17 +183,39 @@ function buildThink(owner: PlannerOwner): Think {
         : [['funded_attack', 'direct_attack'], 'arm_weapon', 'stack_cash', 'reclaim'],
     ),
     lane_pressure: () => new OrderedActionGoal(owner, 'lane_pressure', [['pushed_attack', 'funded_attack', 'direct_attack'], 'arm_weapon', 'stack_product', 'stack_cash']),
-    economy_setup: () => new OrderedActionGoal(
-      owner,
-      'economy_setup',
-      setupNeedsModifiers
-        ? owner.observation.ownReadyFunded > 0
-          && owner.observation.ownReadyPushed === 0
-          && owner.observation.handProducts > 0
-          ? ['deploy_payload', 'equip_backpack', 'deploy_runner', 'stack_product', 'stack_cash', 'arm_weapon', 'place_crew', 'place_reserve_crew']
-          : ['deploy_payload', 'equip_backpack', 'deploy_runner', 'stack_cash', 'stack_product', 'arm_weapon', 'place_crew', 'place_reserve_crew']
-        : ['deploy_payload', 'place_crew', 'place_reserve_crew', 'equip_backpack', 'deploy_runner', 'stack_cash', 'stack_product', 'arm_weapon'],
-    ),
+    economy_setup: () => {
+      // RULES.md §7 runner contract (Epic E2): when we hold a backpack
+      // and have no reserve yet, promote `place_reserve_crew` to the
+      // front of the ordered kinds so the first stage of the runner
+      // contract actually executes. Without this the planner always
+      // picks active placement or a modifier stack first.
+      const player = owner.state.players[owner.side];
+      const reserveCrewCount = player.board.reserve.filter((pos) => pos.crew !== null).length;
+      const needsReserveOpener =
+        owner.observation.handBackpacks > 0
+        && owner.observation.stagedBackpacks === 0
+        && owner.observation.activeRunners === 0
+        && reserveCrewCount === 0;
+
+      if (needsReserveOpener) {
+        return new OrderedActionGoal(
+          owner,
+          'economy_setup',
+          ['place_reserve_crew', 'deploy_payload', 'equip_backpack', 'deploy_runner', 'stack_cash', 'stack_product', 'arm_weapon', 'place_crew'],
+        );
+      }
+      return new OrderedActionGoal(
+        owner,
+        'economy_setup',
+        setupNeedsModifiers
+          ? owner.observation.ownReadyFunded > 0
+            && owner.observation.ownReadyPushed === 0
+            && owner.observation.handProducts > 0
+            ? ['deploy_payload', 'equip_backpack', 'deploy_runner', 'stack_product', 'stack_cash', 'arm_weapon', 'place_crew', 'place_reserve_crew']
+            : ['deploy_payload', 'equip_backpack', 'deploy_runner', 'stack_cash', 'stack_product', 'arm_weapon', 'place_crew', 'place_reserve_crew']
+          : ['deploy_payload', 'place_crew', 'place_reserve_crew', 'equip_backpack', 'deploy_runner', 'stack_cash', 'stack_product', 'arm_weapon'],
+      );
+    },
     hold_defense: () => new OrderedActionGoal(owner, 'hold_defense', ['stack_product', 'arm_weapon', 'stack_cash', 'reclaim', 'direct_attack']),
     anti_stall: () => new OrderedActionGoal(owner, 'anti_stall', ['place_crew', 'stack_cash', 'stack_product', 'direct_attack', 'pass']),
   };

@@ -58,6 +58,28 @@ export function scoreAction(
       const crew = player.hand.crew.find(card => card.id === action.crewCardId);
       if (!crew) return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
       score = (crew.power * 0.85) + (crew.resistance * 1.05) + 0.4 + fuzzy.desperation;
+
+      // RUNNER OPENING (RULES.md §7): when we hold a backpack in hand and
+      // have no reserve crew yet, stage a runner by placing a reserve
+      // crew first. This is the first stage of the four-stage contract;
+      // without this bump the planner always picks active placement and
+      // the contract never fires.
+      const hasBackpackInHand = player.hand.backpacks.length > 0;
+      const hasReserveCrewAlready = player.board.reserve.some((pos) => pos.crew !== null);
+      const hasAnyRunnerEquipped = player.board.reserve.some((pos) => pos.crew !== null && pos.backpack !== null);
+      const hasEmptyActiveToFill = player.board.active.some((pos) => pos.crew === null && !pos.seized);
+
+      if (hasBackpackInHand && !hasAnyRunnerEquipped && !hasReserveCrewAlready) {
+        // Strong bias: we need the first reserve placement to open the
+        // equip → deploy → payload chain. Overpowers the usual
+        // active-placement bias while early-game lanes are still free.
+        const buildupPhase = state.phase === 'buildup';
+        score += buildupPhase ? 6.5 : 3.5;
+      } else if (hasBackpackInHand && !hasAnyRunnerEquipped && hasEmptyActiveToFill) {
+        // We already have one reserve but no equipped runner yet —
+        // maintain moderate pressure on placing more reserves.
+        score += 0.8;
+      }
       break;
     }
 
