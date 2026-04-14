@@ -40,6 +40,19 @@ select {
     radial-gradient(circle at bottom right, rgba(146, 100, 39, 0.12), transparent 25%);
 }
 
+/* Visually-hidden H1 landmark for screen readers. */
+.menu-title-a11y {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .menu-backdrop,
 .menu-grain {
   position: absolute;
