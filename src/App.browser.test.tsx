@@ -49,33 +49,49 @@ describe('App flow', () => {
 
     expect(document.querySelector('[data-testid="deckbuilder-screen"]')).not.toBeNull();
 
-    await buildValidDeck();
-    const startGameButton = await waitForEnabled('[data-testid="start-game-button"]', 5000);
-    if (startGameButton?.disabled !== false) {
-      const selectedCrewCount = document.querySelectorAll('button[data-card-type="crew"].deck-card-selected').length;
-      const selectedWeaponCount = document.querySelectorAll('button[data-card-type="weapon"].deck-card-selected').length;
-      const selectedDrugCount = document.querySelectorAll('button[data-card-type="product"].deck-card-selected').length;
-      const selectedCashCount = document.querySelectorAll('button[data-card-type="cash"].deck-card-selected').length;
-      throw new Error(
-        `start-game-button still disabled after buildValidDeck. ` +
-        `crew=${selectedCrewCount}/25 weapon=${selectedWeaponCount}/19 ` +
-        `drug=${selectedDrugCount}/3 cash=${selectedCashCount}/3`,
-      );
-    }
-    await userEvent.click(startGameButton);
-    await settleBrowser();
+    const errors: string[] = [];
+    const origOnError = window.onerror;
+    const origUnhandled = window.onunhandledrejection;
+    window.onerror = (msg, src, line, col, err) => {
+      errors.push(`${msg} @ ${src}:${line}:${col} :: ${err?.stack ?? ''}`);
+      return false;
+    };
+    window.onunhandledrejection = (event) => {
+      errors.push(`unhandled: ${event.reason?.stack ?? event.reason}`);
+    };
 
-    const buildup = await waitForSelector('[data-testid="buildup-screen"]', 10000);
-    if (!buildup) {
-      const visibleScreens: string[] = [];
-      document.querySelectorAll('[data-testid$="-screen"]').forEach((el) => {
-        visibleScreens.push(el.getAttribute('data-testid') ?? '?');
-      });
-      throw new Error(
-        `buildup-screen did not mount after start click. visible screens=[${visibleScreens.join(',')}] body length=${document.body.textContent?.length ?? 0}`,
-      );
+    try {
+      await buildValidDeck();
+      const startGameButton = await waitForEnabled('[data-testid="start-game-button"]', 5000);
+      if (startGameButton?.disabled !== false) {
+        const selectedCrewCount = document.querySelectorAll('button[data-card-type="crew"].deck-card-selected').length;
+        const selectedWeaponCount = document.querySelectorAll('button[data-card-type="weapon"].deck-card-selected').length;
+        const selectedDrugCount = document.querySelectorAll('button[data-card-type="product"].deck-card-selected').length;
+        const selectedCashCount = document.querySelectorAll('button[data-card-type="cash"].deck-card-selected').length;
+        throw new Error(
+          `start-game-button still disabled after buildValidDeck. ` +
+          `crew=${selectedCrewCount}/25 weapon=${selectedWeaponCount}/19 ` +
+          `drug=${selectedDrugCount}/3 cash=${selectedCashCount}/3`,
+        );
+      }
+      await userEvent.click(startGameButton);
+      await settleBrowser();
+
+      const buildup = await waitForSelector('[data-testid="buildup-screen"]', 10000);
+      if (!buildup) {
+        const visibleScreens: string[] = [];
+        document.querySelectorAll('[data-testid$="-screen"]').forEach((el) => {
+          visibleScreens.push(el.getAttribute('data-testid') ?? '?');
+        });
+        throw new Error(
+          `buildup-screen did not mount after start click. visible screens=[${visibleScreens.join(',')}] errors=[${errors.join(' | ')}] body length=${document.body.textContent?.length ?? 0}`,
+        );
+      }
+      expect(document.body.textContent).toContain('The Street');
+    } finally {
+      window.onerror = origOnError;
+      window.onunhandledrejection = origUnhandled;
     }
-    expect(document.body.textContent).toContain('The Street');
   });
 
   it('opens rules onboarding before the first new game', async () => {
