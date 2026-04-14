@@ -4,7 +4,8 @@
   "name": "Throwing Knife",
   "category": "ranged",
   "bonus": [
-    1
+    1,
+    2
   ],
   "offenseAbility": "REACH",
   "offenseAbilityText": "Can target any enemy position, not just front-line.",

@@ -5,7 +5,8 @@
   "archetype": "enforcer",
   "affiliation": "black_market",
   "power": [
-    3
+    3,
+    4
   ],
   "resistance": [
     3

@@ -48,7 +48,9 @@ describe('generateWeapons', () => {
     const weapons = generateWeapons(rng);
     for (const w of weapons) {
       expect(w.bonus).toBeGreaterThanOrEqual(1);
-      expect(w.bonus).toBeLessThanOrEqual(5);
+      // Ceiling matches CompiledWeaponSchema (1..8). Autobalance may push
+      // values up over time as it tunes for stability.
+      expect(w.bonus).toBeLessThanOrEqual(8);
     }
   });
 
@@ -111,7 +113,9 @@ describe('generateDrugs', () => {
     const drugs = generateDrugs(rng);
     for (const d of drugs) {
       expect(d.potency).toBeGreaterThanOrEqual(1);
-      expect(d.potency).toBeLessThanOrEqual(5);
+      // Ceiling matches CompiledDrugSchema (1..8). Autobalance may push
+      // values up over time as it tunes for stability.
+      expect(d.potency).toBeLessThanOrEqual(8);
     }
   });
 

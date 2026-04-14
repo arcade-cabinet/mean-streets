@@ -4,7 +4,8 @@
   "name": "Bowie Knife",
   "category": "bladed",
   "bonus": [
-    1
+    1,
+    2
   ],
   "offenseAbility": "LACERATE",
   "offenseAbilityText": "Target bleeds, losing 1 resistance per round for bonus rounds.",

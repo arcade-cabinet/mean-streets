@@ -148,6 +148,10 @@
     "consecutiveStableRunsToLock": 3,
     "usageZScoreStabilityMax": 1
   },
+  "autobalance": {
+    "maxHistoryLength": 6,
+    "noteOnSaturation": "Once a card's stat history has 6 entries, autobalance treats it as 'tune-saturated' and stops touching it. Manual review wanted at that point."
+  },
   "aiScoring": {
     "runnerOpenerBuildupBonus": 6.5,
     "runnerOpenerCombatBonus": 3.5,

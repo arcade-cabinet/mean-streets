@@ -4,7 +4,8 @@
   "name": "Savage Mass",
   "category": "steroid",
   "potency": [
-    3
+    3,
+    4
   ],
   "offenseAbility": "BULK",
   "offenseAbilityText": "Crew gets +potency power for attacks.",

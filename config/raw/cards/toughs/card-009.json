@@ -5,7 +5,8 @@
   "archetype": "fixer",
   "affiliation": "iron_devils",
   "power": [
-    1
+    1,
+    2
   ],
   "resistance": [
     4

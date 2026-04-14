@@ -5,7 +5,8 @@
   "archetype": "lookout",
   "affiliation": "reapers",
   "power": [
-    3
+    3,
+    4
   ],
   "resistance": [
     3,

@@ -5,7 +5,8 @@
   "archetype": "snitch",
   "affiliation": "jade_dragon",
   "power": [
-    2
+    2,
+    3
   ],
   "resistance": [
     3,

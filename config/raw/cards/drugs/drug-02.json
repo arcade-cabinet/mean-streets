@@ -4,7 +4,8 @@
   "name": "Nitro Blast",
   "category": "stimulant",
   "potency": [
-    1
+    1,
+    2
   ],
   "offenseAbility": "RUSH",
   "offenseAbilityText": "Crew acts immediately after placement, no setup turn cooldown.",

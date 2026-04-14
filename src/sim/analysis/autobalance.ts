@@ -24,6 +24,10 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import type { LockAnalysisReport } from './locking';
 import type { EffectAnalysisReport, CardEffectEstimate } from './effects';
+import { TURF_SIM_CONFIG } from '../turf/ai/config';
+
+const AUTOBALANCE_CONFIG = (TURF_SIM_CONFIG as { autobalance?: { maxHistoryLength?: number } }).autobalance ?? {};
+const DEFAULT_MAX_HISTORY = AUTOBALANCE_CONFIG.maxHistoryLength ?? 6;
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..', '..', '..');
@@ -155,6 +159,13 @@ export interface AutobalanceOptions {
   dryRun?: boolean;
   /** Maximum number of cards to edit in a single iteration. Defaults to unlimited. */
   maxEdits?: number;
+  /**
+   * Maximum tuning-history entries per card. Once a card's stat array
+   * reaches this length, autobalance stops tuning it (declares it
+   * "tune-saturated"). Defaults to 6, matching ~3 buff/nerf cycles
+   * before manual review is warranted.
+   */
+  maxHistoryLength?: number;
 }
 
 export function runAutobalanceIteration(
@@ -180,9 +191,26 @@ export function runAutobalanceIteration(
       continue;
     }
     // Respect locked cards: never touch authored files that carry locked: true.
-    const rawContent = JSON.parse(readFileSync(resolved.file, 'utf8')) as { locked?: boolean };
+    const rawContent = JSON.parse(readFileSync(resolved.file, 'utf8')) as { locked?: boolean; power?: number[]; resistance?: number[]; bonus?: number[]; potency?: number[] };
     if (rawContent.locked === true) {
       result.skipped.push({ cardId: rec.cardId, reason: 'locked=true' });
+      continue;
+    }
+    // Skip cards that have already been tuned past the saturation
+    // threshold this session — prevents runaway buff/nerf loops on
+    // cards the simple ±1 heuristic cannot stabilize.
+    const maxHistory = opts.maxHistoryLength ?? DEFAULT_MAX_HISTORY;
+    const longestHistory = Math.max(
+      rawContent.power?.length ?? 0,
+      rawContent.resistance?.length ?? 0,
+      rawContent.bonus?.length ?? 0,
+      rawContent.potency?.length ?? 0,
+    );
+    if (longestHistory >= maxHistory) {
+      result.skipped.push({
+        cardId: rec.cardId,
+        reason: `tune-saturated (history >= ${maxHistory})`,
+      });
       continue;
     }
 
