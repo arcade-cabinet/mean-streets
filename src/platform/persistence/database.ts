@@ -20,7 +20,12 @@ CREATE TABLE IF NOT EXISTS app_kv (
 `;
 
 export async function getDatabase(): Promise<SQLiteDBConnection> {
-  connectionPromise ??= initializeDatabase();
+  if (!connectionPromise) {
+    connectionPromise = initializeDatabase().catch((error) => {
+      connectionPromise = null; // allow retries instead of returning a permanently-rejected promise
+      throw error;
+    });
+  }
   return connectionPromise;
 }
 

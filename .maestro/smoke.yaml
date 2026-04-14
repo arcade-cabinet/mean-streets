@@ -1,9 +1,8 @@
-appId: com.arcadecabinet.meanstreets
 ---
 - launchApp
-- assertVisible: "MEAN STREETS"
-- tapOn: "New Game"
-- assertVisible: "Build The Crew"
+- assertVisible:
+    id: "main-menu-screen"
+- assertVisible: "New Game"
 - tapOn:
-    id: "start-game-button"
-    optional: true
+    id: "new-game-button"
+- assertVisible: "Build The Crew"

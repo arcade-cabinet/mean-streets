@@ -141,11 +141,21 @@ export async function resetPersistenceForTests(): Promise<void> {
   migrationPromise = null;
 }
 
+function safeParse<T>(raw: string, source: string): T | null {
+  try {
+    return JSON.parse(raw) as T;
+  } catch (error) {
+    console.warn(`[persistence] discarding corrupted value from ${source}:`, error);
+    return null;
+  }
+}
+
 async function listNamespace<T extends { updatedAt?: string }>(namespace: string): Promise<T[]> {
   if (isTestPersistenceEnv()) {
     return Array.from(testStore.entries())
       .filter(([key]) => key.startsWith(`${namespace}::`))
-      .map(([, value]) => JSON.parse(value) as T)
+      .map(([key, value]) => safeParse<T>(value, key))
+      .filter((parsed): parsed is T => parsed !== null)
       .sort((a, b) => String(b.updatedAt ?? '').localeCompare(String(a.updatedAt ?? '')));
   }
 
@@ -154,13 +164,15 @@ async function listNamespace<T extends { updatedAt?: string }>(namespace: string
     'SELECT value FROM app_kv WHERE namespace = ? ORDER BY updated_at DESC',
     [namespace],
   );
-  return (result.values ?? []).map((row) => JSON.parse(String(row.value)) as T);
+  return (result.values ?? [])
+    .map((row) => safeParse<T>(String(row.value), namespace))
+    .filter((parsed): parsed is T => parsed !== null);
 }
 
 async function getItem<T>(namespace: string, key: string): Promise<T | null> {
   if (isTestPersistenceEnv()) {
     const value = testStore.get(scopedKey(namespace, key));
-    return value ? JSON.parse(value) as T : null;
+    return value ? safeParse<T>(value, scopedKey(namespace, key)) : null;
   }
 
   const db = await getDatabase();
@@ -169,7 +181,7 @@ async function getItem<T>(namespace: string, key: string): Promise<T | null> {
     [namespace, key],
   );
   const row = result.values?.[0];
-  return row ? JSON.parse(String(row.value)) as T : null;
+  return row ? safeParse<T>(String(row.value), `${namespace}::${key}`) : null;
 }
 
 async function setItem<T>(namespace: string, key: string, value: T): Promise<void> {
