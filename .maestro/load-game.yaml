@@ -1,0 +1,22 @@
+---
+# load-game.yaml
+#
+# Validates that a saved active-run persists across app launches.
+# Prerequisite: the app was previously placed into an active-run state
+# (by running smoke.yaml with a `startGame` step or by manual QA).
+#
+# This flow does NOT create the save itself — the app must already have
+# a persisted active run in its SQLite store. On a fresh emulator run
+# the Load Game button will be disabled and this test fails.
+- launchApp
+- assertVisible:
+    id: "main-menu-screen"
+- assertVisible: "Load Game"
+- tapOn:
+    id: "load-game-button"
+- assertVisible:
+    id: "buildup-screen"
+    optional: true
+- assertVisible:
+    id: "combat-screen"
+    optional: true

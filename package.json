@@ -46,7 +46,10 @@
     "test:visual:headless": "PW_HEADLESS=1 playwright test e2e/visual-fixtures.spec.ts",
     "visual:export": "MEAN_STREETS_VISUAL_EXPORT_DIR=artifacts/visual-review playwright test e2e/visual-fixtures.spec.ts",
     "visual:export:headless": "MEAN_STREETS_VISUAL_EXPORT_DIR=artifacts/visual-review PW_HEADLESS=1 playwright test e2e/visual-fixtures.spec.ts",
-    "test:maestro": "maestro test .maestro/smoke.yaml"
+    "test:maestro": "maestro test .maestro/smoke.yaml",
+    "test:maestro:all": "maestro test .maestro/",
+    "test:maestro:backpack": "maestro test .maestro/backpack-pack.yaml",
+    "test:maestro:load": "maestro test .maestro/load-game.yaml"
   },
   "dependencies": {
     "@capacitor-community/sqlite": "^8.1.0",

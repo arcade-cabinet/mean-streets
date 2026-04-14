@@ -1,0 +1,28 @@
+---
+# backpack-pack.yaml
+#
+# Takes a fresh app through the deckbuilder and starts a game.
+# Exercises: menu → new game → deckbuilder → auto-fill → start game →
+#            buildup appears.
+- launchApp
+- assertVisible:
+    id: "main-menu-screen"
+- tapOn:
+    id: "new-game-button"
+- assertVisible:
+    id: "rules-modal"
+    optional: true
+- tapOn:
+    text: "Got it"
+    optional: true
+- assertVisible: "Build The Crew"
+- tapOn:
+    id: "deckbuilder-autofill-button"
+    optional: true
+- tapOn:
+    id: "deckbuilder-save-button"
+    optional: true
+- tapOn:
+    id: "deckbuilder-start-game-button"
+- assertVisible:
+    id: "buildup-screen"
