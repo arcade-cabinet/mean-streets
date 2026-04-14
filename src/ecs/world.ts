@@ -3,49 +3,88 @@
  * Wraps the sim engine's initialization logic.
  */
 
-import { createWorld } from 'koota';
 import type { World } from 'koota';
-import type { TurfGameConfig, PlayerState, CrewCard, ModifierCard } from '../sim/turf/types';
-import { DEFAULT_TURF_CONFIG } from '../sim/turf/types';
+import { createWorld } from 'koota';
+import { loadStarterCrewCards } from '../sim/cards/catalog';
 import { createRng, randomSeed } from '../sim/cards/rng';
-import { generateAllCards } from '../sim/cards/generator';
-import { generateWeapons, generateDrugs, generateCash } from '../sim/turf/generators';
 import { createBoard } from '../sim/turf/board';
 import { emptyMetrics } from '../sim/turf/environment';
-import { GameState, PlayerA, PlayerB, ActionBudget, ScreenTrait } from './traits';
+import {
+  generateBackpacks,
+  generateCash,
+  generateDrugs,
+  generateWeapons,
+} from '../sim/turf/generators';
+import type {
+  BackpackCard,
+  CrewCard,
+  ModifierCard,
+  PlayerState,
+  TurfGameConfig,
+} from '../sim/turf/types';
+import { DEFAULT_TURF_CONFIG } from '../sim/turf/types';
+import {
+  ActionBudget,
+  GameState,
+  PlayerA,
+  PlayerB,
+  ScreenTrait,
+} from './traits';
 
 function buildDeck(
   crewPool: CrewCard[],
   rng: ReturnType<typeof createRng>,
-): { crew: CrewCard[]; modifiers: ModifierCard[] } {
+): { crew: CrewCard[]; modifiers: ModifierCard[]; backpacks: BackpackCard[] } {
   const weaponPool = generateWeapons(rng);
   const drugPool = generateDrugs(rng);
   const cashPool = generateCash();
+  const backpackPool = generateBackpacks(rng, weaponPool, drugPool, cashPool);
 
   const crew = rng.shuffle([...crewPool]).slice(0, 25);
-  const weapons = rng.shuffle(weaponPool.filter(w => w.unlocked)).slice(0, 8);
-  const drugs = rng.shuffle(drugPool.filter(d => d.unlocked)).slice(0, 8);
+  const weapons = rng.shuffle(weaponPool.filter((w) => w.unlocked)).slice(0, 8);
+  const drugs = rng.shuffle(drugPool.filter((d) => d.unlocked)).slice(0, 8);
   const cash = rng.shuffle([...cashPool]).slice(0, 9);
-  const modifiers = rng.shuffle([...weapons, ...drugs, ...cash] as ModifierCard[]);
-  return { crew, modifiers };
+  const modifiers = rng.shuffle([
+    ...weapons,
+    ...drugs,
+    ...cash,
+  ] as ModifierCard[]);
+  const backpacks = rng
+    .shuffle(backpackPool.filter((pack) => pack.unlocked))
+    .slice(0, 12);
+  return { crew, modifiers, backpacks };
 }
 
 function initPlayerState(
   side: 'A' | 'B',
   config: TurfGameConfig,
-  deck: { crew: CrewCard[]; modifiers: ModifierCard[] },
+  deck: {
+    crew: CrewCard[];
+    modifiers: ModifierCard[];
+    backpacks?: BackpackCard[];
+  },
   rng: ReturnType<typeof createRng>,
 ): PlayerState {
-  const crewDeck = rng.shuffle(deck.crew.map(c => ({ ...c })));
-  const modifierDeck = rng.shuffle(deck.modifiers.map(m => ({ ...m })) as ModifierCard[]);
+  const crewDeck = rng.shuffle(deck.crew.map((c) => ({ ...c })));
+  const modifierDeck = rng.shuffle(
+    deck.modifiers.map((m) => ({ ...m })) as ModifierCard[],
+  );
+  const backpackDeck = rng.shuffle(
+    (deck.backpacks ?? []).map((pack) => ({
+      ...pack,
+      payload: pack.payload.map((payload) => ({ ...payload })),
+    })) as BackpackCard[],
+  );
 
   return {
     board: createBoard(side, config.positionCount, config.reserveCount),
     crewDraw: crewDeck.slice(3),
     modifierDraw: modifierDeck.slice(3),
+    backpackDraw: backpackDeck.slice(2),
     hand: {
       crew: crewDeck.slice(0, 3),
       modifiers: modifierDeck.slice(0, 3) as ModifierCard[],
+      backpacks: backpackDeck.slice(0, 2) as BackpackCard[],
     },
     discard: [],
     positionsSeized: 0,
@@ -56,15 +95,18 @@ function initPlayerState(
 export function createGameWorld(
   config: TurfGameConfig = DEFAULT_TURF_CONFIG,
   seed?: number,
-  playerDeck?: { crew: CrewCard[]; modifiers: ModifierCard[] },
+  playerDeck?: {
+    crew: CrewCard[];
+    modifiers: ModifierCard[];
+    backpacks?: BackpackCard[];
+  },
 ): World {
   const gameSeed = seed ?? randomSeed();
   const rng = createRng(gameSeed);
 
-  const allCards = generateAllCards(gameSeed, 25);
-  const crewPool: CrewCard[] = allCards
-    .filter(c => c.unlocked)
-    .map(c => ({
+  const crewPool: CrewCard[] = loadStarterCrewCards(25)
+    .filter((c) => c.unlocked)
+    .map((c) => ({
       type: 'crew' as const,
       id: c.id,
       displayName: c.displayName,
@@ -97,8 +139,28 @@ export function createGameWorld(
     aiState: { A: 'BUILDING', B: 'BUILDING' },
     aiTurnsInState: { A: 0, B: 0 },
     aiMemory: {
-      A: { lastGoal: null, lastActionKind: null, consecutivePasses: 0, failedPlans: 0, blockedLanes: {}, pressuredLanes: {}, laneRoles: {}, focusLane: null, focusRole: null },
-      B: { lastGoal: null, lastActionKind: null, consecutivePasses: 0, failedPlans: 0, blockedLanes: {}, pressuredLanes: {}, laneRoles: {}, focusLane: null, focusRole: null },
+      A: {
+        lastGoal: null,
+        lastActionKind: null,
+        consecutivePasses: 0,
+        failedPlans: 0,
+        blockedLanes: {},
+        pressuredLanes: {},
+        laneRoles: {},
+        focusLane: null,
+        focusRole: null,
+      },
+      B: {
+        lastGoal: null,
+        lastActionKind: null,
+        consecutivePasses: 0,
+        failedPlans: 0,
+        blockedLanes: {},
+        pressuredLanes: {},
+        laneRoles: {},
+        focusLane: null,
+        focusRole: null,
+      },
     },
     plannerTrace: [],
     policySamples: [],
@@ -113,7 +175,10 @@ export function createGameWorld(
     GameState(initialGameState),
     PlayerA(playerA),
     PlayerB(playerB),
-    ActionBudget({ remaining: config.actionsPerRound, total: config.actionsPerRound }),
+    ActionBudget({
+      remaining: config.actionsPerRound,
+      total: config.actionsPerRound,
+    }),
     ScreenTrait({ current: 'menu' }),
   );
 

@@ -5,14 +5,14 @@ interface StreetDividerProps {
 
 export function StreetDivider({ phase, roundNumber }: StreetDividerProps) {
   return (
-    <div className="flex items-center gap-3 my-2 px-4">
-      <div className="flex-1 border-t border-amber-700/60" />
-      <div className="flex items-center gap-2 text-amber-500 font-mono text-xs tracking-widest select-none">
-        <span className="uppercase">{phase}</span>
-        <span className="text-amber-700">·</span>
+    <div className="street-divider">
+      <div className="street-divider-line" />
+      <div className="street-divider-copy">
+        <span className="street-divider-phase">{phase}</span>
+        <span className="street-divider-dot">·</span>
         <span>ROUND {roundNumber}</span>
       </div>
-      <div className="flex-1 border-t border-amber-700/60" />
+      <div className="street-divider-line" />
     </div>
   );
 }

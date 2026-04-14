@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { useDrag } from './DragContext';
 
 interface DraggableCardProps {
-  type: 'crew' | 'modifier';
+  type: 'crew' | 'modifier' | 'backpack' | 'runner';
   cardIndex: number;
   children: ReactNode;
 }

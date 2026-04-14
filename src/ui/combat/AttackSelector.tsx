@@ -20,6 +20,7 @@ import {
   pushedAttackAction,
 } from '../../ecs/actions';
 import { BoardLayout } from '../board';
+import { CardFrame } from '../cards';
 
 type Step = 'SELECT_ATTACKER' | 'SELECT_TARGET';
 
@@ -110,23 +111,23 @@ export function AttackSelector({
   // The BoardLayout passes onPositionClick, PositionSlot adds cursor-pointer when onClick is set.
 
   return (
-    <div className="flex flex-col gap-2 w-full">
-      <div className="flex items-center justify-between px-2">
-        <span className="text-amber-300 text-xs font-bold tracking-widest">{typeLabel} ATTACK — {prompt}</span>
+    <div className="attack-selector">
+      <div className="attack-selector-header">
+        <span className="attack-selector-title">{typeLabel} ATTACK — {prompt}</span>
         <button
           onClick={handleCancel}
-          className="text-stone-500 text-xs hover:text-stone-300 px-2 py-1 rounded border border-stone-700 hover:border-stone-500 transition-colors"
+          className="attack-selector-cancel"
         >
-          Cancel [Esc]
+          <CardFrame variant="button" className="card-frame-svg card-frame-svg-attack-cancel" />
+          <span className="attack-selector-cancel-label">Cancel [Esc]</span>
         </button>
       </div>
 
-      {/* Highlight indicators above opponent row */}
-      <div className="flex gap-2 justify-center">
+      <div className="attack-selector-track attack-selector-track-top">
         {opponentPositions.map((_, i) => (
           <div
             key={i}
-            className={`w-36 h-1 rounded ${step === 'SELECT_TARGET' && validTargets.includes(i) ? 'bg-red-500' : 'bg-transparent'}`}
+            className={`attack-selector-marker ${step === 'SELECT_TARGET' && validTargets.includes(i) ? 'attack-selector-marker-target' : ''}`}
           />
         ))}
       </div>
@@ -139,17 +140,16 @@ export function AttackSelector({
         onPositionClick={handlePositionClick}
       />
 
-      {/* Highlight indicators below player row */}
-      <div className="flex gap-2 justify-center">
+      <div className="attack-selector-track attack-selector-track-bottom">
         {playerPositions.map((_, i) => (
           <div
             key={i}
-            className={`w-36 h-1 rounded ${
+            className={`attack-selector-marker ${
               step === 'SELECT_ATTACKER' && validAttackers.includes(i)
-                ? 'bg-green-500'
+                ? 'attack-selector-marker-attacker'
                 : step === 'SELECT_TARGET' && attackerIdx === i
-                  ? 'bg-amber-400'
-                  : 'bg-transparent'
+                  ? 'attack-selector-marker-selected'
+                  : ''
             }`}
           />
         ))}

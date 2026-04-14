@@ -10,8 +10,10 @@ describe('buildAutoDeck', () => {
 
     expect(deck.crew).toHaveLength(25);
     expect(deck.modifiers).toHaveLength(25);
+    expect(deck.backpacks).toHaveLength(12);
     expect(deck.modifiers.filter(card => card.type === 'weapon').length).toBeGreaterThanOrEqual(3);
     expect(deck.modifiers.filter(card => card.type === 'product').length).toBeGreaterThanOrEqual(3);
     expect(deck.modifiers.filter(card => card.type === 'cash').length).toBeGreaterThanOrEqual(3);
+    expect(deck.backpacks.every(card => card.payload.length >= 2 && card.payload.length <= 4)).toBe(true);
   });
 });

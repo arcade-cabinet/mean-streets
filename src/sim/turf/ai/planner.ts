@@ -190,9 +190,9 @@ function buildThink(owner: PlannerOwner): Think {
         ? owner.observation.ownReadyFunded > 0
           && owner.observation.ownReadyPushed === 0
           && owner.observation.handProducts > 0
-          ? ['stack_product', 'stack_cash', 'arm_weapon', 'place_crew']
-          : ['stack_cash', 'stack_product', 'arm_weapon', 'place_crew']
-        : ['place_crew', 'stack_cash', 'stack_product', 'arm_weapon'],
+          ? ['deploy_payload', 'equip_backpack', 'deploy_runner', 'stack_product', 'stack_cash', 'arm_weapon', 'place_crew', 'place_reserve_crew']
+          : ['deploy_payload', 'equip_backpack', 'deploy_runner', 'stack_cash', 'stack_product', 'arm_weapon', 'place_crew', 'place_reserve_crew']
+        : ['deploy_payload', 'place_crew', 'place_reserve_crew', 'equip_backpack', 'deploy_runner', 'stack_cash', 'stack_product', 'arm_weapon'],
     ),
     hold_defense: () => new OrderedActionGoal(owner, 'hold_defense', ['stack_product', 'arm_weapon', 'stack_cash', 'reclaim', 'direct_attack']),
     anti_stall: () => new OrderedActionGoal(owner, 'anti_stall', ['place_crew', 'stack_cash', 'stack_product', 'direct_attack', 'pass']),

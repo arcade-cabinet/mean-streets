@@ -11,7 +11,7 @@ import { useActionBudget, usePlayerBoard } from '../../ecs/hooks';
 import { GameState } from '../../ecs/traits';
 import { findDirectReady, findFundedReady, findPushReady, seizedCount } from '../../sim/turf/board';
 import type { AttackOutcome } from '../../sim/turf/types';
-import { BoardLayout } from '../board';
+import { BoardLayout, PositionSlot } from '../board';
 import { ActionMenu, AttackSelector } from '../combat';
 import { DragProvider, DropTarget } from '../dnd';
 import { PlayerHand } from '../hand';
@@ -22,12 +22,17 @@ type ActionMode = 'direct' | 'funded' | 'pushed' | 'stack' | null;
 const WIN_THRESHOLD = 5;
 const AI_DELAY_MS = 2000;
 
+function chunkStreet<T>(items: T[]): T[][] {
+  return [items.slice(0, 3), items.slice(3, 5)].filter((row) => row.length > 0);
+}
+
 interface CombatScreenProps {
   world: World;
   onGameOver: (winner: 'A' | 'B') => void;
+  onOpenMenu?: () => void;
 }
 
-export function CombatScreen({ world, onGameOver }: CombatScreenProps) {
+export function CombatScreen({ world, onGameOver, onOpenMenu }: CombatScreenProps) {
   const { layout } = useAppShell();
   const [actionMode, setActionMode] = useState<ActionMode>(null);
   const [aiThinking, setAiThinking] = useState(false);
@@ -41,6 +46,7 @@ export function CombatScreen({ world, onGameOver }: CombatScreenProps) {
 
   const turnNumber = gs?.turnNumber ?? 0;
   const sideHand = layout.handPlacement === 'side';
+  const compactStreet = layout.deviceClass !== 'desktop';
 
   const showFlash = useCallback((msg: string, durationMs = 1400) => {
     setFlash(msg);
@@ -118,10 +124,100 @@ export function CombatScreen({ world, onGameOver }: CombatScreenProps) {
     />
   );
 
+  const compactOpponentStreet = compactStreet ? (
+    <div className="street-grid street-grid-opponent street-grid-dimmed">
+      {chunkStreet(opponentPositions).map((row, rowIndex) => (
+        <div key={rowIndex} className="street-grid-row">
+          {row.map((pos, columnIndex) => (
+            <div key={`${rowIndex}-${columnIndex}`} className="street-grid-cell street-grid-cell-dimmed">
+              <PositionSlot position={pos} index={columnIndex} isPlayer={false} />
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  ) : (
+    <div className="board-layout-row board-layout-row-opponent board-layout-row-dimmed">
+      {opponentPositions.map((pos, i) => (
+        <div key={i} className="board-layout-cell-dimmed">
+          <BoardLayout
+            playerPositions={[]}
+            opponentPositions={[pos]}
+            phase="combat"
+            roundNumber={turnNumber}
+          />
+        </div>
+      ))}
+    </div>
+  );
+
+  const compactPlayerStreet = compactStreet ? (
+    <div className="street-grid street-grid-player">
+      {chunkStreet(playerPositions).map((row, rowIndex) => (
+        <div key={rowIndex} className="street-grid-row">
+          {row.map((pos, columnIndex) => {
+            const positionIdx = rowIndex === 0 ? columnIndex : columnIndex + 3;
+            const slot = (
+              <div className="street-grid-cell">
+                <PositionSlot position={pos} index={positionIdx} isPlayer={true} />
+              </div>
+            );
+
+            if (actionMode === 'stack') {
+              return (
+                <DropTarget
+                  key={`${rowIndex}-${columnIndex}`}
+                  positionIdx={positionIdx}
+                  position={pos}
+                  onCrewDrop={handleCrewDrop}
+                  onModifierDrop={handleModifierDrop}
+                >
+                  {slot}
+                </DropTarget>
+              );
+            }
+
+            return <div key={`${rowIndex}-${columnIndex}`}>{slot}</div>;
+          })}
+        </div>
+      ))}
+    </div>
+  ) : (
+    <div className="board-layout-row board-layout-row-player">
+      {playerPositions.map((pos, i) => (
+        actionMode === 'stack' ? (
+          <DropTarget
+            key={i}
+            positionIdx={i}
+            position={pos}
+            onCrewDrop={handleCrewDrop}
+            onModifierDrop={handleModifierDrop}
+          >
+            <BoardLayout
+              playerPositions={[pos]}
+              opponentPositions={[]}
+              phase="combat"
+              roundNumber={turnNumber}
+            />
+          </DropTarget>
+        ) : (
+          <div key={i} className="board-layout-cell">
+            <BoardLayout
+              playerPositions={[pos]}
+              opponentPositions={[]}
+              phase="combat"
+              roundNumber={turnNumber}
+            />
+          </div>
+        )
+      ))}
+    </div>
+  );
+
   return (
     <DragProvider>
       <div className={`game-screen ${sideHand ? 'game-screen-side' : 'game-screen-bottom'}`} data-testid="combat-screen">
-        <GameHUD />
+        <GameHUD onOpenMenu={onOpenMenu} />
 
         <div className="game-shell">
           <div className="game-board-area">
@@ -133,9 +229,7 @@ export function CombatScreen({ world, onGameOver }: CombatScreenProps) {
 
             {aiThinking && (
               <div className="game-overlay">
-                <span className="text-stone-300 text-sm font-mono tracking-widest animate-pulse">
-                  OPPONENT THINKING...
-                </span>
+                <div className="game-overlay-pill">OPPONENT THINKING...</div>
               </div>
             )}
 
@@ -149,49 +243,15 @@ export function CombatScreen({ world, onGameOver }: CombatScreenProps) {
                 onCancel={handleActionCancel}
               />
             ) : (
-              <div className="flex flex-col gap-2 w-full">
-                <div className="flex gap-2 justify-center flex-wrap">
-                  {opponentPositions.map((pos, i) => (
-                    <div key={i} className="opacity-80">
-                      <BoardLayout
-                        playerPositions={[]}
-                        opponentPositions={[pos]}
-                        phase="combat"
-                        roundNumber={turnNumber}
-                      />
-                    </div>
-                  ))}
+              <div className="combat-board-stack">
+                {compactOpponentStreet}
+
+                <div className="game-street-banner">
+                  <span className="game-street-tag">Combat Zone</span>
+                  <span className="game-street-copy">Round {turnNumber} · Actions {budget.remaining}</span>
                 </div>
 
-                <div className="flex gap-2 justify-center flex-wrap">
-                  {playerPositions.map((pos, i) => (
-                    actionMode === 'stack' ? (
-                      <DropTarget
-                        key={i}
-                        positionIdx={i}
-                        position={pos}
-                        onCrewDrop={handleCrewDrop}
-                        onModifierDrop={handleModifierDrop}
-                      >
-                        <BoardLayout
-                          playerPositions={[pos]}
-                          opponentPositions={[]}
-                          phase="combat"
-                          roundNumber={turnNumber}
-                        />
-                      </DropTarget>
-                    ) : (
-                      <div key={i}>
-                        <BoardLayout
-                          playerPositions={[pos]}
-                          opponentPositions={[]}
-                          phase="combat"
-                          roundNumber={turnNumber}
-                        />
-                      </div>
-                    )
-                  ))}
-                </div>
+                {compactPlayerStreet}
               </div>
             )}
 

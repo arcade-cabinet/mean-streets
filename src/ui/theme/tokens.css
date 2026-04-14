@@ -1,0 +1,77 @@
+:root {
+  color-scheme: dark;
+
+  /* Core palette */
+  --bg-ink: #050505;
+  --bg-panel: rgba(17, 13, 12, 0.9);
+  --bg-panel-strong: rgba(25, 16, 14, 0.97);
+  --bg-card: rgba(35, 24, 21, 0.94);
+  --bg-steel: rgba(67, 59, 55, 0.3);
+
+  --border-muted: rgba(142, 104, 89, 0.38);
+  --border-strong: rgba(153, 27, 27, 0.82);
+  --border-hot: rgba(228, 169, 69, 0.72);
+
+  --text-main: #efe3cf;
+  --text-dim: #9c8d7b;
+  --text-hot: #d5a14d;
+  --text-blood: #b42c1c;
+
+  /* Typography */
+  --font-display: "Impact", "Anton", "Haettenschweiler", "Arial Narrow Bold", sans-serif;
+  --font-body: "Trebuchet MS", "Avenir Next Condensed", "Segoe UI", sans-serif;
+
+  /* Shape */
+  --radius-panel: 18px;
+  --radius-chip: 999px;
+  --radius-card: 22px;
+  --radius-slot: 12px;
+
+  /* Shadow */
+  --shadow-heavy: 0 24px 90px rgba(0, 0, 0, 0.72);
+  --shadow-card: 0 12px 34px rgba(0, 0, 0, 0.48);
+  --shadow-steel: inset 0 1px 0 rgba(255, 235, 214, 0.08), inset 0 -1px 0 rgba(0, 0, 0, 0.35);
+
+  /* Semantic backgrounds */
+  --surface-page: linear-gradient(180deg, #120707 0%, #050404 55%, #020202 100%);
+  --surface-page-accent-top: rgba(91, 17, 17, 0.4);
+  --surface-page-accent-side: rgba(144, 95, 42, 0.14);
+  --surface-menu-shell: linear-gradient(180deg, rgba(7, 6, 6, 0.2), rgba(6, 4, 4, 0.88));
+  --surface-panel: linear-gradient(180deg, rgba(33, 20, 18, 0.88), rgba(14, 11, 10, 0.88));
+  --surface-button: linear-gradient(180deg, rgba(75, 57, 49, 0.92), rgba(26, 20, 18, 0.97));
+  --surface-button-primary: linear-gradient(180deg, rgba(126, 29, 21, 0.96), rgba(66, 16, 12, 0.98));
+  --surface-crew-card: linear-gradient(180deg, rgba(23, 18, 17, 0.98), rgba(8, 8, 8, 0.99));
+  --surface-card-void:
+    linear-gradient(180deg, rgba(14, 12, 12, 0.96), rgba(4, 4, 4, 0.98)),
+    radial-gradient(circle at top, rgba(123, 24, 19, 0.14), transparent 30%);
+  --surface-quarter-weapon: linear-gradient(180deg, rgba(27, 31, 38, 0.96), rgba(8, 10, 13, 0.98));
+  --surface-quarter-drug: linear-gradient(180deg, rgba(44, 18, 42, 0.96), rgba(13, 8, 15, 0.98));
+  --surface-quarter-cash: linear-gradient(180deg, rgba(93, 19, 19, 0.96), rgba(34, 10, 10, 0.98));
+  --surface-slot: linear-gradient(180deg, rgba(16, 14, 14, 0.96), rgba(8, 7, 7, 0.98));
+  --surface-slot-drug: linear-gradient(180deg, rgba(48, 16, 46, 0.9), rgba(12, 8, 13, 0.96));
+  --surface-slot-weapon: linear-gradient(180deg, rgba(22, 27, 34, 0.9), rgba(8, 9, 11, 0.96));
+  --surface-slot-cash: linear-gradient(180deg, rgba(68, 17, 17, 0.9), rgba(24, 10, 10, 0.96));
+  --surface-badge-shell: linear-gradient(180deg, rgba(14, 12, 12, 0.96), rgba(7, 6, 6, 0.98));
+
+  /* Semantic accents */
+  --accent-power: #e0b15f;
+  --accent-defense: #92bfd9;
+  --accent-danger: #d66b57;
+  --accent-paper: #f4e7d6;
+  --accent-steel: #d1d6db;
+  --accent-plum: #d8a1db;
+  --accent-neon: #afdf97;
+
+  /* Affiliation tokens */
+  --affiliation-kings-row: #d9a4a4;
+  --affiliation-iron-devils: #d1d6db;
+  --affiliation-jade-dragon: #97dab9;
+  --affiliation-los-diablos: #d9a06d;
+  --affiliation-southside-saints: #e0b15f;
+  --affiliation-the-reapers: #d0cfc9;
+  --affiliation-dead-rabbits: #dc8f88;
+  --affiliation-neon-snakes: #afdf97;
+  --affiliation-black-market: #d8a1db;
+  --affiliation-cobalt-syndicate: #9ed2eb;
+  --affiliation-freelance: #d3c8ba;
+}

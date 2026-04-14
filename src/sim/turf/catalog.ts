@@ -1,21 +1,35 @@
-import { generateAllCards } from '../cards/generator';
+import { loadStarterCrewCards } from '../cards/catalog';
 import { createRng } from '../cards/rng';
-import { generateCash, generateDrugs, generateWeapons } from './generators';
-import type { CashCard, CrewCard, ProductCard, WeaponCard } from './types';
+import {
+  generateBackpacks,
+  generateCash,
+  generateDrugs,
+  generateWeapons,
+} from './generators';
+import type {
+  BackpackCard,
+  CashCard,
+  CrewCard,
+  ProductCard,
+  WeaponCard,
+} from './types';
 
 export interface TurfCardPools {
   crew: CrewCard[];
   weapons: WeaponCard[];
   drugs: ProductCard[];
   cash: CashCard[];
+  backpacks: BackpackCard[];
 }
 
 interface GenerateTurfCardPoolsOptions {
   allUnlocked?: boolean;
 }
 
-function unlockAll<T extends { unlocked: boolean; locked: boolean }>(cards: T[]): T[] {
-  return cards.map(card => ({
+function unlockAll<T extends { unlocked: boolean; locked: boolean }>(
+  cards: T[],
+): T[] {
+  return cards.map((card) => ({
     ...card,
     unlocked: true,
     locked: false,
@@ -27,13 +41,14 @@ export function generateTurfCardPools(
   options: GenerateTurfCardPoolsOptions = {},
 ): TurfCardPools {
   const rng = createRng(seed);
-  const crew = generateAllCards(seed, 25).map(card => ({
+  const crew = loadStarterCrewCards(25).map((card) => ({
     type: 'crew' as const,
     ...card,
   }));
   const weapons = generateWeapons(rng);
   const drugs = generateDrugs(rng);
   const cash = generateCash();
+  const backpacks = generateBackpacks(rng, weapons, drugs, cash);
 
   if (options.allUnlocked) {
     return {
@@ -41,8 +56,9 @@ export function generateTurfCardPools(
       weapons: unlockAll(weapons),
       drugs: unlockAll(drugs),
       cash,
+      backpacks: unlockAll(backpacks),
     };
   }
 
-  return { crew, weapons, drugs, cash };
+  return { crew, weapons, drugs, cash, backpacks };
 }

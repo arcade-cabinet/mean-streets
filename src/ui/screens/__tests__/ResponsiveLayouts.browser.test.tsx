@@ -15,7 +15,7 @@ describe('responsive layout variants', () => {
     setTestViewport({ width: 390, height: 844, orientation: 'portrait' });
 
     cleanup = (await renderInBrowser(
-      <MainMenuScreen onNewGame={() => {}} onSettings={() => {}} />,
+      <MainMenuScreen onNewGame={() => {}} onLoadGame={() => {}} canLoadGame={false} />,
     )).unmount;
 
     expect(document.querySelector('[data-menu-variant="stacked"]')).not.toBeNull();
@@ -25,7 +25,7 @@ describe('responsive layout variants', () => {
     setTestViewport({ width: 1180, height: 820, orientation: 'landscape' });
 
     cleanup = (await renderInBrowser(
-      <MainMenuScreen onNewGame={() => {}} onSettings={() => {}} />,
+      <MainMenuScreen onNewGame={() => {}} onLoadGame={() => {}} canLoadGame={false} />,
     )).unmount;
 
     expect(document.querySelector('[data-menu-variant="split"]')).not.toBeNull();

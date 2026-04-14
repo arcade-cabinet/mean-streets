@@ -57,7 +57,22 @@ export interface WeaponCard {
   locked: boolean;
 }
 
-export type GameCard = CrewCard | ProductCard | CashCard | WeaponCard;
+/** Payload cards only exist independently in data/deck construction, never as quarter-card draw objects in play. */
+export type PayloadCard = ProductCard | CashCard | WeaponCard;
+
+export interface BackpackCard {
+  type: 'backpack';
+  id: string;
+  name: string;
+  icon: string;
+  size: 1 | 2 | 3 | 4;
+  payload: PayloadCard[];
+  unlocked: boolean;
+  unlockCondition?: string;
+  locked: boolean;
+}
+
+export type GameCard = CrewCard | ProductCard | CashCard | WeaponCard | BackpackCard;
 
 // ── Board State ──────────────────────────────────────────────
 
@@ -83,6 +98,12 @@ export interface Position {
   cashLeft: CashCard | null;
   /** Center-right: cash defense (protects against flips/recruitment). */
   cashRight: CashCard | null;
+  /** Backpack attached to this lane, usually delivered by a runner. */
+  backpack: BackpackCard | null;
+  /** Runner state while a reserve crew is carrying payload. */
+  runner: boolean;
+  /** How many payload items remain in the attached backpack. */
+  payloadRemaining: number;
   owner: 'A' | 'B';
   seized: boolean;
   turnsActive: number;
@@ -112,15 +133,26 @@ export interface AttackOutcome {
 /** A quarter-size modifier card — weapon, drug, or cash. */
 export type ModifierCard = ProductCard | CashCard | WeaponCard;
 
+/**
+ * Legacy modifier alias preserved during the backpack/runner migration.
+ * Prefer `PayloadCard` and `BackpackCard` for new code.
+ */
+export type LegacyModifierCard = ModifierCard;
+
 export interface PlayerState {
   board: PlayerBoard;
   /** Full-size crew draw pile. */
   crewDraw: CrewCard[];
-  /** Quarter-size modifier draw pile (mixed weapons, drugs, cash). */
+  /** Legacy loose-modifier draw pile kept temporarily during backpack migration. */
   modifierDraw: ModifierCard[];
+  /** Canonical full-card backpack draw pile. */
+  backpackDraw: BackpackCard[];
   hand: {
     crew: CrewCard[];
+    /** Legacy loose payload cards kept temporarily during migration. */
     modifiers: ModifierCard[];
+    /** Canonical full-card backpack kits. */
+    backpacks: BackpackCard[];
   };
   discard: GameCard[];
   positionsSeized: number;
@@ -163,6 +195,10 @@ export type GamePhase = 'buildup' | 'combat';
 export type TurfActionKind =
   | 'reclaim'
   | 'place_crew'
+  | 'place_reserve_crew'
+  | 'equip_backpack'
+  | 'deploy_runner'
+  | 'deploy_payload'
   | 'arm_weapon'
   | 'stack_product'
   | 'stack_cash'
@@ -177,10 +213,12 @@ export interface TurfAction {
   attackerIdx?: number;
   targetIdx?: number;
   positionIdx?: number;
+  reserveIdx?: number;
   slot?: 'offense' | 'defense';
   crewCardId?: string;
   modifierCardId?: string;
   cashCardId?: string;
+  backpackCardId?: string;
 }
 
 export interface TurfObservation {
@@ -198,6 +236,9 @@ export interface TurfObservation {
   handWeapons: number;
   handProducts: number;
   handCash: number;
+  handBackpacks: number;
+  activeRunners: number;
+  stagedBackpacks: number;
   ownPower: number;
   ownDefense: number;
   opponentPower: number;
@@ -292,6 +333,25 @@ export interface TurfMetrics {
   productPlayed: number;
   cashPlayed: number;
   crewPlaced: number;
+  reserveCrewPlaced: number;
+  backpacksEquipped: number;
+  runnerDeployments: number;
+  payloadDeployments: number;
+  runnerOpportunityTurns: number;
+  runnerOpportunityTaken: number;
+  runnerOpportunityMissed: number;
+  runnerReserveOpportunityTurns: number;
+  runnerReserveOpportunityTaken: number;
+  runnerReserveOpportunityMissed: number;
+  runnerEquipOpportunityTurns: number;
+  runnerEquipOpportunityTaken: number;
+  runnerEquipOpportunityMissed: number;
+  runnerDeployOpportunityTurns: number;
+  runnerDeployOpportunityTaken: number;
+  runnerDeployOpportunityMissed: number;
+  runnerPayloadOpportunityTurns: number;
+  runnerPayloadOpportunityTaken: number;
+  runnerPayloadOpportunityMissed: number;
   positionsReclaimed: number;
   passes: number;
   goalSwitches: number;
@@ -312,11 +372,13 @@ export interface TurfMetrics {
 export interface DeckTemplate {
   crew: CrewCard[];
   modifiers: ModifierCard[];
+  backpacks: BackpackCard[];
 }
 
 export interface DeckSnapshot {
   crewIds: string[];
   modifierIds: string[];
+  backpackIds: string[];
 }
 
 export interface TurfGameResult {

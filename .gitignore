@@ -16,6 +16,7 @@ npm-debug.log*
 test-results/
 playwright-report/
 maestro-report/
+artifacts/visual-review/
 sim/reports/analysis/
 sim/reports/turf/*.json
 public/assets/sql-wasm.wasm

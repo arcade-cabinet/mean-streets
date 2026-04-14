@@ -29,8 +29,8 @@ Mean Streets is NOT a poker game, NOT a deckbuilder roguelike, NOT a standard ca
 ## Core Loop
 
 ```
-Build Deck (25 crew + 25 modifiers from collection)
-    → Buildup Phase (place crew, stack modifiers, decide when to strike)
+Build Deck (25 crew + 25 backpack kits from collection)
+    → Buildup Phase (place crew, stage runners, deploy kits, decide when to strike)
     → Combat Phase (5 actions/round, attack/build/reclaim)
     → Win by seizing all 5 opponent positions
     → Earn unlocks, build new decks
@@ -52,10 +52,11 @@ Build Deck (25 crew + 25 modifiers from collection)
 | System | Status | Production Expectation |
 |--------|--------|------------------------|
 | Deck flow | Implemented | `Menu -> DeckBuilder -> Buildup -> Combat -> GameOver` |
-| Modifier deck legality | Implemented | 25 modifiers with category minimums enforced |
+| Modifier deck legality | Replaced | 25 backpack kits with category/package legality enforced |
 | Deterministic sim | Implemented | Seeded draw-order randomness only |
 | Planner/policy AI | Active | Same engine powers runtime and simulation |
 | Visual identity | In progress | Must align fully to `public/poc.html` before release |
+| Backpack / runner rules | In progress | Replaces loose modifier draw model before release |
 | Category abilities | In progress | Visible rules must be fully resolved or hidden |
 | Archetype abilities | In progress | Visible rules must be fully resolved or hidden |
 | Persistence/profile | In progress | SQLite-backed, no localStorage product path |
@@ -78,6 +79,7 @@ Build Deck (25 crew + 25 modifiers from collection)
 - PWR (Power): center top number — how hard you hit
 - RES (Resistance): center bottom number — how much you absorb
 - 6 quarter-card slots: drug/weapon top-left/right (offense), bottom-left/right (defense), cash center-left/right
+- quarter-card slots are **board-state attachments only**, never independently drawn game objects
 
 ### Quarter-Card Orientation
 
@@ -90,6 +92,8 @@ The same quarter-card has opposite effects based on placement:
 | $100 bill | Funds flip attempts / pushed attacks | Protects against being flipped |
 
 This is the core strategic decision: do you use your Brass Knuckles to hit harder or to survive longer?
+
+Quarter-cards are only revealed once a kit has been deployed. They are not a separate hand or deck type.
 
 ### Weapon Categories
 
@@ -117,7 +121,87 @@ This is the core strategic decision: do you use your Brass Knuckles to hit harde
 
 ### Currency
 
-Two denominations: $100 and $1000. Players always have 25x $100 + 5x $1000. Additional copies unlockable via achievements (ephemeral). In-game events can award bonus cash.
+Two denominations: $100 and $1000. Currency lives inside backpack kits and is deployed through runners. Additional copies unlockable via achievements (ephemeral). In-game events can award bonus cash.
+
+## Backpacks And Runners
+
+### Why This Exists
+
+The game does **not** support drawing independent quarter-cards coherently. Quarter-cards are a compact board representation, not a real hand/deck ontology. To resolve that, all modifier payload is carried into play through **backpack kits**.
+
+### Backpack Kit
+
+- A backpack is a **full-size card** in the modifier deck.
+- A backpack contains up to four quarter-card payload items.
+- Payload items can be weapons, drugs, cash, or mixed contents.
+- Quarter-cards appear only when a backpack has been equipped and its contents are exposed or dispensed.
+
+### Reserve And Runner Rules
+
+- A backpack can only be equipped to a **reserve crew**.
+- A reserve crew carrying a backpack gains the **Runner** attribute.
+- Runner is an overlay role, not a replacement for archetype or affiliation.
+- A Runner keeps all normal crew stats, archetype effects, and affiliation identity while carrying a backpack.
+
+### Runner Movement
+
+- Equipping a backpack to a reserve crew costs one buildup action.
+- Equipping a backpack unlocks one **free swap**:
+  - the Runner may move into any active slot with no penalty
+  - only if the destination slot is not in active combat
+- This free swap represents the Runner entering the lane with the kit.
+- Once the backpack is empty, retreating the Runner back to reserve is allowed, but it no longer uses the free-swap rule.
+
+### Kit Deployment
+
+- A Runner may dispense specific backpack contents to:
+  - the Runner's current active lane
+  - another friendly active lane if the item/rule allows
+  - an opposing lane if the current direct/funded/pushed rules allow
+- A backpack may keep some payload in reserve while dispensing other items over multiple actions.
+- A crew carrying no payload is no longer a Runner for free-swap purposes.
+
+### Theft And Seizure
+
+- If a Runner is seized while carrying a backpack, the backpack and all remaining contents are stolen with them.
+- This makes overloaded backpacks high-value tactical risks.
+- Empty backpacks may be withdrawn, but do not preserve special movement privileges.
+
+### Strategic Consequences
+
+- Modifier deckbuilding is now about **packages**, not loose singles.
+- Players must decide:
+  - how many backpacks to include
+  - whether to specialize or hybridize a kit
+  - when to stage a Runner
+  - when to commit a Runner to active play
+  - whether to spread payload across multiple Runners or overload one courier
+- This preserves first-blood uncertainty while making the modifier lifecycle coherent.
+
+### Runner Opening Contract
+
+The opening runner line is now an explicit design contract, even though the current AI still fails to satisfy it consistently.
+
+#### Contract Stages
+
+1. **Reserve Start**
+   - If a player has at least one active crew, at least one backpack in hand, and no reserve runner line started yet, the first legal logistics action is to place a reserve crew.
+2. **Equip**
+   - Once reserve crew exists and a backpack is in hand, the next logistics stage is to equip the backpack onto reserve.
+3. **Deploy**
+   - Once a staged backpack exists in reserve, the next logistics stage is to deploy the Runner into an active lane.
+4. **Payload**
+   - Once a Runner is active, payload deployment becomes the next logistics stage.
+
+#### Why This Matters
+
+- The current sim diagnostics prove the rules engine generates legal runner openings.
+- Self-play still ignores the **Reserve Start** stage entirely under the stable planner baseline.
+- Naively forcing the whole sequence destabilizes tempo and attack-family balance.
+
+That means future rules and AI work should be evaluated against this staged contract:
+- not “does runner usage exist somewhere?”
+- but “which contract stage fails, and why?”
 
 ## Archetypes
 

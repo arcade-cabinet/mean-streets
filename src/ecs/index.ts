@@ -9,6 +9,10 @@ export { createGameWorld } from './world';
 
 export {
   placeCrewAction,
+  placeReserveCrewAction,
+  equipBackpackAction,
+  deployRunnerAction,
+  deployPayloadAction,
   placeModifierAction,
   directAttackAction,
   fundedAttackAction,

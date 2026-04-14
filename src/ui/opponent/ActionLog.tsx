@@ -12,14 +12,13 @@ export function ActionLog({ entries }: ActionLogProps) {
 
   return (
     <div
-      className="bg-stone-900/80 border border-stone-700 rounded overflow-y-auto font-mono"
-      style={{ maxHeight: '120px' }}
+      className="action-log"
     >
       {visible.length === 0 ? (
-        <p className="text-xs text-stone-500 px-2 py-1">No actions yet</p>
+        <p className="action-log-empty">No actions yet</p>
       ) : (
         visible.map((entry, i) => (
-          <p key={i} className="text-xs text-stone-400 px-2 py-0.5 leading-tight">
+          <p key={i} className="action-log-entry">
             {entry}
           </p>
         ))

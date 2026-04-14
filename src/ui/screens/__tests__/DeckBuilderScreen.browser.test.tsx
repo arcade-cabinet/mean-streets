@@ -35,8 +35,10 @@ describe('DeckBuilderScreen', () => {
     const screenRoot = document.querySelector<HTMLElement>('[data-testid="deckbuilder-screen"]');
     const saveButton = document.querySelector<HTMLButtonElement>('[data-testid="save-deck-button"]');
     const nameInput = document.querySelector<HTMLInputElement>('[data-testid="deck-name-input"]');
+    const backpackRail = document.querySelector<HTMLElement>('[data-testid="backpack-rail"]');
 
     expect(screenRoot).not.toBeNull();
+    expect(backpackRail).not.toBeNull();
     expect(saveButton?.disabled).toBe(true);
 
     await buildValidDeck();
@@ -50,5 +52,33 @@ describe('DeckBuilderScreen', () => {
 
     const saved = await loadDeckLoadouts();
     expect(saved.some((deck) => deck.name === 'Night Shift')).toBe(true);
+  });
+
+  it('auto build persists kit ids into the saved deck loadout', async () => {
+    cleanup = (await renderInBrowser(
+      <DeckBuilderScreen
+        onBack={vi.fn()}
+        onStartGame={vi.fn()}
+      />,
+    )).unmount;
+
+    const autoBuildButton = document.querySelector<HTMLButtonElement>('[data-testid="auto-build-button"]');
+    const saveButton = document.querySelector<HTMLButtonElement>('[data-testid="save-deck-button"]');
+    const startButton = document.querySelector<HTMLButtonElement>('[data-testid="start-game-button"]');
+    const nameInput = document.querySelector<HTMLInputElement>('[data-testid="deck-name-input"]');
+
+    await userEvent.click(autoBuildButton!);
+    await waitForEnabled(startButton);
+    expect(startButton?.disabled).toBe(false);
+    await userEvent.clear(nameInput!);
+    await userEvent.fill(nameInput!, 'Runner Box');
+    await waitForEnabled(saveButton);
+    await userEvent.click(saveButton!);
+    await settleBrowser();
+
+    const saved = await loadDeckLoadouts();
+    const loadout = saved.find((deck) => deck.name === 'Runner Box');
+    expect(loadout).toBeTruthy();
+    expect((loadout?.backpackIds ?? []).length).toBeGreaterThan(0);
   });
 });

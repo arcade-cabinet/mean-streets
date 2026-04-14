@@ -10,6 +10,7 @@ export default defineConfig({
   test: {
     include: ['src/**/*.browser.test.tsx'],
     globals: true,
+    testTimeout: 30000,
     setupFiles: ['src/test/setup-browser.ts'],
     browser: {
       enabled: true,

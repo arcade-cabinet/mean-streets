@@ -1,20 +1,27 @@
-import heroImage from '../../assets/hero.png';
 import { useAppShell } from '../../platform';
+import { ArchiveRestore, Crosshair } from 'lucide-react';
+import { CardFrame } from '../cards';
 
 interface MainMenuScreenProps {
   onNewGame: () => void;
-  onSettings: () => void;
+  onLoadGame: () => void;
+  canLoadGame: boolean;
 }
 
 interface MenuButtonProps {
   label: string;
+  detail: string;
+  icon: 'crosshair' | 'load';
   onClick: () => void;
   disabled?: boolean;
   tone?: 'primary' | 'secondary';
   testId: string;
 }
 
-function MenuButton({ label, onClick, disabled = false, tone = 'secondary', testId }: MenuButtonProps) {
+function MenuButton({ label, detail, icon, onClick, disabled = false, tone = 'secondary', testId }: MenuButtonProps) {
+  const Icon = icon === 'crosshair'
+    ? Crosshair
+    : ArchiveRestore;
   return (
     <button
       onClick={onClick}
@@ -22,16 +29,25 @@ function MenuButton({ label, onClick, disabled = false, tone = 'secondary', test
       data-testid={testId}
       className={`menu-button ${tone === 'primary' ? 'menu-button-primary' : ''} ${disabled ? 'menu-button-disabled' : ''}`}
     >
-      <span className="menu-button-label">{label}</span>
+      <CardFrame variant="button" className="card-frame-svg card-frame-svg-button" />
+      <span className="menu-button-icon" aria-hidden="true">
+        <Icon size={20} strokeWidth={2.2} />
+      </span>
+      <span className="menu-button-copy">
+        <span className="menu-button-label">{label}</span>
+        <span className="menu-button-detail">{detail}</span>
+      </span>
     </button>
   );
 }
 
 export function MainMenuScreen({
   onNewGame,
-  onSettings,
+  onLoadGame,
+  canLoadGame,
 }: MainMenuScreenProps) {
   const { layout } = useAppShell();
+  const heroImage = `${import.meta.env.BASE_URL}assets/hero.png`;
 
   return (
     <div className="menu-shell" data-testid="main-menu-screen" data-menu-variant={layout.menuVariant}>
@@ -39,17 +55,25 @@ export function MainMenuScreen({
       <div className="menu-grain" />
 
       <section className={`menu-content menu-content-${layout.menuVariant}`}>
-        <div className="menu-copy">
-          <p className="menu-kicker">Southside Tactical Card War</p>
-          <h1 className="menu-title">MEAN STREETS</h1>
-          <p className="menu-subtitle">
-            Stack heat, push product, and seize the block in a deterministic turf war with no dice and no coin flips.
-          </p>
-        </div>
-
-        <div className={`menu-actions menu-actions-${layout.menuVariant}`}>
-          <MenuButton label="New Game" onClick={onNewGame} tone="primary" testId="new-game-button" />
-          <MenuButton label="Settings" onClick={onSettings} testId="settings-button" />
+        <div className="menu-topbar">
+          <div className={`menu-actions menu-actions-${layout.menuVariant}`}>
+            <MenuButton
+              label="New Game"
+              detail="Build your deck and take the street."
+              icon="crosshair"
+              onClick={onNewGame}
+              tone="primary"
+              testId="new-game-button"
+            />
+            <MenuButton
+              label="Load Game"
+              detail={canLoadGame ? 'Resume a committed run from the last save.' : 'No committed run saved yet.'}
+              icon="load"
+              onClick={onLoadGame}
+              disabled={!canLoadGame}
+              testId="load-game-button"
+            />
+          </div>
         </div>
       </section>
     </div>

@@ -1,5 +1,6 @@
 import { Banknote, FlaskConical, Sword } from 'lucide-react';
 import type { CashCard, ProductCard, WeaponCard } from '../../sim/turf/types';
+import { CardFrame } from './CardFrame';
 
 type AttachedCard = ProductCard | WeaponCard | CashCard;
 
@@ -10,21 +11,15 @@ interface ModifierBadgeProps {
 
 const BADGE_STYLES = {
   product: {
-    shell: 'border-purple-500/60 bg-purple-950/75 text-purple-100',
-    value: 'text-purple-200',
-    meta: 'text-purple-300/85',
+    shell: 'modifier-badge-product',
     Icon: FlaskConical,
   },
   weapon: {
-    shell: 'border-slate-400/60 bg-slate-900/80 text-slate-100',
-    value: 'text-slate-100',
-    meta: 'text-slate-300/85',
+    shell: 'modifier-badge-weapon',
     Icon: Sword,
   },
   cash: {
-    shell: 'border-amber-400/60 bg-amber-950/75 text-amber-100',
-    value: 'text-amber-100',
-    meta: 'text-amber-300/90',
+    shell: 'modifier-badge-cash',
     Icon: Banknote,
   },
 } as const;
@@ -54,22 +49,23 @@ export function ModifierBadge({ card, orientation }: ModifierBadgeProps) {
 
   return (
     <div
-      className={`group relative flex h-full min-h-[48px] flex-col justify-between rounded-md border px-1.5 py-1 ${style.shell}`}
+      className={`modifier-badge ${style.shell}`}
       title={titleText(card, orientation)}
     >
-      <div className="flex items-start justify-between gap-1">
-        <Icon size={11} className={style.meta} strokeWidth={2.3} />
-        <span className="text-[7px] font-black tracking-[0.18em] text-stone-200/85">
+      <CardFrame variant="slot" className="card-frame-svg card-frame-svg-badge" />
+      <div className="modifier-badge-top">
+        <Icon size={11} className="modifier-badge-icon" strokeWidth={2.3} />
+        <span className="modifier-badge-orientation">
           {orientation === 'offense' ? 'OFF' : 'DEF'}
         </span>
       </div>
 
-      <div className="mt-1 flex items-end justify-between gap-1">
-        <span className={`text-[11px] font-black leading-none ${style.value}`}>
+      <div className="modifier-badge-bottom">
+        <span className="modifier-badge-value">
           {valueText(card)}
         </span>
         {effect && (
-          <span className={`max-w-[38px] truncate text-[7px] font-black leading-none tracking-[0.12em] ${style.meta}`}>
+          <span className="modifier-badge-effect">
             {effect}
           </span>
         )}

@@ -30,7 +30,7 @@ export function useHand(side: 'A' | 'B') {
   const Trait = side === 'A' ? PlayerA : PlayerB;
   const entity = useQueryFirst(Trait);
   const state = useTrait(entity, Trait);
-  return state?.hand ?? { crew: [], modifiers: [] };
+  return state?.hand ?? { crew: [], modifiers: [], backpacks: [] };
 }
 
 /** Returns the current UI screen name. */

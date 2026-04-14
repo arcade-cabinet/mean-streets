@@ -20,9 +20,8 @@ export function BoardLayout({
   onPositionClick,
 }: BoardLayoutProps) {
   return (
-    <div className="flex flex-col gap-1 w-full">
-      {/* Opponent row — top, mirrored */}
-      <div className="flex gap-2 justify-center flex-wrap">
+    <div className="board-layout">
+      <div className="board-layout-row board-layout-row-opponent">
         {opponentPositions.map((pos, i) => (
           <PositionSlot
             key={i}
@@ -37,8 +36,7 @@ export function BoardLayout({
 
       <StreetDivider phase={phase} roundNumber={roundNumber} />
 
-      {/* Player row — bottom */}
-      <div className="flex gap-2 justify-center flex-wrap">
+      <div className="board-layout-row board-layout-row-player">
         {playerPositions.map((pos, i) => (
           <PositionSlot
             key={i}

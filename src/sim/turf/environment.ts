@@ -3,15 +3,19 @@ import { generateTurfCardPools, type TurfCardPools } from './catalog';
 import { buildAutoDeck, type AutoDeckPolicy } from './deck-builder';
 import {
   createBoard,
+  deployRunner,
+  equipBackpack,
   findDirectReady,
   findEmptyActive,
   findFundedReady,
   findPushReady,
   offensiveCash,
   placeCrew,
+  placeReserveCrew,
   placeModifier,
   positionDefense,
   positionPower,
+  takePayload,
   seizePosition,
   seizedCount,
   tickPositions,
@@ -82,6 +86,25 @@ export function emptyMetrics(): TurfMetrics {
     productPlayed: 0,
     cashPlayed: 0,
     crewPlaced: 0,
+    reserveCrewPlaced: 0,
+    backpacksEquipped: 0,
+    runnerDeployments: 0,
+    payloadDeployments: 0,
+    runnerOpportunityTurns: 0,
+    runnerOpportunityTaken: 0,
+    runnerOpportunityMissed: 0,
+    runnerReserveOpportunityTurns: 0,
+    runnerReserveOpportunityTaken: 0,
+    runnerReserveOpportunityMissed: 0,
+    runnerEquipOpportunityTurns: 0,
+    runnerEquipOpportunityTaken: 0,
+    runnerEquipOpportunityMissed: 0,
+    runnerDeployOpportunityTurns: 0,
+    runnerDeployOpportunityTaken: 0,
+    runnerDeployOpportunityMissed: 0,
+    runnerPayloadOpportunityTurns: 0,
+    runnerPayloadOpportunityTaken: 0,
+    runnerPayloadOpportunityMissed: 0,
     positionsReclaimed: 0,
     passes: 0,
     goalSwitches: 0,
@@ -113,9 +136,17 @@ function initPlayer(
     board: createBoard(side, config.positionCount, config.reserveCount),
     crewDraw: crewDeck.slice(3),
     modifierDraw: modifierDeck.slice(3),
+    backpackDraw: template.backpacks.slice(2).map(card => ({
+      ...card,
+      payload: card.payload.map(payload => ({ ...payload })),
+    })),
     hand: {
       crew: crewDeck.slice(0, 3),
       modifiers: modifierDeck.slice(0, 3),
+      backpacks: template.backpacks.slice(0, 2).map(card => ({
+        ...card,
+        payload: card.payload.map(payload => ({ ...payload })),
+      })),
     },
     discard: [],
     positionsSeized: 0,
@@ -217,6 +248,10 @@ export function drawPhase(state: TurfGameState, side: 'A' | 'B'): void {
     const next = player.modifierDraw.shift();
     if (next) player.hand.modifiers.push(next);
   }
+  if (player.backpackDraw.length > 0 && player.hand.backpacks.length < 4) {
+    const next = player.backpackDraw.shift();
+    if (next) player.hand.backpacks.push(next);
+  }
 }
 
 export function tickRound(state: TurfGameState): void {
@@ -230,6 +265,14 @@ export function normalizeActionKey(action: TurfAction): string {
   switch (action.kind) {
     case 'place_crew':
       return `place_crew:${action.positionIdx}`;
+    case 'place_reserve_crew':
+      return `place_reserve_crew:${action.reserveIdx}`;
+    case 'equip_backpack':
+      return `equip_backpack:${action.reserveIdx}`;
+    case 'deploy_runner':
+      return `deploy_runner:${action.reserveIdx}->${action.positionIdx}`;
+    case 'deploy_payload':
+      return `deploy_payload:${action.positionIdx}:${action.modifierCardId}:${action.slot}`;
     case 'arm_weapon':
     case 'stack_product':
     case 'stack_cash':
@@ -249,6 +292,14 @@ export function policyActionKey(action: TurfAction): string {
   switch (action.kind) {
     case 'place_crew':
       return 'place_crew';
+    case 'place_reserve_crew':
+      return 'place_reserve_crew';
+    case 'equip_backpack':
+      return 'equip_backpack';
+    case 'deploy_runner':
+      return 'deploy_runner';
+    case 'deploy_payload':
+      return `deploy_payload:${action.slot ?? 'offense'}`;
     case 'arm_weapon':
     case 'stack_product':
     case 'stack_cash':
@@ -374,6 +425,9 @@ export function createObservation(state: TurfGameState, side: 'A' | 'B'): TurfOb
   const handWeaponsCount = handWeapons(own).length;
   const handProductsCount = handDrugs(own).length;
   const handCashCount = handCash(own).length;
+  const handBackpacksCount = own.hand.backpacks.length;
+  const activeRunners = own.board.active.filter(pos => pos.runner).length;
+  const stagedBackpacks = own.board.reserve.filter(pos => pos.backpack).length;
   const ownPower = own.board.active.reduce((sum, pos) => sum + positionPower(pos), 0);
   const ownDefense = own.board.active.reduce((sum, pos) => sum + positionDefense(pos), 0);
   const opponentPower = opponent.board.active.reduce((sum, pos) => sum + positionPower(pos), 0);
@@ -414,6 +468,9 @@ export function createObservation(state: TurfGameState, side: 'A' | 'B'): TurfOb
     handWeapons: handWeaponsCount,
     handProducts: handProductsCount,
     handCash: handCashCount,
+    handBackpacks: handBackpacksCount,
+    activeRunners,
+    stagedBackpacks,
     ownPower,
     ownDefense,
     opponentPower,
@@ -480,6 +537,54 @@ export function enumerateLegalActions(state: TurfGameState, side: 'A' | 'B'): Tu
       const position = player.board.active[positionIdx];
       if (!position.crew && !position.seized) {
         actions.push({ kind: 'place_crew', side, positionIdx, crewCardId: crew.id });
+      }
+    }
+  }
+
+  if (state.phase === 'buildup') {
+    for (const crew of player.hand.crew) {
+      for (let reserveIdx = 0; reserveIdx < player.board.reserve.length; reserveIdx++) {
+        const reserve = player.board.reserve[reserveIdx];
+        if (!reserve.crew && !reserve.seized) {
+          actions.push({ kind: 'place_reserve_crew', side, reserveIdx, crewCardId: crew.id });
+        }
+      }
+    }
+
+    for (const backpack of player.hand.backpacks) {
+      for (let reserveIdx = 0; reserveIdx < player.board.reserve.length; reserveIdx++) {
+        const reserve = player.board.reserve[reserveIdx];
+        if (reserve.crew && !reserve.backpack && !reserve.seized) {
+          actions.push({ kind: 'equip_backpack', side, reserveIdx, backpackCardId: backpack.id });
+        }
+      }
+    }
+
+    for (let reserveIdx = 0; reserveIdx < player.board.reserve.length; reserveIdx++) {
+      const reserve = player.board.reserve[reserveIdx];
+      if (!reserve.runner || !reserve.crew || reserve.seized) continue;
+      for (let positionIdx = 0; positionIdx < player.board.active.length; positionIdx++) {
+        const active = player.board.active[positionIdx];
+        if (!active.seized) {
+          actions.push({ kind: 'deploy_runner', side, reserveIdx, positionIdx });
+        }
+      }
+    }
+
+    for (let positionIdx = 0; positionIdx < player.board.active.length; positionIdx++) {
+      const lane = player.board.active[positionIdx];
+      if (!lane.runner || !lane.backpack || !lane.crew || lane.seized) continue;
+      for (const payload of lane.backpack.payload) {
+        if (payload.type === 'weapon') {
+          if (!lane.weaponTop) actions.push({ kind: 'deploy_payload', side, positionIdx, slot: 'offense', modifierCardId: payload.id });
+          if (!lane.weaponBottom) actions.push({ kind: 'deploy_payload', side, positionIdx, slot: 'defense', modifierCardId: payload.id });
+        } else if (payload.type === 'product') {
+          if (!lane.drugTop) actions.push({ kind: 'deploy_payload', side, positionIdx, slot: 'offense', modifierCardId: payload.id });
+          if (!lane.drugBottom) actions.push({ kind: 'deploy_payload', side, positionIdx, slot: 'defense', modifierCardId: payload.id });
+        } else if (payload.type === 'cash') {
+          if (!lane.cashLeft) actions.push({ kind: 'deploy_payload', side, positionIdx, slot: 'offense', modifierCardId: payload.id });
+          if (!lane.cashRight) actions.push({ kind: 'deploy_payload', side, positionIdx, slot: 'defense', modifierCardId: payload.id });
+        }
       }
     }
   }
@@ -662,6 +767,56 @@ export function stepAction(state: TurfGameState, action: TurfAction): TurfStepRe
       break;
     }
 
+    case 'place_reserve_crew': {
+      if (action.reserveIdx === undefined || !action.crewCardId) throw new Error('Invalid place_reserve_crew action');
+      const crew = removeCrew(player, action.crewCardId);
+      if (!crew || !placeReserveCrew(player.board, action.reserveIdx, crew)) throw new Error('Illegal place_reserve_crew action');
+      state.metrics.crewPlaced++;
+      state.metrics.reserveCrewPlaced++;
+      reward += 0.9;
+      break;
+    }
+
+    case 'equip_backpack': {
+      if (action.reserveIdx === undefined || !action.backpackCardId) throw new Error('Invalid equip_backpack action');
+      const idx = player.hand.backpacks.findIndex(card => card.id === action.backpackCardId);
+      if (idx < 0) throw new Error('Illegal equip_backpack action');
+      const backpack = player.hand.backpacks.splice(idx, 1)[0];
+      const reserve = player.board.reserve[action.reserveIdx];
+      if (!backpack || !reserve || !equipBackpack(reserve, backpack, true)) {
+        throw new Error('Illegal equip_backpack action');
+      }
+      state.metrics.backpacksEquipped++;
+      reward += 1.15;
+      break;
+    }
+
+    case 'deploy_runner': {
+      if (action.reserveIdx === undefined || action.positionIdx === undefined) throw new Error('Invalid deploy_runner action');
+      if (state.phase !== 'buildup' || !deployRunner(player.board, action.reserveIdx, action.positionIdx)) {
+        throw new Error('Illegal deploy_runner action');
+      }
+      state.metrics.runnerDeployments++;
+      reward += 1.35;
+      break;
+    }
+
+    case 'deploy_payload': {
+      if (action.positionIdx === undefined || !action.modifierCardId || !action.slot) {
+        throw new Error('Invalid deploy_payload action');
+      }
+      const lane = player.board.active[action.positionIdx];
+      if (!lane?.runner || !lane.backpack || !lane.crew) throw new Error('Illegal deploy_payload action');
+      const card = takePayload(lane, action.modifierCardId);
+      if (!card || !placeModifier(player.board, action.positionIdx, card, action.slot)) {
+        throw new Error('Illegal deploy_payload action');
+      }
+      recordPlacementMetrics(state, card, action.slot);
+      state.metrics.payloadDeployments++;
+      reward += action.slot === 'offense' ? 1.45 : 1.15;
+      break;
+    }
+
     case 'arm_weapon':
     case 'stack_product':
     case 'stack_cash': {
@@ -724,7 +879,7 @@ export function stepAction(state: TurfGameState, action: TurfAction): TurfStepRe
     }
   }
 
-  if (player.hand.crew.length === 0 && player.hand.modifiers.length === 0) {
+  if (player.hand.crew.length === 0 && player.hand.modifiers.length === 0 && player.hand.backpacks.length === 0) {
     state.metrics.deadHandTurns++;
   }
 

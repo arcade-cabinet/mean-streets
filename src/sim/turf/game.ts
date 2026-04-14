@@ -48,7 +48,11 @@ function shouldStrike(state: TurfGameState, side: 'A' | 'B'): boolean {
   }
   if (setupPotential && buildTurns < 7) return false;
   if (state.aiMemory[side].consecutivePasses >= 2) return true;
-  if (state.players[side].hand.crew.length === 0 && state.players[side].hand.modifiers.length === 0) return true;
+  if (
+    state.players[side].hand.crew.length === 0
+    && state.players[side].hand.modifiers.length === 0
+    && state.players[side].hand.backpacks.length === 0
+  ) return true;
   return false;
 }
 
@@ -91,6 +95,75 @@ function chooseActionWithExploration(
   return decideAction(state, side, policyArtifact);
 }
 
+function hasRunnerOpeningOpportunity(
+  state: TurfGameState,
+  side: 'A' | 'B',
+  legalActions: TurfAction[],
+): 'reserve' | 'equip' | 'deploy' | 'payload' | null {
+  if (state.phase !== 'buildup') return null;
+  if (state.buildupTurns[side] > 5) return null;
+  const own = state.players[side];
+  const activeCrewCount = own.board.active.filter(position => position.crew).length;
+  const reserveCrewCount = own.board.reserve.filter(position => position.crew).length;
+  const stagedBackpacks = own.board.reserve.filter(position => position.backpack).length;
+  const activeRunners = own.board.active.filter(position => position.runner).length;
+
+  if (own.hand.backpacks.length > 0 && activeCrewCount > 0 && reserveCrewCount === 0) {
+    return legalActions.some(action => action.kind === 'place_reserve_crew') ? 'reserve' : null;
+  }
+  if (own.hand.backpacks.length > 0 && reserveCrewCount > 0 && stagedBackpacks === 0) {
+    return legalActions.some(action => action.kind === 'equip_backpack') ? 'equip' : null;
+  }
+  if (stagedBackpacks > 0 && activeRunners === 0) {
+    return legalActions.some(action => action.kind === 'deploy_runner') ? 'deploy' : null;
+  }
+  if (activeRunners > 0) {
+    return legalActions.some(action => action.kind === 'deploy_payload') ? 'payload' : null;
+  }
+  return null;
+}
+
+function recordRunnerOpportunity(
+  state: TurfGameState,
+  stage: 'reserve' | 'equip' | 'deploy' | 'payload',
+  action: TurfAction,
+): void {
+  state.metrics.runnerOpportunityTurns++;
+  const taken =
+    (stage === 'reserve' && action.kind === 'place_reserve_crew')
+    || (stage === 'equip' && action.kind === 'equip_backpack')
+    || (stage === 'deploy' && action.kind === 'deploy_runner')
+    || (stage === 'payload' && action.kind === 'deploy_payload');
+  if (taken) {
+    state.metrics.runnerOpportunityTaken++;
+  } else {
+    state.metrics.runnerOpportunityMissed++;
+  }
+
+  switch (stage) {
+    case 'reserve':
+      state.metrics.runnerReserveOpportunityTurns++;
+      if (taken) state.metrics.runnerReserveOpportunityTaken++;
+      else state.metrics.runnerReserveOpportunityMissed++;
+      break;
+    case 'equip':
+      state.metrics.runnerEquipOpportunityTurns++;
+      if (taken) state.metrics.runnerEquipOpportunityTaken++;
+      else state.metrics.runnerEquipOpportunityMissed++;
+      break;
+    case 'deploy':
+      state.metrics.runnerDeployOpportunityTurns++;
+      if (taken) state.metrics.runnerDeployOpportunityTaken++;
+      else state.metrics.runnerDeployOpportunityMissed++;
+      break;
+    case 'payload':
+      state.metrics.runnerPayloadOpportunityTurns++;
+      if (taken) state.metrics.runnerPayloadOpportunityTaken++;
+      else state.metrics.runnerPayloadOpportunityMissed++;
+      break;
+  }
+}
+
 function executePlannedAction(
   state: TurfGameState,
   side: 'A' | 'B',
@@ -99,6 +172,8 @@ function executePlannedAction(
   if (state.plannerTrace.length === 0) {
     state.firstPlayer = side;
   }
+  const legalActions = enumerateLegalActions(state, side);
+  const runnerOpportunity = hasRunnerOpeningOpportunity(state, side, legalActions);
   const { action, trace } = chooseActionWithExploration(
     state,
     side,
@@ -108,6 +183,9 @@ function executePlannedAction(
   pushTrace(state, trace);
   if (trace.switchedGoal) state.metrics.goalSwitches++;
   if (trace.policyUsed) state.metrics.policyGuidedActions++;
+  if (runnerOpportunity) {
+    recordRunnerOpportunity(state, runnerOpportunity, action);
+  }
 
   const result = stepAction(state, action);
   if (result.reward < 0 && action.kind !== 'pass') {
@@ -259,10 +337,12 @@ export function playTurfGame(
       A: {
         crewIds: templates.A.crew.map(card => card.id),
         modifierIds: templates.A.modifiers.map(card => card.id),
+        backpackIds: templates.A.backpacks.map(card => card.id),
       },
       B: {
         crewIds: templates.B.crew.map(card => card.id),
         modifierIds: templates.B.modifiers.map(card => card.id),
+        backpackIds: templates.B.backpacks.map(card => card.id),
       },
     },
   };

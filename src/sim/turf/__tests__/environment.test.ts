@@ -8,7 +8,18 @@ import {
   stepAction,
 } from '../environment';
 import { createBoard, placeCrew, placeModifier } from '../board';
-import type { CashCard, CrewCard, TurfGameState, WeaponCard } from '../types';
+import type { BackpackCard, CashCard, CrewCard, TurfGameState, WeaponCard } from '../types';
+
+function clearHands(state: TurfGameState): void {
+  for (const side of ['A', 'B'] as const) {
+    state.players[side].crewDraw = [];
+    state.players[side].modifierDraw = [];
+    state.players[side].backpackDraw = [];
+    state.players[side].hand.crew = [];
+    state.players[side].hand.modifiers = [];
+    state.players[side].hand.backpacks = [];
+  }
+}
 
 function crew(id: string): CrewCard {
   return {
@@ -49,6 +60,19 @@ function cash(id: string): CashCard {
   };
 }
 
+function backpack(id: string): BackpackCard {
+  return {
+    type: 'backpack',
+    id,
+    name: id,
+    icon: 'crate',
+    size: 2,
+    payload: [cash(`${id}-cash`), weapon(`${id}-weapon`)],
+    unlocked: true,
+    locked: false,
+  };
+}
+
 describe('turf environment', () => {
   it('enumerates legal actions deterministically for the same seed', () => {
     const first = createInitialTurfState(DEFAULT_TURF_CONFIG, 1234);
@@ -77,6 +101,8 @@ describe('turf environment', () => {
     first.players.B.board = createBoard('B', 5, 5);
     second.players.A.board = createBoard('A', 5, 5);
     second.players.B.board = createBoard('B', 5, 5);
+    clearHands(first);
+    clearHands(second);
 
     placeCrew(first.players.A.board, 0, crew('a0'));
     placeCrew(second.players.A.board, 3, crew('a3'));
@@ -101,6 +127,8 @@ describe('turf environment', () => {
     first.players.B.board = createBoard('B', 5, 5);
     second.players.A.board = createBoard('A', 5, 5);
     second.players.B.board = createBoard('B', 5, 5);
+    clearHands(first);
+    clearHands(second);
 
     placeCrew(first.players.A.board, 0, crew('a0'));
     placeCrew(second.players.A.board, 3, crew('a3'));
@@ -126,6 +154,7 @@ describe('turf environment', () => {
     state.phase = 'combat';
     state.players.A.board = createBoard('A', 5, 5);
     state.players.B.board = createBoard('B', 5, 5);
+    clearHands(state);
 
     placeCrew(state.players.A.board, 0, crew('a0'));
     placeCrew(state.players.B.board, 2, crew('b2'));
@@ -145,6 +174,7 @@ describe('turf environment', () => {
     state.phase = 'combat';
     state.players.A.board = createBoard('A', 5, 5);
     state.players.B.board = createBoard('B', 5, 5);
+    clearHands(state);
 
     placeCrew(state.players.A.board, 0, crew('attacker'));
     placeCrew(state.players.B.board, 0, crew('defender'));
@@ -156,5 +186,55 @@ describe('turf environment', () => {
     expect(state.aiMemory.A.laneRoles[0]).toBeUndefined();
     expect(state.aiMemory.A.focusLane).toBeNull();
     expect(state.aiMemory.A.focusRole).toBeNull();
+  });
+
+  it('enumerates and executes reserve crew, backpack equip, and runner deployment during buildup', () => {
+    const state = createInitialTurfState(DEFAULT_TURF_CONFIG, 11).state as TurfGameState;
+    state.phase = 'buildup';
+    state.players.A.board = createBoard('A', 5, 5);
+    state.players.B.board = createBoard('B', 5, 5);
+    clearHands(state);
+    state.players.A.hand.crew = [crew('runner-seed')];
+    state.players.A.hand.backpacks = [backpack('pack-a')];
+
+    const reserveCrewAction = enumerateLegalActions(state, 'A').find(action => action.kind === 'place_reserve_crew');
+    expect(reserveCrewAction).toBeTruthy();
+    stepAction(state, reserveCrewAction!);
+    expect(state.players.A.board.reserve[0].crew?.id).toBe('runner-seed');
+
+    const equipAction = enumerateLegalActions(state, 'A').find(action => action.kind === 'equip_backpack');
+    expect(equipAction).toBeTruthy();
+    stepAction(state, equipAction!);
+    expect(state.players.A.board.reserve[0].backpack?.id).toBe('pack-a');
+    expect(state.players.A.board.reserve[0].runner).toBe(true);
+
+    const deployAction = enumerateLegalActions(state, 'A').find(action => action.kind === 'deploy_runner');
+    expect(deployAction).toBeTruthy();
+    stepAction(state, deployAction!);
+    expect(state.players.A.board.active[0].crew?.id).toBe('runner-seed');
+    expect(state.players.A.board.active[0].backpack?.id).toBe('pack-a');
+    expect(state.players.A.board.active[0].runner).toBe(true);
+  });
+
+  it('deploys payload from an active runner backpack into board slots', () => {
+    const state = createInitialTurfState(DEFAULT_TURF_CONFIG, 12).state as TurfGameState;
+    state.phase = 'buildup';
+    state.players.A.board = createBoard('A', 5, 5);
+    state.players.B.board = createBoard('B', 5, 5);
+    clearHands(state);
+    state.players.A.hand.crew = [crew('runner-seed')];
+    state.players.A.hand.backpacks = [backpack('pack-b')];
+
+    stepAction(state, enumerateLegalActions(state, 'A').find(action => action.kind === 'place_reserve_crew')!);
+    stepAction(state, enumerateLegalActions(state, 'A').find(action => action.kind === 'equip_backpack')!);
+    stepAction(state, enumerateLegalActions(state, 'A').find(action => action.kind === 'deploy_runner')!);
+
+    const payloadAction = enumerateLegalActions(state, 'A').find(action => action.kind === 'deploy_payload' && action.slot === 'offense');
+    expect(payloadAction).toBeTruthy();
+    stepAction(state, payloadAction!);
+
+    const lane = state.players.A.board.active[0];
+    expect(lane.payloadRemaining).toBe(1);
+    expect(Boolean(lane.cashLeft) || Boolean(lane.weaponTop)).toBe(true);
   });
 });

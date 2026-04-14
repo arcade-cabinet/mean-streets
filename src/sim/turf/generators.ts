@@ -7,7 +7,7 @@
 
 import weaponCategoriesPool from '../../data/pools/weapon-categories.json';
 import drugCategoriesPool from '../../data/pools/drug-categories.json';
-import type { WeaponCard, ProductCard, CashCard } from './types';
+import type { BackpackCard, WeaponCard, ProductCard, CashCard, PayloadCard } from './types';
 import type { Rng } from '../cards/rng';
 
 const WEAPONS_PER_CATEGORY = 10;
@@ -167,4 +167,78 @@ export function generateCash(): CashCard[] {
     });
   }
   return cards;
+}
+
+function clonePayload(card: PayloadCard, backpackId: string, slot: number): PayloadCard {
+  return {
+    ...card,
+    id: `${backpackId}::slot-${slot + 1}::${card.id}`,
+  };
+}
+
+const BACKPACK_ICONS = ['knife', 'vial', 'cash', 'mask', 'bolt', 'crosshair', 'crate', 'flame'] as const;
+const BACKPACK_PREFIXES = ['Runner', 'Drop', 'Ghost', 'Street', 'Stash', 'Courier', 'Night', 'Hotshot'] as const;
+const BACKPACK_SUFFIXES = ['Pack', 'Kit', 'Loadout', 'Bag', 'Rig', 'Bundle', 'Satchel', 'Cache'] as const;
+
+/**
+ * Generate backpack kits that package quarter-card payload into a full-card draw object.
+ * These are the canonical modifier draw objects for the runner migration.
+ */
+export function generateBackpacks(
+  rng: Rng,
+  weapons: WeaponCard[],
+  drugs: ProductCard[],
+  cash: CashCard[],
+  count = 30,
+): BackpackCard[] {
+  const unlockedWeapons = weapons.filter(card => card.unlocked);
+  const unlockedDrugs = drugs.filter(card => card.unlocked);
+  const allWeapons = unlockedWeapons.length > 0 ? unlockedWeapons : weapons;
+  const allDrugs = unlockedDrugs.length > 0 ? unlockedDrugs : drugs;
+  const allCash = cash;
+  const backpacks: BackpackCard[] = [];
+
+  for (let i = 0; i < count; i++) {
+    const id = `pack-${String(i + 1).padStart(2, '0')}`;
+    const size = (2 + (i % 3)) as 2 | 3 | 4;
+    const pattern = i % 5;
+    const payload: PayloadCard[] = [];
+
+    if (pattern === 0) {
+      payload.push(allCash[i % allCash.length], allWeapons[i % allWeapons.length]);
+      if (size >= 3) payload.push(allCash[(i + 7) % allCash.length]);
+      if (size >= 4) payload.push(allDrugs[i % allDrugs.length]);
+    } else if (pattern === 1) {
+      payload.push(allCash[i % allCash.length], allDrugs[i % allDrugs.length]);
+      if (size >= 3) payload.push(allWeapons[(i + 5) % allWeapons.length]);
+      if (size >= 4) payload.push(allCash[(i + 11) % allCash.length]);
+    } else if (pattern === 2) {
+      payload.push(allWeapons[i % allWeapons.length], allDrugs[i % allDrugs.length]);
+      if (size >= 3) payload.push(allCash[(i + 13) % allCash.length]);
+      if (size >= 4) payload.push(allWeapons[(i + 3) % allWeapons.length]);
+    } else if (pattern === 3) {
+      payload.push(allCash[i % allCash.length], allCash[(i + 3) % allCash.length]);
+      if (size >= 3) payload.push(allDrugs[(i + 9) % allDrugs.length]);
+      if (size >= 4) payload.push(allWeapons[(i + 9) % allWeapons.length]);
+    } else {
+      payload.push(allDrugs[i % allDrugs.length], allWeapons[(i + 1) % allWeapons.length]);
+      if (size >= 3) payload.push(allDrugs[(i + 7) % allDrugs.length]);
+      if (size >= 4) payload.push(allCash[(i + 17) % allCash.length]);
+    }
+
+    const unlocked = i < 8;
+    backpacks.push({
+      type: 'backpack',
+      id,
+      name: `${BACKPACK_PREFIXES[i % BACKPACK_PREFIXES.length]} ${BACKPACK_SUFFIXES[(i + 2) % BACKPACK_SUFFIXES.length]}`,
+      icon: BACKPACK_ICONS[i % BACKPACK_ICONS.length],
+      size,
+      payload: payload.slice(0, size).map((card, slot) => clonePayload(card, id, slot)),
+      unlocked,
+      unlockCondition: unlocked ? undefined : `Win ${3 + (i % 5)} games with a runner in your deck`,
+      locked: false,
+    });
+  }
+
+  return rng.shuffle(backpacks);
 }

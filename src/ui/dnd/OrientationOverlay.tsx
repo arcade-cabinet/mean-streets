@@ -12,14 +12,14 @@ export function OrientationOverlay({ visible }: OrientationOverlayProps) {
   if (!visible) return null;
 
   return (
-    <div className="absolute inset-0 rounded-lg overflow-hidden pointer-events-none flex flex-col z-10">
-      <div className="flex-1 bg-amber-500/30 flex items-center justify-center border-b border-amber-400/50">
-        <span className="text-amber-300 text-[10px] font-black tracking-widest drop-shadow">
+    <div className="orientation-overlay">
+      <div className="orientation-overlay-half orientation-overlay-half-offense">
+        <span className="orientation-overlay-label orientation-overlay-label-offense">
           OFFENSE
         </span>
       </div>
-      <div className="flex-1 bg-blue-500/30 flex items-center justify-center border-t border-blue-400/50">
-        <span className="text-blue-300 text-[10px] font-black tracking-widest drop-shadow">
+      <div className="orientation-overlay-half orientation-overlay-half-defense">
+        <span className="orientation-overlay-label orientation-overlay-label-defense">
           DEFENSE
         </span>
       </div>

@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import { CapacitorSQLite, SQLiteConnection, type SQLiteDBConnection } from '@capacitor-community/sqlite';
+import { defineCustomElements as defineJeepSqlite } from 'jeep-sqlite/loader';
 
 const DB_NAME = 'mean_streets';
 const DB_VERSION = 1;
@@ -41,16 +42,15 @@ async function prepareWebStore(): Promise<void> {
   if (webReadyPromise) return webReadyPromise;
 
   webReadyPromise = (async () => {
-    if (!customElements.get('jeep-sqlite')) {
-      await import('jeep-sqlite');
-    }
+    const basePath = `${import.meta.env.BASE_URL}assets`;
+    defineJeepSqlite(window);
 
     await customElements.whenDefined('jeep-sqlite');
 
     if (!document.querySelector('jeep-sqlite')) {
       const element = document.createElement('jeep-sqlite');
-      element.setAttribute('auto-save', 'true');
-      element.setAttribute('wasm-path', '/assets');
+      element.setAttribute('autosave', 'true');
+      element.setAttribute('wasmpath', basePath);
       document.body.appendChild(element);
     }
 

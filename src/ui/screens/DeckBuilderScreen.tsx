@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useAppShell } from '../../platform';
-import type { CrewCard, ModifierCard } from '../../sim/turf/types';
-import { QuarterCard } from '../cards';
-import { createDeckCatalog } from '../deckbuilder/catalog';
+import type { BackpackCard, CrewCard, ModifierCard } from '../../sim/turf/types';
+import { CardFrame, QuarterCard } from '../cards';
+import { createAutoDeckSelection, createDeckCatalog } from '../deckbuilder/catalog';
 import {
   loadCrewPresets,
   loadDeckLoadouts,
@@ -21,7 +21,9 @@ import {
 
 interface DeckBuilderScreenProps {
   onBack: () => void;
-  onStartGame: (deck: { crew: CrewCard[]; modifiers: ModifierCard[] }) => void;
+  onStartGame: (deck: { crew: CrewCard[]; modifiers: ModifierCard[]; backpacks: BackpackCard[] }) => void;
+  initialDeckId?: string | null;
+  onDecksChanged?: (decks: DeckLoadout[]) => void;
 }
 
 type ModifierTab = 'all' | 'weapon' | 'product' | 'cash';
@@ -34,10 +36,20 @@ function nowId(prefix: string): string {
   return `${prefix}-${Date.now()}`;
 }
 
+function suggestedDeckName(crew: CrewCard[]): string {
+  const lead = crew[0];
+  if (!lead) return 'Street Loadout';
+  return `${lead.affiliation} Run`;
+}
+
 function cardName(card: CrewCard | ModifierCard): string {
   if (card.type === 'crew') return card.displayName;
   if (card.type === 'cash') return `$${card.denomination}`;
   return card.name;
+}
+
+function backpackSummary(card: BackpackCard): string {
+  return card.payload.map((payload) => payload.type === 'product' ? 'drug' : payload.type).join(' • ');
 }
 
 function applyPresetIds(
@@ -57,6 +69,7 @@ interface LaneHeaderProps {
   subtitle: string;
   count: number;
   goal: number;
+  showPresetControls?: boolean;
   presetName: string;
   presetOptions: CardPreset[];
   selectedPresetId: string;
@@ -71,6 +84,7 @@ function LaneHeader({
   subtitle,
   count,
   goal,
+  showPresetControls = true,
   presetName,
   presetOptions,
   selectedPresetId,
@@ -91,43 +105,57 @@ function LaneHeader({
         </div>
       </div>
 
-      <div className="deck-lane-controls">
-        {children}
-        <select
-          className="deck-select"
-          value={selectedPresetId}
-          onChange={(event) => onPresetSelect(event.target.value)}
-        >
-          <option value="">Load preset</option>
-          {presetOptions.map((option) => (
-            <option key={option.id} value={option.id}>
-              {option.name}
-            </option>
-          ))}
-        </select>
-        <input
-          className="deck-input"
-          value={presetName}
-          onChange={(event) => onPresetNameChange(event.target.value)}
-          placeholder={`Name ${title.toLowerCase()} preset`}
-        />
-        <button className="deck-mini-button" onClick={onSavePreset}>
-          Save
-        </button>
-      </div>
+      {(showPresetControls || children) && (
+        <div className="deck-lane-controls">
+          {children}
+          {showPresetControls && (
+            <>
+              <div className="utility-field utility-field-select">
+                <CardFrame variant="button" className="card-frame-svg card-frame-svg-utility-button" />
+                <select
+                  className="deck-select"
+                  value={selectedPresetId}
+                  onChange={(event) => onPresetSelect(event.target.value)}
+                >
+                  <option value="">Load preset</option>
+                  {presetOptions.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="utility-field">
+                <CardFrame variant="button" className="card-frame-svg card-frame-svg-utility-button" />
+                <input
+                  className="deck-input"
+                  value={presetName}
+                  onChange={(event) => onPresetNameChange(event.target.value)}
+                  placeholder={`Name ${title.toLowerCase()} preset`}
+                />
+              </div>
+              <button className="deck-mini-button" onClick={onSavePreset}>
+                <CardFrame variant="button" className="card-frame-svg card-frame-svg-utility-button" />
+                <span className="utility-button-label">Save</span>
+              </button>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
-export function DeckBuilderScreen({ onBack, onStartGame }: DeckBuilderScreenProps) {
+export function DeckBuilderScreen({ onBack, onStartGame, initialDeckId = null, onDecksChanged }: DeckBuilderScreenProps) {
   const { layout } = useAppShell();
-  const { allCrew, allModifiers } = useMemo(() => {
+  const { allCrew, allModifiers, allBackpacks } = useMemo(() => {
     const catalog = createDeckCatalog();
-    return { allCrew: catalog.crew, allModifiers: catalog.modifiers };
+    return { allCrew: catalog.crew, allModifiers: catalog.modifiers, allBackpacks: catalog.backpacks };
   }, []);
 
   const [selectedCrewIds, setSelectedCrewIds] = useState<string[]>([]);
   const [selectedModifierIds, setSelectedModifierIds] = useState<string[]>([]);
+  const [selectedBackpackIds, setSelectedBackpackIds] = useState<string[]>([]);
   const [modifierTab, setModifierTab] = useState<ModifierTab>('all');
   const [crewPresetName, setCrewPresetName] = useState('');
   const [modifierPresetName, setModifierPresetName] = useState('');
@@ -140,6 +168,7 @@ export function DeckBuilderScreen({ onBack, onStartGame }: DeckBuilderScreenProp
   const [savedDecks, setSavedDecks] = useState<DeckLoadout[]>([]);
   const [pointerDown, setPointerDown] = useState<'crew' | 'modifier' | null>(null);
   const [selectionMode, setSelectionMode] = useState<SelectionMode>(null);
+  const [initialDeckApplied, setInitialDeckApplied] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -153,6 +182,21 @@ export function DeckBuilderScreen({ onBack, onStartGame }: DeckBuilderScreenProp
       setSavedDecks(nextDecks);
     })();
   }, []);
+
+  useEffect(() => {
+    if (!initialDeckId || initialDeckApplied || savedDecks.length === 0) return;
+    const deck = savedDecks.find((entry) => entry.id === initialDeckId);
+    if (!deck) {
+      setInitialDeckApplied(true);
+      return;
+    }
+    setInitialDeckApplied(true);
+    setSelectedDeckId(deck.id);
+    setSelectedCrewIds(applyPresetIds(deck.crewIds, allCrew.map((card) => card.id), CREW_GOAL));
+    setSelectedModifierIds(applyPresetIds(deck.modifierIds, allModifiers.map((card) => card.id), MOD_GOAL));
+    setSelectedBackpackIds(deck.backpackIds ?? []);
+    setDeckName(deck.name);
+  }, [allCrew, allModifiers, initialDeckApplied, initialDeckId, savedDecks]);
 
   const visibleModifiers = useMemo(() => {
     if (modifierTab === 'all') return allModifiers;
@@ -171,6 +215,13 @@ export function DeckBuilderScreen({ onBack, onStartGame }: DeckBuilderScreenProp
       .map((id) => allModifiers.find((card) => card.id === id))
       .filter((card): card is ModifierCard => !!card),
     [allModifiers, selectedModifierIds],
+  );
+
+  const selectedBackpacks = useMemo(
+    () => selectedBackpackIds
+      .map((id) => allBackpacks.find((card) => card.id === id))
+      .filter((card): card is BackpackCard => !!card),
+    [allBackpacks, selectedBackpackIds],
   );
 
   const modifierComposition = useMemo(
@@ -214,6 +265,18 @@ export function DeckBuilderScreen({ onBack, onStartGame }: DeckBuilderScreenProp
     });
   }
 
+  function toggleBackpack(id: string, forcedMode?: SelectionMode) {
+    setSelectedBackpackIds((prev) => {
+      const selected = prev.includes(id);
+      const mode = forcedMode ?? (selected ? 'remove' : 'add');
+      if (mode === 'add') {
+        if (selected) return prev;
+        return [...prev, id];
+      }
+      return prev.filter((cardId) => cardId !== id);
+    });
+  }
+
   function handleCrewPointerDown(id: string) {
     setPointerDown('crew');
     const nextMode: SelectionMode = selectedCrewIds.includes(id) ? 'remove' : 'add';
@@ -226,6 +289,13 @@ export function DeckBuilderScreen({ onBack, onStartGame }: DeckBuilderScreenProp
     const nextMode: SelectionMode = selectedModifierIds.includes(id) ? 'remove' : 'add';
     setSelectionMode(nextMode);
     toggleModifier(id, nextMode);
+  }
+
+  function handleBackpackPointerDown(id: string) {
+    setPointerDown('modifier');
+    const nextMode: SelectionMode = selectedBackpackIds.includes(id) ? 'remove' : 'add';
+    setSelectionMode(nextMode);
+    toggleBackpack(id, nextMode);
   }
 
   function stopPointerSelection() {
@@ -283,9 +353,11 @@ export function DeckBuilderScreen({ onBack, onStartGame }: DeckBuilderScreenProp
         name: deckName.trim(),
         crewIds: selectedCrewIds,
         modifierIds: selectedModifierIds,
+        backpackIds: selectedBackpackIds,
         updatedAt: new Date().toISOString(),
       });
       setSavedDecks(nextDecks);
+      onDecksChanged?.(nextDecks);
       setSelectedDeckId(nextDecks[0]?.id ?? '');
       setDeckName('');
     })();
@@ -296,6 +368,7 @@ export function DeckBuilderScreen({ onBack, onStartGame }: DeckBuilderScreenProp
     onStartGame({
       crew: selectedCrew,
       modifiers: selectedModifiers,
+      backpacks: selectedBackpacks,
     });
   }
 
@@ -305,7 +378,25 @@ export function DeckBuilderScreen({ onBack, onStartGame }: DeckBuilderScreenProp
     if (!deck) return;
     setSelectedCrewIds(applyPresetIds(deck.crewIds, allCrew.map((card) => card.id), CREW_GOAL));
     setSelectedModifierIds(applyPresetIds(deck.modifierIds, allModifiers.map((card) => card.id), MOD_GOAL));
+    setSelectedBackpackIds(deck.backpackIds ?? []);
     setDeckName(deck.name);
+  }
+
+  function autoBuildDeck() {
+    if ((selectedCrewIds.length > 0 || selectedModifierIds.length > 0) && !window.confirm('Auto Build will overwrite the current deck. Continue?')) {
+      return;
+    }
+
+    const next = createAutoDeckSelection();
+    const nextCrew = next.crewIds
+      .map((id) => allCrew.find((card) => card.id === id))
+      .filter((card): card is CrewCard => !!card);
+
+    setSelectedDeckId('');
+    setSelectedCrewIds(next.crewIds);
+    setSelectedModifierIds(next.modifierIds);
+    setSelectedBackpackIds(next.backpackIds);
+    setDeckName((current) => current.trim() || suggestedDeckName(nextCrew));
   }
 
   return (
@@ -321,41 +412,63 @@ export function DeckBuilderScreen({ onBack, onStartGame }: DeckBuilderScreenProp
       }}
     >
       <header className="deckbuilder-header">
-        <div>
+        <div className="deckbuilder-heading">
           <p className="deckbuilder-kicker">Deck Workshop</p>
           <h1 className="deckbuilder-title">Build The Crew</h1>
+          <div className="deckbuilder-rule" aria-hidden="true" />
+          <p className="deckbuilder-subtitle">
+            Assemble muscle, product, and cash into a street-ready loadout before the first shot is fired.
+          </p>
         </div>
 
         <div className="deckbuilder-actions">
-          <select className="deck-select" value={selectedDeckId} onChange={(event) => loadDeck(event.target.value)}>
-            <option value="">Load saved deck</option>
-            {savedDecks.map((deck) => (
-              <option key={deck.id} value={deck.id}>
-                {deck.name}
-              </option>
-            ))}
-          </select>
-          <input
-            className="deck-input deck-input-wide"
-            value={deckName}
-            onChange={(event) => setDeckName(event.target.value)}
-            placeholder="Name full deck loadout"
-            data-testid="deck-name-input"
-          />
-          <button className="deck-mini-button" onClick={saveDeck} disabled={!canSaveDeck} data-testid="save-deck-button">
-            Save Deck
-          </button>
-          <button className="deck-mini-button" onClick={onBack}>
-            Menu
-          </button>
+          <div className="deckbuilder-actions-top">
+            <div className="utility-field utility-field-select">
+              <CardFrame variant="button" className="card-frame-svg card-frame-svg-utility-button" />
+              <select className="deck-select" value={selectedDeckId} onChange={(event) => loadDeck(event.target.value)}>
+                <option value="">Load saved deck</option>
+                {savedDecks.map((deck) => (
+                  <option key={deck.id} value={deck.id}>
+                    {deck.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="utility-field utility-field-wide deckbuilder-name-field">
+              <CardFrame variant="button" className="card-frame-svg card-frame-svg-utility-button" />
+              <input
+                className="deck-input deck-input-wide"
+                value={deckName}
+                onChange={(event) => setDeckName(event.target.value)}
+                placeholder="Name full deck loadout"
+                data-testid="deck-name-input"
+              />
+            </div>
+            <button className="deck-mini-button" onClick={saveDeck} disabled={!canSaveDeck} data-testid="save-deck-button">
+              <CardFrame variant="button" className="card-frame-svg card-frame-svg-utility-button" />
+              <span className="utility-button-label">Save Deck</span>
+            </button>
+            <button className="deck-mini-button" onClick={autoBuildDeck} data-testid="auto-build-button">
+              <CardFrame variant="button" className="card-frame-svg card-frame-svg-utility-button" />
+              <span className="utility-button-label">Auto Build</span>
+            </button>
+          </div>
+
+          <div className="deckbuilder-actions-bottom">
+            <button className="deck-mini-button" onClick={onBack}>
+              <CardFrame variant="button" className="card-frame-svg card-frame-svg-utility-button" />
+              <span className="utility-button-label">Menu</span>
+            </button>
           <button
-            className={`menu-button menu-button-primary ${!canStartGame ? 'menu-button-disabled' : ''}`}
+            className={`menu-button menu-button-primary deckbuilder-start-button ${!canStartGame ? 'menu-button-disabled' : ''}`}
             onClick={handleStartGame}
             disabled={!canStartGame}
             data-testid="start-game-button"
           >
+            <CardFrame variant="button" className="card-frame-svg card-frame-svg-button" />
             <span className="menu-button-label">Start Game</span>
           </button>
+          </div>
         </div>
       </header>
 
@@ -390,6 +503,7 @@ export function DeckBuilderScreen({ onBack, onStartGame }: DeckBuilderScreenProp
                 disabled={card.locked}
                 title={card.unlockCondition}
               >
+                <CardFrame variant="crew" className="card-frame-svg card-frame-svg-deck-card" />
                 <div className="deck-card-topline">
                   <span className="deck-card-power">P{card.power}</span>
                   <span className="deck-card-defense">R{card.resistance}</span>
@@ -456,8 +570,55 @@ export function DeckBuilderScreen({ onBack, onStartGame }: DeckBuilderScreenProp
                 disabled={cardIsLocked(card)}
                 title={card.type === 'cash' ? 'Cash card' : card.unlockCondition}
               >
+                <CardFrame variant="quarter" className="card-frame-svg card-frame-svg-deck-card" />
                 <QuarterCard card={card} compact />
                 <span className="deck-quarter-name">{cardName(card)}</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="deck-lane">
+        <LaneHeader
+          title="Kits"
+          subtitle="Backpacks become runner payload. Stage them in reserve, then unpack them onto the street."
+          count={selectedBackpacks.length}
+          goal={12}
+          showPresetControls={false}
+          presetName=""
+          presetOptions={[]}
+          selectedPresetId=""
+          onPresetNameChange={() => {}}
+          onPresetSelect={() => {}}
+          onSavePreset={() => {}}
+        />
+
+        <div className="deck-rail deck-rail-kits" data-testid="backpack-rail">
+          {allBackpacks.map((card) => {
+            const selected = selectedBackpackIds.includes(card.id);
+            return (
+              <button
+                key={card.id}
+                type="button"
+                data-card-type="backpack"
+                data-testid={`collection-card-${card.id}`}
+                className={`deck-card deck-card-quarter deck-card-kit ${selected ? 'deck-card-selected' : ''} ${card.locked ? 'deck-card-locked' : ''}`}
+                onPointerDown={() => handleBackpackPointerDown(card.id)}
+                onPointerEnter={() => {
+                  if (pointerDown === 'modifier' && selectionMode) toggleBackpack(card.id, selectionMode);
+                }}
+                disabled={card.locked}
+                title={card.unlockCondition}
+              >
+                <CardFrame variant="quarter" className="card-frame-svg card-frame-svg-deck-card" />
+                <div className="deck-kit-header">
+                  <span className="deck-kit-icon">{card.icon}</span>
+                  <span className="deck-kit-size">{card.payload.length} load</span>
+                </div>
+                <span className="deck-quarter-name">{card.name}</span>
+                <span className="deck-card-meta">{backpackSummary(card)}</span>
+                {selected && <span className="deck-card-badge">Packed</span>}
               </button>
             );
           })}
@@ -468,6 +629,7 @@ export function DeckBuilderScreen({ onBack, onStartGame }: DeckBuilderScreenProp
         <div className="deckbuilder-summary">
           <span className={`deck-counter ${selectedCrew.length === CREW_GOAL ? 'deck-counter-complete' : ''}`}>Crew {selectedCrew.length}/25</span>
           <span className={`deck-counter ${selectedModifiers.length === MOD_GOAL ? 'deck-counter-complete' : ''}`}>Mods {selectedModifiers.length}/25</span>
+          <span className={`deck-counter ${selectedBackpacks.length > 0 ? 'deck-counter-complete' : ''}`}>Kits {selectedBackpacks.length}</span>
           <span
             className={`deck-counter ${modifierComposition.weapon >= MODIFIER_MINIMUMS.weapon ? 'deck-counter-complete' : ''}`}
             data-testid="modifier-rule-weapons"
@@ -486,6 +648,9 @@ export function DeckBuilderScreen({ onBack, onStartGame }: DeckBuilderScreenProp
           >
             Cash {modifierComposition.cash}/3
           </span>
+        </div>
+        <div className="deckbuilder-footnote">
+          <span className="deckbuilder-footnote-label">Street Brief</span>
           <span className="deckbuilder-note">Selected cards stay highlighted until removed or replaced by a loaded preset.</span>
         </div>
       </footer>

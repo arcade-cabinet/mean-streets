@@ -7,14 +7,14 @@ interface PhaseIndicatorProps {
 
 export function PhaseIndicator({ phase, turnNumber }: PhaseIndicatorProps) {
   const label = phase === 'combat' ? 'COMBAT' : 'BUILDUP';
-  const color = phase === 'combat' ? 'text-red-400' : 'text-amber-400';
+  const toneClass = phase === 'combat' ? 'game-phase-combat' : 'game-phase-buildup';
 
   return (
-    <div className="flex items-center gap-2">
-      <span className={`font-mono font-bold text-sm tracking-widest ${color}`}>
+    <div className="game-phase">
+      <span className={`game-phase-label ${toneClass}`}>
         {label}
       </span>
-      <span className="text-stone-500 text-xs font-mono">
+      <span className="game-phase-round">
         R{turnNumber}
       </span>
     </div>

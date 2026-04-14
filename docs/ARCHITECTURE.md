@@ -18,7 +18,7 @@ domain: technical
 │  (Entities, Traits, Relations, Systems)          │
 ├─────────────────────────────────────────────────┤
 │              Game Engine (src/sim/turf/)          │
-│  Board, Attacks, Game Loop, Generators           │
+│  Board, Attacks, Game Loop, Runners, Generators  │
 ├─────────────────────────────────────────────────┤
 │            Simulation Analysis (dev-only)        │
 │  Benchmarks, Sweeps, Effects, Locking, Reports   │
@@ -38,10 +38,10 @@ src/
   sim/                          # Simulation engine (runs without React)
     turf/                       # Active game engine
       types.ts                  # All game types: Position, PlayerState, Config
-      board.ts                  # Board ops: placeModifier, positionPower/Defense
+      board.ts                  # Board ops: place crew, deploy runner payload, positionPower/Defense
       attacks.ts                # Direct/funded/pushed attack resolution
-      game.ts                   # Game loop: buildup + combat phases
-      generators.ts             # Product/cash/weapon card generators
+      game.ts                   # Game loop: buildup + combat phases + runner logistics
+      generators.ts             # Backpack/payload generators
       ai-fuzzy.ts               # Yuka FuzzyModule (4 inputs → 3 outputs)
       ai/                       # Active planner/policy package
       run.ts                    # CLI: npx tsx src/sim/turf/run.ts --games N
@@ -53,7 +53,8 @@ src/
       reports.ts                # JSON artifact writers
       cli.ts                    # analysis:benchmark/sweep/lock entrypoint
     cards/                      # Card generation
-      generator.ts              # 100-card crew generator from name pools
+      catalog.ts                # Authored crew-card loader from src/data/cards.json
+      generator.ts              # Legacy seeded crew generator (deprecated for production pools)
       schemas.ts                # Zod schemas for crew/archetype/affiliation
       rng.ts                    # Seedrandom-backed deterministic PRNG
     engine/                     # Legacy gang-deck engine (deprecated)
@@ -66,7 +67,7 @@ src/
       affiliations.json         # 10 gangs + freelance with relationships
       weapon-categories.json    # 5 categories with abilities, bonusMod, name pools
       drug-categories.json      # 5 categories with abilities, potencyMod, name pools
-    cards.json                  # Generated 100-card crew pool
+    cards.json                  # Authored 100-card crew pool used by runtime + analysis
   platform/                     # Capacitor shell, device/layout services, SQLite persistence
     AppShell.tsx                # Device/layout provider + safe-area shell
     device.ts                   # Capacitor-backed device profile detection
@@ -87,10 +88,14 @@ sim/
 
 ### Card Generation
 ```
-JSON pools (names, archetypes, affiliations, weapon-categories, drug-categories)
+Authored crew pool (src/data/cards.json)
+  → Shared loader + Zod normalization
+  → 100 production crew cards
+
+JSON pools (weapon-categories, drug-categories)
   → Zod validation
-  → Generators (seeded PRNG)
-  → 100 crew + 50 weapons + 50 drugs + 30 cash
+  → Seeded generators
+  → backpack/payload card pools
 ```
 
 ### Game Simulation
@@ -98,8 +103,8 @@ JSON pools (names, archetypes, affiliations, weapon-categories, drug-categories)
 Card pools
   → Independent deck templates (seeded PRNG)
   → Shuffle independently per player (seeded PRNG)
-  → Deal initial hands (3 crew, modifiers)
-  → Buildup phase (place, stack, fuzzy strike-timing)
+  → Deal initial hands (3 crew, backpack kits)
+  → Buildup phase (place crew, stage runners, deploy kit payload, fuzzy strike-timing)
   → Combat phase (5 actions/round, Yuka goal arbitration + policy guidance)
   → Win check (5 positions seized)
   → Metrics collection → JSON report
@@ -139,6 +144,7 @@ Seeded benchmark run
 | Persistence | Active production target | Capacitor SQLite on native and web OPFS path |
 | Responsive layout system | Active production target | Device/posture-aware, not scale-only CSS |
 | LocalStorage persistence | Removed from product path | Test cleanup only, not a runtime backend |
+| Backpack / runner ontology | Required production correction | Replaces the invalid loose quarter-card draw model |
 
 ## Release Ownership
 
@@ -158,6 +164,9 @@ Fuzzy logic produces continuous-valued context. Yuka goal arbitration and planne
 
 ### Why Deterministic (No Dice)?
 Fixed action budgets (5/round) + stacking modifiers provide enough depth. Randomness from draw order only. Player agency over outcomes. Dice were removed after simulation proved balance holds without them.
+
+### Why Backpacks And Runners?
+Loose quarter-card draws are not a coherent ontology. Quarter-cards are attached board-state encodings only, not independently drawable hand objects. Backpacks solve that by introducing a real full-card container that is equipped to reserve crew, turning them into runners who stage and deliver payload into the active street.
 
 ### Why Simultaneous Rounds?
 Eliminates first-mover advantage entirely. Both players act each round with randomized initiative per action pair. Proven at 50.0/50.0% win rate across 10k games.

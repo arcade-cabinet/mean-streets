@@ -10,6 +10,7 @@ interface DropTargetProps {
   position: Position;
   onCrewDrop: (posIdx: number) => void;
   onModifierDrop: (posIdx: number, cardIdx: number, orientation: 'offense' | 'defense') => void;
+  onRunnerDrop?: (reserveIdx: number, posIdx: number) => void;
   children: ReactNode;
 }
 
@@ -18,6 +19,7 @@ type DropValidity = 'none' | 'valid' | 'invalid';
 function isValidDrop(payload: DragPayload, position: Position): boolean {
   if (payload.type === 'crew') return !position.crew && !position.seized;
   if (payload.type === 'modifier') return !!position.crew && !position.seized;
+  if (payload.type === 'runner') return !position.seized;
   return false;
 }
 
@@ -30,7 +32,7 @@ function resolveOrientation(
   return relativeY < rect.height / 2 ? 'offense' : 'defense';
 }
 
-export function DropTarget({ positionIdx, position, onCrewDrop, onModifierDrop, children }: DropTargetProps) {
+export function DropTarget({ positionIdx, position, onCrewDrop, onModifierDrop, onRunnerDrop, children }: DropTargetProps) {
   const { dragging, setDragging } = useDrag();
   const [validity, setValidity] = useState<DropValidity>('none');
   const containerRef = useRef<HTMLDivElement>(null);
@@ -54,6 +56,8 @@ export function DropTarget({ positionIdx, position, onCrewDrop, onModifierDrop, 
 
     if (payload.type === 'crew') {
       onCrewDrop(positionIdx);
+    } else if (payload.type === 'runner' && onRunnerDrop) {
+      onRunnerDrop(payload.cardIndex, positionIdx);
     } else if (payload.type === 'modifier' && containerRef.current) {
       const orientation = resolveOrientation(event.clientY, containerRef.current);
       onModifierDrop(positionIdx, payload.cardIndex, orientation);
@@ -65,6 +69,8 @@ export function DropTarget({ positionIdx, position, onCrewDrop, onModifierDrop, 
     if (!dragging || !isValidDrop(dragging, position)) return;
     if (dragging.type === 'crew') {
       onCrewDrop(positionIdx);
+    } else if (dragging.type === 'runner' && onRunnerDrop) {
+      onRunnerDrop(dragging.cardIndex, positionIdx);
     } else {
       onModifierDrop(positionIdx, dragging.cardIndex, 'offense');
     }

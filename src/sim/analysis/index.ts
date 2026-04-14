@@ -1,5 +1,12 @@
-export { runSeededBenchmark, createBenchmarkReport, writeBenchmarkReport } from './benchmarks';
-export { runCuratedSweep } from './sweeps';
-export { estimateCardEffects } from './effects';
-export { deriveLockRecommendations } from './locking';
+export {
+  createBenchmarkReport,
+  runSeededBenchmark,
+  writeBenchmarkReport,
+} from './benchmarks';
+export { type EffectEstimationProgress, estimateCardEffects } from './effects';
+export {
+  deriveLockRecommendations,
+  summarizeLockRecommendations,
+} from './locking';
 export { writeAnalysisJson } from './reports';
+export { type CuratedSweepProgress, runCuratedSweep } from './sweeps';

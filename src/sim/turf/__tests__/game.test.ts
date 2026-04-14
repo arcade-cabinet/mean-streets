@@ -24,6 +24,33 @@ describe('playTurfGame', () => {
     expect(result.plannerTrace.length).toBeGreaterThan(0);
   });
 
+  it('tracks runner opener opportunities during buildup', () => {
+    const result = playTurfGame(DEFAULT_TURF_CONFIG, 42);
+    expect(result.metrics.runnerOpportunityTurns).toBeGreaterThanOrEqual(0);
+    expect(result.metrics.runnerOpportunityTaken).toBeGreaterThanOrEqual(0);
+    expect(result.metrics.runnerOpportunityMissed).toBeGreaterThanOrEqual(0);
+    expect(result.metrics.runnerOpportunityTaken + result.metrics.runnerOpportunityMissed)
+      .toBe(result.metrics.runnerOpportunityTurns);
+    expect(
+      result.metrics.runnerReserveOpportunityTurns
+      + result.metrics.runnerEquipOpportunityTurns
+      + result.metrics.runnerDeployOpportunityTurns
+      + result.metrics.runnerPayloadOpportunityTurns,
+    ).toBe(result.metrics.runnerOpportunityTurns);
+    expect(
+      result.metrics.runnerReserveOpportunityTaken
+      + result.metrics.runnerEquipOpportunityTaken
+      + result.metrics.runnerDeployOpportunityTaken
+      + result.metrics.runnerPayloadOpportunityTaken,
+    ).toBe(result.metrics.runnerOpportunityTaken);
+    expect(
+      result.metrics.runnerReserveOpportunityMissed
+      + result.metrics.runnerEquipOpportunityMissed
+      + result.metrics.runnerDeployOpportunityMissed
+      + result.metrics.runnerPayloadOpportunityMissed,
+    ).toBe(result.metrics.runnerOpportunityMissed);
+  });
+
   it('ends by seizure or timeout', () => {
     const result = playTurfGame(DEFAULT_TURF_CONFIG, 42);
     expect(['total_seizure', 'timeout']).toContain(result.endReason);

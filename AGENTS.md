@@ -37,10 +37,10 @@ pnpm run cap:sync
 
 - `src/sim/turf/` — Active game engine (types, board, attacks, game loop, AI)
 - `src/sim/analysis/` — Dev-only benchmarking, sweep, effect, and lock-state tooling
-- `src/sim/cards/` — Card generators, schemas, seeded PRNG
+- `src/sim/cards/` — Authored crew loader, legacy generator, schemas, seeded PRNG
 - `src/platform/` — Capacitor shell, responsive layout classification, SQLite persistence
 - `src/data/pools/` — JSON card data (names, archetypes, affiliations, products, weapons)
-- `src/data/cards.json` — Generated 100-card crew pool
+- `src/data/cards.json` — Authored 100-card crew pool used by runtime and analysis
 - `docs/` — Design doc, architecture, production checklist
 - `sim/reports/` — JSON balance reports from simulation runs
 

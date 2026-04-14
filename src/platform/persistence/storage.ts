@@ -12,12 +12,14 @@ export interface DeckLoadout {
   name: string;
   crewIds: string[];
   modifierIds: string[];
+  backpackIds?: string[];
   updatedAt: string;
 }
 
 export interface AppSettings {
   audioEnabled: boolean;
   motionReduced: boolean;
+  rulesSeen: boolean;
 }
 
 export interface PlayerProfile {
@@ -36,6 +38,7 @@ const ACTIVE_RUN_NAMESPACE = 'active-run';
 const DEFAULT_SETTINGS: AppSettings = {
   audioEnabled: true,
   motionReduced: false,
+  rulesSeen: false,
 };
 
 const DEFAULT_PROFILE: PlayerProfile = {
@@ -45,6 +48,15 @@ const DEFAULT_PROFILE: PlayerProfile = {
 };
 
 let migrationPromise: Promise<void> | null = null;
+const testStore = new Map<string, string>();
+
+function isTestPersistenceEnv(): boolean {
+  return typeof window !== 'undefined' && window.__MEAN_STREETS_TEST__ === true;
+}
+
+function scopedKey(namespace: string, key: string): string {
+  return `${namespace}::${key}`;
+}
 
 export async function initializePersistence(): Promise<void> {
   if (!migrationPromise) {
@@ -117,6 +129,12 @@ export async function saveActiveRun<T>(run: T | null): Promise<void> {
 }
 
 export async function resetPersistenceForTests(): Promise<void> {
+  testStore.clear();
+  if (isTestPersistenceEnv()) {
+    migrationPromise = null;
+    return;
+  }
+
   const db = await getDatabase();
   await db.execute('DELETE FROM app_kv;');
   await saveWebStore();
@@ -124,6 +142,13 @@ export async function resetPersistenceForTests(): Promise<void> {
 }
 
 async function listNamespace<T extends { updatedAt?: string }>(namespace: string): Promise<T[]> {
+  if (isTestPersistenceEnv()) {
+    return Array.from(testStore.entries())
+      .filter(([key]) => key.startsWith(`${namespace}::`))
+      .map(([, value]) => JSON.parse(value) as T)
+      .sort((a, b) => String(b.updatedAt ?? '').localeCompare(String(a.updatedAt ?? '')));
+  }
+
   const db = await getDatabase();
   const result = await db.query(
     'SELECT value FROM app_kv WHERE namespace = ? ORDER BY updated_at DESC',
@@ -133,6 +158,11 @@ async function listNamespace<T extends { updatedAt?: string }>(namespace: string
 }
 
 async function getItem<T>(namespace: string, key: string): Promise<T | null> {
+  if (isTestPersistenceEnv()) {
+    const value = testStore.get(scopedKey(namespace, key));
+    return value ? JSON.parse(value) as T : null;
+  }
+
   const db = await getDatabase();
   const result = await db.query(
     'SELECT value FROM app_kv WHERE namespace = ? AND item_key = ? LIMIT 1',
@@ -143,6 +173,11 @@ async function getItem<T>(namespace: string, key: string): Promise<T | null> {
 }
 
 async function setItem<T>(namespace: string, key: string, value: T): Promise<void> {
+  if (isTestPersistenceEnv()) {
+    testStore.set(scopedKey(namespace, key), JSON.stringify(value));
+    return;
+  }
+
   const db = await getDatabase();
   const now = new Date().toISOString();
   await db.run(
@@ -156,12 +191,21 @@ async function setItem<T>(namespace: string, key: string, value: T): Promise<voi
 }
 
 async function deleteItem(namespace: string, key: string): Promise<void> {
+  if (isTestPersistenceEnv()) {
+    testStore.delete(scopedKey(namespace, key));
+    return;
+  }
+
   const db = await getDatabase();
   await db.run('DELETE FROM app_kv WHERE namespace = ? AND item_key = ?', [namespace, key]);
   await saveWebStore();
 }
 
 async function namespaceCount(namespace: string): Promise<number> {
+  if (isTestPersistenceEnv()) {
+    return Array.from(testStore.keys()).filter((key) => key.startsWith(`${namespace}::`)).length;
+  }
+
   const db = await getDatabase();
   const result = await db.query('SELECT COUNT(*) as count FROM app_kv WHERE namespace = ?', [namespace]);
   return Number(result.values?.[0]?.count ?? 0);

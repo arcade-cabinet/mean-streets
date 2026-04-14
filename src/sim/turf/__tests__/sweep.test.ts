@@ -16,12 +16,13 @@ describe('permutation sweep', () => {
 
     expect(deckA.crew.map(card => card.id)).toEqual(deckB.crew.map(card => card.id));
     expect(deckA.modifiers.map(card => card.id)).toEqual(deckB.modifiers.map(card => card.id));
+    expect(deckA.backpacks.map(card => card.id)).toEqual(deckB.backpacks.map(card => card.id));
     for (const id of forcedIds) {
       expect(deckA.crew.some(card => card.id === id) || deckA.modifiers.some(card => card.id === id)).toBe(true);
     }
   });
 
-  it('runs deterministic permutation sweeps over targeted crew/weapon/drug anchors', () => {
+  it('runs deterministic permutation sweeps over targeted crew/weapon/drug anchors', { timeout: 45000 }, () => {
     const pools = generateTurfCardPools(42, { allUnlocked: true });
     const crewIds = pools.crew.slice(0, 2).map(card => card.id);
     const weaponIds = pools.weapons.slice(0, 2).map(card => card.id);

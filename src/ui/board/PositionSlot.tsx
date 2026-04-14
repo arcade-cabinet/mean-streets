@@ -1,5 +1,6 @@
 import type { Position } from '../../sim/turf/types';
 import { CrewCard } from '../cards';
+import { CardFrame } from '../cards/CardFrame';
 
 interface PositionSlotProps {
   position: Position;
@@ -13,10 +14,11 @@ export function PositionSlot({ position, index: _index, isPlayer, faceDown, onCl
   if (faceDown) {
     return (
       <div
-        className="w-[188px] h-[252px] rounded-[22px] border border-stone-700 bg-stone-800 flex items-center justify-center cursor-default shrink-0"
+        className="position-slot-back"
         aria-label="Hidden opponent card"
       >
-        <span className="text-stone-600 text-xs font-mono tracking-widest rotate-180">MEAN STREETS</span>
+        <CardFrame variant="slot" className="card-frame-svg card-frame-svg-position-back" />
+        <span className="position-slot-back-copy">Mean Streets</span>
       </div>
     );
   }
@@ -24,7 +26,7 @@ export function PositionSlot({ position, index: _index, isPlayer, faceDown, onCl
   if (position.seized) {
     return (
       <div
-        className="relative w-[188px] h-[252px] shrink-0 cursor-pointer"
+        className="position-slot position-slot-seized"
         onClick={onClick}
         role="button"
         tabIndex={0}
@@ -32,8 +34,8 @@ export function PositionSlot({ position, index: _index, isPlayer, faceDown, onCl
         aria-label="Seized position"
       >
         <CrewCard position={position} isPlayer={isPlayer} />
-        <div className="absolute inset-0 rounded-lg bg-red-900/50 flex items-center justify-center pointer-events-none">
-          <span className="text-red-400 text-sm font-black tracking-widest rotate-[-12deg] border-2 border-red-400 px-2 py-0.5">
+        <div className="position-slot-seized-overlay">
+          <span className="position-slot-seized-stamp">
             SEIZED
           </span>
         </div>
@@ -44,21 +46,22 @@ export function PositionSlot({ position, index: _index, isPlayer, faceDown, onCl
   if (!position.crew) {
     return (
       <div
-        className={`w-[188px] h-[252px] rounded-[22px] border-2 border-dashed border-stone-700 flex items-center justify-center bg-stone-900/40 shrink-0 ${onClick ? 'cursor-pointer hover:border-amber-700 hover:bg-stone-800/40 transition-colors' : 'cursor-default'}`}
+        className={`position-slot-empty ${onClick ? 'position-slot-empty-clickable' : ''}`}
         onClick={onClick}
         role={onClick ? 'button' : undefined}
         tabIndex={onClick ? 0 : undefined}
         onKeyDown={(e) => e.key === 'Enter' && onClick?.()}
         aria-label="Empty position"
       >
-        <span className="text-stone-600 text-xs font-mono tracking-widest">EMPTY</span>
+        <CardFrame variant="slot" className="card-frame-svg card-frame-svg-position-empty" />
+        <span className="position-slot-empty-label">Empty</span>
       </div>
     );
   }
 
   return (
     <div
-      className={`shrink-0 ${onClick ? 'cursor-pointer' : 'cursor-default'}`}
+      className={`position-slot ${onClick ? 'position-slot-clickable' : ''}`}
       onClick={onClick}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}

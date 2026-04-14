@@ -7,7 +7,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
 export interface DragPayload {
-  type: 'crew' | 'modifier';
+  type: 'crew' | 'modifier' | 'backpack' | 'runner';
   cardIndex: number;
 }
 

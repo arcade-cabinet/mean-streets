@@ -26,6 +26,27 @@ export interface BenchmarkSummary {
   pushedAttacks: number;
   directAttacks: number;
   policyGuidedActions: number;
+  reserveCrewPlacements: number;
+  backpacksEquipped: number;
+  runnerDeployments: number;
+  payloadDeployments: number;
+  runnerOpportunityTurns: number;
+  runnerOpportunityTaken: number;
+  runnerOpportunityMissed: number;
+  runnerReserveOpportunityTurns: number;
+  runnerReserveOpportunityTaken: number;
+  runnerReserveOpportunityMissed: number;
+  runnerEquipOpportunityTurns: number;
+  runnerEquipOpportunityTaken: number;
+  runnerEquipOpportunityMissed: number;
+  runnerDeployOpportunityTurns: number;
+  runnerDeployOpportunityTaken: number;
+  runnerDeployOpportunityMissed: number;
+  runnerPayloadOpportunityTurns: number;
+  runnerPayloadOpportunityTaken: number;
+  runnerPayloadOpportunityMissed: number;
+  runnerOpportunityUseRate: number;
+  runnerReserveStartUseRate: number;
   passRatePerTurn: number;
 }
 
@@ -107,6 +128,37 @@ export function runSeededBenchmark(
     pushedAttacks: average(results, result => result.metrics.pushedAttacks),
     directAttacks: average(results, result => result.metrics.directAttacks),
     policyGuidedActions: average(results, result => result.metrics.policyGuidedActions),
+    reserveCrewPlacements: average(results, result => result.metrics.reserveCrewPlaced),
+    backpacksEquipped: average(results, result => result.metrics.backpacksEquipped),
+    runnerDeployments: average(results, result => result.metrics.runnerDeployments),
+    payloadDeployments: average(results, result => result.metrics.payloadDeployments),
+    runnerOpportunityTurns: average(results, result => result.metrics.runnerOpportunityTurns),
+    runnerOpportunityTaken: average(results, result => result.metrics.runnerOpportunityTaken),
+    runnerOpportunityMissed: average(results, result => result.metrics.runnerOpportunityMissed),
+    runnerReserveOpportunityTurns: average(results, result => result.metrics.runnerReserveOpportunityTurns),
+    runnerReserveOpportunityTaken: average(results, result => result.metrics.runnerReserveOpportunityTaken),
+    runnerReserveOpportunityMissed: average(results, result => result.metrics.runnerReserveOpportunityMissed),
+    runnerEquipOpportunityTurns: average(results, result => result.metrics.runnerEquipOpportunityTurns),
+    runnerEquipOpportunityTaken: average(results, result => result.metrics.runnerEquipOpportunityTaken),
+    runnerEquipOpportunityMissed: average(results, result => result.metrics.runnerEquipOpportunityMissed),
+    runnerDeployOpportunityTurns: average(results, result => result.metrics.runnerDeployOpportunityTurns),
+    runnerDeployOpportunityTaken: average(results, result => result.metrics.runnerDeployOpportunityTaken),
+    runnerDeployOpportunityMissed: average(results, result => result.metrics.runnerDeployOpportunityMissed),
+    runnerPayloadOpportunityTurns: average(results, result => result.metrics.runnerPayloadOpportunityTurns),
+    runnerPayloadOpportunityTaken: average(results, result => result.metrics.runnerPayloadOpportunityTaken),
+    runnerPayloadOpportunityMissed: average(results, result => result.metrics.runnerPayloadOpportunityMissed),
+    runnerOpportunityUseRate:
+      average(results, result =>
+        result.metrics.runnerOpportunityTurns > 0
+          ? result.metrics.runnerOpportunityTaken / result.metrics.runnerOpportunityTurns
+          : 0,
+      ),
+    runnerReserveStartUseRate:
+      average(results, result =>
+        result.metrics.runnerReserveOpportunityTurns > 0
+          ? result.metrics.runnerReserveOpportunityTaken / result.metrics.runnerReserveOpportunityTurns
+          : 0,
+      ),
     passRatePerTurn: totalPasses / Math.max(1, totalTurns),
   };
 

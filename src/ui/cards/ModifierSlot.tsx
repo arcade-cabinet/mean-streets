@@ -1,4 +1,5 @@
 import type { ProductCard, WeaponCard, CashCard } from '../../sim/turf/types';
+import { CardFrame } from './CardFrame';
 import { ModifierBadge } from './ModifierBadge';
 
 interface ModifierSlotProps {
@@ -14,16 +15,10 @@ const ORIENTATION_LABEL: Record<'offense' | 'defense', string> = {
   defense: 'DEF',
 };
 
-const COLOR: Record<string, string> = {
-  drug: 'border-purple-500 text-purple-300',
-  weapon: 'border-slate-400 text-slate-300',
-  cash: 'border-amber-400 text-amber-300',
-};
-
-const BG: Record<string, string> = {
-  drug: 'bg-purple-950/60',
-  weapon: 'bg-slate-800/60',
-  cash: 'bg-amber-950/60',
+const TONE: Record<string, string> = {
+  drug: 'modifier-slot-drug',
+  weapon: 'modifier-slot-weapon',
+  cash: 'modifier-slot-cash',
 };
 
 function cardValue(card: ProductCard | WeaponCard | CashCard): string {
@@ -33,19 +28,19 @@ function cardValue(card: ProductCard | WeaponCard | CashCard): string {
 }
 
 export function ModifierSlot({ type, card, orientation, slotId }: ModifierSlotProps) {
-  const color = COLOR[type];
-  const bg = BG[type];
+  const tone = TONE[type];
 
   if (!card) {
     return (
       <div
-        className={`relative w-full h-full min-h-[48px] border border-dashed ${color} rounded-md flex items-center justify-center ${bg}`}
+        className={`modifier-slot modifier-slot-empty ${tone}`}
         data-slot-id={slotId}
       >
-        <span className={`text-[8px] font-mono tracking-[0.22em] opacity-55 ${color.split(' ')[1]}`}>
+        <CardFrame variant="slot" className="card-frame-svg card-frame-svg-slot" />
+        <span className="modifier-slot-label">
           {LABEL[type]}
         </span>
-        <span className="absolute right-1 top-1 text-[7px] font-black tracking-[0.18em] text-stone-500">
+        <span className="modifier-slot-orientation">
           {ORIENTATION_LABEL[orientation]}
         </span>
       </div>
@@ -54,13 +49,14 @@ export function ModifierSlot({ type, card, orientation, slotId }: ModifierSlotPr
 
   return (
     <div
-      className={`group relative w-full h-full min-h-[48px] border ${color} rounded-md ${bg} overflow-hidden`}
+      className={`modifier-slot modifier-slot-filled ${tone}`}
       data-slot-id={slotId}
     >
-      <div className="h-full p-0.5">
+      <CardFrame variant="slot" className="card-frame-svg card-frame-svg-slot" />
+      <div className="modifier-slot-badge-wrap">
         <ModifierBadge card={card} orientation={orientation} />
       </div>
-      <div className={`absolute bottom-0 left-0 right-0 px-1 py-[2px] text-[7px] font-mono leading-none ${color.split(' ')[1]} bg-stone-950/55 opacity-0 transition-opacity group-hover:opacity-100`}>
+      <div className="modifier-slot-value">
         {cardValue(card)}
       </div>
     </div>

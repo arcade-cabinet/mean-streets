@@ -13,9 +13,9 @@ interface StatRowProps {
 
 function StatRow({ label, value }: StatRowProps) {
   return (
-    <div className="flex justify-between gap-8 text-sm">
-      <span className="text-stone-400 uppercase tracking-widest">{label}</span>
-      <span className="text-stone-100 font-bold tabular-nums">{value}</span>
+    <div className="gameover-stat-row">
+      <span className="gameover-stat-label">{label}</span>
+      <span className="gameover-stat-value">{value}</span>
     </div>
   );
 }
@@ -25,18 +25,22 @@ export function GameOverScreen({ winner, metrics, onPlayAgain }: GameOverScreenP
 
   return (
     <div
-      className="h-screen bg-stone-950 flex flex-col items-center justify-center gap-8"
+      className="gameover-screen"
       data-testid="gameover-screen"
     >
-      <h1
-        className={`text-7xl font-bold tracking-[0.2em] uppercase select-none ${
-          isVictory ? 'text-amber-400' : 'text-red-500'
-        }`}
-      >
-        {isVictory ? 'VICTORY' : 'DEFEAT'}
-      </h1>
+      <div className="gameover-copy">
+        <p className="gameover-kicker">Case Closed</p>
+        <h1 className={`gameover-title ${isVictory ? 'gameover-title-victory' : 'gameover-title-defeat'}`}>
+          {isVictory ? 'Victory' : 'Defeat'}
+        </h1>
+        <p className="gameover-subtitle">
+          {isVictory
+            ? 'The block is yours. Count the damage, then step back onto the street.'
+            : 'You lost the corner. Study the numbers, reload the crew, and make another run.'}
+        </p>
+      </div>
 
-      <div className="bg-stone-900 border border-stone-700 rounded p-6 w-72 flex flex-col gap-3">
+      <div className="gameover-panel">
         <StatRow label="Rounds" value={metrics.combatRounds} />
         <StatRow label="Kills" value={metrics.kills} />
         <StatRow label="Flips" value={metrics.flips} />
@@ -46,9 +50,10 @@ export function GameOverScreen({ winner, metrics, onPlayAgain }: GameOverScreenP
       <button
         onClick={onPlayAgain}
         data-testid="play-again-button"
-        className="bg-amber-700 hover:bg-amber-600 text-stone-900 font-bold px-8 py-3 rounded tracking-widest uppercase transition-all shadow-lg shadow-amber-900/40"
+        className="menu-button menu-button-primary gameover-button"
       >
-        PLAY AGAIN
+        <span className="menu-button-label">Play Again</span>
+        <span className="menu-button-detail">Build another deck and retake the street.</span>
       </button>
     </div>
   );

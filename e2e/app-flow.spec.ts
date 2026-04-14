@@ -1,41 +1,66 @@
 import { expect, test } from '@playwright/test';
-import type { Page } from '@playwright/test';
+import type { Locator, Page, TestInfo } from '@playwright/test';
 
-async function buildDeck(page: Page) {
-  const crewCards = page.locator('button[data-card-type="crew"]:not([disabled])');
-  const weaponCards = page.locator('button[data-card-type="weapon"]:not([disabled])');
-  const drugCards = page.locator('button[data-card-type="product"]:not([disabled])');
-  const cashCards = page.locator('button[data-card-type="cash"]:not([disabled])');
-
-  for (let index = 0; index < 25; index += 1) {
-    await crewCards.nth(index).click();
+async function activate(target: Locator, testInfo: TestInfo) {
+  if (testInfo.project.use.hasTouch) {
+    await target.tap();
+    return;
   }
-
-  for (let index = 0; index < 19; index += 1) {
-    await weaponCards.nth(index).click();
-  }
-  for (let index = 0; index < 3; index += 1) {
-    await drugCards.nth(index).click();
-  }
-  for (let index = 0; index < 3; index += 1) {
-    await cashCards.nth(index).click();
-  }
+  await target.click();
 }
 
-test('core flow reaches combat after building a legal deck', async ({ page }) => {
+async function buildDeck(page: Page, testInfo: TestInfo) {
+  await activate(page.getByTestId('auto-build-button'), testInfo);
+  await expect(page.getByTestId('start-game-button')).toBeEnabled();
+}
+
+async function enterDeckWorkshop(page: Page, testInfo: TestInfo) {
+  const start = Date.now();
+  while (Date.now() - start < 5000) {
+    if (await page.getByTestId('deckbuilder-screen').isVisible().catch(() => false)) {
+      return;
+    }
+    if (await page.getByTestId('deck-garage-screen').isVisible().catch(() => false)) {
+      break;
+    }
+    await page.waitForTimeout(100);
+  }
+
+  const garage = page.getByTestId('deck-garage-screen');
+  if (await garage.isVisible().catch(() => false)) {
+    await activate(page.getByTestId('new-deck-button'), testInfo);
+  }
+  await expect(page.getByTestId('deckbuilder-screen')).toBeVisible();
+}
+
+test('menu, new-game, deck build, save, and load flow works on the live app', async ({ page }, testInfo) => {
   await page.goto('/');
 
   await expect(page.getByTestId('main-menu-screen')).toBeVisible();
-  await page.getByTestId('new-game-button').click();
+  await expect(page.locator('.menu-backdrop')).toHaveCSS('background-image', /hero\.png/);
+  await expect(page.getByTestId('new-game-button')).toBeVisible();
+  await expect(page.getByTestId('load-game-button')).toBeVisible();
+  await expect(page.getByTestId('load-game-button')).toBeDisabled();
 
-  await expect(page.getByTestId('deckbuilder-screen')).toBeVisible();
-  await buildDeck(page);
+  await activate(page.getByTestId('new-game-button'), testInfo);
+  await expect(page.getByRole('heading', { name: 'Rules' })).toBeVisible();
+  await activate(page.getByTestId('close-rules-button'), testInfo);
+
+  await enterDeckWorkshop(page, testInfo);
+  await buildDeck(page, testInfo);
+  await page.getByTestId('deck-name-input').fill('Night Shift');
+  await expect(page.getByTestId('save-deck-button')).toBeEnabled();
+  await activate(page.getByTestId('save-deck-button'), testInfo);
 
   await expect(page.getByTestId('start-game-button')).toBeEnabled();
-  await page.getByTestId('start-game-button').click();
+  await activate(page.getByTestId('start-game-button'), testInfo);
 
   await expect(page.getByTestId('buildup-screen')).toBeVisible();
-  await page.getByTestId('strike-button').click();
+  await page.goto('/');
 
-  await expect(page.getByTestId('combat-screen')).toBeVisible({ timeout: 3000 });
+  await expect(page.getByTestId('main-menu-screen')).toBeVisible();
+  await expect(page.getByTestId('load-game-button')).toBeEnabled();
+  await activate(page.getByTestId('load-game-button'), testInfo);
+
+  await expect(page.getByTestId('buildup-screen')).toBeVisible({ timeout: 3000 });
 });

@@ -54,6 +54,59 @@ export function scoreAction(
       break;
     }
 
+    case 'place_reserve_crew': {
+      const crew = player.hand.crew.find(card => card.id === action.crewCardId);
+      if (!crew) return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
+      score = (crew.power * 0.85) + (crew.resistance * 1.05) + 0.4 + fuzzy.desperation;
+      break;
+    }
+
+    case 'equip_backpack': {
+      if (action.reserveIdx === undefined || !action.backpackCardId) {
+        return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
+      }
+      const reserve = player.board.reserve[action.reserveIdx];
+      const backpack = player.hand.backpacks.find(card => card.id === action.backpackCardId);
+      if (!reserve?.crew || !backpack) return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
+      const cashPayload = backpack.payload.filter(card => card.type === 'cash').length;
+      const offensePayload = backpack.payload.filter(card => card.type === 'weapon' || card.type === 'product').length;
+      score = 1.4 + backpack.payload.length * 0.35 + offensePayload * 0.5 + cashPayload * 0.25;
+      break;
+    }
+
+    case 'deploy_runner': {
+      if (action.reserveIdx === undefined || action.positionIdx === undefined) {
+        return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
+      }
+      const reserve = player.board.reserve[action.reserveIdx];
+      const active = player.board.active[action.positionIdx];
+      if (!reserve?.crew || !reserve.runner || !reserve.backpack || !active) {
+        return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
+      }
+      score = 1.1 + reserve.payloadRemaining * 0.35;
+      if (!active.crew) score += 0.8;
+      if (active.crew && active.turnsActive === 0) score += 0.5;
+      break;
+    }
+
+    case 'deploy_payload': {
+      if (action.positionIdx === undefined || !action.modifierCardId || !action.slot) {
+        return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
+      }
+      const lane = player.board.active[action.positionIdx];
+      if (!lane?.runner || !lane.backpack || !lane.crew) {
+        return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
+      }
+      const payload = lane.backpack.payload.find(card => card.id === action.modifierCardId);
+      if (!payload) return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
+      score = action.slot === 'offense' ? 1.35 : 0.95;
+      if (payload.type === 'weapon') score += action.slot === 'offense' ? 1.7 : 0.8;
+      if (payload.type === 'product') score += action.slot === 'offense' ? 1.55 : 0.7;
+      if (payload.type === 'cash') score += action.slot === 'offense' ? 1.3 : 0.5;
+      if (action.slot === 'offense' && lane.backpack.payload.length > 1) score += 0.25;
+      break;
+    }
+
     case 'arm_weapon':
     case 'stack_product':
     case 'stack_cash': {
@@ -230,6 +283,14 @@ export function describeActionForTrace(action: TurfAction): string {
   switch (action.kind) {
     case 'place_crew':
       return `place_crew@${action.positionIdx}`;
+    case 'place_reserve_crew':
+      return `place_reserve_crew@${action.reserveIdx}`;
+    case 'equip_backpack':
+      return `equip_backpack@${action.reserveIdx}`;
+    case 'deploy_runner':
+      return `deploy_runner@${action.reserveIdx}->${action.positionIdx}`;
+    case 'deploy_payload':
+      return `deploy_payload@${action.positionIdx}:${action.slot}`;
     case 'arm_weapon':
     case 'stack_product':
     case 'stack_cash':

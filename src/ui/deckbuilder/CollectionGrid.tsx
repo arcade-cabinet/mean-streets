@@ -43,11 +43,11 @@ function cardHint(c: AnyCard): string | undefined {
 }
 
 function cardColor(c: AnyCard): string {
-  if ('power' in c) return 'text-amber-200';
-  if ('bonus' in c) return 'text-red-300';
-  if ('potency' in c) return 'text-purple-300';
-  if ('denomination' in c) return 'text-green-300';
-  return 'text-stone-300';
+  if ('power' in c) return 'collection-card-title-crew';
+  if ('bonus' in c) return 'collection-card-title-weapon';
+  if ('potency' in c) return 'collection-card-title-drug';
+  if ('denomination' in c) return 'collection-card-title-cash';
+  return 'collection-card-title-muted';
 }
 
 function cardType(c: AnyCard): 'crew' | 'weapon' | 'product' | 'cash' {
@@ -69,24 +69,20 @@ export function CollectionGrid({ crewCards, modifiers, selectedIds, onToggle, ac
   });
 
   return (
-    <div className="flex flex-col h-full" data-testid="collection-grid">
-      <div className="flex gap-1 p-2 border-b border-stone-700">
+    <div className="collection-grid" data-testid="collection-grid">
+      <div className="collection-tabs">
         {TABS.map(tab => (
           <button
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
             data-testid={`tab-${tab.id}`}
-            className={`px-3 py-1 text-xs font-bold rounded uppercase tracking-wider transition-colors
-              ${activeTab === tab.id
-                ? 'bg-amber-600 text-stone-900'
-                : 'bg-stone-800 text-stone-400 hover:text-amber-300 hover:bg-stone-700'
-              }`}
+            className={`collection-tab ${activeTab === tab.id ? 'collection-tab-active' : ''}`}
           >
             {tab.label}
           </button>
         ))}
       </div>
-      <div className="flex-1 overflow-y-auto p-2 grid grid-cols-2 gap-1.5 content-start">
+      <div className="collection-grid-cards">
         {visible.map(card => {
           const unlocked = cardUnlocked(card);
           const selected = selectedIds.has(card.id);
@@ -99,19 +95,19 @@ export function CollectionGrid({ crewCards, modifiers, selectedIds, onToggle, ac
               onClick={() => onToggle(card)}
               data-testid={`collection-card-${card.id}`}
               data-card-type={cardType(card)}
-              className={`text-left p-2 rounded border transition-all
-                ${!unlocked
-                  ? 'border-stone-700 bg-stone-900 opacity-40 cursor-not-allowed'
+              className={`collection-card ${
+                !unlocked
+                  ? 'collection-card-locked'
                   : selected
-                    ? 'border-amber-500 bg-amber-900/30 ring-1 ring-amber-500'
-                    : 'border-stone-600 bg-stone-800 hover:border-amber-600 hover:bg-stone-700'
-                }`}
+                    ? 'collection-card-selected'
+                    : 'collection-card-idle'
+              }`}
             >
-              <div className={`text-[11px] font-bold leading-tight truncate ${unlocked ? cardColor(card) : 'text-stone-500'}`}>
-                {!unlocked && <span className="mr-1">🔒</span>}
+              <div className={`collection-card-title ${unlocked ? cardColor(card) : 'collection-card-title-muted'}`}>
+                {!unlocked && <span className="collection-card-lock">LOCK</span>}
                 {cardName(card)}
               </div>
-              <div className="text-[10px] text-stone-500 mt-0.5">{cardStat(card)}</div>
+              <div className="collection-card-stat">{cardStat(card)}</div>
             </button>
           );
         })}

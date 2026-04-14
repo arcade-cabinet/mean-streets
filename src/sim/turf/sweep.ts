@@ -22,6 +22,10 @@ export interface PermutationSummary {
   fundedAttacks: number;
   pushedAttacks: number;
   directAttacks: number;
+  reserveCrewPlacements: number;
+  backpacksEquipped: number;
+  runnerDeployments: number;
+  payloadDeployments: number;
 }
 
 export interface PermutationSweepResult {
@@ -91,6 +95,10 @@ function runPermutation(
     fundedAttacks: average(results, result => result.metrics.fundedAttacks),
     pushedAttacks: average(results, result => result.metrics.pushedAttacks),
     directAttacks: average(results, result => result.metrics.directAttacks),
+    reserveCrewPlacements: average(results, result => result.metrics.reserveCrewPlaced),
+    backpacksEquipped: average(results, result => result.metrics.backpacksEquipped),
+    runnerDeployments: average(results, result => result.metrics.runnerDeployments),
+    payloadDeployments: average(results, result => result.metrics.payloadDeployments),
   };
 }
 

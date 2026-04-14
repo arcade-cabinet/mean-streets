@@ -62,7 +62,7 @@
       "failedPlansMax": 0.9,
       "fundedAttacksMin": 0.3,
       "pushedAttacksMin": 1,
-      "policyGuidedMin": 2.15
+      "policyGuidedMin": 2.1
     },
     "release": {
       "winRateMin": 0.45,

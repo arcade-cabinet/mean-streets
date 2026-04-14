@@ -1,4 +1,5 @@
 import type { ModifierCard } from '../../sim/turf/types';
+import { CardFrame } from './CardFrame';
 
 interface QuarterCardProps {
   card: ModifierCard;
@@ -6,19 +7,15 @@ interface QuarterCardProps {
   compact?: boolean;
 }
 
-const WEAPON_CLASSES = 'bg-slate-700 border border-slate-500 text-slate-100';
-const DRUG_CLASSES   = 'bg-purple-900/80 border border-purple-700 text-purple-100';
-const CASH_CLASSES   = 'bg-amber-900/80 border border-amber-600 text-amber-100';
-
 export function QuarterCard({ card, orientation, compact = false }: QuarterCardProps) {
   if (card.type === 'cash') {
     const label = card.denomination === 1000 ? '$1,000' : '$100';
     return (
       <div
-        className={`${CASH_CLASSES} rounded ${compact ? 'px-1 py-0.5 text-[10px]' : 'px-2 py-1 text-xs'} font-bold`}
-        style={{ filter: 'url(#grime)' }}
+        className={`quarter-card quarter-card-grimed quarter-card-cash ${compact ? 'quarter-card-compact' : 'quarter-card-full'}`}
       >
-        {label}
+        <CardFrame variant="quarter" className="card-frame-svg card-frame-svg-quarter" />
+        <span className="quarter-card-headerline">{label}</span>
       </div>
     );
   }
@@ -33,27 +30,27 @@ export function QuarterCard({ card, orientation, compact = false }: QuarterCardP
     if (compact) {
       return (
         <div
-          className={`${WEAPON_CLASSES} rounded px-1 py-0.5 text-[10px] font-semibold truncate`}
-          style={{ filter: 'url(#grime)' }}
+          className="quarter-card quarter-card-grimed quarter-card-weapon quarter-card-compact"
           title={card.name}
         >
-          {card.name} <span className="font-bold">+{card.bonus}</span>
+          <CardFrame variant="quarter" className="card-frame-svg card-frame-svg-quarter" />
+          <span className="quarter-card-headerline">{card.name} <span className="quarter-card-inline-value">+{card.bonus}</span></span>
         </div>
       );
     }
 
     return (
       <div
-        className={`${WEAPON_CLASSES} rounded px-2 py-1 text-xs space-y-0.5`}
-        style={{ filter: 'url(#grime)' }}
+        className="quarter-card quarter-card-grimed quarter-card-weapon quarter-card-full"
       >
-        <div className="flex justify-between items-center">
-          <span className="font-bold truncate">{card.name}</span>
-          <span className="font-mono font-bold ml-1">+{card.bonus}</span>
+        <CardFrame variant="quarter" className="card-frame-svg card-frame-svg-quarter" />
+        <div className="quarter-card-top">
+          <span className="quarter-card-title">{card.name}</span>
+          <span className="quarter-card-value">+{card.bonus}</span>
         </div>
-        <div className="text-slate-400 uppercase tracking-wide text-[9px]">{card.category}</div>
+        <div className="quarter-card-meta">{card.category}</div>
         {abilityText && (
-          <div className="text-slate-300 text-[9px] leading-tight">{abilityText}</div>
+          <div className="quarter-card-ability">{abilityText}</div>
         )}
       </div>
     );
@@ -69,27 +66,27 @@ export function QuarterCard({ card, orientation, compact = false }: QuarterCardP
   if (compact) {
     return (
       <div
-        className={`${DRUG_CLASSES} rounded px-1 py-0.5 text-[10px] font-semibold truncate`}
-        style={{ filter: 'url(#grime)' }}
+        className="quarter-card quarter-card-grimed quarter-card-drug quarter-card-compact"
         title={card.name}
       >
-        {card.name} <span className="font-bold">{card.potency}</span>
+        <CardFrame variant="quarter" className="card-frame-svg card-frame-svg-quarter" />
+        <span className="quarter-card-headerline">{card.name} <span className="quarter-card-inline-value">{card.potency}</span></span>
       </div>
     );
   }
 
   return (
     <div
-      className={`${DRUG_CLASSES} rounded px-2 py-1 text-xs space-y-0.5`}
-      style={{ filter: 'url(#grime)' }}
+      className="quarter-card quarter-card-grimed quarter-card-drug quarter-card-full"
     >
-      <div className="flex justify-between items-center">
-        <span className="font-bold truncate">{card.name}</span>
-        <span className="font-mono font-bold ml-1">{card.potency}</span>
+      <CardFrame variant="quarter" className="card-frame-svg card-frame-svg-quarter" />
+      <div className="quarter-card-top">
+        <span className="quarter-card-title">{card.name}</span>
+        <span className="quarter-card-value">{card.potency}</span>
       </div>
-      <div className="text-purple-400 uppercase tracking-wide text-[9px]">{card.category}</div>
+      <div className="quarter-card-meta">{card.category}</div>
       {abilityText && (
-        <div className="text-purple-300 text-[9px] leading-tight">{abilityText}</div>
+        <div className="quarter-card-ability">{abilityText}</div>
       )}
     </div>
   );

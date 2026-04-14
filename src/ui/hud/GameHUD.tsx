@@ -1,3 +1,4 @@
+import { Menu } from 'lucide-react';
 import { useGamePhase, useActionBudget, usePlayerBoard, useHand } from '../../ecs/hooks';
 import { seizedCount } from '../../sim/turf/board';
 import { PhaseIndicator } from './PhaseIndicator';
@@ -5,7 +6,11 @@ import { ActionBudget } from './ActionBudget';
 
 const POSITIONS_TOTAL = 5;
 
-export function GameHUD() {
+interface GameHUDProps {
+  onOpenMenu?: () => void;
+}
+
+export function GameHUD({ onOpenMenu }: GameHUDProps) {
   const phase = useGamePhase();
   const budget = useActionBudget();
   const playerPositions = usePlayerBoard('A');
@@ -18,32 +23,40 @@ export function GameHUD() {
   const isPlayerTurn = true; // placeholder — replace with turn-side hook when available
 
   return (
-    <div className="w-full flex items-center gap-4 px-4 py-2 bg-stone-900/90 backdrop-blur border-b border-stone-700 font-mono text-xs">
+    <div className="game-hud">
       <PhaseIndicator phase={phase} turnNumber={0} />
 
       {phase === 'combat' && (
         <ActionBudget remaining={budget.remaining} total={budget.total} />
       )}
 
-      <div className="flex items-center gap-1 text-stone-400">
-        <span className="text-stone-500">DECK</span>
-        <span className="text-amber-200">{playerHand.crew.length}</span>
-        <span className="text-stone-600">/</span>
-        <span className="text-stone-300">{playerHand.modifiers.length}</span>
+      <div className="game-hud-pill">
+        <span className="game-hud-pill-label">Deck</span>
+        <span className="game-hud-pill-value">{playerHand.crew.length}</span>
+        <span className="game-hud-pill-separator">/</span>
+        <span className="game-hud-pill-alt">{playerHand.modifiers.length}</span>
+        <span className="game-hud-pill-separator">/</span>
+        <span className="game-hud-pill-alt">{playerHand.backpacks.length}</span>
       </div>
 
-      <div className="flex items-center gap-1 text-stone-400 ml-auto">
-        <span className="text-amber-200">You:</span>
-        <span className="text-amber-400 font-bold">{playerSeized}/{POSITIONS_TOTAL}</span>
-        <span className="text-stone-600 mx-1">|</span>
-        <span className="text-red-300">Opp:</span>
-        <span className="text-red-400 font-bold">{oppSeized}/{POSITIONS_TOTAL}</span>
-        <span className="text-stone-500 ml-1">seized</span>
+      <div className="game-hud-score">
+        <span className="game-hud-score-label">You</span>
+        <span className="game-hud-score-value">{playerSeized}/{POSITIONS_TOTAL}</span>
+        <span className="game-hud-score-divider" aria-hidden="true" />
+        <span className="game-hud-score-label game-hud-score-label-opp">Opp</span>
+        <span className="game-hud-score-value game-hud-score-value-opp">{oppSeized}/{POSITIONS_TOTAL}</span>
+        <span className="game-hud-score-trailer">seized</span>
       </div>
 
-      <div className={`text-xs font-bold tracking-widest ${isPlayerTurn ? 'text-amber-300' : 'text-stone-500'}`}>
+      <div className={`game-hud-status ${isPlayerTurn ? 'game-hud-status-live' : 'game-hud-status-muted'}`}>
         {isPlayerTurn ? 'YOUR TURN' : 'OPPONENT THINKING...'}
       </div>
+
+      {onOpenMenu && (
+        <button className="game-hud-menu-button" onClick={onOpenMenu} data-testid="game-menu-button" aria-label="Open game menu">
+          <Menu size={18} strokeWidth={2.2} />
+        </button>
+      )}
     </div>
   );
 }

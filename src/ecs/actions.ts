@@ -4,7 +4,7 @@
 
 import type { World, Entity } from 'koota';
 import type { ModifierCard, PlayerState, AttackOutcome } from '../sim/turf/types';
-import { placeCrew, placeModifier, tickPositions } from '../sim/turf/board';
+import { deployRunner, equipBackpack, placeCrew, placeModifier, placeReserveCrew, takePayload, tickPositions } from '../sim/turf/board';
 import { resolveDirectAttack, resolveFundedAttack, resolvePushedAttack } from '../sim/turf/attacks';
 import { GameState, PlayerA, PlayerB, ActionBudget, ScreenTrait } from './traits';
 import type { ScreenName } from './traits';
@@ -19,6 +19,62 @@ export function placeCrewAction(world: World, positionIdx: number): boolean {
   const placed = placeCrew(pA.board, positionIdx, pA.hand.crew[0]);
   if (placed) { pA.hand.crew.splice(0, 1); e!.changed(PlayerA); }
   return placed;
+}
+
+export function placeReserveCrewAction(world: World, reserveIdx: number): boolean {
+  const e = getEntity(world);
+  const pA = e?.get(PlayerA);
+  if (!pA || pA.hand.crew.length === 0) return false;
+  const placed = placeReserveCrew(pA.board, reserveIdx, pA.hand.crew[0]);
+  if (placed) { pA.hand.crew.splice(0, 1); e!.changed(PlayerA); }
+  return placed;
+}
+
+export function equipBackpackAction(world: World, reserveIdx: number, backpackIdx: number): boolean {
+  const e = getEntity(world);
+  const pA = e?.get(PlayerA);
+  const backpack = pA?.hand.backpacks[backpackIdx];
+  if (!pA || !backpack) return false;
+  const reserve = pA.board.reserve[reserveIdx];
+  if (!reserve) return false;
+  const placed = equipBackpack(reserve, backpack, true);
+  if (placed) { pA.hand.backpacks.splice(backpackIdx, 1); e!.changed(PlayerA); }
+  return placed;
+}
+
+export function deployRunnerAction(world: World, reserveIdx: number, activeIdx: number): boolean {
+  const e = getEntity(world);
+  const pA = e?.get(PlayerA);
+  const gs = e?.get(GameState);
+  if (!pA || !gs || gs.phase !== 'buildup') return false;
+  const moved = deployRunner(pA.board, reserveIdx, activeIdx);
+  if (moved) { e!.changed(PlayerA); }
+  return moved;
+}
+
+export function deployPayloadAction(
+  world: World,
+  activeIdx: number,
+  payloadId: string,
+  orientation: 'offense' | 'defense',
+): boolean {
+  const e = getEntity(world);
+  const pA = e?.get(PlayerA);
+  const gs = e?.get(GameState);
+  if (!pA || !gs || gs.phase !== 'buildup') return false;
+  const lane = pA.board.active[activeIdx];
+  if (!lane?.runner || !lane.backpack) return false;
+  const card = takePayload(lane, payloadId);
+  if (!card) return false;
+  const placed = placeModifier(pA.board, activeIdx, card, orientation);
+  if (placed) {
+    e!.changed(PlayerA);
+    return true;
+  }
+  lane.backpack.payload.unshift(card);
+  lane.payloadRemaining = lane.backpack.payload.length;
+  lane.runner = lane.payloadRemaining > 0;
+  return false;
 }
 
 /** Place modifier card from hand[cardIdx] onto position for side A. */
@@ -120,4 +176,5 @@ function consumeAction(e: Entity): void {
 function drawCard(p: PlayerState): void {
   if (p.crewDraw.length > 0 && p.hand.crew.length < 5) p.hand.crew.push(p.crewDraw.pop()!);
   if (p.modifierDraw.length > 0 && p.hand.modifiers.length < 7) p.hand.modifiers.push(p.modifierDraw.pop()!);
+  if (p.backpackDraw.length > 0 && p.hand.backpacks.length < 4) p.hand.backpacks.push(p.backpackDraw.pop()!);
 }
