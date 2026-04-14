@@ -351,7 +351,11 @@ select {
 }
 
 .deck-garage-screen {
-  min-height: 100%;
+  /* Use viewport height so the 1fr rail track actually expands to
+     fill remaining space. min-height: 100% collapses because the
+     parent chain uses min-height, not definite height. */
+  min-height: 100vh;
+  min-height: 100svh;
   display: grid;
   grid-template-rows: auto 1fr;
   gap: 1rem;
@@ -397,12 +401,21 @@ select {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1rem;
-  align-content: start;
+  /* Center the deck-box row vertically when it has extra space
+     (tablet-landscape + desktop-wide). Phone-portrait stacks cards
+     vertically so `start` is still fine there — the mobile media
+     query below restores it. */
+  align-content: center;
   padding: 0.85rem;
   background: var(--bg-panel);
   border: 1px solid var(--border-muted);
   border-radius: var(--radius-panel);
   box-shadow: var(--shadow-heavy);
+}
+
+[data-layout='phone-portrait'] .deck-garage-rail,
+[data-layout='folded'] .deck-garage-rail {
+  align-content: start;
 }
 
 .deck-box-card {
