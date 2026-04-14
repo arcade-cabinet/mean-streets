@@ -1,0 +1,135 @@
+name: Mobile Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Git ref to build (branch or tag)'
+        default: 'main'
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    env:
+      # Only used in the artifact name (static interpolation), never piped to a shell.
+      TARGET_REF: ${{ github.event.inputs.ref || github.ref_name }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+          lfs: true
+
+      - uses: actions/setup-java@67aec007b1fd4956b80e13d10fce3b718e3db6ab # v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 10.33.0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build web assets
+        run: pnpm run build
+
+      - name: Sync Capacitor
+        run: pnpm exec cap sync android
+
+      - name: Decode signing keystore
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          echo "${ANDROID_KEYSTORE_BASE64}" | base64 --decode > android/release.keystore
+
+      - name: Build Android AAB
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        working-directory: android
+        run: |
+          if [[ -f release.keystore ]]; then
+            ./gradlew bundleRelease \
+              -Pandroid.injected.signing.store.file="$PWD/release.keystore" \
+              -Pandroid.injected.signing.store.password="${ANDROID_KEYSTORE_PASSWORD}" \
+              -Pandroid.injected.signing.key.alias="${ANDROID_KEY_ALIAS}" \
+              -Pandroid.injected.signing.key.password="${ANDROID_KEY_PASSWORD}"
+          else
+            echo "No signing keystore — building debug AAB"
+            ./gradlew bundleDebug
+          fi
+
+      - name: Upload AAB
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: mean-streets-android-${{ env.TARGET_REF }}
+          path: android/app/build/outputs/bundle/*/app-*.aab
+          if-no-files-found: error
+
+  ios:
+    runs-on: macos-14
+    env:
+      TARGET_REF: ${{ github.event.inputs.ref || github.ref_name }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+          lfs: true
+
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 10.33.0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build web assets
+        run: pnpm run build
+
+      - name: Sync Capacitor
+        run: pnpm exec cap sync ios
+
+      - name: Install CocoaPods dependencies
+        working-directory: ios/App
+        run: pod install --repo-update
+
+      - name: Build iOS archive (unsigned)
+        working-directory: ios/App
+        run: |
+          xcodebuild -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath ./build/App.xcarchive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            archive
+
+      - name: Upload iOS archive
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: mean-streets-ios-${{ env.TARGET_REF }}
+          path: ios/App/build/App.xcarchive
+          if-no-files-found: error
