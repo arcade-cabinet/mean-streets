@@ -101,12 +101,29 @@ function attackerBonusDamage(
     amount += diff;
     notes.push(`BLOOD_FRENZY ${diff}`);
   }
-  if (
-    attacker.crew?.archetype === 'enforcer' &&
-    context?.targetIsAtWar === true
-  ) {
-    // VENDETTA: double final damage against a rival affiliation.
-    // Applied as a multiplier hook in the caller — we mark intent here.
+  if (attacker.crew?.archetype === 'sniper') {
+    // CALLED_SHOT: sniper always lands at least +1 damage — represents
+    // the archetype's precision accuracy even without a ranged weapon.
+    amount += 1;
+    notes.push('CALLED_SHOT 1');
+  }
+  if (attacker.crew?.archetype === 'arsonist') {
+    // SCORCHED_EARTH: arsonist attacks deal +1 collateral damage.
+    amount += 1;
+    notes.push('SCORCHED_EARTH 1');
+  }
+  return { amount, notes };
+}
+
+function attackerIgnoreDefense(attacker: Position): { amount: number; notes: string[] } {
+  const notes: string[] = [];
+  let amount = 0;
+  if (attacker.crew?.archetype === 'ghost') {
+    // PHANTOM_STRIKE: ghost bypasses 2 points of the defender's defense
+    // threshold. The full "attack from reserve" mechanic would need an
+    // engine action refactor; this is the combat-resolution half.
+    amount += 2;
+    notes.push('PHANTOM_STRIKE -2 def');
   }
   return { amount, notes };
 }
@@ -139,8 +156,11 @@ export function resolveDirectAttack(
   }
 
   const atk = positionPower(attacker);
-  const def = positionDefense(defender) + defensiveThresholdBonus(defender);
+  let def = positionDefense(defender) + defensiveThresholdBonus(defender);
   const notes: string[] = [];
+  const phantom = attackerIgnoreDefense(attacker);
+  def = Math.max(0, def - phantom.amount);
+  if (phantom.notes.length > 0) notes.push(...phantom.notes);
 
   if (atk >= def) {
     if (defenderSurvivesKill(defender)) {

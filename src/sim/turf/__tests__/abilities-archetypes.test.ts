@@ -130,4 +130,51 @@ describe('archetype abilities', () => {
     const outcome = resolveDirectAttack(attacker, defender);
     expect(outcome.type).toBe('kill');
   });
+
+  it('CALLED_SHOT: sniper lands at least +1 damage on every hit', () => {
+    const attacker = position(
+      'A',
+      makeCrew({ displayName: 'Scope', archetype: 'sniper', power: 4 }),
+    );
+    attacker.weaponTop = makeWeapon('blunt', 0);
+    const defender = position('B', makeCrew({ displayName: 'Target', resistance: 10 }));
+
+    const outcome = resolveDirectAttack(attacker, defender);
+    expect(outcome.description).toContain('CALLED_SHOT 1');
+  });
+
+  it('SCORCHED_EARTH: arsonist gets +1 collateral damage', () => {
+    const attacker = position(
+      'A',
+      makeCrew({ displayName: 'Pyre', archetype: 'arsonist', power: 4 }),
+    );
+    attacker.weaponTop = makeWeapon('blunt', 0);
+    const defender = position('B', makeCrew({ displayName: 'Wall', resistance: 10 }));
+
+    const outcome = resolveDirectAttack(attacker, defender);
+    expect(outcome.description).toContain('SCORCHED_EARTH 1');
+  });
+
+  it('PHANTOM_STRIKE: ghost attack bypasses 2 points of defense', () => {
+    const armedAttacker = position(
+      'A',
+      makeCrew({ displayName: 'Blade', archetype: 'bruiser', power: 5 }),
+    );
+    armedAttacker.weaponTop = makeWeapon('blunt', 2);
+    const defender1 = position('B', makeCrew({ displayName: 'Brick', resistance: 7 }));
+    // atk = 5 + 2 = 7, def = 7 → kill
+    const bruiserOutcome = resolveDirectAttack(armedAttacker, defender1);
+    expect(bruiserOutcome.type).toBe('kill');
+
+    const ghostAttacker = position(
+      'A',
+      makeCrew({ displayName: 'Spook', archetype: 'ghost', power: 3 }),
+    );
+    ghostAttacker.weaponTop = makeWeapon('blunt', 2);
+    const defender2 = position('B', makeCrew({ displayName: 'Brick', resistance: 7 }));
+    // atk = 3 + 2 = 5, def = 7 → 5 + phantom -2 def, so def becomes 5, kill triggers
+    const ghostOutcome = resolveDirectAttack(ghostAttacker, defender2);
+    expect(ghostOutcome.description).toContain('PHANTOM_STRIKE');
+    expect(ghostOutcome.type).toBe('kill');
+  });
 });
