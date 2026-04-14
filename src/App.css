@@ -2803,6 +2803,43 @@ select {
   user-select: none;
 }
 
+/* Runner badge: visible overlay on a tough carrying a backpack
+   (RULES.md §7). Sits in the upper-right corner; payload count is
+   the number of remaining items in the backpack. */
+.crew-card-shell-runner {
+  outline: 1px solid rgba(228, 169, 69, 0.55);
+  outline-offset: -1px;
+}
+
+.crew-card-runner-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 6px;
+  border-radius: var(--radius-chip);
+  background: linear-gradient(135deg, rgba(228, 169, 69, 0.92), rgba(146, 100, 39, 0.86));
+  color: #1a0d05;
+  font-family: var(--font-display);
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+}
+
+.crew-card-runner-badge-icon {
+  font-size: 13px;
+}
+
+.crew-card-runner-badge-count {
+  font-weight: 700;
+}
+
 .crew-card-shell-compact {
   display: grid;
   grid-template-rows: auto auto 1fr auto;
