@@ -15,7 +15,7 @@
     "common"
   ],
   "abilities": [
-    "On play: swap 1 card from your hand with 1 from your reserves"
+    "On play: swap 1 card from your hand with 1 from your stack"
   ],
   "unlocked": true,
   "locked": false,

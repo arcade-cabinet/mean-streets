@@ -15,7 +15,7 @@
     "common"
   ],
   "abilities": [
-    "Deals +2 damage when attacking a target with lower ATK than this card"
+    "Deals +2 damage when attacking a target with lower power than this card"
   ],
   "unlocked": true,
   "locked": false,

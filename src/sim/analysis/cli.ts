@@ -333,10 +333,22 @@ function writeProgressArtifact(
   });
 }
 
+export function parseCommand(argv: string[]): string {
+  // The verb is always the leading positional token:
+  //     cli.ts <verb> --flag value --flag value ...
+  // Flags-only invocations (`cli.ts --profile release`) previously mis-parsed
+  // `release` as the verb because the old code stripped all `--*` tokens and
+  // picked the first remaining arg — which happened to be a flag value.
+  // Fix: if argv[0] is missing or itself a flag, default to 'benchmark'.
+  const first = argv[0];
+  if (first === undefined || first.startsWith('--')) {
+    return 'benchmark';
+  }
+  return first;
+}
+
 async function main(): Promise<void> {
-  const [command = 'benchmark'] = process.argv
-    .slice(2)
-    .filter(arg => !arg.startsWith('--'));
+  const command = parseCommand(process.argv.slice(2));
 
   if (command === 'benchmark') {
     const profile = (getArg('--profile') ?? 'ci') as 'smoke' | 'ci' | 'release';
@@ -517,7 +529,16 @@ async function main(): Promise<void> {
   throw new Error(`Unknown analysis command: ${command}`);
 }
 
-main().catch(error => {
-  console.error(error);
-  process.exit(1);
-});
+function isDirectInvocation(): boolean {
+  // Only execute main() when this file is the entry point, not when imported
+  // by tests. Works for both `tsx src/sim/analysis/cli.ts` and node ESM.
+  const entry = process.argv[1] ?? '';
+  return entry.includes('cli.ts') || entry.includes('cli.js');
+}
+
+if (isDirectInvocation()) {
+  main().catch(error => {
+    console.error(error);
+    process.exit(1);
+  });
+}

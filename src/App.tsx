@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import './App.css';
 import { GameState } from './ecs/traits';
 import { createGameWorld } from './ecs/world';
+import { randomSeed } from './sim/cards/rng';
 import { processGameEnd } from './platform/achievements/achievements';
 import { openRewardPacks } from './platform/persistence/collection';
 import { loadCompiledToughs } from './sim/cards/catalog';
@@ -40,7 +41,9 @@ type Screen =
 type Modal = 'rules-onboarding' | 'game-menu' | null;
 interface ActiveRunState {
   phase: 'combat';
-  deck: Parameters<typeof createGameWorld>[2];
+  config: GameConfig;
+  seed: number;
+  deck?: Parameters<typeof createGameWorld>[2];
 }
 
 const EMPTY_METRICS: TurfMetrics = emptyMetrics();
@@ -113,21 +116,23 @@ export default function App() {
       }
 
       const resumedWorld = createGameWorld(
-        undefined,
-        undefined,
+        activeRun.config,
+        activeRun.seed,
         activeRun.deck,
       );
       setWorld(resumedWorld);
+      setActiveConfig(activeRun.config);
       setScreen(activeRun.phase);
     })();
   }
 
   function handleSelectDifficulty(config: GameConfig) {
-    const newWorld = createGameWorld(config);
+    const seed = randomSeed();
+    const newWorld = createGameWorld(config, seed);
     setWorld(newWorld);
     setActiveConfig(config);
     setHasActiveRun(true);
-    void saveActiveRun<ActiveRunState>({ phase: 'combat', deck: undefined });
+    void saveActiveRun<ActiveRunState>({ phase: 'combat', config, seed });
     setScreen('combat');
   }
 

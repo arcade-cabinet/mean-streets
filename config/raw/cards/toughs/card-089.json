@@ -15,7 +15,7 @@
     "common"
   ],
   "abilities": [
-    "On play: swap 1 card from your hand with 1 from your reserves"
+    "On play: swap 1 card from your hand with 1 from your stack"
   ],
   "unlocked": false,
   "unlockCondition": "Deal 38 total damage in a single game",

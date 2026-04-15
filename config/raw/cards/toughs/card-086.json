@@ -15,7 +15,7 @@
     "common"
   ],
   "abilities": [
-    "On play: opponent must reveal 1 random card from their hand for the rest of the round"
+    "On play: opponent must reveal their highest-power card in hand for the rest of the round"
   ],
   "unlocked": false,
   "unlockCondition": "Trigger 7 overdraw penalties on opponents",

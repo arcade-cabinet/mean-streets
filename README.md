@@ -17,7 +17,7 @@ A gritty tactical turf-war card game built for mobile-first release. You run a s
 
 ## How It Works
 
-Two players each bring a **50-card deck**: 25 toughs and 25 modifiers (weapons, drugs, currency) shuffled together. Win by seizing all of your opponent's turfs.
+Each player has a single unified deck built from every card they've unlocked. New players start with a 35-card starter (4×5 tough packs + 1 each weapon, drug, and currency pack); subsequent wins and pack openings grow the collection. Win by seizing all of your opponent's turfs.
 
 - **Toughs**: named fighters with Power and Resistance, gang affiliation, and archetype identity
 - **Weapons**: bladed, blunt, explosive, ranged, or stealth — add power and resistance to turfs
@@ -49,8 +49,8 @@ pnpm install
 pnpm run dev          # Vite dev server
 pnpm run build        # Production build (tsc + vite)
 pnpm run lint         # Biome
-pnpm run test         # Node + DOM unit tests (281 tests)
-pnpm run test:browser # Real Chromium tests (20 tests)
+pnpm run test         # Node + DOM unit tests (379 tests)
+pnpm run test:browser # Real Chromium tests (27 tests)
 pnpm run test:e2e     # Playwright across 4 device profiles (111 tests)
 pnpm run analysis:benchmark   # Balance benchmark
 pnpm run analysis:lock:persist # Lock state persistence

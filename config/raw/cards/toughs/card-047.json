@@ -15,7 +15,7 @@
     "common"
   ],
   "abilities": [
-    "+1 damage for every point of damage already on the enemy vanguard"
+    "+1 damage for every point of damage already on the enemy top tough"
   ],
   "unlocked": false,
   "unlockCondition": "Win without using any reserves",

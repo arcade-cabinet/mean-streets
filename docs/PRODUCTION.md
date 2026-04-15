@@ -88,7 +88,7 @@ other than `Ready`, the release is blocked.
 | GameScreen (action menu + strike interaction)| Ready  |
 | Responsive layouts (4 device profiles)| Ready          |
 | Gritty noir SVG filter system         | Ready          |
-| Accessibility (tap-only + landmark)   | Ready          |
+| Accessibility (tap input + keyboard navigation + landmarks)| Ready |
 | Visual polish (designer pass)         | Pending        |
 
 ### Platform / Mobile
@@ -108,10 +108,10 @@ other than `Ready`, the release is blocked.
 
 | System                                | Status         |
 |---------------------------------------|----------------|
-| Node tests (sim engine, pure logic)   | Ready (182 tests, 15 files) |
-| DOM tests (jsdom, presentational)     | Ready (99 tests, 8 files) |
-| Browser tests (real Chromium)         | Ready (20 tests, 4 files) |
-| E2E tests (Playwright, 4 profiles)   | Ready (111 passed across 9 specs) |
+| Node tests (sim engine, pure logic)   | Ready (280 tests) |
+| DOM tests (jsdom, presentational)     | Ready (99 tests)  |
+| Browser tests (real Chromium)         | Ready (27 tests)  |
+| E2E tests (Playwright, 4 profiles)   | Ready (111 tests across 9 specs) |
 | Release gate (lock coverage >= 70%)   | Ready          |
 
 ### CI / Release Governance
@@ -132,8 +132,8 @@ other than `Ready`, the release is blocked.
 These are all required for a store-ready launch:
 
 - [x] `pnpm run build` green
-- [x] `pnpm run test` (node + DOM) green — 281 tests
-- [x] `pnpm run test:browser` green — 20 tests
+- [x] `pnpm run test` (node + DOM) green — 379 tests (280 node + 99 DOM)
+- [x] `pnpm run test:browser` green — 27 tests
 - [x] `pnpm run test:e2e` green — 111 tests across 4 device profiles
 - [x] `pnpm run test:release` green (70% lock coverage floor)
 - [ ] 100% of the balance catalog in `locked` state (weekly cron drives this)

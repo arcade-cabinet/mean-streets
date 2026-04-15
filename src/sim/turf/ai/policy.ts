@@ -120,10 +120,32 @@ type DifficultyProfile = {
 };
 
 function getProfile(difficulty: DifficultyTier): DifficultyProfile {
-  const profiles = TURF_SIM_CONFIG.difficultyProfiles;
-  return profiles[difficulty] as DifficultyProfile;
+  const profiles = TURF_SIM_CONFIG.difficultyProfiles as Record<
+    string,
+    DifficultyProfile | undefined
+  >;
+  const profile = profiles[difficulty];
+  if (!profile) {
+    throw new Error(
+      `Missing difficulty profile for tier "${difficulty}" in turf-sim.json. ` +
+        `Known tiers: ${Object.keys(profiles).join(', ') || '<none>'}`,
+    );
+  }
+  return profile;
 }
 
+/**
+ * Select an action from a scored list, applying the difficulty profile's
+ * top-K truncation and noise.
+ *
+ * Randomness note (RULES.md §13): AI noise is seeded and deterministic given
+ * the same rng instance. Callers currently pass the match rng, which entangles
+ * draw order and AI noise under a single seed. The v0.2 spec allows this —
+ * reproducibility is preserved because the rng is seeded — but a future
+ * refactor may introduce a sub-rng dedicated to AI noise. This function is
+ * intentionally conservative: it consumes `rng.next()` exactly `candidates.length`
+ * times when noise > 0, preserving the existing replay semantics.
+ */
 export function selectAction(
   scored: ScoredAction[],
   difficulty: DifficultyTier,
@@ -134,7 +156,13 @@ export function selectAction(
 
   const profile = getProfile(difficulty);
   const sorted = [...scored].sort((a, b) => b.score - a.score);
-  const candidates = sorted.slice(0, Math.min(profile.topK, sorted.length));
+  const topK = Math.min(profile.topK, sorted.length);
+  const candidates = topK > 0 ? sorted.slice(0, topK) : [];
+
+  // Defensive fallback: if topK is non-positive or slicing produced no
+  // candidates for any reason, fall back to the top-scoring sorted entry.
+  // `sorted[0]` is guaranteed to exist because we validated scored.length > 0.
+  if (candidates.length === 0) return sorted[0];
 
   if (profile.noise === 0) return candidates[0];
 

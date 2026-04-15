@@ -15,7 +15,7 @@
     "common"
   ],
   "abilities": [
-    "On play: change one card in your active stack's affiliation to match this card's for the round"
+    "On play: change one card in your stack's affiliation to match this card's for the round"
   ],
   "unlocked": false,
   "unlockCondition": "Win 3 games",

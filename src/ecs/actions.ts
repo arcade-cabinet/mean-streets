@@ -1,6 +1,6 @@
 import type { World, Entity } from 'koota';
 import type { TurfAction, TurfGameState } from '../sim/turf/types';
-import { stepAction, actionsForTurn, drawPhase } from '../sim/turf/environment';
+import { stepAction, advanceTurn } from '../sim/turf/environment';
 import { GameState, PlayerA, PlayerB, ActionBudget, ScreenTrait } from './traits';
 import type { ScreenName } from './traits';
 
@@ -84,19 +84,15 @@ export function endTurnAction(world: World): void {
   const gs = e?.get(GameState);
   if (!e || !gs) return;
 
+  // Delegate all sim mutations to the environment. `stepAction` zeroes
+  // the outgoing side's remaining actions; `advanceTurn` swaps sides,
+  // bumps turnNumber, draws for the new side, and resets the incoming
+  // side's action budget via `actionsForTurn`.
   const action: TurfAction = { kind: 'end_turn', side: gs.turnSide };
   stepAction(gs, action);
+  advanceTurn(gs);
 
-  const prevSide = gs.turnSide;
-  gs.turnSide = prevSide === 'A' ? 'B' : 'A';
-  gs.turnNumber++;
-  gs.metrics.turns++;
-
-  drawPhase(gs, gs.turnSide);
-
-  const newBudget = actionsForTurn(gs.config, gs.turnNumber, gs.turnSide);
-  gs.players[gs.turnSide].actionsRemaining = newBudget;
-
+  const newBudget = gs.players[gs.turnSide].actionsRemaining;
   e.set(ActionBudget, {
     remaining: newBudget,
     total: newBudget,

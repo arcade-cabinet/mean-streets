@@ -15,7 +15,7 @@
     "common"
   ],
   "abilities": [
-    "On play: swap your vanguard with any card in your active hand (vanguard goes to hand at current HP)"
+    "On play: swap your top tough with any card in your hand"
   ],
   "unlocked": false,
   "unlockCondition": "Win a game in under 10 turns",

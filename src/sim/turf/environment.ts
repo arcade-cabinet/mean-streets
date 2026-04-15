@@ -139,6 +139,36 @@ export function tickRound(state: TurfGameState): void {
   drawPhase(state, 'B');
 }
 
+// ── Turn transition ────────────────────────────────────────
+
+/**
+ * Advance the game to the next side's turn. Atomically:
+ *   1. Switches turnSide to the opponent of the current side.
+ *   2. Increments turnNumber and turn metrics.
+ *   3. Draws a card for the incoming side.
+ *   4. Resets the incoming side's actionsRemaining via actionsForTurn.
+ *
+ * This is the single source of truth for turn transitions. Callers that
+ * drive the sim outside of `runTurn` (e.g. the ECS bridge) should invoke
+ * this after `stepAction(state, { kind: 'end_turn', ... })` rather than
+ * mutating turn fields directly.
+ */
+export function advanceTurn(state: TurfGameState): void {
+  const prevSide = state.turnSide;
+  const nextSide = prevSide === 'A' ? 'B' : 'A';
+  state.turnSide = nextSide;
+  state.turnNumber++;
+  state.metrics.turns++;
+
+  drawPhase(state, nextSide);
+
+  state.players[nextSide].actionsRemaining = actionsForTurn(
+    state.config,
+    state.turnNumber,
+    nextSide,
+  );
+}
+
 // ── Step action ────────────────────────────────────────────
 
 function resolveStrike(

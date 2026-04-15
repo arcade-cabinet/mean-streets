@@ -15,7 +15,7 @@
     "common"
   ],
   "abilities": [
-    "On attack: also deals 1 damage to the card behind the vanguard (next in line)"
+    "On attack: also deals 1 damage to the card behind your top tough (next in line)"
   ],
   "unlocked": false,
   "unlockCondition": "Deal 39 total damage in a single game",

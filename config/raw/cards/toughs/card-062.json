@@ -15,7 +15,7 @@
     "common"
   ],
   "abilities": [
-    "On play: opponent must reveal 1 random card from their hand for the rest of the round"
+    "On play: opponent must reveal the rightmost card in their hand for the rest of the round"
   ],
   "unlocked": false,
   "unlockCondition": "Win 1 games with a full Freelance deck",

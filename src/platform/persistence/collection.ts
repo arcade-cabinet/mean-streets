@@ -57,14 +57,24 @@ export async function openRewardPacks(
   rewards: PackReward[],
   suddenDeathWin: boolean,
 ): Promise<Card[]> {
-  const collection = await loadCollection();
+  const baseCollection = await loadCollection();
   const rng = createRng(randomSeed());
   const newCards: Card[] = [];
+  // Running view of unlocked cards so each pack in the batch reflects
+  // unlocks from prior packs in the same call (avoids stale-snapshot dupes).
+  const runningCollection: Card[] = [...baseCollection];
+  const seenIds = new Set(runningCollection.map(c => c.id));
 
   for (const reward of rewards) {
     for (let i = 0; i < reward.count; i++) {
-      const packCards = generatePack(reward.kind, collection, rng, { suddenDeathWin });
+      const packCards = generatePack(reward.kind, runningCollection, rng, { suddenDeathWin });
       newCards.push(...packCards);
+      for (const card of packCards) {
+        if (!seenIds.has(card.id)) {
+          seenIds.add(card.id);
+          runningCollection.push(card);
+        }
+      }
     }
   }
 

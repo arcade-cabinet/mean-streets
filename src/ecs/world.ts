@@ -45,9 +45,17 @@ function initPlayerState(
   config: GameConfig,
   deck: Card[],
   rng: ReturnType<typeof createRng>,
+  side: 'A' | 'B',
+  firstPlayer: 'A' | 'B',
 ): PlayerState {
   const shuffled = rng.shuffle(deck.map((c) => ({ ...c })));
   const turfs = Array.from({ length: config.turfCount }, () => createTurf());
+
+  // Only the starting side (A per rules) gets an action budget on the
+  // opening frame. B's budget is assigned on turn transition via
+  // `actionsForTurn` when `advanceTurn` fires, matching `game.ts:runTurn`.
+  const isStarter = side === firstPlayer;
+  const initialActions = isStarter ? actionsForTurn(config, 1, side) : 0;
 
   return {
     turfs,
@@ -55,7 +63,7 @@ function initPlayerState(
     deck: shuffled.slice(TURF_SIM_CONFIG.starterCollection.openingHandSize),
     discard: [],
     toughsInPlay: 0,
-    actionsRemaining: config.firstTurnActions,
+    actionsRemaining: initialActions,
   };
 }
 
@@ -73,19 +81,23 @@ export function createGameWorld(
   const defaultDeck = buildDeck(crewPool, rng);
   const playerADeck = playerDeck ?? defaultDeck;
   const playerBDeck = buildDeck(crewPool, rng);
-  const playerA = initPlayerState(config, playerADeck, rng);
-  const playerB = initPlayerState(config, playerBDeck, rng);
+  const firstPlayer: 'A' | 'B' = 'A';
+  const playerA = initPlayerState(config, playerADeck, rng, 'A', firstPlayer);
+  const playerB = initPlayerState(config, playerBDeck, rng, 'B', firstPlayer);
 
   const world = createWorld();
 
-  const initialBudget = actionsForTurn(config, 0, 'A');
+  // Turn numbering is 1-based; turn 1 belongs to `firstPlayer` and
+  // receives `firstTurnActions` via `actionsForTurn` (see environment.ts).
+  const initialTurn = 1;
+  const initialBudget = actionsForTurn(config, initialTurn, firstPlayer);
 
   const initialGameState = {
     config,
     players: { A: playerA, B: playerB },
-    turnSide: 'A' as const,
-    firstPlayer: 'A' as const,
-    turnNumber: 0,
+    turnSide: firstPlayer,
+    firstPlayer,
+    turnNumber: initialTurn,
     phase: 'combat' as const,
     hasStruck: { A: false, B: false },
     aiState: { A: 'BUILDING', B: 'BUILDING' },
@@ -107,7 +119,7 @@ export function createGameWorld(
     ActionBudget({
       remaining: initialBudget,
       total: initialBudget,
-      turnNumber: 0,
+      turnNumber: initialTurn,
     }),
     ScreenTrait({ current: 'menu' }),
   );
