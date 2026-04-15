@@ -5,7 +5,10 @@
   "archetype": "hustler",
   "affiliation": "southside_saints",
   "power": [
-    2
+    2,
+    3,
+    4,
+    5
   ],
   "resistance": [
     5
@@ -14,5 +17,6 @@
   "unlocked": true,
   "unlockCondition": null,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "tagline": "Turns nothing into something, twice."
 }

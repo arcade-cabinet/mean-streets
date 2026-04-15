@@ -1,12 +1,14 @@
 import { createRng, type Rng } from '../cards/rng';
 import type { BackpackCard, DeckTemplate, ModifierCard } from './types';
 import type { TurfCardPools } from './catalog';
+import { TURF_SIM_CONFIG } from './ai/config';
 
-const MIN_WEAPONS = 3;
-const MIN_DRUGS = 3;
-const TOTAL_MODIFIERS = 25;
-const TOTAL_CREW = 25;
-const TOTAL_BACKPACKS = 12;
+const DECK_BUILDER_CONFIG = TURF_SIM_CONFIG.deckBuilder;
+const MIN_WEAPONS = DECK_BUILDER_CONFIG.minWeapons;
+const MIN_DRUGS = DECK_BUILDER_CONFIG.minDrugs;
+const TOTAL_MODIFIERS = DECK_BUILDER_CONFIG.totalModifiers;
+const TOTAL_CREW = DECK_BUILDER_CONFIG.totalCrew;
+const TOTAL_BACKPACKS = DECK_BUILDER_CONFIG.totalBackpacks;
 
 export interface AutoDeckPolicy {
   aggressionBias?: number;

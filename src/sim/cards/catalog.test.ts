@@ -6,18 +6,23 @@ describe('loadAuthoredCrewCards', () => {
     const cards = loadAuthoredCrewCards();
 
     expect(cards).toHaveLength(100);
+    // Identity-only checks: stats live in tuning history and may shift
+    // between autobalance runs, so we don't pin the numeric values here.
     expect(cards[0]).toMatchObject({
       id: 'card-001',
       displayName: 'Ana "Thorn" Reyes',
       archetype: 'bruiser',
       affiliation: 'kings_row',
-      power: 5,
-      resistance: 2,
       abilityText:
         'Deals +2 damage when attacking a target with lower ATK than this card',
       unlocked: true,
       locked: false,
     });
+    // Stats stay positive integers within the schema range.
+    expect(cards[0]?.power).toBeGreaterThanOrEqual(1);
+    expect(cards[0]?.power).toBeLessThanOrEqual(12);
+    expect(cards[0]?.resistance).toBeGreaterThanOrEqual(1);
+    expect(cards[0]?.resistance).toBeLessThanOrEqual(12);
     expect(cards[2]).toMatchObject({
       id: 'card-003',
       displayName: 'Zhao "Lookout" Sullivan',

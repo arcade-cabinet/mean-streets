@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import type { ProductCard, TurfGameResult, WeaponCard, CrewCard } from './types';
 import type { TurfCardPools } from './catalog';
+import { TURF_SIM_CONFIG } from './ai/config';
 
 type BalanceCard = CrewCard | WeaponCard | ProductCard;
 type BalanceCardType = BalanceCard['type'];
@@ -102,11 +103,14 @@ interface PairStat {
   wins: number;
 }
 
-const LOCK_DELTA_THRESHOLD = 0.02;
-const RECOMMENDATION_DELTA_THRESHOLD = 0.035;
-const MIN_CARD_SAMPLE = 30;
-const MIN_PAIR_SAMPLE = 20;
+const BALANCE_CONFIG = TURF_SIM_CONFIG.balance;
+const LOCK_DELTA_THRESHOLD = BALANCE_CONFIG.lockDeltaThreshold;
+const RECOMMENDATION_DELTA_THRESHOLD = BALANCE_CONFIG.recommendationDeltaThreshold;
+const MIN_CARD_SAMPLE = BALANCE_CONFIG.minCardSample;
+const MIN_PAIR_SAMPLE = BALANCE_CONFIG.minPairSample;
 const HISTORY_VERSION = 1;
+const CONSECUTIVE_STABLE_RUNS_TO_LOCK = BALANCE_CONFIG.consecutiveStableRunsToLock;
+const USAGE_Z_SCORE_STABILITY_MAX = BALANCE_CONFIG.usageZScoreStabilityMax;
 
 function stdDev(values: number[], mean: number): number {
   if (values.length < 2) return 0;
@@ -318,7 +322,7 @@ export function analyzeBalanceResults(
   for (const perf of rawPerformances) {
     const current = catalog.get(perf.id)!;
     const enoughSample = perf.includedCount >= MIN_CARD_SAMPLE;
-    const hasUsageStability = Math.abs(perf.usageZScore) <= 1;
+    const hasUsageStability = Math.abs(perf.usageZScore) <= USAGE_Z_SCORE_STABILITY_MAX;
     const needsAdjustment = enoughSample && Math.abs(perf.winRateDelta) >= RECOMMENDATION_DELTA_THRESHOLD;
     const stableThisRun = enoughSample
       && !needsAdjustment
@@ -359,7 +363,7 @@ export function analyzeBalanceResults(
     const consecutiveStableRuns = perf.stableThisRun && noRecommendation
       ? previous.consecutiveStableRuns + 1
       : 0;
-    const locked = previous.locked || consecutiveStableRuns >= 3;
+    const locked = previous.locked || consecutiveStableRuns >= CONSECUTIVE_STABLE_RUNS_TO_LOCK;
 
     perf.locked = locked;
     nextHistory.cards[perf.id] = {

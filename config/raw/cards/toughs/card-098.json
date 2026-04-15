@@ -14,5 +14,6 @@
   "unlocked": false,
   "unlockCondition": "Win with a deck containing 3+ affiliations",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "tagline": "Your secrets pay the rent."
 }

@@ -48,13 +48,23 @@ export function MainMenuScreen({
 }: MainMenuScreenProps) {
   const { layout } = useAppShell();
   const heroImage = `${import.meta.env.BASE_URL}assets/hero.png`;
+  const logoImage = `${import.meta.env.BASE_URL}assets/logo.png`;
 
   return (
-    <div className="menu-shell" data-testid="main-menu-screen" data-menu-variant={layout.menuVariant}>
-      <div className="menu-backdrop" style={{ backgroundImage: `url(${heroImage})` }} />
-      <div className="menu-grain" />
+    <main className="menu-shell" data-testid="main-menu-screen" data-menu-variant={layout.menuVariant} aria-label="Main Menu">
+      <div className="menu-backdrop" style={{ backgroundImage: `url(${heroImage})` }} aria-hidden="true" />
+      <div className="menu-grain" aria-hidden="true" />
 
-      <section className={`menu-content menu-content-${layout.menuVariant}`}>
+      <h1 className="menu-title-a11y">Mean Streets: Precision Starvation</h1>
+
+      <img
+        src={logoImage}
+        alt="Mean Streets: Precision Starvation"
+        className={`menu-logo menu-logo-${layout.menuVariant}`}
+        data-testid="menu-logo"
+      />
+
+      <section className={`menu-content menu-content-${layout.menuVariant}`} aria-label="Menu Actions">
         <div className="menu-topbar">
           <div className={`menu-actions menu-actions-${layout.menuVariant}`}>
             <MenuButton
@@ -76,6 +86,6 @@ export function MainMenuScreen({
           </div>
         </div>
       </section>
-    </div>
+    </main>
   );
 }

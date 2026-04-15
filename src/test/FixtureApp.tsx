@@ -306,7 +306,10 @@ export function FixtureApp({ fixture }: FixtureAppProps) {
   return (
     <>
       <GrittyFilters />
-      <div data-testid="fixture-root">
+      <div
+        data-testid="fixture-root"
+        style={{ minHeight: '100vh', width: '100%', position: 'relative' }}
+      >
         {renderFixture(fixture as FixtureName)}
       </div>
     </>

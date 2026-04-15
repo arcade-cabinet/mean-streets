@@ -4,7 +4,12 @@
   "name": "Dead Drop",
   "category": "narcotic",
   "potency": [
-    1
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
   ],
   "offenseAbility": "BERSERK",
   "offenseAbilityText": "Crew power boosted by potency but takes 1 self-damage after attacking.",

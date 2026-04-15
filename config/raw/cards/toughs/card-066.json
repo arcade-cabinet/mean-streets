@@ -14,5 +14,6 @@
   "unlocked": false,
   "unlockCondition": "Trigger 6 overdraw penalties on opponents",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "tagline": "Does the work no one thanks you for."
 }

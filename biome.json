@@ -37,6 +37,17 @@
       },
       "suspicious": {
         "noDebugger": "error"
+      },
+      "style": {
+        "noRestrictedGlobals": {
+          "level": "error",
+          "options": {
+            "deniedGlobals": {
+              "localStorage": "Use src/platform/persistence/storage.ts (SQLite-backed).",
+              "sessionStorage": "Use src/platform/persistence/storage.ts (SQLite-backed)."
+            }
+          }
+        }
       }
     }
   },

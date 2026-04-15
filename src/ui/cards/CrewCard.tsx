@@ -58,12 +58,19 @@ export function CrewCard({ position, isPlayer: _isPlayer, onSlotDrop: _onSlotDro
 
     return (
       <div
-        className={`crew-card-shell crew-card-shell-compact ${isSeized ? 'crew-card-shell-seized' : ''}`}
+        className={`crew-card-shell crew-card-shell-compact ${isSeized ? 'crew-card-shell-seized' : ''} ${position.runner ? 'crew-card-shell-runner' : ''}`}
         data-testid={`crew-card-${crew.id}`}
+        data-runner={position.runner ? 'true' : undefined}
       >
         <CardFrame variant="crew" className="card-frame-svg card-frame-svg-crew" />
         <div className="crew-card-noise crew-card-noise-ragged" />
         <div className="crew-card-sheen" />
+        {position.runner && (
+          <div className="crew-card-runner-badge" aria-label="runner with backpack" title="Runner — carrying backpack">
+            <span className="crew-card-runner-badge-icon" aria-hidden="true">🎒</span>
+            <span className="crew-card-runner-badge-count">{position.payloadRemaining}</span>
+          </div>
+        )}
 
         <div className="crew-card-compact-top">
           {compactValue('P', power)}
@@ -94,12 +101,19 @@ export function CrewCard({ position, isPlayer: _isPlayer, onSlotDrop: _onSlotDro
 
   return (
     <div
-      className={`crew-card-shell crew-card-shell-metallic ${isSeized ? 'crew-card-shell-seized' : ''}`}
+      className={`crew-card-shell crew-card-shell-metallic ${isSeized ? 'crew-card-shell-seized' : ''} ${position.runner ? 'crew-card-shell-runner' : ''}`}
       data-testid={`crew-card-${crew.id}`}
+      data-runner={position.runner ? 'true' : undefined}
     >
       <CardFrame variant="crew" className="card-frame-svg card-frame-svg-crew" />
       <div className="crew-card-noise crew-card-noise-ragged" />
       <div className="crew-card-sheen" />
+      {position.runner && (
+        <div className="crew-card-runner-badge" aria-label="runner with backpack" title={`Runner — ${position.payloadRemaining} payload remaining`}>
+          <span className="crew-card-runner-badge-icon" aria-hidden="true">🎒</span>
+          <span className="crew-card-runner-badge-count">{position.payloadRemaining}</span>
+        </div>
+      )}
 
       <div className="crew-card-inner">
         <div className="crew-card-header">

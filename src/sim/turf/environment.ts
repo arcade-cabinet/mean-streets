@@ -2,6 +2,7 @@ import { createRng } from '../cards/rng';
 import { generateTurfCardPools, type TurfCardPools } from './catalog';
 import { buildAutoDeck, type AutoDeckPolicy } from './deck-builder';
 import {
+  captureRunnerOnSeize,
   createBoard,
   deployRunner,
   equipBackpack,
@@ -9,6 +10,7 @@ import {
   findEmptyActive,
   findFundedReady,
   findPushReady,
+  freeSwapEquippedRunner,
   offensiveCash,
   placeCrew,
   placeReserveCrew,
@@ -25,7 +27,26 @@ import {
   resolveDirectAttack,
   resolveFundedAttack,
   resolvePushedAttack,
+  type AttackContext,
 } from './attacks';
+import affiliationsPool from '../../data/pools/affiliations.json';
+
+const AT_WAR_MAP: Map<string, Set<string>> = (() => {
+  const map = new Map<string, Set<string>>();
+  for (const affiliation of affiliationsPool.affiliations) {
+    map.set(affiliation.id, new Set(affiliation.atWarWith ?? []));
+  }
+  return map;
+})();
+
+function isAtWar(attackerAffiliation: string, defenderAffiliation: string): boolean {
+  const enemies = AT_WAR_MAP.get(attackerAffiliation);
+  return enemies?.has(defenderAffiliation) ?? false;
+}
+
+function countCrew(positions: { crew: unknown }[]): number {
+  return positions.filter((p) => p.crew !== null).length;
+}
 import type {
   CashCard,
   CrewCard,
@@ -710,6 +731,13 @@ function resolveOutcome(
     state.metrics.kills++;
     reward += 2;
     awardCash(player);
+    // RULES.md §7: seizing a runner transfers the backpack to the
+    // attacker. Capture before clearing the position.
+    const capturedOnKill = captureRunnerOnSeize(opponent.board.active[targetIdx]);
+    if (capturedOnKill) {
+      player.hand.backpacks.push(capturedOnKill);
+      reward += 1.5;
+    }
     if (!opponent.board.active[targetIdx].crew) {
       seizePosition(opponent.board.active[targetIdx]);
       player.positionsSeized++;
@@ -729,6 +757,11 @@ function resolveOutcome(
           reward += 1;
         }
       }
+    }
+    const capturedOnFlip = captureRunnerOnSeize(opponent.board.active[targetIdx]);
+    if (capturedOnFlip) {
+      player.hand.backpacks.push(capturedOnFlip);
+      reward += 1.5;
     }
     if (!opponent.board.active[targetIdx].crew) {
       seizePosition(opponent.board.active[targetIdx]);
@@ -764,6 +797,57 @@ export function stepAction(state: TurfGameState, action: TurfAction): TurfStepRe
       if (!crew || !placeCrew(player.board, action.positionIdx, crew)) throw new Error('Illegal place_crew action');
       state.metrics.crewPlaced++;
       reward += 1;
+
+      // Structural archetype on-play effects (D3):
+      //  - Snitch RAT_OUT: peek-ish advantage, modelled here as a
+      //    free-card draw from own modifier pile (we gain info/tempo).
+      //  - Lookout SCOUT: treats reserves as sortable — immediately
+      //    cycles one reserve crew into hand if a slot is open.
+      //  - Wheelman EXTRACTION: on play, can swap self into any empty
+      //    active lane — the environment already places to the chosen
+      //    lane, so this fires a +0.3 reward to bias placement scoring.
+      //  - Fence HOT_SWAP: triggers on-sacrifice only; no hook here.
+      //  - Hustler PICKPOCKET: on-attack effect; handled at attack time.
+      //  - Sniper/Ghost/Arsonist/Shark/Enforcer: handled in attacks.ts.
+      if (crew.archetype === 'snitch') {
+        // Draw one extra modifier if any exist in the draw pile.
+        if (player.modifierDraw.length > 0) {
+          const extra = player.modifierDraw.shift();
+          if (extra) {
+            player.hand.modifiers.push(extra);
+          }
+        }
+        reward += 0.25;
+      } else if (crew.archetype === 'lookout') {
+        // No structural reserve-cycle yet; small placement reward to
+        // reflect the tempo advantage the ability conveys.
+        reward += 0.2;
+      } else if (crew.archetype === 'wheelman') {
+        reward += 0.3;
+      } else if (crew.archetype === 'medic') {
+        // PATCH_UP: restore 1 resistance to an adjacent damaged ally.
+        if (action.positionIdx !== undefined) {
+          const idx = action.positionIdx;
+          for (const adjIdx of [idx - 1, idx + 1]) {
+            const adj = player.board.active[adjIdx];
+            if (adj?.crew && adj.crew.resistance < 12) {
+              adj.crew.resistance = Math.min(12, adj.crew.resistance + 1);
+              reward += 0.15;
+              break;
+            }
+          }
+        }
+      } else if (crew.archetype === 'fence') {
+        // HOT_SWAP (abridged): convert a cash card from hand into a
+        // modifier draw so tempo swing on play mirrors the intent.
+        const cashIdx = player.hand.modifiers.findIndex((c) => c.type === 'cash');
+        if (cashIdx >= 0 && player.modifierDraw.length > 0) {
+          player.hand.modifiers.splice(cashIdx, 1);
+          const extra = player.modifierDraw.shift();
+          if (extra) player.hand.modifiers.push(extra);
+          reward += 0.2;
+        }
+      }
       break;
     }
 
@@ -788,6 +872,18 @@ export function stepAction(state: TurfGameState, action: TurfAction): TurfStepRe
       }
       state.metrics.backpacksEquipped++;
       reward += 1.15;
+      // RULES.md §7: equipping a backpack to a reserve grants a free
+      // swap into active. Honor the rule by trying to land the runner
+      // immediately into an empty active slot. The action does NOT
+      // count as a separate deploy action — the player still has its
+      // turn budget intact.
+      if (action.reserveIdx !== undefined) {
+        const landed = freeSwapEquippedRunner(player.board, action.reserveIdx);
+        if (landed >= 0) {
+          state.metrics.runnerDeployments++;
+          reward += 0.6; // reward the combo, less than a deliberate deploy
+        }
+      }
       break;
     }
 
@@ -859,8 +955,13 @@ export function stepAction(state: TurfGameState, action: TurfAction): TurfStepRe
       const attacker = player.board.active[action.attackerIdx];
       const target = opponent.board.active[action.targetIdx];
       if (!attacker.crew || !target.crew) throw new Error(`Illegal ${action.kind} action`);
+      const attackContext: AttackContext = {
+        ownCardsInPlay: countCrew(player.board.active),
+        opponentCardsInPlay: countCrew(opponent.board.active),
+        targetIsAtWar: isAtWar(attacker.crew.affiliation, target.crew.affiliation),
+      };
       const outcome = action.kind === 'direct_attack'
-        ? resolveDirectAttack(attacker, target)
+        ? resolveDirectAttack(attacker, target, attackContext)
         : action.kind === 'funded_attack'
           ? resolveFundedAttack(attacker, target, state.config)
           : resolvePushedAttack(attacker, target, opponent.board.active, state.config);

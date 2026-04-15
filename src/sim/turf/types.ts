@@ -381,6 +381,27 @@ export interface DeckSnapshot {
   backpackIds: string[];
 }
 
+/**
+ * Player-packed backpack (RULES.md §6) — each slot references a
+ * quarter-card the player chose at deckbuild time. Resolves to a
+ * runtime BackpackCard with a concrete payload via resolvePackedBackpack().
+ */
+export interface PackedBackpack {
+  /** 1..4; fewer slots = smaller pack */
+  slots: string[]; // quarter-card ids
+}
+
+/**
+ * The PRD's post-refactor deck shape: crew plus N backpacks, where
+ * each backpack is defined by the quarter-card ids the player chose
+ * to fill its slots with. Modifiers never exist outside a backpack
+ * once this shape is in use.
+ */
+export interface PackedDeckSnapshot {
+  crewIds: string[];
+  backpacks: PackedBackpack[];
+}
+
 export interface TurfGameResult {
   winner: 'A' | 'B';
   endReason: string;

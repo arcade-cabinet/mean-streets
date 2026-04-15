@@ -76,8 +76,17 @@ export function CombatScreen({ world, onGameOver, onOpenMenu }: CombatScreenProp
     }, AI_DELAY_MS);
   }, [world, turnNumber, showFlash]);
 
-  function handleActionComplete(_outcome: AttackOutcome | null) {
+  function handleActionComplete(outcome: AttackOutcome | null) {
     setActionMode(null);
+    if (outcome) {
+      // Surface the combat outcome (kill / flip / sick / busted / miss /
+      // seized) as a screen flash so the player can see ability tags
+      // (PARRY, BLOOD_FRENZY, PHANTOM_STRIKE, etc.) fire.
+      const tagged = outcome.description.length > 80
+        ? outcome.description.slice(0, 78) + '…'
+        : outcome.description;
+      showFlash(`${outcome.type.toUpperCase()} — ${tagged}`, 2200);
+    }
     if (checkWinCondition()) return;
     if (budget.remaining <= 1) {
       runAiTurn();

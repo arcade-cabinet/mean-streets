@@ -14,5 +14,6 @@
   "unlocked": false,
   "unlockCondition": "Win 5 games",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "tagline": "Makes the problem disappear."
 }

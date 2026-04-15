@@ -1,4 +1,6 @@
 import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { TURF_SIM_CONFIG } from '../turf/ai/config';
 import { generateTurfCardPools } from '../turf/catalog';
 import { saveBalanceHistory } from '../turf/balance';
 import type { CardEffectEstimate } from './effects';
@@ -12,6 +14,12 @@ import {
   writeAnalysisJson,
 } from './index';
 import type { LockRecommendation } from './locking';
+import {
+  commitAutobalanceIteration,
+  gitWorkingTreeClean,
+  runAutobalanceIteration,
+  type AutobalanceEdit,
+} from './autobalance';
 
 const BALANCE_HISTORY_PATH = join(process.cwd(), 'sim', 'reports', 'turf', 'balance-history.json');
 
@@ -773,6 +781,257 @@ async function main(): Promise<void> {
     printFocusedEffects(focusedEffects, descriptors);
     printUnstablePairingSummary(pairingSummary, descriptors);
     console.log(path);
+    return;
+  }
+
+  if (command === 'backpack-quota') {
+    const profile = (getArg('--profile') ?? 'ci') as 'smoke' | 'ci' | 'release';
+    const minQ = Number.parseInt(getArg('--min') ?? '3', 10);
+    const maxQ = Number.parseInt(getArg('--max') ?? '10', 10);
+
+    interface QuotaSample {
+      quota: number;
+      winRateA: number;
+      passRatePerTurn: number;
+      medianTurns: number;
+      runnerOpportunityUseRate: number;
+      runnerReserveStartUseRate: number;
+      reserveCrewPlacements: number;
+      backpacksEquipped: number;
+    }
+
+    const samples: QuotaSample[] = [];
+
+    logPhase(`backpack-quota profile=${profile} sweeping ${minQ}..${maxQ}`);
+    for (let q = minQ; q <= maxQ; q++) {
+      // Override the deck-builder TOTAL_BACKPACKS at runtime by editing
+      // the shared TURF_SIM_CONFIG.deckBuilder reference. Restored after
+      // each iteration so subsequent commands see the original value.
+      type DeckBuilderCfg = { totalBackpacks: number };
+      const cfg = (TURF_SIM_CONFIG as { deckBuilder: DeckBuilderCfg }).deckBuilder;
+      const originalQuota = cfg.totalBackpacks;
+      cfg.totalBackpacks = q;
+      try {
+        const run = runSeededBenchmark(profile, { includeBalance: false });
+        const s = run.summary;
+        samples.push({
+          quota: q,
+          winRateA: s.winRateA,
+          passRatePerTurn: s.passRatePerTurn,
+          medianTurns: s.medianTurns,
+          runnerOpportunityUseRate: s.runnerOpportunityUseRate,
+          runnerReserveStartUseRate: s.runnerReserveStartUseRate,
+          reserveCrewPlacements: s.reserveCrewPlacements,
+          backpacksEquipped: s.backpacksEquipped,
+        });
+      } finally {
+        cfg.totalBackpacks = originalQuota;
+      }
+    }
+
+    console.log('\nBackpack Quota Sweep');
+    console.log('  quota | winA   | medTurns | passT  | reserve | equip  | runnerUse | resStart');
+    console.log('  ------+--------+----------+--------+---------+--------+-----------+---------');
+    for (const s of samples) {
+      console.log(
+        `  ${String(s.quota).padStart(5)} | ${s.winRateA.toFixed(3)} |   ${String(s.medianTurns).padStart(4)}   | ${s.passRatePerTurn.toFixed(3)} |  ${s.reserveCrewPlacements.toFixed(2)}  |  ${s.backpacksEquipped.toFixed(2)} |   ${s.runnerOpportunityUseRate.toFixed(3)}  |  ${s.runnerReserveStartUseRate.toFixed(3)}`,
+      );
+    }
+
+    // Pick the quota with the closest-to-50% win rate AND non-zero
+    // backpacks equipped.
+    const best = samples
+      .filter((s) => s.backpacksEquipped > 0)
+      .reduce(
+        (acc, s) => (Math.abs(s.winRateA - 0.5) < Math.abs(acc.winRateA - 0.5) ? s : acc),
+        samples[0]!,
+      );
+    console.log(`\nRecommended quota: ${best.quota}  (winA ${best.winRateA.toFixed(3)}, equip ${best.backpacksEquipped.toFixed(2)})`);
+
+    const path = writeAnalysisJson('backpack-quota', `backpack-quota-${profile}.json`, {
+      generatedAt: new Date().toISOString(),
+      profile,
+      range: { min: minQ, max: maxQ },
+      samples,
+      recommended: best.quota,
+    });
+    console.log(path);
+    return;
+  }
+
+  if (command === 'runner-contract') {
+    const profile = (getArg('--profile') ?? 'ci') as 'smoke' | 'ci' | 'release';
+    logPhase(`runner-contract profile=${profile}`);
+    const run = runSeededBenchmark(profile, { includeBalance: false });
+    const s = run.summary;
+
+    function rate(taken: number, turns: number): number {
+      return turns > 0 ? taken / turns : 0;
+    }
+
+    const stages = {
+      reserveStart: {
+        turns: s.runnerReserveOpportunityTurns,
+        taken: s.runnerReserveOpportunityTaken,
+        missed: s.runnerReserveOpportunityMissed,
+        rate: rate(s.runnerReserveOpportunityTaken, s.runnerReserveOpportunityTurns),
+      },
+      equip: {
+        turns: s.runnerEquipOpportunityTurns,
+        taken: s.runnerEquipOpportunityTaken,
+        missed: s.runnerEquipOpportunityMissed,
+        rate: rate(s.runnerEquipOpportunityTaken, s.runnerEquipOpportunityTurns),
+      },
+      deploy: {
+        turns: s.runnerDeployOpportunityTurns,
+        taken: s.runnerDeployOpportunityTaken,
+        missed: s.runnerDeployOpportunityMissed,
+        rate: rate(s.runnerDeployOpportunityTaken, s.runnerDeployOpportunityTurns),
+      },
+      payload: {
+        turns: s.runnerPayloadOpportunityTurns,
+        taken: s.runnerPayloadOpportunityTaken,
+        missed: s.runnerPayloadOpportunityMissed,
+        rate: rate(s.runnerPayloadOpportunityTaken, s.runnerPayloadOpportunityTurns),
+      },
+    };
+
+    console.log('\nRunner Contract (four-stage diagnostic)');
+    for (const [name, stage] of Object.entries(stages)) {
+      console.log(
+        `  ${name.padEnd(14)}  turns=${stage.turns.toFixed(2)}  taken=${stage.taken.toFixed(2)}  missed=${stage.missed.toFixed(2)}  rate=${stage.rate.toFixed(4)}`,
+      );
+    }
+
+    const notes: string[] = [];
+    if (stages.reserveStart.rate < 0.5) {
+      notes.push(
+        `reserve-start rate ${stages.reserveStart.rate.toFixed(4)} below 0.5 — planner either isn't generating reserve-crew placements or scoring them too low`,
+      );
+    }
+    if (stages.equip.rate < 0.5) {
+      notes.push(
+        `equip rate ${stages.equip.rate.toFixed(4)} below 0.5 — planner has backpacks but isn't attaching them to reserves`,
+      );
+    }
+    if (stages.deploy.rate < 0.5) {
+      notes.push(
+        `deploy rate ${stages.deploy.rate.toFixed(4)} below 0.5 — runners are equipped but not promoted to active`,
+      );
+    }
+    if (stages.payload.rate < 0.5) {
+      notes.push(
+        `payload rate ${stages.payload.rate.toFixed(4)} below 0.5 — runners are active but not dispensing payload`,
+      );
+    }
+    if (notes.length === 0) {
+      notes.push('all four stages above 0.5 — contract is healthy');
+    }
+
+    console.log('\nNotes');
+    for (const n of notes) console.log(`  - ${n}`);
+
+    const path = writeAnalysisJson('runner-contract', `runner-contract-${profile}.json`, {
+      generatedAt: new Date().toISOString(),
+      profile,
+      stages,
+      notes,
+      summary: createBenchmarkReport(run),
+    });
+    console.log(path);
+    return;
+  }
+
+  if (command === 'autobalance') {
+    const profile = (getArg('--profile') ?? 'standard') as
+      | 'quick'
+      | 'standard'
+      | 'release';
+    const baselineProfile =
+      profile === 'release'
+        ? 'release'
+        : profile === 'standard'
+          ? 'ci'
+          : 'smoke';
+    const iterations = Number.parseInt(getArg('--iterations') ?? '1', 10);
+    const noCommit = process.argv.includes('--no-commit');
+    const dryRun = process.argv.includes('--dry-run');
+    const maxEditsArg = getArg('--max-edits');
+    const maxEdits = maxEditsArg ? Number.parseInt(maxEditsArg, 10) : undefined;
+
+    logPhase(
+      `autobalance profile=${profile} iterations=${iterations} commit=${!noCommit} dryRun=${dryRun}`,
+    );
+
+    if (!dryRun && !noCommit) {
+      const clean = gitWorkingTreeClean();
+      if (!clean.clean) {
+        console.error(
+          '[autobalance] refusing to run: working tree has uncommitted changes. Stash or commit first, or pass --dry-run / --no-commit.',
+        );
+        if (clean.details) console.error(clean.details);
+        process.exit(2);
+      }
+    }
+
+    const allEdits: AutobalanceEdit[] = [];
+    for (let iter = 1; iter <= iterations; iter++) {
+      logPhase(`iteration ${iter}/${iterations}: benchmark + sweeps`);
+      const baseline = runSeededBenchmark(baselineProfile, { includeBalance: true });
+      const crewWeapon = runCuratedSweep('crew_weapon', profile, baseline.summary.catalogSeed).permutations;
+      const crewDrug = runCuratedSweep('crew_drug', profile, baseline.summary.catalogSeed).permutations;
+      const weaponDrug = runCuratedSweep('weapon_drug', profile, baseline.summary.catalogSeed).permutations;
+      const crewWeaponDrug = runCuratedSweep('crew_weapon_drug', profile, baseline.summary.catalogSeed).permutations;
+      const sweeps = [...crewWeapon, ...crewDrug, ...weaponDrug, ...crewWeaponDrug];
+      const effects = estimateCardEffects(baseline, sweeps, profile);
+      const locks = deriveLockRecommendations(effects);
+      const summary = summarizeLockRecommendations(locks);
+      printLockSummary(summary);
+
+      const result = runAutobalanceIteration(locks, effects, { dryRun, maxEdits });
+      console.log(`[autobalance] iter ${iter}: edits=${result.edits.length} clamped=${result.clamped.length} skipped=${result.skipped.length}`);
+      for (const edit of result.edits) {
+        console.log(
+          `  ${edit.cardId}  ${edit.stat} ${edit.from}→${edit.to}  (${edit.direction})  -- ${edit.reason}`,
+        );
+      }
+
+      if (result.edits.length === 0) {
+        console.log('[autobalance] catalog stable — stopping iteration loop.');
+        break;
+      }
+
+      if (!dryRun) {
+        // Recompile so the next iteration's sim sees the new values.
+        logPhase('recompiling card catalog');
+        const compile = spawnSync('node', ['scripts/compile-cards.mjs'], {
+          cwd: process.cwd(),
+          encoding: 'utf8',
+          stdio: 'inherit',
+        });
+        if (compile.status !== 0) {
+          throw new Error('compile-cards.mjs failed');
+        }
+      }
+
+      if (!dryRun && !noCommit) {
+        const commit = commitAutobalanceIteration(result.edits, { iteration: iter });
+        if (commit.committed) {
+          console.log(`[autobalance] committed iter ${iter} -> ${commit.sha}`);
+        } else if (commit.stderr) {
+          console.log(`[autobalance] commit skipped: ${commit.stderr.trim()}`);
+        }
+      }
+      allEdits.push(...result.edits);
+    }
+    writeAnalysisJson('autobalance', `autobalance-${profile}.json`, {
+      completedAt: new Date().toISOString(),
+      profile,
+      baselineProfile,
+      iterations,
+      totalEdits: allEdits.length,
+      edits: allEdits,
+    });
     return;
   }
 

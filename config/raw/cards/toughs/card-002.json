@@ -5,14 +5,21 @@
   "archetype": "snitch",
   "affiliation": "jade_dragon",
   "power": [
-    2
+    2,
+    3,
+    4,
+    5
   ],
   "resistance": [
-    3
+    3,
+    4,
+    5,
+    6
   ],
   "abilityText": "On play: opponent must reveal 1 random card from their hand for the rest of the round",
   "unlocked": true,
   "unlockCondition": null,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "tagline": "Sells the truth by the ounce."
 }

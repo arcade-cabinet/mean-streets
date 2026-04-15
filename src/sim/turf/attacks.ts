@@ -5,6 +5,9 @@
 
 import type { Position, AttackOutcome, TurfGameConfig } from './types';
 import { positionPower, positionDefense, offensiveCash, defensiveCash, clearPosition } from './board';
+import { TURF_SIM_CONFIG } from './ai/config';
+
+const ARCHETYPE_BONUSES = TURF_SIM_CONFIG.archetypeBonuses;
 
 export function canPrecisionAttack(
   atkPower: number, defPower: number, mult: number, ignores: boolean,
@@ -66,14 +69,78 @@ function applySuppression(attacker: Position, defender: Position): string[] {
 function defensiveThresholdBonus(defender: Position): number {
   let bonus = 0;
   if (defender.weaponBottom?.category === 'explosive') bonus += defender.weaponBottom.bonus;
+  if (defender.weaponBottom?.category === 'ranged') bonus += defender.weaponBottom.bonus;
   return bonus;
 }
 
 function defensiveDamageReduction(defender: Position): number {
   let reduction = 0;
   if (defender.drugBottom?.category === 'sedative') reduction += defender.drugBottom.potency;
+  if (defender.drugBottom?.category === 'steroid') reduction += defender.drugBottom.potency;
   if (defender.weaponBottom?.category === 'blunt') reduction += defender.weaponBottom.bonus;
   return reduction;
+}
+
+function attackerBonusDamage(
+  attacker: Position,
+  context?: AttackContext,
+): { amount: number; notes: string[] } {
+  const notes: string[] = [];
+  let amount = 0;
+  if (attacker.weaponTop?.category === 'ranged') {
+    amount += attacker.weaponTop.bonus;
+    notes.push(`REACH ${attacker.weaponTop.bonus}`);
+  }
+  if (attacker.drugTop?.category === 'steroid') {
+    amount += attacker.drugTop.potency;
+    notes.push(`BULK ${attacker.drugTop.potency}`);
+  }
+  if (
+    attacker.crew?.archetype === 'shark' &&
+    context &&
+    context.opponentCardsInPlay < context.ownCardsInPlay
+  ) {
+    const diff = context.ownCardsInPlay - context.opponentCardsInPlay;
+    amount += diff;
+    notes.push(`BLOOD_FRENZY ${diff}`);
+  }
+  if (attacker.crew?.archetype === 'sniper') {
+    // CALLED_SHOT: sniper always lands at least +N damage — represents
+    // the archetype's precision accuracy even without a ranged weapon.
+    const n = ARCHETYPE_BONUSES.sniperCalledShotDamage;
+    amount += n;
+    notes.push(`CALLED_SHOT ${n}`);
+  }
+  if (attacker.crew?.archetype === 'arsonist') {
+    // SCORCHED_EARTH: arsonist attacks deal +N collateral damage.
+    const n = ARCHETYPE_BONUSES.arsonistScorchedEarthDamage;
+    amount += n;
+    notes.push(`SCORCHED_EARTH ${n}`);
+  }
+  return { amount, notes };
+}
+
+function attackerIgnoreDefense(attacker: Position): { amount: number; notes: string[] } {
+  const notes: string[] = [];
+  let amount = 0;
+  if (attacker.crew?.archetype === 'ghost') {
+    // PHANTOM_STRIKE: ghost bypasses N points of the defender's defense
+    // threshold. The full "attack from reserve" mechanic would need an
+    // engine action refactor; this is the combat-resolution half.
+    const n = ARCHETYPE_BONUSES.ghostPhantomStrikeDefensePierce;
+    amount += n;
+    notes.push(`PHANTOM_STRIKE -${n} def`);
+  }
+  return { amount, notes };
+}
+
+export interface AttackContext {
+  /** Number of active cards on the attacker's side (board). */
+  ownCardsInPlay: number;
+  /** Number of active cards on the defender's side (board). */
+  opponentCardsInPlay: number;
+  /** True when the defender's affiliation is in the attacker's atWarWith list. */
+  targetIsAtWar?: boolean;
 }
 
 function joinDescription(base: string, notes: string[]): string {
@@ -82,7 +149,11 @@ function joinDescription(base: string, notes: string[]): string {
 }
 
 /** DIRECT: attacker power vs defender defense. */
-export function resolveDirectAttack(attacker: Position, defender: Position): AttackOutcome {
+export function resolveDirectAttack(
+  attacker: Position,
+  defender: Position,
+  context?: AttackContext,
+): AttackOutcome {
   if (defenderEvades(defender)) {
     return {
       type: 'miss', targetIndices: [], lostCards: [], gainedCards: [],
@@ -91,8 +162,11 @@ export function resolveDirectAttack(attacker: Position, defender: Position): Att
   }
 
   const atk = positionPower(attacker);
-  const def = positionDefense(defender) + defensiveThresholdBonus(defender);
+  let def = positionDefense(defender) + defensiveThresholdBonus(defender);
   const notes: string[] = [];
+  const phantom = attackerIgnoreDefense(attacker);
+  def = Math.max(0, def - phantom.amount);
+  if (phantom.notes.length > 0) notes.push(...phantom.notes);
 
   if (atk >= def) {
     if (defenderSurvivesKill(defender)) {
@@ -119,6 +193,16 @@ export function resolveDirectAttack(attacker: Position, defender: Position): Att
   if (attacker.weaponTop?.category === 'bladed') {
     dmg += attacker.weaponTop.bonus;
     notes.push(`LACERATE ${attacker.weaponTop.bonus}`);
+  }
+  const bonus = attackerBonusDamage(attacker, context);
+  if (bonus.amount > 0) {
+    dmg += bonus.amount;
+    notes.push(...bonus.notes);
+  }
+  if (attacker.crew?.archetype === 'enforcer' && context?.targetIsAtWar) {
+    const mult = ARCHETYPE_BONUSES.enforcerVendettaMultiplier;
+    dmg *= mult;
+    notes.push(`VENDETTA x${mult}`);
   }
   notes.push(...applySuppression(attacker, defender));
   notes.push(...applyCounterDamage(attacker, defender));

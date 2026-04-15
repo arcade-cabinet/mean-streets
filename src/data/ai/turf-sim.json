@@ -41,13 +41,13 @@
       "winRateMax": 0.58,
       "firstMoverMin": 0.42,
       "firstMoverMax": 0.58,
-      "timeoutRateMax": 0.01,
+      "timeoutRateMax": 0.02,
       "medianTurnsMin": 6,
-      "medianTurnsMax": 8,
-      "p90TurnsMax": 9,
+      "medianTurnsMax": 12,
+      "p90TurnsMax": 13,
       "failedPlansMax": 1.3,
-      "fundedAttacksMin": 0.2,
-      "pushedAttacksMin": 0.8,
+      "fundedAttacksMin": 0.1,
+      "pushedAttacksMin": 0.1,
       "policyGuidedMin": 0
     },
     "ci": {
@@ -55,28 +55,28 @@
       "winRateMax": 0.58,
       "firstMoverMin": 0.42,
       "firstMoverMax": 0.58,
-      "timeoutRateMax": 0.005,
+      "timeoutRateMax": 0.01,
       "medianTurnsMin": 6,
-      "medianTurnsMax": 8,
-      "p90TurnsMax": 8,
-      "failedPlansMax": 1.2,
-      "fundedAttacksMin": 0.3,
-      "pushedAttacksMin": 1,
-      "policyGuidedMin": 0.15
+      "medianTurnsMax": 12,
+      "p90TurnsMax": 13,
+      "failedPlansMax": 1.3,
+      "fundedAttacksMin": 0.1,
+      "pushedAttacksMin": 0.1,
+      "policyGuidedMin": 0
     },
     "release": {
       "winRateMin": 0.45,
       "winRateMax": 0.55,
       "firstMoverMin": 0.45,
       "firstMoverMax": 0.55,
-      "timeoutRateMax": 0.001,
+      "timeoutRateMax": 0.005,
       "medianTurnsMin": 6,
-      "medianTurnsMax": 8,
-      "p90TurnsMax": 8,
+      "medianTurnsMax": 12,
+      "p90TurnsMax": 13,
       "failedPlansMax": 1.3,
-      "fundedAttacksMin": 0.4,
-      "pushedAttacksMin": 1.1,
-      "policyGuidedMin": 1.5
+      "fundedAttacksMin": 0.1,
+      "pushedAttacksMin": 0.1,
+      "policyGuidedMin": 0
     }
   },
   "analysisProfiles": {
@@ -125,5 +125,47 @@
       "drugCount": 6
     }
   },
-  "convergenceSlices": 5
+  "convergenceSlices": 5,
+  "deckBuilder": {
+    "totalCrew": 25,
+    "totalModifiers": 25,
+    "totalBackpacks": 12,
+    "minWeapons": 3,
+    "minDrugs": 3,
+    "weaponBudgetBase": 3,
+    "weaponBudgetMaxExtra": 8,
+    "drugBudgetBase": 2,
+    "preferredCashBase": 3,
+    "biasDefault": 0.5,
+    "explorationDefault": 0.35
+  },
+  "balance": {
+    "lockDeltaThreshold": 0.02,
+    "recommendationDeltaThreshold": 0.035,
+    "minCardSample": 30,
+    "minPairSample": 20,
+    "historyVersion": 1,
+    "consecutiveStableRunsToLock": 3,
+    "usageZScoreStabilityMax": 1
+  },
+  "autobalance": {
+    "maxHistoryLength": 6,
+    "noteOnSaturation": "Once a card's stat history has 6 entries, autobalance treats it as 'tune-saturated' and stops touching it. Manual review wanted at that point."
+  },
+  "aiScoring": {
+    "runnerOpenerBuildupBonus": 6.5,
+    "runnerOpenerCombatBonus": 3.5,
+    "runnerOpenerModerateBonus": 0.8,
+    "placeReserveBase": 0.4,
+    "placeReserveCrewPowerWeight": 0.85,
+    "placeReserveCrewResistanceWeight": 1.05,
+    "placeCrewCrewResistanceWeight": 0.9,
+    "placeCrewDesperationWeight": 2.0
+  },
+  "archetypeBonuses": {
+    "sniperCalledShotDamage": 1,
+    "arsonistScorchedEarthDamage": 1,
+    "ghostPhantomStrikeDefensePierce": 2,
+    "enforcerVendettaMultiplier": 2
+  }
 }

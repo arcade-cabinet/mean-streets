@@ -32,12 +32,55 @@ select {
 
 .menu-shell {
   position: relative;
-  min-height: 100%;
+  min-height: 100vh;
+  /* Fall back to small-viewport height where supported for mobile
+     browsers that shift their URL bar. */
+  min-height: 100svh;
   overflow: hidden;
   background:
     var(--surface-menu-shell),
     radial-gradient(circle at top left, rgba(122, 23, 18, 0.22), transparent 34%),
     radial-gradient(circle at bottom right, rgba(146, 100, 39, 0.12), transparent 25%);
+}
+
+/* Visually-hidden H1 landmark for screen readers. */
+.menu-title-a11y {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Display logo. Scales with menu variant. */
+.menu-logo {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.55));
+}
+
+.menu-logo-stacked {
+  top: max(24px, calc(env(safe-area-inset-top) + 24px));
+  left: 50%;
+  transform: translateX(-50%);
+  width: clamp(160px, 38vw, 240px);
+  /* Cap by both viewport height and width so landscape phones do
+     not stretch the logo into the menu buttons. */
+  max-height: min(28vh, 220px);
+  object-fit: contain;
+}
+
+.menu-logo-split {
+  top: max(32px, calc(env(safe-area-inset-top) + 32px));
+  left: max(48px, calc(env(safe-area-inset-left) + 48px));
+  width: clamp(200px, 22vw, 320px);
+  max-height: 28vh;
+  object-fit: contain;
 }
 
 .menu-backdrop,
@@ -75,6 +118,10 @@ select {
 
 .menu-content-stacked {
   align-items: stretch;
+  /* Reserve vertical space for the absolutely-positioned logo above
+     (see .menu-logo-stacked: top 24px + max-height 30vh). */
+  padding-top: calc(30vh + 48px);
+  justify-content: flex-start;
 }
 
 .menu-topbar {
@@ -288,6 +335,14 @@ select {
   min-height: 100%;
   display: grid;
   grid-template-rows: auto 1fr 1fr auto;
+  /* Hard width + overflow guard: prevents any runaway flex/grid child
+     from widening the viewport. Grid tracks fall back to 0 minimum
+     via minmax(0, 1fr). */
+  width: 100%;
+  max-width: 100vw;
+  min-width: 0;
+  overflow-x: hidden;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
   padding: 1.1rem;
   background:
@@ -296,7 +351,11 @@ select {
 }
 
 .deck-garage-screen {
-  min-height: 100%;
+  /* Use viewport height so the 1fr rail track actually expands to
+     fill remaining space. min-height: 100% collapses because the
+     parent chain uses min-height, not definite height. */
+  min-height: 100vh;
+  min-height: 100svh;
   display: grid;
   grid-template-rows: auto 1fr;
   gap: 1rem;
@@ -342,12 +401,21 @@ select {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1rem;
-  align-content: start;
+  /* Center the deck-box row vertically when it has extra space
+     (tablet-landscape + desktop-wide). Phone-portrait stacks cards
+     vertically so `start` is still fine there — the mobile media
+     query below restores it. */
+  align-content: center;
   padding: 0.85rem;
   background: var(--bg-panel);
   border: 1px solid var(--border-muted);
   border-radius: var(--radius-panel);
   box-shadow: var(--shadow-heavy);
+}
+
+[data-layout='phone-portrait'] .deck-garage-rail,
+[data-layout='folded'] .deck-garage-rail {
+  align-content: start;
 }
 
 .deck-box-card {
@@ -509,6 +577,7 @@ select {
   justify-content: space-between;
   gap: 1rem;
   align-items: flex-start;
+  min-width: 0;
 }
 
 .deckbuilder-actions,
@@ -522,11 +591,13 @@ select {
 }
 
 .deckbuilder-actions {
+  display: flex;
   flex-direction: column;
   align-items: flex-end;
   align-content: flex-start;
   gap: 0.65rem;
   max-width: 46rem;
+  min-width: 0;
 }
 
 .deckbuilder-actions-top,
@@ -1473,11 +1544,16 @@ select {
   color: #f3e4cb;
   font-size: 0.56rem;
   font-weight: 800;
-  line-height: 1.08;
+  line-height: 1.14;
   text-align: center;
-  white-space: nowrap;
+  /* Two-line clamp so long display names ("Paulo 'Lanza' Diaz") wrap
+     once inside the hand tile instead of ellipsizing too early. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .hand-crew-archetype {
@@ -1544,10 +1620,23 @@ select {
     padding: 2rem 1rem;
   }
 
+  /* Stacked variant has the logo pinned above — push content below
+     the logo's reserved space (see .menu-logo-stacked max-height). */
+  .menu-content-stacked {
+    padding-top: calc(28vh + 64px);
+  }
+
   .menu-actions {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     width: min(100%, 36rem);
     justify-self: center;
+  }
+
+  /* Stacked variant: 1 column — LATER in cascade so it overrides the
+     generic .menu-actions 2-column above. */
+  .menu-actions.menu-actions-stacked {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
   }
 
   .deckbuilder-header {
@@ -1591,7 +1680,11 @@ select {
 
   .deckbuilder-shell,
   .deckbuilder-shell-split {
-    grid-template-columns: 1fr;
+    /* minmax(0, 1fr) ensures the grid track can shrink when a child
+       tries to push wider than the viewport; plain "1fr" lets the
+       track expand to fit a wide flex container, which was making
+       .deckbuilder-actions explode to 20000+px on mobile. */
+    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto auto auto auto;
   }
 
@@ -1796,6 +1889,15 @@ select {
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: 0.04em;
+  /* Allow up to 2 lines so long display names like
+     "Rafael 'Chains' Murphy" wrap inside narrow deck-card tiles
+     instead of clipping mid-word. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .deck-card-meta,
@@ -1871,6 +1973,25 @@ select {
 
 .deck-quarter-name {
   text-align: left;
+  /* Two-line ellipsis for cells in the quarter-card rails so long
+     names ("Karambit", "Courier Cache") don't clip the last chars. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.2;
+}
+
+.deck-card-meta {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.2;
 }
 
 .deck-tab {
@@ -1968,9 +2089,14 @@ select {
   font-size: 0.72rem;
   font-weight: 800;
   line-height: 1.2;
-  white-space: nowrap;
+  /* Allow up to 2 lines so long crew names like
+     "Zhao 'Lookout' Sullivan" don't clip. Extra lines ellipsize. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .collection-card-title-crew { color: #e8cfad; }
@@ -2765,6 +2891,43 @@ select {
   user-select: none;
 }
 
+/* Runner badge: visible overlay on a tough carrying a backpack
+   (RULES.md §7). Sits in the upper-right corner; payload count is
+   the number of remaining items in the backpack. */
+.crew-card-shell-runner {
+  outline: 1px solid rgba(228, 169, 69, 0.55);
+  outline-offset: -1px;
+}
+
+.crew-card-runner-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 6px;
+  border-radius: var(--radius-chip);
+  background: linear-gradient(135deg, rgba(228, 169, 69, 0.92), rgba(146, 100, 39, 0.86));
+  color: #1a0d05;
+  font-family: var(--font-display);
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+}
+
+.crew-card-runner-badge-icon {
+  font-size: 13px;
+}
+
+.crew-card-runner-badge-count {
+  font-weight: 700;
+}
+
 .crew-card-shell-compact {
   display: grid;
   grid-template-rows: auto auto 1fr auto;
@@ -3463,4 +3626,183 @@ select {
   .deckbuilder-actions-bottom {
     grid-template-columns: 1fr;
   }
+}
+
+/* ────────────────────────────────────────────────────────────── */
+/* G2 — landscape + tablet + desktop-wide refinements              */
+/* ────────────────────────────────────────────────────────────── */
+
+/* Tablet landscape (iPad Pro 11" landscape etc.): widen the content
+   column and relax vertical padding so combat/buildup rows breathe. */
+[data-layout='tablet-landscape'] .menu-content,
+[data-layout='tablet-landscape'] .deckbuilder-screen,
+[data-layout='tablet-landscape'] .buildup-screen,
+[data-layout='tablet-landscape'] .combat-screen {
+  --tablet-ls-content-max: min(1120px, 92vw);
+  padding-inline: clamp(24px, 4vw, 48px);
+}
+
+[data-layout='tablet-landscape'] .crew-card-shell {
+  width: 168px;
+  height: 224px;
+}
+
+[data-layout='tablet-landscape'] .menu-logo-split {
+  width: clamp(240px, 18vw, 320px);
+}
+
+/* Tablet portrait (iPad portrait): keep single column but allow
+   wider deckbuilder collection grid and larger cards. */
+[data-layout='tablet-portrait'] .deckbuilder-screen {
+  padding-inline: clamp(24px, 5vw, 56px);
+}
+
+[data-layout='tablet-portrait'] .crew-card-shell {
+  width: 172px;
+  height: 230px;
+}
+
+/* Wide content cap: applies at the tablet-landscape breakpoint and
+   up. Prevents the playfield from stretching into empty edges on 4K
+   monitors.
+   NOTE: Playwright's "desktop-chromium" project uses a 1280x720
+   viewport which classifies as tablet-landscape (shortestSide 720 <
+   900), so we key on tablet-landscape + desktop-wide together. */
+[data-layout='tablet-landscape'] .app-shell,
+[data-layout='desktop-wide'] .app-shell {
+  --desktop-content-max: 1440px;
+}
+
+[data-layout='tablet-landscape'] .menu-content,
+[data-layout='tablet-landscape'] .deckbuilder-screen,
+[data-layout='tablet-landscape'] .buildup-screen,
+[data-layout='tablet-landscape'] .combat-screen,
+[data-layout='desktop-wide'] .menu-content,
+[data-layout='desktop-wide'] .deckbuilder-screen,
+[data-layout='desktop-wide'] .buildup-screen,
+[data-layout='desktop-wide'] .combat-screen {
+  max-width: var(--desktop-content-max, 1440px);
+  margin-inline: auto;
+}
+
+/* Fold-aware: when a device exposes two viewport segments,
+   reserve the centre hinge gutter and keep interactive content
+   out of the fold seam. */
+[data-layout='unfolded'] .app-shell {
+  --fold-gutter: 16px;
+  padding-inline: var(--fold-gutter);
+}
+
+/* ────────────────────────────────────────────────────────────── */
+/* BackpackRail (C3) — player-packed backpack deckbuilding        */
+/* ────────────────────────────────────────────────────────────── */
+
+.backpack-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.75rem;
+  border-radius: var(--radius-panel);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-muted);
+}
+
+.backpack-rail-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.backpack-rail-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-main);
+}
+
+.backpack-rail-budget {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-hot);
+  letter-spacing: 0.04em;
+}
+
+.backpack-rail-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 0.5rem;
+}
+
+.backpack-rail-pack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: var(--radius-slot);
+  background: rgba(20, 14, 12, 0.82);
+  border: 1px solid var(--border-muted);
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.backpack-rail-pack-full {
+  border-color: rgba(228, 169, 69, 0.7);
+  background: rgba(33, 20, 10, 0.9);
+}
+
+.backpack-rail-pack-partial {
+  border-color: rgba(228, 169, 69, 0.35);
+}
+
+.backpack-rail-pack-label {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.backpack-rail-slots {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.3rem;
+}
+
+.backpack-rail-slot {
+  min-height: 36px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px dashed var(--border-muted);
+  background: var(--bg-steel);
+  color: var(--text-main);
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.backpack-rail-slot-empty {
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.backpack-rail-slot-filled {
+  border-style: solid;
+  border-color: rgba(228, 169, 69, 0.5);
+  background: rgba(33, 20, 10, 0.78);
+}
+
+.backpack-rail-slot:hover {
+  border-color: rgba(228, 169, 69, 0.85);
+}
+
+.backpack-rail-slot:focus-visible {
+  outline: 2px solid var(--text-hot);
+  outline-offset: 2px;
 }

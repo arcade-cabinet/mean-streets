@@ -5,7 +5,10 @@
   "archetype": "bruiser",
   "affiliation": "kings_row",
   "power": [
-    5
+    5,
+    6,
+    7,
+    8
   ],
   "resistance": [
     2
@@ -14,5 +17,6 @@
   "unlocked": true,
   "unlockCondition": null,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "tagline": "Your rules do not apply here."
 }

@@ -4,7 +4,12 @@
   "name": "Karambit",
   "category": "bladed",
   "bonus": [
-    1
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
   ],
   "offenseAbility": "LACERATE",
   "offenseAbilityText": "Target bleeds, losing 1 resistance per round for bonus rounds.",

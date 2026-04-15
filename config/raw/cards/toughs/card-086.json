@@ -14,5 +14,6 @@
   "unlocked": false,
   "unlockCondition": "Trigger 7 overdraw penalties on opponents",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "tagline": "Your secrets pay the rent."
 }

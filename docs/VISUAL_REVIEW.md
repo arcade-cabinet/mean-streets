@@ -59,3 +59,38 @@ Focus review on:
 - Exported screenshots are intentionally ignored by git.
 - Playwright attachments still land in `test-results/` for one-off debugging.
 - If visual changes are made, regenerate the export set before doing subjective review.
+
+## Gap Analysis Worksheet (Epic F1)
+
+Each row owns one fixture. Fill in the **Gap** column after comparing the
+exported capture against `public/poc.html`. Keep each note under 80
+characters — longer findings go in their own commit or issue.
+
+| Fixture          | Device profile          | POC target                            | Gap (fill in) |
+|------------------|-------------------------|---------------------------------------|---------------|
+| menu             | desktop-chromium        | Title wordmark + menu chip size       |               |
+| menu             | iphone-14               | Safe-area top, touch-friendly chips   |               |
+| menu             | ipad-pro-landscape      | Wide-mode hero crop, two-column chips |               |
+| menu             | pixel-7                 | Portrait hero fit, no clipped edges   |               |
+| deck-garage      | desktop-chromium        | Deck card density, hover state        |               |
+| deck-garage      | iphone-14               | Single-column list, 60% screen height |               |
+| deckbuilder      | desktop-chromium        | Collection grid, filter rail, summary |               |
+| deckbuilder      | iphone-14               | Mobile rail collapse                  |               |
+| buildup          | desktop-chromium        | Lane spacing, reserve rail            |               |
+| buildup          | iphone-14               | Compact lane overview                 |               |
+| combat           | desktop-chromium        | Attack affordances, readout           |               |
+| combat           | iphone-14               | Target-picker UX                      |               |
+| crew-card        | desktop-chromium        | Card frame, corner slots, tagline     |               |
+| modifier-badges  | desktop-chromium        | Weapon/drug/cash badge hierarchy      |               |
+
+### How to review
+
+1. Run `pnpm run visual:export:headless` — produces the 4×7 capture matrix under `artifacts/visual-review/`.
+2. Open each export side-by-side with `public/poc.html` in the same breakpoint.
+3. Write the most important delta in the **Gap** cell (what is different, not what to do about it).
+4. If a cell identifies a gap that needs code, open a sub-task under the epic that owns the surface (Epic F2 for menu/garage, F3 for deckbuilder, F4 for buildup/combat, F5 for card component).
+
+### Change-log
+
+- *(empty — no rows filled yet)*
+

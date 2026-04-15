@@ -117,14 +117,15 @@ function inferOrientation(width: number, height: number): Orientation {
   return width >= height ? 'landscape' : 'portrait';
 }
 
-function inferPosture(width: number, height: number): Posture {
+function inferPosture(_width: number, _height: number): Posture {
+  // Posture detection is authoritative through the Viewport Segments
+  // API (window.getWindowSegments); anything else is 'flat'. The
+  // previous dimension-based heuristic (width < 420 && height > 820)
+  // was flagging regular tall phones like Pixel 7 (412x839) as
+  // "folded", which turned off their phone-portrait CSS rules.
   if (typeof window !== 'undefined') {
     const segmentCount = window.getWindowSegments?.().length ?? 0;
     if (segmentCount > 1) return 'unfolded';
   }
-
-  const shortestSide = Math.min(width, height);
-  const longestSide = Math.max(width, height);
-  if (shortestSide < 420 && longestSide > 820) return 'folded';
   return 'flat';
 }

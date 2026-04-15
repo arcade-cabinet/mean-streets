@@ -1,41 +1,34 @@
-import cardsData from '../../data/cards.json';
-import { type CharacterCard, CharacterCardSchema } from './schemas';
+/**
+ * Runtime loader for compiled crew (tough) cards.
+ *
+ * Reads `config/compiled/toughs.json`, which the build step produced from
+ * the tuning-history files under `config/raw/cards/toughs/`. The file is
+ * imported as static JSON so Vite bundles it into the web build and
+ * Node's import.meta.url resolver handles it for tsx/vitest tests.
+ */
 
-interface AuthoredCrewCardRecord {
-  id: string;
-  displayName: string;
-  archetype: string;
-  affiliation: string;
-  dayAtk: number;
-  dayDef: number;
-  nightAtk: number;
-  nightDef: number;
-  abilityDesc: string;
-  unlocked: boolean;
-}
+import compiledToughs from '../../../config/compiled/toughs.json';
+import { type CharacterCard, CompiledCrewSchema } from './schemas';
 
-const authoredCards = cardsData as AuthoredCrewCardRecord[];
+const parsed = (compiledToughs as unknown[]).map((entry) => CompiledCrewSchema.parse(entry));
 
-function toCharacterCard(card: AuthoredCrewCardRecord): CharacterCard {
-  const normalized: CharacterCard = {
+function toCharacterCard(card: (typeof parsed)[number]): CharacterCard {
+  return {
     id: card.id,
     displayName: card.displayName,
     archetype: card.archetype,
     affiliation: card.affiliation,
-    // The active turf engine uses one attack/resistance pair, so authored day/night
-    // values are collapsed to the stronger side for now instead of inventing extra rules.
-    power: Math.max(card.dayAtk, card.nightAtk),
-    resistance: Math.max(card.dayDef, card.nightDef),
-    abilityText: card.abilityDesc,
+    power: card.power,
+    resistance: card.resistance,
+    abilityText: card.abilityText,
     unlocked: card.unlocked,
-    locked: false,
+    ...(card.unlockCondition ? { unlockCondition: card.unlockCondition } : {}),
+    locked: card.locked,
   };
-
-  return CharacterCardSchema.parse(normalized);
 }
 
 export function loadAuthoredCrewCards(): CharacterCard[] {
-  return authoredCards.map(toCharacterCard);
+  return parsed.map(toCharacterCard);
 }
 
 export function loadStarterCrewCards(starterCount = 25): CharacterCard[] {

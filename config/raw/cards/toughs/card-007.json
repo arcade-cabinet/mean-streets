@@ -5,14 +5,21 @@
   "archetype": "arsonist",
   "affiliation": "los_diablos",
   "power": [
-    6
+    6,
+    7,
+    8,
+    9
   ],
   "resistance": [
-    2
+    2,
+    3,
+    4,
+    5
   ],
   "abilityText": "On attack: also deals 1 damage to the card behind the vanguard (next in line)",
   "unlocked": true,
   "unlockCondition": null,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "tagline": "Leaves the block a little louder."
 }
