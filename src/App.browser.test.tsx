@@ -1,19 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import App from './App';
-import { buildValidDeck } from './test/browser-helpers';
 import { renderInBrowser, settleBrowser } from './test/render-browser';
-import { resetPersistenceForTests, saveDeckLoadout } from './ui/deckbuilder/storage';
-
-async function waitForEnabled(selector: string, timeoutMs = 5000): Promise<HTMLButtonElement | null> {
-  const started = Date.now();
-  while (Date.now() - started < timeoutMs) {
-    const button = document.querySelector<HTMLButtonElement>(selector);
-    if (button && !button.disabled) return button;
-    await new Promise((resolve) => window.setTimeout(resolve, 50));
-  }
-  return document.querySelector<HTMLButtonElement>(selector);
-}
+import { resetPersistenceForTests } from './ui/deckbuilder/storage';
 
 async function waitForSelector(selector: string, timeoutMs = 5000): Promise<Element | null> {
   const started = Date.now();
@@ -25,6 +14,14 @@ async function waitForSelector(selector: string, timeoutMs = 5000): Promise<Elem
   return document.querySelector(selector);
 }
 
+async function dismissRulesOnboarding(): Promise<void> {
+  const closeBtn = await waitForSelector('[data-testid="close-rules-button"]', 2000);
+  if (closeBtn) {
+    await userEvent.click(closeBtn as HTMLButtonElement);
+    await settleBrowser();
+  }
+}
+
 describe('App flow', () => {
   let cleanup: (() => void) | undefined;
 
@@ -33,105 +30,73 @@ describe('App flow', () => {
     cleanup?.();
   });
 
-  it('routes through the documented menu to deckbuilder flow before reaching combat', async () => {
+  it('renders the v0.2 main menu with all entry points', async () => {
     cleanup = (await renderInBrowser(<App />)).unmount;
 
     expect(document.querySelector('[data-testid="main-menu-screen"]')).not.toBeNull();
-    expect(document.body.textContent).not.toContain('Continue');
-    expect(document.body.textContent).not.toContain('Difficulty');
-
-    await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="new-game-button"]')!);
-    await settleBrowser();
-
-    expect(document.body.textContent).toContain('Rules');
-    await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="close-rules-button"]')!);
-    await settleBrowser();
-
-    expect(document.querySelector('[data-testid="deckbuilder-screen"]')).not.toBeNull();
-
-    const errors: string[] = [];
-    const origOnError = window.onerror;
-    const origUnhandled = window.onunhandledrejection;
-    window.onerror = (msg, src, line, col, err) => {
-      errors.push(`${msg} @ ${src}:${line}:${col} :: ${err?.stack ?? ''}`);
-      return false;
-    };
-    window.onunhandledrejection = (event) => {
-      errors.push(`unhandled: ${event.reason?.stack ?? event.reason}`);
-    };
-
-    try {
-      await buildValidDeck();
-      const startGameButton = await waitForEnabled('[data-testid="start-game-button"]', 5000);
-      if (startGameButton?.disabled !== false) {
-        const selectedCrewCount = document.querySelectorAll('button[data-card-type="crew"].deck-card-selected').length;
-        const selectedWeaponCount = document.querySelectorAll('button[data-card-type="weapon"].deck-card-selected').length;
-        const selectedDrugCount = document.querySelectorAll('button[data-card-type="product"].deck-card-selected').length;
-        const selectedCashCount = document.querySelectorAll('button[data-card-type="cash"].deck-card-selected').length;
-        throw new Error(
-          `start-game-button still disabled after buildValidDeck. ` +
-          `crew=${selectedCrewCount}/25 weapon=${selectedWeaponCount}/19 ` +
-          `drug=${selectedDrugCount}/3 cash=${selectedCashCount}/3`,
-        );
-      }
-      startGameButton.scrollIntoView({ block: 'center', inline: 'center' });
-      await settleBrowser();
-      // Use a native dispatch so the DOM event fires even if the button is
-      // partially outside the playwright click hit-target box on CI viewports.
-      startGameButton.click();
-      await settleBrowser();
-
-      const combat = await waitForSelector('[data-testid="combat-screen"]', 10000);
-      if (!combat) {
-        const visibleScreens: string[] = [];
-        document.querySelectorAll('[data-testid$="-screen"]').forEach((el) => {
-          visibleScreens.push(el.getAttribute('data-testid') ?? '?');
-        });
-        throw new Error(
-          `combat-screen did not mount after start click. visible screens=[${visibleScreens.join(',')}] errors=[${errors.join(' | ')}] body length=${document.body.textContent?.length ?? 0}`,
-        );
-      }
-      expect(document.body.textContent).toContain('The Street');
-    } finally {
-      window.onerror = origOnError;
-      window.onunhandledrejection = origUnhandled;
-    }
+    expect(document.querySelector('[data-testid="new-game-button"]')).not.toBeNull();
+    expect(document.querySelector('[data-testid="load-game-button"]')).not.toBeNull();
+    expect(document.querySelector('[data-testid="collection-button"]')).not.toBeNull();
+    expect(document.querySelector('[data-testid="open-pack-button"]')).not.toBeNull();
   });
 
-  it('opens rules onboarding before the first new game', async () => {
+  it('opens rules onboarding on first New Game, then routes to difficulty', async () => {
     cleanup = (await renderInBrowser(<App />)).unmount;
 
     await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="new-game-button"]')!);
     await settleBrowser();
 
-    expect(document.body.textContent).toContain('Rules');
-    expect(document.body.textContent).toContain('Deck');
-    expect(document.body.textContent).toContain('Combat');
-    expect(document.body.textContent).not.toContain('Continue');
-    expect(document.body.textContent).not.toContain('Difficulty');
+    // First launch: rules onboarding modal appears.
+    expect(await waitForSelector('[data-testid="close-rules-button"]')).not.toBeNull();
+    await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="close-rules-button"]')!);
+    await settleBrowser();
+
+    expect(await waitForSelector('[data-testid="difficulty-screen"]')).not.toBeNull();
+    expect(document.querySelector('[data-testid="diff-tile-easy"]')).not.toBeNull();
+    expect(document.querySelector('[data-testid="diff-tile-medium"]')).not.toBeNull();
+    expect(document.querySelector('[data-testid="diff-tile-hard"]')).not.toBeNull();
+    expect(document.querySelector('[data-testid="diff-tile-nightmare"]')).not.toBeNull();
+    expect(document.querySelector('[data-testid="diff-tile-ultra-nightmare"]')).not.toBeNull();
+    expect(document.querySelector('[data-testid="diff-sudden-death"]')).not.toBeNull();
+    expect(document.querySelector('[data-testid="diff-start"]')).not.toBeNull();
   });
 
-  it('routes to the deck garage when saved decks exist', async () => {
-    window.__MEAN_STREETS_TEST__ = true;
-    await saveDeckLoadout({
-      id: 'deck-night-shift',
-      name: 'Night Shift',
-      crewIds: [],
-      modifierIds: [],
-      updatedAt: new Date().toISOString(),
-    });
+  it('routes Collection entry point to the collection screen', async () => {
+    cleanup = (await renderInBrowser(<App />)).unmount;
 
+    await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="collection-button"]')!);
+    await settleBrowser();
+
+    expect(await waitForSelector('[data-testid="collection-screen"]')).not.toBeNull();
+  });
+
+  it('routes Open Pack entry point to the pack opening screen', async () => {
+    cleanup = (await renderInBrowser(<App />)).unmount;
+
+    await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="open-pack-button"]')!);
+    await settleBrowser();
+
+    expect(await waitForSelector('[data-testid="pack-opening-screen"]')).not.toBeNull();
+  });
+
+  it('difficulty -> start spawns the game screen', async () => {
     cleanup = (await renderInBrowser(<App />)).unmount;
 
     await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="new-game-button"]')!);
     await settleBrowser();
 
-    expect(document.body.textContent).toContain('Rules');
-    await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="close-rules-button"]')!);
+    await dismissRulesOnboarding();
+
+    expect(await waitForSelector('[data-testid="difficulty-screen"]')).not.toBeNull();
+
+    await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="diff-tile-medium"]')!);
     await settleBrowser();
 
-    expect(await waitForSelector('[data-testid="deck-garage-screen"]')).not.toBeNull();
-    expect(document.body.textContent).toContain('Night Shift');
-    expect(document.querySelector('[data-testid="new-deck-button"]')).not.toBeNull();
+    await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="diff-start"]')!);
+    await settleBrowser();
+
+    expect(await waitForSelector('[data-testid="game-screen"]', 10000)).not.toBeNull();
+    expect(document.querySelector('[data-testid="action-budget"]')).not.toBeNull();
+    expect(document.querySelector('[data-testid="hand-row"]')).not.toBeNull();
   });
 });
