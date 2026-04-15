@@ -1,7 +1,8 @@
 {
   "id": "card-069",
-  "type": "crew",
-  "displayName": "Dao \"Fixer\" Morales",
+  "kind": "tough",
+  "name": "Dao \"Fixer\" Morales",
+  "tagline": "Cleans up what others leave behind.",
   "archetype": "fixer",
   "affiliation": "kings_row",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     7
   ],
-  "abilityText": "On play: change one card in your active stack's affiliation to match this card's for the round",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On play: change one card in your active stack's affiliation to match this card's for the round"
+  ],
   "unlocked": false,
   "unlockCondition": "Deal 42 total damage in a single game",
   "locked": false,
-  "draft": true,
-  "tagline": "Cleans up what others leave behind."
+  "draft": true
 }

@@ -1,7 +1,8 @@
 {
   "id": "card-075",
-  "type": "crew",
-  "displayName": "Rosa \"Scar\" Mendoza",
+  "kind": "tough",
+  "name": "Rosa \"Scar\" Mendoza",
+  "tagline": "Reads rooftops like road signs.",
   "archetype": "lookout",
   "affiliation": "reapers",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     7
   ],
-  "abilityText": "On play: peek at the top 2 cards of your own deck, reorder them",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On play: peek at the top 2 cards of your own deck, reorder them"
+  ],
   "unlocked": false,
   "unlockCondition": "Win a game using only cards from 2 affiliations",
   "locked": false,
-  "draft": true,
-  "tagline": "Reads rooftops like road signs."
+  "draft": true
 }

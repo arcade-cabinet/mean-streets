@@ -1,5 +1,5 @@
-import { createRng, type Rng } from '../cards/rng';
-import type { BackpackCard, DeckTemplate, ModifierCard } from './types';
+import type { Rng } from '../cards/rng';
+import type { Card, ToughCard, WeaponCard, DrugCard, CurrencyCard } from './types';
 import type { TurfCardPools } from './catalog';
 import { TURF_SIM_CONFIG } from './ai/config';
 
@@ -8,7 +8,6 @@ const MIN_WEAPONS = DECK_BUILDER_CONFIG.minWeapons;
 const MIN_DRUGS = DECK_BUILDER_CONFIG.minDrugs;
 const TOTAL_MODIFIERS = DECK_BUILDER_CONFIG.totalModifiers;
 const TOTAL_CREW = DECK_BUILDER_CONFIG.totalCrew;
-const TOTAL_BACKPACKS = DECK_BUILDER_CONFIG.totalBackpacks;
 
 export interface AutoDeckPolicy {
   aggressionBias?: number;
@@ -27,12 +26,11 @@ export function buildAutoDeck(
   pools: TurfCardPools,
   rng: Rng,
   policy: AutoDeckPolicy = {},
-): DeckTemplate {
-  const crewPool = pools.crew.filter(card => card.unlocked);
-  const weaponPool = pools.weapons.filter(card => card.unlocked);
-  const drugPool = pools.drugs.filter(card => card.unlocked);
-  const cashPool = [...pools.cash];
-  const backpackPool = pools.backpacks.filter(card => card.unlocked);
+): Card[] {
+  const crewPool = [...pools.crew] as ToughCard[];
+  const weaponPool = [...pools.weapons] as WeaponCard[];
+  const drugPool = [...pools.drugs] as DrugCard[];
+  const cashPool = [...pools.cash] as CurrencyCard[];
 
   const aggressionBias = normalizeBias(policy.aggressionBias, 0.5);
   const controlBias = normalizeBias(policy.controlBias, 0.5);
@@ -46,6 +44,7 @@ export function buildAutoDeck(
     ...forcedCrew,
     ...rng.shuffle(crewPool.filter(card => !forcedIds.has(card.id))).slice(0, Math.max(0, TOTAL_CREW - forcedCrew.length)),
   ].slice(0, TOTAL_CREW);
+
   const weaponBudget = 3 + Math.round((aggressionBias + controlBias) * 2) + Math.round(synergyBias);
   const maxExtraWeapons = Math.max(0, Math.min(8, weaponBudget + rng.int(0, Math.max(1, Math.round(explorationBias * 4)))));
   const extraWeapons = rng.int(0, maxExtraWeapons);
@@ -75,16 +74,6 @@ export function buildAutoDeck(
     ...rng.shuffle(drugPool.filter(card => !forcedIds.has(card.id))).slice(0, Math.max(0, drugCount - forcedDrugs.length)),
   ].slice(0, drugCount);
   const cash = rng.shuffle([...cashPool]).slice(0, cashCount);
-  const modifiers = rng.shuffle([...weapons, ...drugs, ...cash] as ModifierCard[]);
-  const forcedBackpacks = backpackPool.filter(card => forcedIds.has(card.id));
-  const backpackRng = createRng(rng.seed + 9001);
-  const backpacks = [
-    ...forcedBackpacks,
-    ...backpackRng.shuffle(backpackPool.filter(card => !forcedIds.has(card.id))).slice(0, Math.max(0, TOTAL_BACKPACKS - forcedBackpacks.length)),
-  ].slice(0, TOTAL_BACKPACKS).map((card): BackpackCard => ({
-    ...card,
-    payload: card.payload.map(payload => ({ ...payload })),
-  }));
 
-  return { crew, modifiers, backpacks };
+  return rng.shuffle([...crew, ...weapons, ...drugs, ...cash] as Card[]);
 }

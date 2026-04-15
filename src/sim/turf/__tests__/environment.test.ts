@@ -1,240 +1,315 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_TURF_CONFIG } from '../types';
+import { DEFAULT_GAME_CONFIG } from '../types';
+import type { Card, GameConfig, PlayerState, TurfGameState } from '../types';
 import {
-  createInitialTurfState,
-  createObservation,
-  enumerateLegalActions,
-  normalizeActionKey,
+  actionsForTurn,
+  drawPhase,
+  emptyMetrics,
+  emptyPlannerMemory,
   stepAction,
 } from '../environment';
-import { createBoard, placeCrew, placeModifier } from '../board';
-import type { BackpackCard, CashCard, CrewCard, TurfGameState, WeaponCard } from '../types';
+import {
+  createObservation,
+  enumerateLegalActions,
+} from '../env-query';
+import { createTurf, addToStack, resetTurfIdCounter } from '../board';
+import { createRng } from '../../cards/rng';
+import type { ToughCard, WeaponCard, DrugCard, CurrencyCard } from '../types';
 
-function clearHands(state: TurfGameState): void {
-  for (const side of ['A', 'B'] as const) {
-    state.players[side].crewDraw = [];
-    state.players[side].modifierDraw = [];
-    state.players[side].backpackDraw = [];
-    state.players[side].hand.crew = [];
-    state.players[side].hand.modifiers = [];
-    state.players[side].hand.backpacks = [];
-  }
-}
-
-function crew(id: string): CrewCard {
+function tough(id: string, power = 4, resistance = 4): ToughCard {
   return {
-    type: 'crew',
-    id,
-    displayName: id,
-    archetype: 'bruiser',
-    affiliation: 'freelance',
-    power: 4,
-    resistance: 4,
-    abilityText: '',
-    unlocked: true,
-    locked: false,
+    kind: 'tough', id, name: id, tagline: '', archetype: 'bruiser',
+    affiliation: 'freelance', power, resistance, rarity: 'common', abilities: [],
   };
 }
 
-function weapon(id: string): WeaponCard {
+function weapon(id: string, power = 3): WeaponCard {
   return {
-    type: 'weapon',
-    id,
-    name: id,
-    category: 'ranged',
-    bonus: 3,
-    offenseAbility: 'SUPPRESS',
-    offenseAbilityText: '',
-    defenseAbility: 'PARRY',
-    defenseAbilityText: '',
-    unlocked: true,
-    locked: false,
+    kind: 'weapon', id, name: id, category: 'ranged',
+    power, resistance: 2, rarity: 'common', abilities: [],
   };
 }
 
-function cash(id: string): CashCard {
+function drug(id: string): DrugCard {
   return {
-    type: 'cash',
-    id,
-    denomination: 100,
+    kind: 'drug', id, name: id, category: 'stimulant',
+    power: 2, resistance: 2, rarity: 'common', abilities: [],
   };
 }
 
-function backpack(id: string): BackpackCard {
+function currency(id: string, denomination: 100 | 1000 = 100): CurrencyCard {
+  return { kind: 'currency', id, name: id, denomination, rarity: 'common' };
+}
+
+function makePlayer(turfs: number, handCards: Card[] = []): PlayerState {
+  const t = [];
+  for (let i = 0; i < turfs; i++) t.push(createTurf());
   return {
-    type: 'backpack',
-    id,
-    name: id,
-    icon: 'crate',
-    size: 2,
-    payload: [cash(`${id}-cash`), weapon(`${id}-weapon`)],
-    unlocked: true,
-    locked: false,
+    turfs: t, hand: [...handCards], deck: [], discard: [],
+    toughsInPlay: 0, actionsRemaining: 5,
   };
 }
 
-describe('turf environment', () => {
-  it('enumerates legal actions deterministically for the same seed', () => {
-    const first = createInitialTurfState(DEFAULT_TURF_CONFIG, 1234);
-    const second = createInitialTurfState(DEFAULT_TURF_CONFIG, 1234);
+function makeState(overrides: Partial<TurfGameState> = {}): TurfGameState {
+  resetTurfIdCounter();
+  return {
+    config: { ...DEFAULT_GAME_CONFIG },
+    players: {
+      A: makePlayer(2),
+      B: makePlayer(2),
+    },
+    turnSide: 'A',
+    firstPlayer: 'A',
+    turnNumber: 1,
+    phase: 'combat',
+    hasStruck: { A: false, B: false },
+    aiState: { A: 'BUILDING', B: 'BUILDING' },
+    aiTurnsInState: { A: 0, B: 0 },
+    aiMemory: { A: emptyPlannerMemory(), B: emptyPlannerMemory() },
+    plannerTrace: [],
+    policySamples: [],
+    rng: createRng(42),
+    seed: 42,
+    winner: null,
+    endReason: null,
+    metrics: emptyMetrics(),
+    ...overrides,
+  };
+}
 
-    const actionsA = enumerateLegalActions(first.state, 'A').map(normalizeActionKey);
-    const actionsB = enumerateLegalActions(second.state, 'A').map(normalizeActionKey);
-
-    expect(actionsA).toEqual(actionsB);
+describe('actionsForTurn', () => {
+  it('returns firstTurnActions for turn 1', () => {
+    expect(actionsForTurn(DEFAULT_GAME_CONFIG, 1)).toBe(5);
   });
 
-  it('builds a stable observation state key for identical state', () => {
-    const first = createInitialTurfState(DEFAULT_TURF_CONFIG, 99);
-    const second = createInitialTurfState(DEFAULT_TURF_CONFIG, 99);
-
-    expect(createObservation(first.state, 'A').stateKey).toBe(createObservation(second.state, 'A').stateKey);
+  it('returns actionsPerTurn for turn 2+', () => {
+    expect(actionsForTurn(DEFAULT_GAME_CONFIG, 2)).toBe(3);
+    expect(actionsForTurn(DEFAULT_GAME_CONFIG, 10)).toBe(3);
   });
 
-  it('coarsens combat state keys across equivalent tactical lane shapes', () => {
-    const first = createInitialTurfState(DEFAULT_TURF_CONFIG, 3).state as TurfGameState;
-    const second = createInitialTurfState(DEFAULT_TURF_CONFIG, 4).state as TurfGameState;
+  it('respects custom config', () => {
+    const config: GameConfig = { ...DEFAULT_GAME_CONFIG, actionsPerTurn: 4, firstTurnActions: 6 };
+    expect(actionsForTurn(config, 1)).toBe(6);
+    expect(actionsForTurn(config, 3)).toBe(4);
+  });
+});
 
-    first.phase = 'combat';
-    second.phase = 'combat';
-    first.players.A.board = createBoard('A', 5, 5);
-    first.players.B.board = createBoard('B', 5, 5);
-    second.players.A.board = createBoard('A', 5, 5);
-    second.players.B.board = createBoard('B', 5, 5);
-    clearHands(first);
-    clearHands(second);
+describe('stepAction — play_card', () => {
+  it('plays a tough onto a turf', () => {
+    const state = makeState();
+    const t = tough('t1');
+    state.players.A.hand = [t];
 
-    placeCrew(first.players.A.board, 0, crew('a0'));
-    placeCrew(second.players.A.board, 3, crew('a3'));
-    placeCrew(first.players.B.board, 2, crew('b2'));
-    placeCrew(second.players.B.board, 1, crew('b1'));
+    const result = stepAction(state, { kind: 'play_card', side: 'A', turfIdx: 0, cardId: 't1' });
 
-    placeModifier(first.players.A.board, 0, weapon('gun-1'), 'offense');
-    placeModifier(second.players.A.board, 3, weapon('gun-2'), 'offense');
-    placeModifier(first.players.A.board, 0, cash('cash-1'), 'offense');
-    placeModifier(second.players.A.board, 3, cash('cash-2'), 'offense');
-
-    expect(createObservation(first, 'A').stateKey).toBe(createObservation(second, 'A').stateKey);
+    expect(result.reward).toBe(1);
+    expect(state.players.A.turfs[0].stack).toHaveLength(1);
+    expect(state.players.A.toughsInPlay).toBe(1);
+    expect(state.players.A.hand).toHaveLength(0);
+    expect(state.metrics.toughsPlayed).toBe(1);
+    expect(state.metrics.cardsPlayed).toBe(1);
+    expect(state.players.A.actionsRemaining).toBe(4);
   });
 
-  it('coarsens focused combat state keys across equivalent tactical lane shapes', () => {
-    const first = createInitialTurfState(DEFAULT_TURF_CONFIG, 3).state as TurfGameState;
-    const second = createInitialTurfState(DEFAULT_TURF_CONFIG, 4).state as TurfGameState;
+  it('plays a modifier onto a turf with a tough', () => {
+    const state = makeState();
+    const t = tough('t1');
+    const w = weapon('w1');
+    addToStack(state.players.A.turfs[0], t);
+    state.players.A.toughsInPlay = 1;
+    state.players.A.hand = [w];
 
-    first.phase = 'combat';
-    second.phase = 'combat';
-    first.players.A.board = createBoard('A', 5, 5);
-    first.players.B.board = createBoard('B', 5, 5);
-    second.players.A.board = createBoard('A', 5, 5);
-    second.players.B.board = createBoard('B', 5, 5);
-    clearHands(first);
-    clearHands(second);
+    const result = stepAction(state, { kind: 'play_card', side: 'A', turfIdx: 0, cardId: 'w1' });
 
-    placeCrew(first.players.A.board, 0, crew('a0'));
-    placeCrew(second.players.A.board, 3, crew('a3'));
-    placeCrew(first.players.B.board, 2, crew('b2'));
-    placeCrew(second.players.B.board, 1, crew('b1'));
-
-    placeModifier(first.players.A.board, 0, weapon('gun-1'), 'offense');
-    placeModifier(second.players.A.board, 3, weapon('gun-2'), 'offense');
-    placeModifier(first.players.A.board, 0, cash('cash-1'), 'offense');
-    placeModifier(second.players.A.board, 3, cash('cash-2'), 'offense');
-
-    first.aiMemory.A.focusLane = 0;
-    first.aiMemory.A.focusRole = 'funded';
-    second.aiMemory.A.focusLane = 3;
-    second.aiMemory.A.focusRole = 'funded';
-
-    expect(createObservation(first, 'A').stateKey).toBe(createObservation(second, 'A').stateKey);
+    expect(result.reward).toBe(0.75);
+    expect(state.players.A.turfs[0].stack).toHaveLength(2);
+    expect(state.metrics.modifiersPlayed).toBe(1);
   });
 
-  it('distinguishes focused combat state keys from unfocused ones', () => {
-    const state = createInitialTurfState(DEFAULT_TURF_CONFIG, 3).state as TurfGameState;
+  it('rejects modifier with no toughs in play (draw-gate)', () => {
+    const state = makeState();
+    state.players.A.hand = [weapon('w1')];
 
-    state.phase = 'combat';
-    state.players.A.board = createBoard('A', 5, 5);
-    state.players.B.board = createBoard('B', 5, 5);
-    clearHands(state);
-
-    placeCrew(state.players.A.board, 0, crew('a0'));
-    placeCrew(state.players.B.board, 2, crew('b2'));
-    placeModifier(state.players.A.board, 0, weapon('gun-1'), 'offense');
-    placeModifier(state.players.A.board, 0, cash('cash-1'), 'offense');
-
-    const unfocused = createObservation(state, 'A').stateKey;
-    state.aiMemory.A.focusLane = 0;
-    state.aiMemory.A.focusRole = 'funded';
-    const focused = createObservation(state, 'A').stateKey;
-
-    expect(focused).not.toBe(unfocused);
+    expect(() => {
+      stepAction(state, { kind: 'play_card', side: 'A', turfIdx: 0, cardId: 'w1' });
+    }).toThrow('Draw-gate');
   });
 
-  it('does not mark a direct-only attack lane as funded focus after attacking', () => {
-    const state = createInitialTurfState(DEFAULT_TURF_CONFIG, 7).state as TurfGameState;
-    state.phase = 'combat';
-    state.players.A.board = createBoard('A', 5, 5);
-    state.players.B.board = createBoard('B', 5, 5);
-    clearHands(state);
+  it('rejects modifier on empty turf even if toughs exist elsewhere', () => {
+    const state = makeState();
+    addToStack(state.players.A.turfs[0], tough('t1'));
+    state.players.A.toughsInPlay = 1;
+    state.players.A.hand = [weapon('w1')];
 
-    placeCrew(state.players.A.board, 0, crew('attacker'));
-    placeCrew(state.players.B.board, 0, crew('defender'));
-    placeModifier(state.players.A.board, 0, weapon('gun-1'), 'offense');
-    state.players.A.board.active[0].turnsActive = 1;
+    expect(() => {
+      stepAction(state, { kind: 'play_card', side: 'A', turfIdx: 1, cardId: 'w1' });
+    }).toThrow('Cannot play modifier on empty turf');
+  });
+});
 
-    stepAction(state, { kind: 'direct_attack', side: 'A', attackerIdx: 0, targetIdx: 0 });
+describe('stepAction — discard', () => {
+  it('discards a card for free (no action cost)', () => {
+    const state = makeState();
+    state.players.A.hand = [weapon('w1')];
 
-    expect(state.aiMemory.A.laneRoles[0]).toBeUndefined();
-    expect(state.aiMemory.A.focusLane).toBeNull();
-    expect(state.aiMemory.A.focusRole).toBeNull();
+    const result = stepAction(state, { kind: 'discard', side: 'A', cardId: 'w1' });
+
+    expect(state.players.A.actionsRemaining).toBe(5);
+    expect(state.players.A.discard).toHaveLength(1);
+    expect(state.metrics.cardsDiscarded).toBe(1);
+    expect(result.reward).toBe(-0.25);
+    expect(state.metrics.totalActions).toBe(0);
+  });
+});
+
+describe('stepAction — end_turn', () => {
+  it('zeroes remaining actions for free', () => {
+    const state = makeState();
+    state.players.A.actionsRemaining = 3;
+
+    stepAction(state, { kind: 'end_turn', side: 'A' });
+
+    expect(state.players.A.actionsRemaining).toBe(0);
+    expect(state.metrics.totalActions).toBe(0);
+  });
+});
+
+describe('stepAction — direct_strike', () => {
+  it('kills when power >= resistance', () => {
+    const state = makeState();
+    addToStack(state.players.A.turfs[0], tough('attacker', 10, 5));
+    state.players.A.toughsInPlay = 1;
+    addToStack(state.players.B.turfs[0], tough('defender', 3, 5));
+    state.players.B.toughsInPlay = 1;
+
+    const result = stepAction(state, {
+      kind: 'direct_strike', side: 'A', turfIdx: 0, targetTurfIdx: 0,
+    });
+
+    expect(result.reason).toContain('kill');
+    expect(state.metrics.directStrikes).toBe(1);
+    expect(state.metrics.kills).toBe(1);
+    expect(state.players.B.toughsInPlay).toBe(0);
   });
 
-  it('enumerates and executes reserve crew, backpack equip, and runner deployment during buildup', () => {
-    const state = createInitialTurfState(DEFAULT_TURF_CONFIG, 11).state as TurfGameState;
-    state.phase = 'buildup';
-    state.players.A.board = createBoard('A', 5, 5);
-    state.players.B.board = createBoard('B', 5, 5);
-    clearHands(state);
-    state.players.A.hand.crew = [crew('runner-seed')];
-    state.players.A.hand.backpacks = [backpack('pack-a')];
+  it('seizes turf when last tough killed', () => {
+    const state = makeState();
+    addToStack(state.players.A.turfs[0], tough('attacker', 10, 5));
+    state.players.A.toughsInPlay = 1;
+    addToStack(state.players.B.turfs[0], tough('defender', 3, 5));
+    state.players.B.toughsInPlay = 1;
 
-    const reserveCrewAction = enumerateLegalActions(state, 'A').find(action => action.kind === 'place_reserve_crew');
-    expect(reserveCrewAction).toBeTruthy();
-    stepAction(state, reserveCrewAction!);
-    expect(state.players.A.board.reserve[0].crew?.id).toBe('runner-seed');
+    stepAction(state, {
+      kind: 'direct_strike', side: 'A', turfIdx: 0, targetTurfIdx: 0,
+    });
 
-    const equipAction = enumerateLegalActions(state, 'A').find(action => action.kind === 'equip_backpack');
-    expect(equipAction).toBeTruthy();
-    stepAction(state, equipAction!);
+    expect(state.metrics.seizures).toBe(1);
+    expect(state.players.B.turfs).toHaveLength(1);
+  });
+});
 
-    // RULES.md §7: equipping a backpack to a reserve grants a FREE
-    // swap into active. The runner now sits in the first empty
-    // active slot, not on the reserve row.
-    expect(state.players.A.board.active[0].crew?.id).toBe('runner-seed');
-    expect(state.players.A.board.active[0].backpack?.id).toBe('pack-a');
-    expect(state.players.A.board.active[0].runner).toBe(true);
-    expect(state.players.A.board.reserve[0].crew).toBeNull();
+describe('stepAction — funded_recruit', () => {
+  it('recruits when enough cash', () => {
+    const state = makeState();
+    addToStack(state.players.A.turfs[0], tough('attacker', 5, 5));
+    state.players.A.toughsInPlay = 1;
+    for (let i = 0; i < 10; i++) {
+      addToStack(state.players.A.turfs[0], currency(`c${i}`));
+    }
+    addToStack(state.players.B.turfs[0], tough('target', 3, 2));
+    state.players.B.toughsInPlay = 1;
+
+    const result = stepAction(state, {
+      kind: 'funded_recruit', side: 'A', turfIdx: 0, targetTurfIdx: 0,
+    });
+
+    expect(result.reason).toContain('kill');
+    expect(state.metrics.fundedRecruits).toBe(1);
+    expect(state.players.A.toughsInPlay).toBe(2);
+    expect(state.players.B.toughsInPlay).toBe(0);
+  });
+});
+
+describe('stepAction — pass', () => {
+  it('costs an action and records metric', () => {
+    const state = makeState();
+
+    stepAction(state, { kind: 'pass', side: 'A' });
+
+    expect(state.players.A.actionsRemaining).toBe(4);
+    expect(state.metrics.passes).toBe(1);
+    expect(state.metrics.totalActions).toBe(1);
+  });
+});
+
+describe('win detection', () => {
+  it('declares winner when opponent has 0 turfs', () => {
+    const state = makeState();
+    state.players.B = makePlayer(1);
+    addToStack(state.players.A.turfs[0], tough('a', 20, 5));
+    state.players.A.toughsInPlay = 1;
+    addToStack(state.players.B.turfs[0], tough('d', 1, 1));
+    state.players.B.toughsInPlay = 1;
+
+    const result = stepAction(state, {
+      kind: 'direct_strike', side: 'A', turfIdx: 0, targetTurfIdx: 0,
+    });
+
+    expect(result.terminal).toBe(true);
+    expect(state.winner).toBe('A');
+    expect(state.endReason).toBe('total_seizure');
+  });
+});
+
+describe('drawPhase', () => {
+  it('draws one card from deck to hand', () => {
+    const state = makeState();
+    state.players.A.deck = [tough('d1'), weapon('d2')];
+
+    drawPhase(state, 'A');
+
+    expect(state.players.A.hand).toHaveLength(1);
+    expect(state.players.A.deck).toHaveLength(1);
+    expect(state.players.A.hand[0].id).toBe('d1');
+  });
+});
+
+describe('enumerateLegalActions', () => {
+  it('excludes modifier play_card when no toughs in play', () => {
+    const state = makeState();
+    state.players.A.hand = [weapon('w1'), drug('d1'), currency('c1')];
+
+    const actions = enumerateLegalActions(state, 'A');
+    const playActions = actions.filter(a => a.kind === 'play_card');
+
+    expect(playActions).toHaveLength(0);
   });
 
-  it('deploys payload from an active runner backpack into board slots', () => {
-    const state = createInitialTurfState(DEFAULT_TURF_CONFIG, 12).state as TurfGameState;
-    state.phase = 'buildup';
-    state.players.A.board = createBoard('A', 5, 5);
-    state.players.B.board = createBoard('B', 5, 5);
-    clearHands(state);
-    state.players.A.hand.crew = [crew('runner-seed')];
-    state.players.A.hand.backpacks = [backpack('pack-b')];
+  it('includes tough play_card even when no toughs in play', () => {
+    const state = makeState();
+    state.players.A.hand = [tough('t1')];
 
-    stepAction(state, enumerateLegalActions(state, 'A').find(action => action.kind === 'place_reserve_crew')!);
-    // equip already lands the runner in active via the §7 free swap;
-    // no separate deploy_runner step needed.
-    stepAction(state, enumerateLegalActions(state, 'A').find(action => action.kind === 'equip_backpack')!);
+    const actions = enumerateLegalActions(state, 'A');
+    const playActions = actions.filter(a => a.kind === 'play_card');
 
-    const payloadAction = enumerateLegalActions(state, 'A').find(action => action.kind === 'deploy_payload' && action.slot === 'offense');
-    expect(payloadAction).toBeTruthy();
-    stepAction(state, payloadAction!);
+    expect(playActions.length).toBeGreaterThan(0);
+  });
 
-    const lane = state.players.A.board.active[0];
-    expect(lane.payloadRemaining).toBe(1);
-    expect(Boolean(lane.cashLeft) || Boolean(lane.weaponTop)).toBe(true);
+  it('always includes end_turn', () => {
+    const state = makeState();
+    const actions = enumerateLegalActions(state, 'A');
+
+    expect(actions[actions.length - 1].kind).toBe('end_turn');
+  });
+});
+
+describe('observation', () => {
+  it('builds an observation with correct turf counts', () => {
+    const state = makeState();
+    const obs = createObservation(state, 'A');
+
+    expect(obs.ownTurfCount).toBe(2);
+    expect(obs.opponentTurfCount).toBe(2);
+    expect(obs.actionsRemaining).toBe(5);
   });
 });

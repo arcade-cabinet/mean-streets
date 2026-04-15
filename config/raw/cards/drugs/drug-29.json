@@ -1,15 +1,21 @@
 {
   "id": "drug-29",
-  "type": "product",
+  "kind": "drug",
   "name": "Fractal Prism",
   "category": "hallucinogen",
-  "potency": [
+  "power": [
     3
   ],
-  "offenseAbility": "CONFUSE",
-  "offenseAbilityText": "Funded flip threshold reduced by potency.",
-  "defenseAbility": "PARANOIA",
-  "defenseAbilityText": "Funded flips against this crew cost potency extra cash.",
+  "resistance": [
+    1
+  ],
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "CONFUSE",
+    "PARANOIA"
+  ],
   "unlocked": false,
   "unlockCondition": "Use 16 drugs in total across games",
   "locked": false,

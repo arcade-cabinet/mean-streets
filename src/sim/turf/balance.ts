@@ -1,16 +1,15 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
-import type { ProductCard, TurfGameResult, WeaponCard, CrewCard } from './types';
+import type { TurfGameResult } from './types';
 import type { TurfCardPools } from './catalog';
 import { TURF_SIM_CONFIG } from './ai/config';
 
-type BalanceCard = CrewCard | WeaponCard | ProductCard;
-type BalanceCardType = BalanceCard['type'];
+type BalanceCardKind = 'tough' | 'weapon' | 'drug';
 
 export interface BalanceCatalogEntry {
   id: string;
   name: string;
-  type: BalanceCardType;
+  kind: BalanceCardKind;
   category: string;
   stat: number;
   locked: boolean;
@@ -19,7 +18,7 @@ export interface BalanceCatalogEntry {
 export interface CardPerformance {
   id: string;
   name: string;
-  type: BalanceCardType;
+  kind: BalanceCardKind;
   category: string;
   includedCount: number;
   includedWinRate: number;
@@ -36,9 +35,9 @@ export interface CardPerformance {
 export interface BalanceRecommendation {
   cardId: string;
   cardName: string;
-  type: BalanceCardType;
+  kind: BalanceCardKind;
   category: string;
-  field: 'power' | 'resistance' | 'bonus' | 'potency';
+  field: 'power' | 'resistance';
   currentValue: number;
   recommendedValue: number;
   direction: 'up' | 'down';
@@ -72,7 +71,7 @@ export interface BalanceHistoryCardState {
 }
 
 export interface BalanceHistory {
-  version: 1;
+  version: 2;
   cards: Record<string, BalanceHistoryCardState>;
 }
 
@@ -80,8 +79,8 @@ export interface BalanceAnalysis {
   overview: {
     sideAppearances: number;
     winningSides: number;
-    locked: Record<'crew' | 'weapon' | 'product', number>;
-    unlocked: Record<'crew' | 'weapon' | 'product', number>;
+    locked: Record<BalanceCardKind, number>;
+    unlocked: Record<BalanceCardKind, number>;
   };
   performances: CardPerformance[];
   recommendations: BalanceRecommendation[];
@@ -108,13 +107,13 @@ const LOCK_DELTA_THRESHOLD = BALANCE_CONFIG.lockDeltaThreshold;
 const RECOMMENDATION_DELTA_THRESHOLD = BALANCE_CONFIG.recommendationDeltaThreshold;
 const MIN_CARD_SAMPLE = BALANCE_CONFIG.minCardSample;
 const MIN_PAIR_SAMPLE = BALANCE_CONFIG.minPairSample;
-const HISTORY_VERSION = 1;
+const HISTORY_VERSION = 2;
 const CONSECUTIVE_STABLE_RUNS_TO_LOCK = BALANCE_CONFIG.consecutiveStableRunsToLock;
 const USAGE_Z_SCORE_STABILITY_MAX = BALANCE_CONFIG.usageZScoreStabilityMax;
 
 function stdDev(values: number[], mean: number): number {
   if (values.length < 2) return 0;
-  const variance = values.reduce((sum, value) => sum + ((value - mean) ** 2), 0) / values.length;
+  const variance = values.reduce((sum, v) => sum + ((v - mean) ** 2), 0) / values.length;
   return Math.sqrt(variance);
 }
 
@@ -130,54 +129,53 @@ function matchupKey(cardId: string, opponentId: string): string {
   return `${cardId}=>${opponentId}`;
 }
 
-function primaryStatField(card: BalanceCatalogEntry): BalanceRecommendation['field'] {
-  switch (card.type) {
-    case 'crew':
-      return card.category === 'crew-resistance' ? 'resistance' : 'power';
-    case 'weapon':
-      return 'bonus';
-    case 'product':
-      return 'potency';
+function primaryStatField(card: BalanceCatalogEntry): 'power' | 'resistance' {
+  if (card.kind === 'tough') {
+    return card.category === 'crew-resistance' ? 'resistance' : 'power';
   }
+  return 'power';
 }
 
-function buildCatalog(pools: TurfCardPools, history: BalanceHistory): Map<string, BalanceCatalogEntry> {
+function buildCatalog(
+  pools: TurfCardPools,
+  history: BalanceHistory,
+): Map<string, BalanceCatalogEntry> {
   const entries = new Map<string, BalanceCatalogEntry>();
 
   for (const card of pools.crew) {
-    const historyState = history.cards[card.id];
+    const histState = history.cards[card.id];
     const field = card.power >= card.resistance ? 'crew-power' : 'crew-resistance';
     entries.set(card.id, {
       id: card.id,
-      name: card.displayName,
-      type: 'crew',
+      name: card.name,
+      kind: 'tough',
       category: field,
       stat: field === 'crew-power' ? card.power : card.resistance,
-      locked: historyState?.locked ?? card.locked,
+      locked: histState?.locked ?? false,
     });
   }
 
   for (const card of pools.weapons) {
-    const historyState = history.cards[card.id];
+    const histState = history.cards[card.id];
     entries.set(card.id, {
       id: card.id,
       name: card.name,
-      type: 'weapon',
+      kind: 'weapon',
       category: card.category,
-      stat: card.bonus,
-      locked: historyState?.locked ?? card.locked,
+      stat: card.power,
+      locked: histState?.locked ?? false,
     });
   }
 
   for (const card of pools.drugs) {
-    const historyState = history.cards[card.id];
+    const histState = history.cards[card.id];
     entries.set(card.id, {
       id: card.id,
       name: card.name,
-      type: 'product',
+      kind: 'drug',
       category: card.category,
-      stat: card.potency,
-      locked: historyState?.locked ?? card.locked,
+      stat: card.power,
+      locked: histState?.locked ?? false,
     });
   }
 
@@ -186,17 +184,20 @@ function buildCatalog(pools: TurfCardPools, history: BalanceHistory): Map<string
 
 export function loadBalanceHistory(path: string): BalanceHistory {
   try {
-    const parsed = JSON.parse(readFileSync(path, 'utf8')) as BalanceHistory;
-    if (parsed.version !== HISTORY_VERSION || !parsed.cards) {
-      return { version: HISTORY_VERSION, cards: {} };
+    const parsed = JSON.parse(readFileSync(path, 'utf8'));
+    if (parsed.version === 1 || parsed.version === 2) {
+      return { version: HISTORY_VERSION, cards: parsed.cards ?? {} };
     }
-    return parsed;
+    return { version: HISTORY_VERSION, cards: {} };
   } catch {
     return { version: HISTORY_VERSION, cards: {} };
   }
 }
 
-export function saveBalanceHistory(path: string, history: BalanceHistory): void {
+export function saveBalanceHistory(
+  path: string,
+  history: BalanceHistory,
+): void {
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, `${JSON.stringify(history, null, 2)}\n`, 'utf8');
 }
@@ -206,12 +207,12 @@ function buildSideDecks(results: TurfGameResult[]): SideDeck[] {
     {
       side: 'A' as const,
       won: result.winner === 'A',
-      ids: [...result.decks.A.crewIds, ...result.decks.A.modifierIds],
+      ids: result.decks.A.cardIds,
     },
     {
       side: 'B' as const,
       won: result.winner === 'B',
-      ids: [...result.decks.B.crewIds, ...result.decks.B.modifierIds],
+      ids: result.decks.B.cardIds,
     },
   ]));
 }
@@ -224,21 +225,19 @@ export function analyzeBalanceResults(
   const catalog = buildCatalog(pools, previousHistory);
   const sideDecks = buildSideDecks(results);
   const sideAppearances = sideDecks.length;
-  const winningSides = sideDecks.filter(side => side.won).length;
+  const winningSides = sideDecks.filter(s => s.won).length;
   const included = new Map<string, PairStat>();
   const synergyStats = new Map<string, PairStat>();
   const matchupStats = new Map<string, PairStat>();
 
   for (const deck of sideDecks) {
     const balanceIds = deck.ids.filter(id => catalog.has(id));
-
     for (const id of balanceIds) {
       const stat = included.get(id) ?? { appearances: 0, wins: 0 };
       stat.appearances++;
       if (deck.won) stat.wins++;
       included.set(id, stat);
     }
-
     for (let i = 0; i < balanceIds.length; i++) {
       for (let j = i + 1; j < balanceIds.length; j++) {
         const key = pairKey(balanceIds[i], balanceIds[j]);
@@ -251,9 +250,8 @@ export function analyzeBalanceResults(
   }
 
   for (const result of results) {
-    const aIds = [...result.decks.A.crewIds, ...result.decks.A.modifierIds].filter(id => catalog.has(id));
-    const bIds = [...result.decks.B.crewIds, ...result.decks.B.modifierIds].filter(id => catalog.has(id));
-
+    const aIds = result.decks.A.cardIds.filter(id => catalog.has(id));
+    const bIds = result.decks.B.cardIds.filter(id => catalog.has(id));
     for (const aId of aIds) {
       for (const bId of bIds) {
         const aKey = matchupKey(aId, bId);
@@ -261,7 +259,6 @@ export function analyzeBalanceResults(
         aStat.appearances++;
         if (result.winner === 'A') aStat.wins++;
         matchupStats.set(aKey, aStat);
-
         const bKey = matchupKey(bId, aId);
         const bStat = matchupStats.get(bKey) ?? { appearances: 0, wins: 0 };
         bStat.appearances++;
@@ -271,7 +268,7 @@ export function analyzeBalanceResults(
     }
   }
 
-  const rawPerformances: CardPerformance[] = [];
+  const rawPerfs: CardPerformance[] = [];
   const byCategory = new Map<string, CardPerformance[]>();
 
   for (const card of catalog.values()) {
@@ -283,10 +280,10 @@ export function analyzeBalanceResults(
     const excludedWinRate = excludedCount === 0 ? 0.5 : excludedWins / excludedCount;
     const usageRate = sideAppearances === 0 ? 0 : includedCount / sideAppearances;
 
-    const performance: CardPerformance = {
+    const perf: CardPerformance = {
       id: card.id,
       name: card.name,
-      type: card.type,
+      kind: card.kind,
       category: card.category,
       includedCount,
       includedWinRate: round(includedWinRate),
@@ -299,27 +296,26 @@ export function analyzeBalanceResults(
       locked: card.locked,
       stableThisRun: false,
     };
-
-    rawPerformances.push(performance);
-    const groupKey = `${card.type}:${card.category}`;
+    rawPerfs.push(perf);
+    const groupKey = `${card.kind}:${card.category}`;
     const group = byCategory.get(groupKey) ?? [];
-    group.push(performance);
+    group.push(perf);
     byCategory.set(groupKey, group);
   }
 
   for (const group of byCategory.values()) {
-    const mean = group.reduce((sum, perf) => sum + perf.usageRate, 0) / group.length;
-    const deviation = stdDev(group.map(perf => perf.usageRate), mean);
-    for (const perf of group) {
-      perf.usageMean = round(mean);
-      perf.usageStdDev = round(deviation);
-      perf.usageZScore = deviation === 0 ? 0 : round((perf.usageRate - mean) / deviation);
+    const mean = group.reduce((sum, p) => sum + p.usageRate, 0) / group.length;
+    const deviation = stdDev(group.map(p => p.usageRate), mean);
+    for (const p of group) {
+      p.usageMean = round(mean);
+      p.usageStdDev = round(deviation);
+      p.usageZScore = deviation === 0 ? 0 : round((p.usageRate - mean) / deviation);
     }
   }
 
   const recommendations: BalanceRecommendation[] = [];
 
-  for (const perf of rawPerformances) {
+  for (const perf of rawPerfs) {
     const current = catalog.get(perf.id)!;
     const enoughSample = perf.includedCount >= MIN_CARD_SAMPLE;
     const hasUsageStability = Math.abs(perf.usageZScore) <= USAGE_Z_SCORE_STABILITY_MAX;
@@ -329,10 +325,9 @@ export function analyzeBalanceResults(
       && Math.abs(perf.winRateDelta) < LOCK_DELTA_THRESHOLD
       && hasUsageStability;
     perf.stableThisRun = stableThisRun;
-
     if (current.locked || !needsAdjustment) continue;
 
-    const direction: BalanceRecommendation['direction'] = perf.winRateDelta > 0 ? 'down' : 'up';
+    const direction: 'up' | 'down' = perf.winRateDelta > 0 ? 'down' : 'up';
     const field = primaryStatField(current);
     const adjustment = direction === 'down' ? -1 : 1;
     const recommendedValue = Math.max(1, current.stat + adjustment);
@@ -341,7 +336,7 @@ export function analyzeBalanceResults(
     recommendations.push({
       cardId: perf.id,
       cardName: perf.name,
-      type: perf.type,
+      kind: perf.kind,
       category: perf.category,
       field,
       currentValue: current.stat,
@@ -352,41 +347,34 @@ export function analyzeBalanceResults(
     });
   }
 
-  const nextHistory: BalanceHistory = {
-    version: HISTORY_VERSION,
-    cards: {},
-  };
+  const nextHistory: BalanceHistory = { version: HISTORY_VERSION, cards: {} };
 
-  for (const perf of rawPerformances) {
-    const previous = previousHistory.cards[perf.id] ?? { consecutiveStableRuns: 0, locked: false };
-    const noRecommendation = !recommendations.some(rec => rec.cardId === perf.id);
-    const consecutiveStableRuns = perf.stableThisRun && noRecommendation
+  for (const perf of rawPerfs) {
+    const previous = previousHistory.cards[perf.id] ?? {
+      consecutiveStableRuns: 0,
+      locked: false,
+    };
+    const noRec = !recommendations.some(r => r.cardId === perf.id);
+    const consecutiveStableRuns = perf.stableThisRun && noRec
       ? previous.consecutiveStableRuns + 1
       : 0;
     const locked = previous.locked || consecutiveStableRuns >= CONSECUTIVE_STABLE_RUNS_TO_LOCK;
-
     perf.locked = locked;
-    nextHistory.cards[perf.id] = {
-      consecutiveStableRuns,
-      locked,
-    };
+    nextHistory.cards[perf.id] = { consecutiveStableRuns, locked };
   }
 
   const synergyPairs: PairRecommendation[] = [];
-
   for (const [key, stat] of synergyStats.entries()) {
     if (stat.appearances < MIN_PAIR_SAMPLE) continue;
     const [cardAId, cardBId] = key.split('::');
-    const perfA = rawPerformances.find(perf => perf.id === cardAId);
-    const perfB = rawPerformances.find(perf => perf.id === cardBId);
+    const perfA = rawPerfs.find(p => p.id === cardAId);
+    const perfB = rawPerfs.find(p => p.id === cardBId);
     if (!perfA || !perfB) continue;
     const winRate = stat.wins / stat.appearances;
     const baseline = (perfA.includedWinRate + perfB.includedWinRate) / 2;
     synergyPairs.push({
-      cardAId,
-      cardAName: perfA.name,
-      cardBId,
-      cardBName: perfB.name,
+      cardAId, cardAName: perfA.name,
+      cardBId, cardBName: perfB.name,
       sampleSize: stat.appearances,
       winRate: round(winRate),
       score: round(winRate - baseline),
@@ -394,35 +382,32 @@ export function analyzeBalanceResults(
   }
 
   const matchupPairs: MatchupRecommendation[] = [];
-
   for (const [key, stat] of matchupStats.entries()) {
     if (stat.appearances < MIN_PAIR_SAMPLE) continue;
     const [cardId, opponentId] = key.split('=>');
-    const perf = rawPerformances.find(entry => entry.id === cardId);
-    const opponent = rawPerformances.find(entry => entry.id === opponentId);
+    const perf = rawPerfs.find(p => p.id === cardId);
+    const opponent = rawPerfs.find(p => p.id === opponentId);
     if (!perf || !opponent) continue;
     const winRate = stat.wins / stat.appearances;
     matchupPairs.push({
-      cardId,
-      cardName: perf.name,
-      opponentId,
-      opponentName: opponent.name,
+      cardId, cardName: perf.name,
+      opponentId, opponentName: opponent.name,
       sampleSize: stat.appearances,
       winRate: round(winRate),
       deltaVsBaseline: round(winRate - perf.includedWinRate),
     });
   }
 
-  const performances = rawPerformances.sort((a, b) => {
+  const performances = rawPerfs.sort((a, b) => {
     const lockDelta = Number(a.locked) - Number(b.locked);
     if (lockDelta !== 0) return lockDelta;
     return Math.abs(b.winRateDelta) - Math.abs(a.winRateDelta);
   });
 
   const lockCounts = {
-    crew: performances.filter(perf => perf.type === 'crew' && perf.locked).length,
-    weapon: performances.filter(perf => perf.type === 'weapon' && perf.locked).length,
-    product: performances.filter(perf => perf.type === 'product' && perf.locked).length,
+    tough: performances.filter(p => p.kind === 'tough' && p.locked).length,
+    weapon: performances.filter(p => p.kind === 'weapon' && p.locked).length,
+    drug: performances.filter(p => p.kind === 'drug' && p.locked).length,
   };
 
   return {
@@ -431,25 +416,17 @@ export function analyzeBalanceResults(
       winningSides,
       locked: lockCounts,
       unlocked: {
-        crew: performances.filter(perf => perf.type === 'crew' && !perf.locked).length,
-        weapon: performances.filter(perf => perf.type === 'weapon' && !perf.locked).length,
-        product: performances.filter(perf => perf.type === 'product' && !perf.locked).length,
+        tough: performances.filter(p => p.kind === 'tough' && !p.locked).length,
+        weapon: performances.filter(p => p.kind === 'weapon' && !p.locked).length,
+        drug: performances.filter(p => p.kind === 'drug' && !p.locked).length,
       },
     },
     performances,
     recommendations: recommendations.sort((a, b) => Math.abs(b.metric) - Math.abs(a.metric)),
-    strongestSynergies: synergyPairs
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 12),
-    weakestSynergies: synergyPairs
-      .sort((a, b) => a.score - b.score)
-      .slice(0, 12),
-    bestCounters: matchupPairs
-      .sort((a, b) => b.deltaVsBaseline - a.deltaVsBaseline)
-      .slice(0, 12),
-    worstMatchups: matchupPairs
-      .sort((a, b) => a.deltaVsBaseline - b.deltaVsBaseline)
-      .slice(0, 12),
+    strongestSynergies: synergyPairs.sort((a, b) => b.score - a.score).slice(0, 12),
+    weakestSynergies: synergyPairs.sort((a, b) => a.score - b.score).slice(0, 12),
+    bestCounters: matchupPairs.sort((a, b) => b.deltaVsBaseline - a.deltaVsBaseline).slice(0, 12),
+    worstMatchups: matchupPairs.sort((a, b) => a.deltaVsBaseline - b.deltaVsBaseline).slice(0, 12),
     history: nextHistory,
   };
 }

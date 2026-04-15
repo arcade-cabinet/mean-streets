@@ -1,15 +1,21 @@
 {
   "id": "drug-27",
-  "type": "product",
+  "kind": "drug",
   "name": "Vivid Flux",
   "category": "hallucinogen",
-  "potency": [
+  "power": [
     2
   ],
-  "offenseAbility": "CONFUSE",
-  "offenseAbilityText": "Funded flip threshold reduced by potency.",
-  "defenseAbility": "PARANOIA",
-  "defenseAbilityText": "Funded flips against this crew cost potency extra cash.",
+  "resistance": [
+    1
+  ],
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "CONFUSE",
+    "PARANOIA"
+  ],
   "unlocked": false,
   "unlockCondition": "Win a game with all 5 drug categories in your deck",
   "locked": false,

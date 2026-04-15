@@ -1,7 +1,8 @@
 {
   "id": "card-045",
-  "type": "crew",
-  "displayName": "Richie \"Two-Tone\" Liu",
+  "kind": "tough",
+  "name": "Richie \"Two-Tone\" Liu",
+  "tagline": "Cleans up what others leave behind.",
   "archetype": "fixer",
   "affiliation": "los_diablos",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     5
   ],
-  "abilityText": "On play: change one card in your active stack's affiliation to match this card's for the round",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On play: change one card in your active stack's affiliation to match this card's for the round"
+  ],
   "unlocked": false,
   "unlockCondition": "Win a game using only cards from 2 affiliations",
   "locked": false,
-  "draft": true,
-  "tagline": "Cleans up what others leave behind."
+  "draft": true
 }

@@ -1,20 +1,25 @@
 {
   "id": "drug-02",
-  "type": "product",
+  "kind": "drug",
   "name": "Nitro Blast",
   "category": "stimulant",
-  "potency": [
+  "power": [
     1,
     2,
     3,
     4
   ],
-  "offenseAbility": "RUSH",
-  "offenseAbilityText": "Crew acts immediately after placement, no setup turn cooldown.",
-  "defenseAbility": "REFLEXES",
-  "defenseAbilityText": "Crew counter-attacks for potency damage when hit.",
+  "resistance": [
+    1
+  ],
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "RUSH",
+    "REFLEXES"
+  ],
   "unlocked": true,
-  "unlockCondition": null,
   "locked": false,
   "draft": true
 }

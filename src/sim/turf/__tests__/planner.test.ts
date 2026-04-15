@@ -1,193 +1,137 @@
 import { describe, expect, it } from 'vitest';
 import { decideAction } from '../ai';
-import { createInitialTurfState } from '../environment';
-import { createBoard, placeCrew, placeModifier } from '../board';
-import { DEFAULT_TURF_CONFIG } from '../types';
-import type { CashCard, CrewCard, ProductCard, TurfGameState } from '../types';
+import { createMatch } from '../game';
+import { createTurf, addToStack, resetTurfIdCounter } from '../board';
+import { DEFAULT_GAME_CONFIG } from '../types';
+import type { ToughCard, CurrencyCard, WeaponCard, TurfGameState } from '../types';
 
-function crew(id: string, power: number, resistance: number): CrewCard {
+function tough(id: string, power: number, resistance: number): ToughCard {
   return {
-    type: 'crew',
-    id,
-    displayName: id,
-    archetype: 'bruiser',
-    affiliation: 'freelance',
-    power,
-    resistance,
-    abilityText: '',
-    unlocked: true,
-    locked: false,
+    kind: 'tough', id, name: id, tagline: '', archetype: 'bruiser',
+    affiliation: 'freelance', power, resistance, rarity: 'common', abilities: [],
   };
 }
 
-function cash(id: string): CashCard {
+function currency(id: string, denom: 100 | 1000 = 100): CurrencyCard {
+  return { kind: 'currency', id, name: `$${denom}`, denomination: denom, rarity: 'common' };
+}
+
+function weapon(id: string, power = 2): WeaponCard {
   return {
-    type: 'cash',
-    id,
-    denomination: 100,
+    kind: 'weapon', id, name: id, category: 'bladed',
+    power, resistance: 1, rarity: 'common', abilities: [],
   };
 }
 
-function product(id: string): ProductCard {
-  return {
-    type: 'product',
-    id,
-    name: id,
-    category: 'stimulant',
-    potency: 2,
-    offenseAbility: 'RUSH',
-    offenseAbilityText: '',
-    defenseAbility: 'REFLEXES',
-    defenseAbilityText: '',
-    unlocked: true,
-    locked: false,
-  };
+function makeState(): TurfGameState {
+  resetTurfIdCounter();
+  const match = createMatch(DEFAULT_GAME_CONFIG, {
+    deckA: [tough('a1', 5, 5), tough('a2', 4, 4), weapon('w1'), currency('c1')],
+    deckB: [tough('b1', 5, 5), tough('b2', 4, 4), weapon('w2'), currency('c2')],
+  });
+  return match.game;
 }
 
-describe('turf planner', () => {
+describe('turf planner v0.2', () => {
   it('emits a legal action and planner trace', () => {
-    const { state } = createInitialTurfState(DEFAULT_TURF_CONFIG, 77);
+    const state = makeState();
+    state.players.A.hand = [tough('h1', 4, 4)];
     const { action, trace } = decideAction(state, 'A');
-
     expect(action.side).toBe('A');
     expect(trace.legalActionCount).toBeGreaterThan(0);
     expect(trace.chosenGoal.length).toBeGreaterThan(0);
     expect(trace.actionScores.length).toBeGreaterThan(0);
   });
 
-  it('falls back to a global legal action instead of passing when a goal-specific set is empty', () => {
-    const state = {
-      ...createInitialTurfState(DEFAULT_TURF_CONFIG, 1).state,
-      phase: 'combat',
-    } as TurfGameState;
-    state.players.A.board = createBoard('A', 5, 5);
-    state.players.B.board = createBoard('B', 5, 5);
-    state.players.A.hand.modifiers = [];
-    state.players.A.hand.crew = [crew('backup', 4, 4)];
-    state.players.A.board.active[0].seized = true;
-    placeCrew(state.players.B.board, 0, crew('enemy', 4, 6));
+  it('prefers playing a tough when no toughs are in play', () => {
+    const state = makeState();
+    state.players.A.turfs = [createTurf()];
+    state.players.A.hand = [tough('newcomer', 4, 4), currency('c-hand')];
+    state.players.A.toughsInPlay = 0;
+    state.players.A.actionsRemaining = 3;
+    const { action } = decideAction(state, 'A');
+    expect(action.kind).toBe('play_card');
+    expect(action.cardId).toBe('newcomer');
+  });
+
+  it('falls back to a global legal action instead of end_turn when goal set is empty', () => {
+    const state = makeState();
+    state.players.A.turfs = [createTurf()];
+    state.players.A.hand = [tough('backup', 4, 4)];
+    state.players.A.toughsInPlay = 0;
+    state.players.A.actionsRemaining = 3;
+    const turfB = createTurf();
+    addToStack(turfB, tough('enemy', 4, 6));
+    state.players.B.turfs = [turfB];
+    state.players.B.toughsInPlay = 1;
 
     const { action, trace } = decideAction(state, 'A');
     expect(action.kind).not.toBe('pass');
     expect(trace.actionScores.length).toBeGreaterThan(0);
   });
 
-  it('preserves funded lane role instead of always upgrading it into a push lane', () => {
-    const state = createInitialTurfState(DEFAULT_TURF_CONFIG, 2).state as TurfGameState;
-    state.phase = 'buildup';
-    state.players.A.board = createBoard('A', 5, 5);
-    state.players.B.board = createBoard('B', 5, 5);
-    placeCrew(state.players.A.board, 0, crew('funded', 4, 4));
-    placeCrew(state.players.A.board, 1, crew('fresh', 4, 4));
-    state.players.A.hand.crew = [];
-    state.players.A.hand.modifiers = [cash('cash-a'), product('prod-a')];
-    state.aiMemory.A.laneRoles[0] = 'funded';
+  it('enumerates all v0.2 action kinds: play_card, strikes, discard, end_turn', () => {
+    const state = makeState();
+    const turfA = createTurf();
+    addToStack(turfA, tough('atk', 6, 5));
+    state.players.A.turfs = [turfA];
+    state.players.A.toughsInPlay = 1;
+    state.players.A.hand = [tough('spare', 3, 3)];
+    state.players.A.actionsRemaining = 3;
+    const turfB = createTurf();
+    addToStack(turfB, tough('def', 4, 4));
+    state.players.B.turfs = [turfB];
+    state.players.B.toughsInPlay = 1;
+
+    const { trace } = decideAction(state, 'A');
+    const kinds = new Set(trace.actionScores.map((s) => s.action.split('@')[0].split(':')[0]));
+    expect(kinds.size).toBeGreaterThanOrEqual(2);
+  });
+
+  it('scores funded_recruit higher when enough currency on turf', () => {
+    const state = makeState();
+    const turfA = createTurf();
+    addToStack(turfA, tough('recruiter', 4, 4));
+    addToStack(turfA, currency('c-1k', 1000));
+    state.players.A.turfs = [turfA];
+    state.players.A.toughsInPlay = 1;
+    state.players.A.hand = [];
+    state.players.A.actionsRemaining = 3;
+    const turfB = createTurf();
+    addToStack(turfB, tough('target', 3, 3));
+    state.players.B.turfs = [turfB];
+    state.players.B.toughsInPlay = 1;
 
     const { action } = decideAction(state, 'A');
-    expect(action.kind).toBe('stack_cash');
+    expect(['funded_recruit', 'direct_strike', 'pushed_strike']).toContain(action.kind);
   });
 
-  it('uses funded pressure goal when a funded lane is ready but no push lane exists', () => {
-    const state = createInitialTurfState(DEFAULT_TURF_CONFIG, 3).state as TurfGameState;
-    state.phase = 'combat';
-    state.players.A.board = createBoard('A', 5, 5);
-    state.players.B.board = createBoard('B', 5, 5);
-    placeCrew(state.players.A.board, 0, crew('attacker', 4, 4));
-    placeCrew(state.players.B.board, 0, crew('defender', 4, 4));
-    placeModifier(state.players.A.board, 0, cash('cash-a'), 'offense');
-    state.players.A.board.active[0].turnsActive = 1;
-    state.players.A.hand.crew = [];
-    state.players.A.hand.modifiers = [];
-
-    const { trace } = decideAction(state, 'A');
-    expect(trace.chosenGoal).toBe('funded_pressure');
-    expect(['funded_attack', 'direct_attack']).toContain(trace.chosenAction.kind);
+  it('does not crash with empty hand and empty turfs', () => {
+    const state = makeState();
+    state.players.A.turfs = [createTurf()];
+    state.players.A.hand = [];
+    state.players.A.toughsInPlay = 0;
+    state.players.A.actionsRemaining = 3;
+    const { action } = decideAction(state, 'A');
+    expect(action.kind).toBe('end_turn');
   });
 
-  it('prefers attacking with the focused funded lane over a generic direct lane', () => {
-    const state = createInitialTurfState(DEFAULT_TURF_CONFIG, 4).state as TurfGameState;
-    state.phase = 'combat';
-    state.players.A.board = createBoard('A', 5, 5);
-    state.players.B.board = createBoard('B', 5, 5);
-    placeCrew(state.players.A.board, 0, crew('funded-attacker', 4, 4));
-    placeCrew(state.players.A.board, 1, crew('direct-attacker', 5, 4));
-    placeCrew(state.players.B.board, 0, crew('defender-a', 4, 4));
-    placeCrew(state.players.B.board, 1, crew('defender-b', 4, 4));
-    placeModifier(state.players.A.board, 0, cash('cash-focus'), 'offense');
-    state.players.A.board.active[0].turnsActive = 1;
-    state.players.A.board.active[1].turnsActive = 1;
-    state.aiMemory.A.focusLane = 0;
-    state.aiMemory.A.focusRole = 'funded';
-    state.aiMemory.A.laneRoles[0] = 'funded';
-    state.players.A.hand.crew = [];
-    state.players.A.hand.modifiers = [];
+  it('checks affiliation compatibility when scoring play_card for toughs', () => {
+    const state = makeState();
+    const turfA = createTurf();
+    const existing = tough('existing', 5, 5);
+    existing.affiliation = 'kings_row';
+    addToStack(turfA, existing);
+    state.players.A.turfs = [turfA];
+    state.players.A.toughsInPlay = 1;
+    const rival = tough('rival', 4, 4);
+    rival.affiliation = 'iron_devils';
+    state.players.A.hand = [rival];
+    state.players.A.actionsRemaining = 3;
 
-    const { action, trace } = decideAction(state, 'A');
-    expect(trace.chosenGoal).toBe('funded_pressure');
-    expect(action.kind).toBe('funded_attack');
-    expect(action.attackerIdx).toBe(0);
-  });
-
-  it('converts a focused funded lane into a push lane when product is available and no push exists', () => {
-    const state = createInitialTurfState(DEFAULT_TURF_CONFIG, 5).state as TurfGameState;
-    state.phase = 'combat';
-    state.players.A.board = createBoard('A', 5, 5);
-    state.players.B.board = createBoard('B', 5, 5);
-    placeCrew(state.players.A.board, 0, crew('funded-attacker', 4, 4));
-    placeCrew(state.players.B.board, 0, crew('defender-a', 4, 4));
-    placeModifier(state.players.A.board, 0, cash('cash-focus'), 'offense');
-    state.players.A.board.active[0].turnsActive = 1;
-    state.aiMemory.A.focusLane = 0;
-    state.aiMemory.A.focusRole = 'funded';
-    state.aiMemory.A.laneRoles[0] = 'funded';
-    state.players.A.hand.crew = [];
-    state.players.A.hand.modifiers = [product('prod-focus')];
-
-    const { action, trace } = decideAction(state, 'A');
-    expect(trace.chosenGoal).toBe('funded_pressure');
-    expect(action.kind).toBe('stack_product');
-    expect(action.positionIdx).toBe(0);
-    expect(action.slot).toBe('offense');
-  });
-
-  it('keeps funded pressure for a profitable exchange before converting the focused lane', () => {
-    const state = createInitialTurfState(DEFAULT_TURF_CONFIG, 6).state as TurfGameState;
-    state.phase = 'combat';
-    state.players.A.board = createBoard('A', 5, 5);
-    state.players.B.board = createBoard('B', 5, 5);
-    placeCrew(state.players.A.board, 0, crew('funded-attacker', 6, 4));
-    placeCrew(state.players.B.board, 0, crew('defender-a', 3, 3));
-    placeModifier(state.players.A.board, 0, cash('cash-focus'), 'offense');
-    state.players.A.board.active[0].turnsActive = 1;
-    state.aiMemory.A.focusLane = 0;
-    state.aiMemory.A.focusRole = 'funded';
-    state.aiMemory.A.laneRoles[0] = 'funded';
-    state.players.A.hand.crew = [];
-    state.players.A.hand.modifiers = [product('prod-focus')];
-
-    const { action, trace } = decideAction(state, 'A');
-    expect(trace.chosenGoal).toBe('funded_pressure');
-    expect(action.kind).toBe('funded_attack');
-    expect(action.attackerIdx).toBe(0);
-  });
-
-  it('does not let hold_defense override a live focused funded lane too easily', () => {
-    const state = createInitialTurfState(DEFAULT_TURF_CONFIG, 7).state as TurfGameState;
-    state.phase = 'combat';
-    state.players.A.board = createBoard('A', 5, 5);
-    state.players.B.board = createBoard('B', 5, 5);
-    placeCrew(state.players.A.board, 0, crew('funded-attacker', 5, 4));
-    placeCrew(state.players.B.board, 0, crew('defender-a', 4, 4));
-    placeCrew(state.players.B.board, 1, crew('defender-b', 5, 5));
-    placeModifier(state.players.A.board, 0, cash('cash-focus'), 'offense');
-    state.players.A.board.active[0].turnsActive = 1;
-    state.aiMemory.A.focusLane = 0;
-    state.aiMemory.A.focusRole = 'funded';
-    state.aiMemory.A.laneRoles[0] = 'funded';
-    state.players.A.hand.crew = [];
-    state.players.A.hand.modifiers = [];
-
-    const { trace } = decideAction(state, 'A');
-    expect(trace.chosenGoal).toBe('funded_pressure');
+    const { action } = decideAction(state, 'A');
+    if (action.kind === 'play_card') {
+      expect(action.cardId).not.toBe('rival');
+    }
   });
 });

@@ -1,7 +1,8 @@
 {
   "id": "card-013",
-  "type": "crew",
-  "displayName": "Gino \"Bruiser\" Ferraro",
+  "kind": "tough",
+  "name": "Gino \"Bruiser\" Ferraro",
+  "tagline": "Your rules do not apply here.",
   "archetype": "bruiser",
   "affiliation": "reapers",
   "power": [
@@ -10,10 +11,13 @@
   "resistance": [
     1
   ],
-  "abilityText": "Deals +2 damage when attacking a target with lower ATK than this card",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "Deals +2 damage when attacking a target with lower ATK than this card"
+  ],
   "unlocked": true,
-  "unlockCondition": null,
   "locked": false,
-  "draft": true,
-  "tagline": "Your rules do not apply here."
+  "draft": true
 }

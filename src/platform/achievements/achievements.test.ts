@@ -1,19 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import type { CharacterCard } from '../../sim/cards/schemas';
+import type { CompiledTough } from '../../sim/cards/schemas';
 import type { TurfMetrics } from '../../sim/turf/types';
 import { emptyMetrics } from '../../sim/turf/environment';
 import type { PlayerProfile } from '../persistence/storage';
 import { processGameEnd, type GameEndEvent } from './achievements';
 
-function makeCard(id: string, unlockCondition?: string): CharacterCard {
+function makeCard(id: string, unlockCondition?: string): CompiledTough {
   return {
+    kind: 'tough',
     id,
-    displayName: id,
+    name: id,
     archetype: 'bruiser',
     affiliation: 'kings-row',
     power: 5,
     resistance: 5,
-    abilityText: '',
+    rarity: 'common',
+    abilities: [],
     unlocked: false,
     ...(unlockCondition ? { unlockCondition } : {}),
     locked: false,

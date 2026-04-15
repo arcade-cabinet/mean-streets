@@ -1,17 +1,22 @@
 {
   "id": "drug-34",
-  "type": "product",
+  "kind": "drug",
   "name": "Titan Power",
   "category": "steroid",
-  "potency": [
+  "power": [
     4
   ],
-  "offenseAbility": "BULK",
-  "offenseAbilityText": "Crew gets +potency power for attacks.",
-  "defenseAbility": "FORTIFY",
-  "defenseAbilityText": "Crew gets +potency resistance.",
+  "resistance": [
+    1
+  ],
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "BULK",
+    "FORTIFY"
+  ],
   "unlocked": true,
-  "unlockCondition": null,
   "locked": false,
   "draft": true
 }

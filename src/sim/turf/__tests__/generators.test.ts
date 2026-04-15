@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateWeapons, generateDrugs, generateCash } from '../generators';
+import { generateWeapons, generateDrugs, generateCurrency } from '../generators';
 import { createRng } from '../../cards/rng';
 
 describe('generateWeapons', () => {
@@ -35,36 +35,21 @@ describe('generateWeapons', () => {
     expect(new Set(names).size).toBe(50);
   });
 
-  it('weapons have dual abilities from their category', () => {
+  it('weapons have abilities from their category', () => {
     const rng = createRng(42);
     const weapons = generateWeapons(rng);
     const bladed = weapons.find(w => w.category === 'bladed')!;
-    expect(bladed.offenseAbility).toBe('LACERATE');
-    expect(bladed.defenseAbility).toBe('PARRY');
+    expect(bladed.abilities).toContain('LACERATE');
+    expect(bladed.abilities).toContain('PARRY');
   });
 
-  it('bonus values are within expected range', () => {
+  it('power values are within expected range', () => {
     const rng = createRng(42);
     const weapons = generateWeapons(rng);
     for (const w of weapons) {
-      expect(w.bonus).toBeGreaterThanOrEqual(1);
-      // Ceiling matches CompiledWeaponSchema (1..8). Autobalance may push
-      // values up over time as it tunes for stability.
-      expect(w.bonus).toBeLessThanOrEqual(8);
+      expect(w.power).toBeGreaterThanOrEqual(1);
+      expect(w.power).toBeLessThanOrEqual(12);
     }
-  });
-
-  it('20 weapons are unlocked at start', () => {
-    const rng = createRng(42);
-    const weapons = generateWeapons(rng);
-    const unlocked = weapons.filter(w => w.unlocked).length;
-    expect(unlocked).toBe(20);
-  });
-
-  it('all weapons start with locked=false', () => {
-    const rng = createRng(42);
-    const weapons = generateWeapons(rng);
-    expect(weapons.every(w => w.locked === false)).toBe(true);
   });
 
   it('is deterministic with same seed', () => {
@@ -100,70 +85,46 @@ describe('generateDrugs', () => {
     expect(new Set(ids).size).toBe(50);
   });
 
-  it('drugs have dual abilities from their category', () => {
+  it('drugs have abilities from their category', () => {
     const rng = createRng(42);
     const drugs = generateDrugs(rng);
     const stim = drugs.find(d => d.category === 'stimulant')!;
-    expect(stim.offenseAbility).toBe('RUSH');
-    expect(stim.defenseAbility).toBe('REFLEXES');
+    expect(stim.abilities).toContain('RUSH');
+    expect(stim.abilities).toContain('REFLEXES');
   });
 
-  it('potency values are within expected range', () => {
+  it('power values are within expected range', () => {
     const rng = createRng(42);
     const drugs = generateDrugs(rng);
     for (const d of drugs) {
-      expect(d.potency).toBeGreaterThanOrEqual(1);
-      // Ceiling matches CompiledDrugSchema (1..8). Autobalance may push
-      // values up over time as it tunes for stability.
-      expect(d.potency).toBeLessThanOrEqual(8);
+      expect(d.power).toBeGreaterThanOrEqual(1);
+      expect(d.power).toBeLessThanOrEqual(12);
     }
-  });
-
-  it('20 drugs are unlocked at start', () => {
-    const rng = createRng(42);
-    const drugs = generateDrugs(rng);
-    const unlocked = drugs.filter(d => d.unlocked).length;
-    expect(unlocked).toBe(20);
-  });
-
-  it('keeps unlocked hallucinogens above the dead-low starter floor', () => {
-    const rng = createRng(42);
-    const drugs = generateDrugs(rng);
-    const unlockedHallucinogens = drugs
-      .filter((d) => d.category === 'hallucinogen' && d.unlocked)
-      .map((d) => d.potency);
-
-    expect(unlockedHallucinogens).toHaveLength(4);
-    expect(unlockedHallucinogens.every((potency) => potency >= 3)).toBe(true);
-  });
-
-  it('keeps the first unlocked stimulant above the dead-low starter floor', () => {
-    const rng = createRng(42);
-    const firstUnlockedStimulant = generateDrugs(rng).find(
-      (d) => d.category === 'stimulant' && d.unlocked,
-    );
-
-    expect(firstUnlockedStimulant?.potency).toBeGreaterThanOrEqual(2);
   });
 });
 
-describe('generateCash', () => {
-  it('generates 30 cash cards total (25x$100 + 5x$1000)', () => {
-    const cash = generateCash();
+describe('generateCurrency', () => {
+  it('generates 30 currency cards total (25x$100 + 5x$1000)', () => {
+    const cash = generateCurrency();
     expect(cash).toHaveLength(30);
   });
 
   it('has correct denomination breakdown', () => {
-    const cash = generateCash();
+    const cash = generateCurrency();
     const hundreds = cash.filter(c => c.denomination === 100);
     const thousands = cash.filter(c => c.denomination === 1000);
     expect(hundreds).toHaveLength(25);
     expect(thousands).toHaveLength(5);
   });
 
-  it('all cash cards have unique ids', () => {
-    const cash = generateCash();
+  it('all currency cards have unique ids', () => {
+    const cash = generateCurrency();
     const ids = cash.map(c => c.id);
     expect(new Set(ids).size).toBe(30);
+  });
+
+  it('all currency cards have kind=currency', () => {
+    const cash = generateCurrency();
+    expect(cash.every(c => c.kind === 'currency')).toBe(true);
   });
 });

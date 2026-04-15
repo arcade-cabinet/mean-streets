@@ -1,7 +1,8 @@
 {
   "id": "card-016",
-  "type": "crew",
-  "displayName": "Wong \"Enforcer\" Wu",
+  "kind": "tough",
+  "name": "Wong \"Enforcer\" Wu",
+  "tagline": "Works the edges of the neighborhood.",
   "archetype": "enforcer",
   "affiliation": "jade_dragon",
   "power": [
@@ -10,10 +11,13 @@
   "resistance": [
     3
   ],
-  "abilityText": "+3 damage against cards from a rival affiliation",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "+3 damage against cards from a rival affiliation"
+  ],
   "unlocked": true,
-  "unlockCondition": null,
   "locked": false,
-  "draft": true,
-  "tagline": "Works the edges of the neighborhood."
+  "draft": true
 }

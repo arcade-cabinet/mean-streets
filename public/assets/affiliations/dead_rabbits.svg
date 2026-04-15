@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Dead Rabbits: Been here since before the roads — rabbit skull with crossed clubs -->
+  <path d="M24 8 Q22 18, 26 24" stroke="#556B2F" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M40 8 Q42 18, 38 24" stroke="#556B2F" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M24 26 Q24 20, 32 18 Q40 20, 40 26 Q40 34, 32 36 Q24 34, 24 26 Z"
+        stroke="#556B2F" stroke-width="2.5" stroke-linejoin="round" fill="none"/>
+  <circle cx="28" cy="25" r="2" stroke="#556B2F" stroke-width="1.5" fill="none"/>
+  <circle cx="36" cy="25" r="2" stroke="#556B2F" stroke-width="1.5" fill="none"/>
+  <path d="M30 30 L32 32 L34 30" stroke="#556B2F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M18 54 L38 38" stroke="#556B2F" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+  <path d="M46 54 L26 38" stroke="#556B2F" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+  <circle cx="18" cy="54" r="3" stroke="#556B2F" stroke-width="1.5" fill="none" opacity="0.6"/>
+  <circle cx="46" cy="54" r="3" stroke="#556B2F" stroke-width="1.5" fill="none" opacity="0.6"/>
+</svg>

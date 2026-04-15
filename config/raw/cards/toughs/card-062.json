@@ -1,7 +1,8 @@
 {
   "id": "card-062",
-  "type": "crew",
-  "displayName": "Marco \"Snitch\" Ishida",
+  "kind": "tough",
+  "name": "Marco \"Snitch\" Ishida",
+  "tagline": "Your secrets pay the rent.",
   "archetype": "snitch",
   "affiliation": "jade_dragon",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     7
   ],
-  "abilityText": "On play: opponent must reveal 1 random card from their hand for the rest of the round",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On play: opponent must reveal 1 random card from their hand for the rest of the round"
+  ],
   "unlocked": false,
   "unlockCondition": "Win 1 games with a full Freelance deck",
   "locked": false,
-  "draft": true,
-  "tagline": "Your secrets pay the rent."
+  "draft": true
 }

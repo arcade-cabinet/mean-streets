@@ -1,15 +1,158 @@
-/**
- * Zod schemas for the character card system.
- *
- * Two views:
- * - `Authored*` schemas: tuning-history form. Stat fields are arrays; last
- *   element is current. Autobalance appends a new value on each adjustment.
- * - Runtime schemas (`CharacterCardSchema`, `WeaponCategorySchema`,
- *   `DrugCategorySchema`): flat scalars. Produced by the build-time
- *   compile step.
- */
-
 import { z } from 'zod';
+
+// ── Shared enums & helpers ─────────────────────────────────────
+
+export const RaritySchema = z.enum(['common', 'rare', 'legendary']);
+
+export const WeaponCategoryEnum = z.enum([
+  'bladed',
+  'blunt',
+  'explosive',
+  'ranged',
+  'stealth',
+]);
+
+export const DrugCategoryEnum = z.enum([
+  'stimulant',
+  'sedative',
+  'hallucinogen',
+  'steroid',
+  'narcotic',
+]);
+
+export const StatHistorySchema = z
+  .array(z.number().int().min(1).max(12))
+  .min(1);
+
+export const RarityHistorySchema = z
+  .array(RaritySchema)
+  .min(1);
+
+// ── Authored schemas (tuning-history on disk) ──────────────────
+
+export const AuthoredToughSchema = z.object({
+  id: z.string(),
+  kind: z.literal('tough'),
+  name: z.string(),
+  tagline: z.string().optional(),
+  archetype: z.string(),
+  affiliation: z.string(),
+  power: StatHistorySchema,
+  resistance: StatHistorySchema,
+  rarity: RarityHistorySchema,
+  abilities: z.array(z.string()),
+  unlocked: z.boolean(),
+  unlockCondition: z.string().nullable().optional(),
+  locked: z.boolean(),
+  draft: z.boolean().optional(),
+});
+
+export const AuthoredWeaponSchema = z.object({
+  id: z.string(),
+  kind: z.literal('weapon'),
+  name: z.string(),
+  category: WeaponCategoryEnum,
+  power: StatHistorySchema,
+  resistance: StatHistorySchema,
+  rarity: RarityHistorySchema,
+  abilities: z.array(z.string()),
+  unlocked: z.boolean(),
+  unlockCondition: z.string().nullable().optional(),
+  locked: z.boolean(),
+  draft: z.boolean().optional(),
+});
+
+export const AuthoredDrugSchema = z.object({
+  id: z.string(),
+  kind: z.literal('drug'),
+  name: z.string(),
+  category: DrugCategoryEnum,
+  power: StatHistorySchema,
+  resistance: StatHistorySchema,
+  rarity: RarityHistorySchema,
+  abilities: z.array(z.string()),
+  unlocked: z.boolean(),
+  unlockCondition: z.string().nullable().optional(),
+  locked: z.boolean(),
+  draft: z.boolean().optional(),
+});
+
+export const AuthoredCurrencySchema = z.object({
+  id: z.string(),
+  kind: z.literal('currency'),
+  name: z.string(),
+  denomination: z.union([z.literal(100), z.literal(1000)]),
+  rarity: RarityHistorySchema,
+  unlocked: z.boolean(),
+  locked: z.boolean(),
+  draft: z.boolean().optional(),
+});
+
+// ── Compiled schemas (runtime flat values) ─────────────────────
+
+export const CompiledToughSchema = z.object({
+  kind: z.literal('tough'),
+  id: z.string(),
+  name: z.string(),
+  tagline: z.string().optional(),
+  archetype: z.string(),
+  affiliation: z.string(),
+  power: z.number().int().min(1).max(12),
+  resistance: z.number().int().min(1).max(12),
+  rarity: RaritySchema,
+  abilities: z.array(z.string()),
+  unlocked: z.boolean(),
+  unlockCondition: z.string().optional(),
+  locked: z.boolean(),
+});
+
+export const CompiledWeaponSchema = z.object({
+  kind: z.literal('weapon'),
+  id: z.string(),
+  name: z.string(),
+  category: WeaponCategoryEnum,
+  power: z.number().int().min(1).max(12),
+  resistance: z.number().int().min(1).max(12),
+  rarity: RaritySchema,
+  abilities: z.array(z.string()),
+  unlocked: z.boolean(),
+  unlockCondition: z.string().optional(),
+  locked: z.boolean(),
+});
+
+export const CompiledDrugSchema = z.object({
+  kind: z.literal('drug'),
+  id: z.string(),
+  name: z.string(),
+  category: DrugCategoryEnum,
+  power: z.number().int().min(1).max(12),
+  resistance: z.number().int().min(1).max(12),
+  rarity: RaritySchema,
+  abilities: z.array(z.string()),
+  unlocked: z.boolean(),
+  unlockCondition: z.string().optional(),
+  locked: z.boolean(),
+});
+
+export const CompiledCurrencySchema = z.object({
+  kind: z.literal('currency'),
+  id: z.string(),
+  name: z.string(),
+  denomination: z.union([z.literal(100), z.literal(1000)]),
+  rarity: RaritySchema,
+  unlocked: z.boolean(),
+  locked: z.boolean(),
+});
+
+export const CompiledCardSchema = z.discriminatedUnion('kind', [
+  CompiledToughSchema,
+  CompiledWeaponSchema,
+  CompiledDrugSchema,
+  CompiledCurrencySchema,
+]);
+
+// ── Legacy compatibility schemas ───────────────────────────────
+// Used by archetype/affiliation pool loaders — unchanged from v0.1
 
 export const ArchetypeSchema = z.object({
   id: z.string(),
@@ -17,7 +160,7 @@ export const ArchetypeSchema = z.object({
   description: z.string(),
   ability: z.string(),
   abilityText: z.string(),
-  targets: z.enum(['vanguard', 'hand', 'reserves', 'draw_pile', 'self', 'any']),
+  targets: z.enum(['vanguard', 'hand', 'draw_pile', 'self', 'any']),
   timing: z.enum(['on_attack', 'on_sacrifice', 'on_play', 'passive']),
   powerMod: z.number().int(),
 });
@@ -27,177 +170,14 @@ export const AffiliationSchema = z.object({
   name: z.string(),
   color: z.string(),
   description: z.string(),
-  atPeaceWith: z.array(z.string()),
-  atWarWith: z.array(z.string()),
+  loyal: z.array(z.string()),
+  rival: z.array(z.string()),
+  neutral: z.array(z.string()),
+  mediator: z.array(z.string()),
 });
 
-export const CharacterCardSchema = z.object({
-  id: z.string(),
-  displayName: z.string(),
-  archetype: z.string(),
-  affiliation: z.string(),
-  power: z.number().int().min(1).max(12),
-  resistance: z.number().int().min(1).max(12),
-  abilityText: z.string(),
-  unlocked: z.boolean(),
-  unlockCondition: z.string().optional(),
-  locked: z.boolean(),
-});
+// ── Helpers ────────────────────────────────────────────────────
 
-export const WeaponCategorySchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  description: z.string(),
-  offenseAbility: z.string(),
-  offenseAbilityText: z.string(),
-  defenseAbility: z.string(),
-  defenseAbilityText: z.string(),
-  bonusMod: z.number().int().min(-1).max(1),
-  names: z.array(z.string()).min(10),
-});
-
-export const DrugCategorySchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  description: z.string(),
-  offenseAbility: z.string(),
-  offenseAbilityText: z.string(),
-  defenseAbility: z.string(),
-  defenseAbilityText: z.string(),
-  potencyMod: z.number().int().min(-1).max(1),
-  adjectives: z.array(z.string()).min(10),
-  nouns: z.array(z.string()).min(10),
-});
-
-// ─────────────────────────────────────────────────────────────────────────
-// Authored (tuning-history) schemas — the source of truth on disk
-// ─────────────────────────────────────────────────────────────────────────
-
-export const StatHistorySchema = z.array(z.number().int().min(1).max(12)).min(1);
-
-export const AuthoredCrewSchema = z.object({
-  id: z.string(),
-  type: z.literal('crew'),
-  displayName: z.string(),
-  archetype: z.string(),
-  affiliation: z.string(),
-  power: StatHistorySchema,
-  resistance: StatHistorySchema,
-  abilityText: z.string(),
-  unlocked: z.boolean(),
-  unlockCondition: z.string().nullable().optional(),
-  locked: z.boolean(),
-  draft: z.boolean().optional(),
-  tagline: z.string().optional(),
-});
-
-export const AuthoredWeaponSchema = z.object({
-  id: z.string(),
-  type: z.literal('weapon'),
-  name: z.string(),
-  category: z.enum(['bladed', 'blunt', 'explosive', 'ranged', 'stealth']),
-  bonus: z.array(z.number().int().min(1).max(8)).min(1),
-  offenseAbility: z.string(),
-  offenseAbilityText: z.string(),
-  defenseAbility: z.string(),
-  defenseAbilityText: z.string(),
-  unlocked: z.boolean(),
-  unlockCondition: z.string().nullable().optional(),
-  locked: z.boolean(),
-  draft: z.boolean().optional(),
-});
-
-export const AuthoredDrugSchema = z.object({
-  id: z.string(),
-  type: z.literal('product'),
-  name: z.string(),
-  category: z.enum(['stimulant', 'sedative', 'hallucinogen', 'steroid', 'narcotic']),
-  potency: z.array(z.number().int().min(1).max(8)).min(1),
-  offenseAbility: z.string(),
-  offenseAbilityText: z.string(),
-  defenseAbility: z.string(),
-  defenseAbilityText: z.string(),
-  unlocked: z.boolean(),
-  unlockCondition: z.string().nullable().optional(),
-  locked: z.boolean(),
-  draft: z.boolean().optional(),
-});
-
-export const CardSpecialSchema = z.object({
-  backpack: z.object({
-    id: z.string(),
-    type: z.literal('special'),
-    slots: z.number().int().positive(),
-    deployableTo: z.string(),
-    transferRule: z.string(),
-    freeSwapOnEquip: z.boolean(),
-    description: z.string(),
-    draft: z.boolean().optional(),
-    locked: z.boolean(),
-  }),
-  cash: z.object({
-    id: z.string(),
-    type: z.literal('special'),
-    description: z.string(),
-    denominations: z
-      .array(
-        z.object({
-          id: z.string(),
-          value: z.number().int().positive(),
-          displayName: z.string(),
-          locked: z.boolean(),
-        }),
-      )
-      .min(1),
-    draft: z.boolean().optional(),
-    locked: z.boolean(),
-  }),
-});
-
-// ─────────────────────────────────────────────────────────────────────────
-// Compiled schemas (runtime flat scalars)
-// ─────────────────────────────────────────────────────────────────────────
-
-export const CompiledCrewSchema = CharacterCardSchema.extend({
-  type: z.literal('crew'),
-  tagline: z.string().optional(),
-});
-
-export const CompiledWeaponSchema = z.object({
-  id: z.string(),
-  type: z.literal('weapon'),
-  name: z.string(),
-  category: z.enum(['bladed', 'blunt', 'explosive', 'ranged', 'stealth']),
-  bonus: z.number().int().min(1).max(8),
-  offenseAbility: z.string(),
-  offenseAbilityText: z.string(),
-  defenseAbility: z.string(),
-  defenseAbilityText: z.string(),
-  unlocked: z.boolean(),
-  unlockCondition: z.string().optional(),
-  locked: z.boolean(),
-});
-
-export const CompiledDrugSchema = z.object({
-  id: z.string(),
-  type: z.literal('product'),
-  name: z.string(),
-  category: z.enum(['stimulant', 'sedative', 'hallucinogen', 'steroid', 'narcotic']),
-  potency: z.number().int().min(1).max(8),
-  offenseAbility: z.string(),
-  offenseAbilityText: z.string(),
-  defenseAbility: z.string(),
-  defenseAbilityText: z.string(),
-  unlocked: z.boolean(),
-  unlockCondition: z.string().optional(),
-  locked: z.boolean(),
-});
-
-// ─────────────────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────────────────
-
-/** Return the last element of a tuning-history stat array. */
 export function latestStat(history: readonly number[]): number {
   if (history.length === 0) {
     throw new Error('latestStat: history array is empty');
@@ -205,17 +185,27 @@ export function latestStat(history: readonly number[]): number {
   return history[history.length - 1];
 }
 
+export function latestRarity(
+  history: readonly string[],
+): 'common' | 'rare' | 'legendary' {
+  if (history.length === 0) {
+    throw new Error('latestRarity: history array is empty');
+  }
+  return history[history.length - 1] as 'common' | 'rare' | 'legendary';
+}
+
+// ── Inferred types ─────────────────────────────────────────────
+
 export type ArchetypeData = z.infer<typeof ArchetypeSchema>;
 export type AffiliationData = z.infer<typeof AffiliationSchema>;
-export type CharacterCard = z.infer<typeof CharacterCardSchema>;
-export type WeaponCategoryData = z.infer<typeof WeaponCategorySchema>;
-export type DrugCategoryData = z.infer<typeof DrugCategorySchema>;
 
-export type AuthoredCrew = z.infer<typeof AuthoredCrewSchema>;
+export type AuthoredTough = z.infer<typeof AuthoredToughSchema>;
 export type AuthoredWeapon = z.infer<typeof AuthoredWeaponSchema>;
 export type AuthoredDrug = z.infer<typeof AuthoredDrugSchema>;
-export type CardSpecial = z.infer<typeof CardSpecialSchema>;
+export type AuthoredCurrency = z.infer<typeof AuthoredCurrencySchema>;
 
-export type CompiledCrew = z.infer<typeof CompiledCrewSchema>;
+export type CompiledTough = z.infer<typeof CompiledToughSchema>;
 export type CompiledWeapon = z.infer<typeof CompiledWeaponSchema>;
 export type CompiledDrug = z.infer<typeof CompiledDrugSchema>;
+export type CompiledCurrency = z.infer<typeof CompiledCurrencySchema>;
+export type CompiledCard = z.infer<typeof CompiledCardSchema>;

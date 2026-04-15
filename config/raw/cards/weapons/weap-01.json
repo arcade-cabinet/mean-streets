@@ -1,20 +1,25 @@
 {
   "id": "weap-01",
-  "type": "weapon",
+  "kind": "weapon",
   "name": "Bowie Knife",
   "category": "bladed",
-  "bonus": [
+  "power": [
     1,
     2,
     3,
     4
   ],
-  "offenseAbility": "LACERATE",
-  "offenseAbilityText": "Target bleeds, losing 1 resistance per round for bonus rounds.",
-  "defenseAbility": "PARRY",
-  "defenseAbilityText": "Attacker takes bonus counter-damage.",
+  "resistance": [
+    1
+  ],
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "LACERATE",
+    "PARRY"
+  ],
   "unlocked": true,
-  "unlockCondition": null,
   "locked": false,
   "draft": true
 }

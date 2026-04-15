@@ -1,7 +1,8 @@
 {
   "id": "card-100",
-  "type": "crew",
-  "displayName": "Louie \"Enforcer\" Salazar",
+  "kind": "tough",
+  "name": "Louie \"Enforcer\" Salazar",
+  "tagline": "Works the edges of the neighborhood.",
   "archetype": "enforcer",
   "affiliation": "reapers",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     8
   ],
-  "abilityText": "+3 damage against cards from a rival affiliation",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "+3 damage against cards from a rival affiliation"
+  ],
   "unlocked": false,
   "unlockCondition": "Win a game on the first night phase",
   "locked": false,
-  "draft": true,
-  "tagline": "Works the edges of the neighborhood."
+  "draft": true
 }

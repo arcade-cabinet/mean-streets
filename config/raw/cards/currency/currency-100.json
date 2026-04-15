@@ -1,0 +1,11 @@
+{
+  "id": "currency-100",
+  "kind": "currency",
+  "name": "Hundred",
+  "denomination": 100,
+  "rarity": [
+    "common"
+  ],
+  "unlocked": true,
+  "locked": false
+}

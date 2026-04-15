@@ -1,7 +1,8 @@
 {
   "id": "card-023",
-  "type": "crew",
-  "displayName": "Luis \"Patch\" Yang",
+  "kind": "tough",
+  "name": "Luis \"Patch\" Yang",
+  "tagline": "Has never met a fair fight.",
   "archetype": "shark",
   "affiliation": "southside_saints",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     4
   ],
-  "abilityText": "+1 damage for every point of damage already on the enemy vanguard",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "+1 damage for every point of damage already on the enemy vanguard"
+  ],
   "unlocked": false,
   "unlockCondition": "Kill 7 vanguards total",
   "locked": false,
-  "draft": true,
-  "tagline": "Has never met a fair fight."
+  "draft": true
 }

@@ -1,7 +1,8 @@
 {
   "id": "card-079",
-  "type": "crew",
-  "displayName": "Yuki \"Scar\" Kwon",
+  "kind": "tough",
+  "name": "Yuki \"Scar\" Kwon",
+  "tagline": "Brings fire to problems.",
   "archetype": "arsonist",
   "affiliation": "los_diablos",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     4
   ],
-  "abilityText": "On attack: also deals 1 damage to the card behind the vanguard (next in line)",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On attack: also deals 1 damage to the card behind the vanguard (next in line)"
+  ],
   "unlocked": false,
   "unlockCondition": "Deal 39 total damage in a single game",
   "locked": false,
-  "draft": true,
-  "tagline": "Brings fire to problems."
+  "draft": true
 }

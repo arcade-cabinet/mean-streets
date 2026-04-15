@@ -1,7 +1,8 @@
 {
   "id": "card-036",
-  "type": "crew",
-  "displayName": "Paulie \"Patch\" Diaz",
+  "kind": "tough",
+  "name": "Paulie \"Patch\" Diaz",
+  "tagline": "Turns a punch into a payday.",
   "archetype": "fence",
   "affiliation": "black_market",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     4
   ],
-  "abilityText": "On sacrifice: draw 2 cards instead of healing",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On sacrifice: draw 2 cards instead of healing"
+  ],
   "unlocked": false,
   "unlockCondition": "Trigger 5 overdraw penalties on opponents",
   "locked": false,
-  "draft": true,
-  "tagline": "Turns a punch into a payday."
+  "draft": true
 }

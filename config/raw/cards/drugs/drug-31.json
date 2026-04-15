@@ -1,20 +1,25 @@
 {
   "id": "drug-31",
-  "type": "product",
+  "kind": "drug",
   "name": "Savage Mass",
   "category": "steroid",
-  "potency": [
+  "power": [
     3,
     4,
     5,
     6
   ],
-  "offenseAbility": "BULK",
-  "offenseAbilityText": "Crew gets +potency power for attacks.",
-  "defenseAbility": "FORTIFY",
-  "defenseAbilityText": "Crew gets +potency resistance.",
+  "resistance": [
+    1
+  ],
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "BULK",
+    "FORTIFY"
+  ],
   "unlocked": true,
-  "unlockCondition": null,
   "locked": false,
   "draft": true
 }

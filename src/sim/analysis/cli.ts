@@ -1,6 +1,5 @@
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { TURF_SIM_CONFIG } from '../turf/ai/config';
 import { generateTurfCardPools } from '../turf/catalog';
 import { saveBalanceHistory } from '../turf/balance';
 import type { CardEffectEstimate } from './effects';
@@ -21,12 +20,14 @@ import {
   type AutobalanceEdit,
 } from './autobalance';
 
-const BALANCE_HISTORY_PATH = join(process.cwd(), 'sim', 'reports', 'turf', 'balance-history.json');
+const BALANCE_HISTORY_PATH = join(
+  process.cwd(), 'sim', 'reports', 'turf', 'balance-history.json',
+);
 
 interface CardDescriptor {
   label: string;
   family: string;
-  type: 'crew' | 'weapon' | 'drug' | 'backpack';
+  type: 'tough' | 'weapon' | 'drug';
 }
 
 interface SelectedPairingSummary {
@@ -40,13 +41,18 @@ function getArg(flag: string): string | undefined {
   return idx >= 0 ? args[idx + 1] : undefined;
 }
 
+function getArgList(flag: string): string[] {
+  const value = getArg(flag);
+  if (!value) return [];
+  return value.split(',').map(item => item.trim()).filter(Boolean);
+}
+
 function printLockSummary(summary: {
   totalCards: number;
   unmeasured: number;
   unstable: number;
   provisionallyStable: number;
   locked: number;
-  runnerReserveStartRiskCards: string[];
   volatilityOnlyUnstableCards: string[];
 }): void {
   console.log('\nLock Summary');
@@ -55,14 +61,6 @@ function printLockSummary(summary: {
   console.log(`  Provisionally Stable:       ${summary.provisionallyStable}`);
   console.log(`  Unstable:                   ${summary.unstable}`);
   console.log(`  Unmeasured:                 ${summary.unmeasured}`);
-  console.log(
-    `  Reserve-Start Risk Cards:   ${summary.runnerReserveStartRiskCards.length}`,
-  );
-  if (summary.runnerReserveStartRiskCards.length > 0) {
-    console.log(
-      `  Reserve-Start Risk IDs:     ${summary.runnerReserveStartRiskCards.join(', ')}`,
-    );
-  }
   console.log(
     `  Volatility-Only Unstable:   ${summary.volatilityOnlyUnstableCards.length}`,
   );
@@ -74,19 +72,17 @@ function printLockSummary(summary: {
 }
 
 function printVolatilityOnlyGuidance(
-  summary: {
-    volatilityOnlyUnstableCards: string[];
-  },
+  summary: { volatilityOnlyUnstableCards: string[] },
   profile: 'quick' | 'standard' | 'release',
 ): void {
   if (summary.volatilityOnlyUnstableCards.length === 0) return;
   if (profile !== 'quick') return;
   console.log('\nTriage Note');
   console.log(
-    '  Quick-profile volatility-only cards should be confirmed with a deeper focus run before balance changes.',
+    '  Quick-profile volatility-only cards should be confirmed with a deeper focus run.',
   );
   console.log(
-    `  Suggested next step: pnpm exec tsx src/sim/analysis/cli.ts focus --profile standard --cards ${summary.volatilityOnlyUnstableCards.join(',')}`,
+    `  Suggested: pnpm exec tsx src/sim/analysis/cli.ts focus --profile standard --cards ${summary.volatilityOnlyUnstableCards.join(',')}`,
   );
 }
 
@@ -97,30 +93,23 @@ function resolveCardDescriptors(
   const descriptors = new Map<string, CardDescriptor>();
   for (const card of pools.crew) {
     descriptors.set(card.id, {
-      label: `${card.displayName} [crew:${card.archetype}/${card.affiliation}]`,
-      family: `crew:${card.archetype}`,
-      type: 'crew',
+      label: `${card.name} [tough:${card.archetype}/${card.affiliation}]`,
+      family: `tough:${card.archetype}`,
+      type: 'tough',
     });
   }
   for (const card of pools.weapons) {
     descriptors.set(card.id, {
-      label: `${card.name} [weapon:${card.category}/+${card.bonus}]`,
-      family: `weapon:${card.category}/+${card.bonus}`,
+      label: `${card.name} [weapon:${card.category}/+${card.power}]`,
+      family: `weapon:${card.category}/+${card.power}`,
       type: 'weapon',
     });
   }
   for (const card of pools.drugs) {
     descriptors.set(card.id, {
-      label: `${card.name} [drug:${card.category}/${card.potency}]`,
-      family: `drug:${card.category}/${card.potency}`,
+      label: `${card.name} [drug:${card.category}/${card.power}]`,
+      family: `drug:${card.category}/${card.power}`,
       type: 'drug',
-    });
-  }
-  for (const card of pools.backpacks) {
-    descriptors.set(card.id, {
-      label: `${card.name} [backpack:${card.size}]`,
-      family: `backpack:${card.size}`,
-      type: 'backpack',
     });
   }
   return descriptors;
@@ -132,18 +121,11 @@ function selectRelevantSweepShapes(
 ): Array<'crew_weapon' | 'crew_drug' | 'weapon_drug' | 'crew_weapon_drug'> {
   const selectedTypes = new Set(
     selectedCardIds
-      .map((cardId) => descriptors.get(cardId)?.type)
-      .filter(
-        (type): type is 'crew' | 'weapon' | 'drug' | 'backpack' =>
-          type !== undefined,
-      ),
+      .map(id => descriptors.get(id)?.type)
+      .filter((t): t is 'tough' | 'weapon' | 'drug' => t !== undefined),
   );
-
-  const shapes: Array<
-    'crew_weapon' | 'crew_drug' | 'weapon_drug' | 'crew_weapon_drug'
-  > = [];
-
-  if (selectedTypes.has('crew')) {
+  const shapes: Array<'crew_weapon' | 'crew_drug' | 'weapon_drug' | 'crew_weapon_drug'> = [];
+  if (selectedTypes.has('tough')) {
     shapes.push('crew_weapon', 'crew_drug', 'crew_weapon_drug');
   }
   if (selectedTypes.has('weapon')) {
@@ -156,10 +138,6 @@ function selectRelevantSweepShapes(
     if (!shapes.includes('weapon_drug')) shapes.push('weapon_drug');
     if (!shapes.includes('crew_weapon_drug')) shapes.push('crew_weapon_drug');
   }
-  if (selectedTypes.has('backpack')) {
-    if (!shapes.includes('crew_weapon_drug')) shapes.push('crew_weapon_drug');
-  }
-
   return shapes.length > 0
     ? shapes
     : ['crew_weapon', 'crew_drug', 'weapon_drug', 'crew_weapon_drug'];
@@ -169,16 +147,13 @@ function printUnstableRecommendations(
   recommendations: LockRecommendation[],
   descriptors: Map<string, CardDescriptor>,
 ): void {
-  const unstable = recommendations.filter(
-    (recommendation) => recommendation.state === 'unstable',
-  );
+  const unstable = recommendations.filter(r => r.state === 'unstable');
   if (unstable.length === 0) return;
   console.log('\nUnstable Cards');
-  for (const recommendation of unstable) {
-    const label =
-      descriptors.get(recommendation.cardId)?.label ?? recommendation.cardId;
-    console.log(`  ${recommendation.cardId}  ${label}`);
-    for (const reason of recommendation.reasons) {
+  for (const rec of unstable) {
+    const label = descriptors.get(rec.cardId)?.label ?? rec.cardId;
+    console.log(`  ${rec.cardId}  ${label}`);
+    for (const reason of rec.reasons) {
       console.log(`    - ${reason}`);
     }
   }
@@ -189,40 +164,29 @@ function createUnstableDetails(
   descriptors: Map<string, CardDescriptor>,
 ): Array<{ cardId: string; label: string; family: string; reasons: string[] }> {
   return recommendations
-    .filter((recommendation) => recommendation.state === 'unstable')
-    .map((recommendation) => ({
-      cardId: recommendation.cardId,
-      label:
-        descriptors.get(recommendation.cardId)?.label ?? recommendation.cardId,
-      family: descriptors.get(recommendation.cardId)?.family ?? 'unknown',
-      reasons: recommendation.reasons,
+    .filter(r => r.state === 'unstable')
+    .map(r => ({
+      cardId: r.cardId,
+      label: descriptors.get(r.cardId)?.label ?? r.cardId,
+      family: descriptors.get(r.cardId)?.family ?? 'unknown',
+      reasons: r.reasons,
     }));
 }
 
 function createUnstableFamilySummary(
-  unstableDetails: Array<{
-    cardId: string;
-    label: string;
-    family: string;
-    reasons: string[];
-  }>,
+  unstableDetails: Array<{ cardId: string; family: string }>,
 ): Array<{ family: string; count: number; cardIds: string[] }> {
-  const families = new Map<
-    string,
-    { family: string; count: number; cardIds: string[] }
-  >();
+  const families = new Map<string, { family: string; count: number; cardIds: string[] }>();
   for (const detail of unstableDetails) {
     const existing = families.get(detail.family);
     if (existing) {
       existing.count++;
       existing.cardIds.push(detail.cardId);
-      continue;
+    } else {
+      families.set(detail.family, {
+        family: detail.family, count: 1, cardIds: [detail.cardId],
+      });
     }
-    families.set(detail.family, {
-      family: detail.family,
-      count: 1,
-      cardIds: [detail.cardId],
-    });
   }
   return [...families.values()].sort(
     (a, b) => b.count - a.count || a.family.localeCompare(b.family),
@@ -248,21 +212,12 @@ function createFamilyEffectSummary(
   count: number;
   averageWinRateDelta: number;
   maxAbsWinRateDelta: number;
-  averageReserveStartRateDelta: number;
   cardIds: string[];
 }> {
-  const families = new Map<
-    string,
-    {
-      family: string;
-      count: number;
-      totalWinRateDelta: number;
-      maxAbsWinRateDelta: number;
-      totalReserveStartRateDelta: number;
-      cardIds: string[];
-    }
-  >();
-
+  const families = new Map<string, {
+    family: string; count: number; totalWinRateDelta: number;
+    maxAbsWinRateDelta: number; cardIds: string[];
+  }>();
   for (const effect of effects) {
     const family = descriptors.get(effect.cardId)?.family ?? 'unknown';
     const existing = families.get(family);
@@ -270,56 +225,40 @@ function createFamilyEffectSummary(
       existing.count++;
       existing.totalWinRateDelta += effect.winRateDelta;
       existing.maxAbsWinRateDelta = Math.max(
-        existing.maxAbsWinRateDelta,
-        Math.abs(effect.winRateDelta),
+        existing.maxAbsWinRateDelta, Math.abs(effect.winRateDelta),
       );
-      existing.totalReserveStartRateDelta +=
-        effect.runnerReserveStartUseRateDelta;
       existing.cardIds.push(effect.cardId);
-      continue;
+    } else {
+      families.set(family, {
+        family, count: 1,
+        totalWinRateDelta: effect.winRateDelta,
+        maxAbsWinRateDelta: Math.abs(effect.winRateDelta),
+        cardIds: [effect.cardId],
+      });
     }
-    families.set(family, {
-      family,
-      count: 1,
-      totalWinRateDelta: effect.winRateDelta,
-      maxAbsWinRateDelta: Math.abs(effect.winRateDelta),
-      totalReserveStartRateDelta: effect.runnerReserveStartUseRateDelta,
-      cardIds: [effect.cardId],
-    });
   }
-
   return [...families.values()]
-    .map((entry) => ({
-      family: entry.family,
-      count: entry.count,
-      averageWinRateDelta: entry.totalWinRateDelta / entry.count,
-      maxAbsWinRateDelta: entry.maxAbsWinRateDelta,
-      averageReserveStartRateDelta:
-        entry.totalReserveStartRateDelta / entry.count,
-      cardIds: entry.cardIds,
+    .map(e => ({
+      family: e.family, count: e.count,
+      averageWinRateDelta: e.totalWinRateDelta / e.count,
+      maxAbsWinRateDelta: e.maxAbsWinRateDelta,
+      cardIds: e.cardIds,
     }))
-    .sort(
-      (a, b) =>
-        b.maxAbsWinRateDelta - a.maxAbsWinRateDelta || b.count - a.count,
-    );
+    .sort((a, b) => b.maxAbsWinRateDelta - a.maxAbsWinRateDelta || b.count - a.count);
 }
 
 function printTopFamilyEffects(
   families: Array<{
-    family: string;
-    count: number;
-    averageWinRateDelta: number;
+    family: string; count: number; averageWinRateDelta: number;
     maxAbsWinRateDelta: number;
-    averageReserveStartRateDelta: number;
-    cardIds: string[];
   }>,
 ): void {
   const top = families.slice(0, 6);
   if (top.length === 0) return;
   console.log('\nTop Family Effects');
-  for (const family of top) {
+  for (const fam of top) {
     console.log(
-      `  ${family.family}  count=${family.count}  avgΔ=${family.averageWinRateDelta.toFixed(4)}  max|Δ|=${family.maxAbsWinRateDelta.toFixed(4)}  avg reserveΔ=${family.averageReserveStartRateDelta.toFixed(4)}`,
+      `  ${fam.family}  count=${fam.count}  avgΔ=${fam.averageWinRateDelta.toFixed(4)}  max|Δ|=${fam.maxAbsWinRateDelta.toFixed(4)}`,
     );
   }
 }
@@ -330,13 +269,8 @@ function createUnstablePairingSummary(
   baselineWinRate: number,
 ): SelectedPairingSummary[] {
   return permutations
-    .filter((permutation) =>
-      permutation.forcedIds.some((id) => unstableCardIds.includes(id)),
-    )
-    .map((permutation) => ({
-      forcedIds: permutation.forcedIds,
-      winRateDelta: permutation.winRateA - baselineWinRate,
-    }))
+    .filter(p => p.forcedIds.some(id => unstableCardIds.includes(id)))
+    .map(p => ({ forcedIds: p.forcedIds, winRateDelta: p.winRateA - baselineWinRate }))
     .sort((a, b) => Math.abs(b.winRateDelta) - Math.abs(a.winRateDelta))
     .slice(0, 8);
 }
@@ -348,23 +282,10 @@ function printUnstablePairingSummary(
   if (pairings.length === 0) return;
   console.log('\nTop Unstable Pairings');
   for (const pairing of pairings) {
-    const labels = pairing.forcedIds.map(
-      (id) => descriptors.get(id)?.label ?? id,
-    );
-    console.log(
-      `  ${pairing.forcedIds.join(' + ')}  Δ${pairing.winRateDelta.toFixed(4)}`,
-    );
+    const labels = pairing.forcedIds.map(id => descriptors.get(id)?.label ?? id);
+    console.log(`  ${pairing.forcedIds.join(' + ')}  Δ${pairing.winRateDelta.toFixed(4)}`);
     console.log(`    ${labels.join('  |  ')}`);
   }
-}
-
-function getArgList(flag: string): string[] {
-  const value = getArg(flag);
-  if (!value) return [];
-  return value
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean);
 }
 
 function createSelectedPairingSummary(
@@ -373,13 +294,8 @@ function createSelectedPairingSummary(
   baselineWinRate: number,
 ): SelectedPairingSummary[] {
   return permutations
-    .filter((permutation) =>
-      permutation.forcedIds.some((id) => selectedCardIds.includes(id)),
-    )
-    .map((permutation) => ({
-      forcedIds: permutation.forcedIds,
-      winRateDelta: permutation.winRateA - baselineWinRate,
-    }))
+    .filter(p => p.forcedIds.some(id => selectedCardIds.includes(id)))
+    .map(p => ({ forcedIds: p.forcedIds, winRateDelta: p.winRateA - baselineWinRate }))
     .sort((a, b) => Math.abs(b.winRateDelta) - Math.abs(a.winRateDelta))
     .slice(0, 12);
 }
@@ -399,12 +315,6 @@ function printFocusedEffects(
     console.log(
       `    turnsΔ=${effect.medianTurnDelta.toFixed(4)}  fundedΔ=${effect.fundedDelta.toFixed(4)}  pushedΔ=${effect.pushedDelta.toFixed(4)}  directΔ=${effect.directDelta.toFixed(4)}`,
     );
-    console.log(
-      `    reserveΔ=${effect.reserveCrewDelta.toFixed(4)}  backpacksΔ=${effect.backpacksEquippedDelta.toFixed(4)}  runnersΔ=${effect.runnerDeploymentsDelta.toFixed(4)}  payloadΔ=${effect.payloadDeploymentsDelta.toFixed(4)}`,
-    );
-    console.log(
-      `    runnerUseΔ=${effect.runnerOpportunityUseRateDelta.toFixed(4)}  reserveStartΔ=${effect.runnerReserveStartUseRateDelta.toFixed(4)}`,
-    );
   }
 }
 
@@ -413,7 +323,7 @@ function logPhase(message: string): void {
 }
 
 function writeProgressArtifact(
-  group: 'locks' | 'focus',
+  group: string,
   fileName: string,
   payload: Record<string, unknown>,
 ): void {
@@ -423,30 +333,11 @@ function writeProgressArtifact(
   });
 }
 
-function writeSweepProgress(
-  group: 'locks' | 'focus',
-  fileName: string,
-  payload: {
-    profile: 'quick' | 'standard' | 'release';
-    baselineProfile: 'smoke' | 'ci' | 'release';
-    shape: 'crew_weapon' | 'crew_drug' | 'weapon_drug' | 'crew_weapon_drug';
-    completed: number;
-    total: number;
-    forcedIds: string[];
-    permutationCount?: number;
-    selectedCardIds?: string[];
-  },
-): void {
-  writeProgressArtifact(group, fileName, {
-    phase: 'sweep_in_progress',
-    ...payload,
-  });
-}
-
 async function main(): Promise<void> {
   const [command = 'benchmark'] = process.argv
     .slice(2)
-    .filter((arg) => !arg.startsWith('--'));
+    .filter(arg => !arg.startsWith('--'));
+
   if (command === 'benchmark') {
     const profile = (getArg('--profile') ?? 'ci') as 'smoke' | 'ci' | 'release';
     logPhase(`benchmark profile=${profile}`);
@@ -462,210 +353,51 @@ async function main(): Promise<void> {
 
   if (command === 'sweep') {
     const shape = (getArg('--shape') ?? 'crew_weapon') as
-      | 'crew_weapon'
-      | 'crew_drug'
-      | 'weapon_drug'
-      | 'crew_weapon_drug';
-    const profile = (getArg('--profile') ?? 'quick') as
-      | 'quick'
-      | 'standard'
-      | 'release';
+      | 'crew_weapon' | 'crew_drug' | 'weapon_drug' | 'crew_weapon_drug';
+    const profile = (getArg('--profile') ?? 'quick') as 'quick' | 'standard' | 'release';
     logPhase(`sweep shape=${shape} profile=${profile}`);
     const sweep = runCuratedSweep(shape, profile);
-    const path = writeAnalysisJson(
-      'sweeps',
-      `sweep-${shape}-${profile}.json`,
-      sweep,
-    );
+    const path = writeAnalysisJson('sweeps', `sweep-${shape}-${profile}.json`, sweep);
     console.log(path);
     return;
   }
 
   if (command === 'lock') {
-    const profile = (getArg('--profile') ?? 'standard') as
-      | 'quick'
-      | 'standard'
-      | 'release';
-    const baselineProfile =
-      profile === 'release'
-        ? 'release'
-        : profile === 'standard'
-          ? 'ci'
-          : 'smoke';
+    const profile = (getArg('--profile') ?? 'standard') as 'quick' | 'standard' | 'release';
+    const baselineProfile = profile === 'release' ? 'release' : profile === 'standard' ? 'ci' : 'smoke';
     const progressFile = `lock-${profile}.progress.json`;
     logPhase(`lock profile=${profile} baseline=${baselineProfile}`);
-    writeProgressArtifact('locks', progressFile, {
-      phase: 'starting',
-      profile,
-      baselineProfile,
-    });
+
     logPhase('running seeded benchmark');
-    const baseline = runSeededBenchmark(baselineProfile, {
-      includeBalance: true,
-    });
+    const baseline = runSeededBenchmark(baselineProfile, { includeBalance: true });
     writeProgressArtifact('locks', progressFile, {
-      phase: 'baseline_complete',
-      profile,
-      baselineProfile,
-      benchmark: createBenchmarkReport(baseline),
+      phase: 'baseline_complete', profile, baselineProfile,
     });
-    logPhase('running curated sweep crew_weapon');
-    const crewWeapon = runCuratedSweep(
-      'crew_weapon',
-      profile,
-      baseline.summary.catalogSeed,
-      (progress) =>
-        writeSweepProgress('locks', progressFile, {
-          profile,
-          baselineProfile,
-          shape: progress.shape,
-          completed: progress.completed,
-          total: progress.total,
-          forcedIds: progress.forcedIds,
-          permutationCount: progress.completed,
-        }),
-    ).permutations;
-    writeProgressArtifact('locks', progressFile, {
-      phase: 'crew_weapon_complete',
-      profile,
-      baselineProfile,
-      benchmark: createBenchmarkReport(baseline),
-      permutationCount: crewWeapon.length,
+
+    const sweepShapes = ['crew_weapon', 'crew_drug', 'weapon_drug', 'crew_weapon_drug'] as const;
+    const allSweeps = sweepShapes.flatMap(shape => {
+      logPhase(`running curated sweep ${shape}`);
+      return runCuratedSweep(shape, profile, baseline.summary.catalogSeed).permutations;
     });
-    logPhase('running curated sweep crew_drug');
-    const crewDrug = runCuratedSweep(
-      'crew_drug',
-      profile,
-      baseline.summary.catalogSeed,
-      (progress) =>
-        writeSweepProgress('locks', progressFile, {
-          profile,
-          baselineProfile,
-          shape: progress.shape,
-          completed: progress.completed,
-          total: progress.total,
-          forcedIds: progress.forcedIds,
-          permutationCount: crewWeapon.length + progress.completed,
-        }),
-    ).permutations;
-    writeProgressArtifact('locks', progressFile, {
-      phase: 'crew_drug_complete',
-      profile,
-      baselineProfile,
-      benchmark: createBenchmarkReport(baseline),
-      permutationCount: crewWeapon.length + crewDrug.length,
-    });
-    logPhase('running curated sweep weapon_drug');
-    const weaponDrug = runCuratedSweep(
-      'weapon_drug',
-      profile,
-      baseline.summary.catalogSeed,
-      (progress) =>
-        writeSweepProgress('locks', progressFile, {
-          profile,
-          baselineProfile,
-          shape: progress.shape,
-          completed: progress.completed,
-          total: progress.total,
-          forcedIds: progress.forcedIds,
-          permutationCount:
-            crewWeapon.length + crewDrug.length + progress.completed,
-        }),
-    ).permutations;
-    writeProgressArtifact('locks', progressFile, {
-      phase: 'weapon_drug_complete',
-      profile,
-      baselineProfile,
-      benchmark: createBenchmarkReport(baseline),
-      permutationCount: crewWeapon.length + crewDrug.length + weaponDrug.length,
-    });
-    logPhase('running curated sweep crew_weapon_drug');
-    const crewWeaponDrug = runCuratedSweep(
-      'crew_weapon_drug',
-      profile,
-      baseline.summary.catalogSeed,
-      (progress) =>
-        writeSweepProgress('locks', progressFile, {
-          profile,
-          baselineProfile,
-          shape: progress.shape,
-          completed: progress.completed,
-          total: progress.total,
-          forcedIds: progress.forcedIds,
-          permutationCount:
-            crewWeapon.length +
-            crewDrug.length +
-            weaponDrug.length +
-            progress.completed,
-        }),
-    ).permutations;
-    const sweeps = [
-      ...crewWeapon,
-      ...crewDrug,
-      ...weaponDrug,
-      ...crewWeaponDrug,
-    ];
-    writeProgressArtifact('locks', progressFile, {
-      phase: 'sweeps_complete',
-      profile,
-      baselineProfile,
-      benchmark: createBenchmarkReport(baseline),
-      permutationCount: sweeps.length,
-    });
-    logPhase(`estimating effects across ${sweeps.length} permutations`);
-    const effects = estimateCardEffects(baseline, sweeps, profile, (progress) =>
-      writeProgressArtifact('locks', progressFile, {
-        phase: 'effects_in_progress',
-        profile,
-        baselineProfile,
-        permutationCount: sweeps.length,
-        completedEffects: progress.completed,
-        totalEffects: progress.total,
-        cardId: progress.cardId,
-      }),
-    );
-    writeProgressArtifact('locks', progressFile, {
-      phase: 'effects_complete',
-      profile,
-      baselineProfile,
-      benchmark: createBenchmarkReport(baseline),
-      permutationCount: sweeps.length,
-      effectCount: effects.cardEffects.length,
-    });
-    logPhase('deriving lock recommendations');
+
+    logPhase(`estimating effects across ${allSweeps.length} permutations`);
+    const effects = estimateCardEffects(baseline, allSweeps, profile);
     const locks = deriveLockRecommendations(effects);
     const summary = summarizeLockRecommendations(locks);
     const descriptors = resolveCardDescriptors(baseline.summary.catalogSeed);
-    const familyEffectSummary = createFamilyEffectSummary(
-      effects.cardEffects,
-      descriptors,
-    );
-    const unstableDetails = createUnstableDetails(
-      locks.recommendations,
-      descriptors,
-    );
+    const familyEffectSummary = createFamilyEffectSummary(effects.cardEffects, descriptors);
+    const unstableDetails = createUnstableDetails(locks.recommendations, descriptors);
     const unstableFamilySummary = createUnstableFamilySummary(unstableDetails);
     const unstablePairingSummary = createUnstablePairingSummary(
-      unstableDetails.map((detail) => detail.cardId),
-      sweeps,
-      baseline.summary.winRateA,
+      unstableDetails.map(d => d.cardId), allSweeps, baseline.summary.winRateA,
     );
     const path = writeAnalysisJson('locks', `lock-${profile}.json`, {
       benchmark: createBenchmarkReport(baseline),
-      effects,
-      locks,
-      summary,
-      familyEffectSummary,
-      unstableDetails,
-      unstableFamilySummary,
-      unstablePairingSummary,
+      effects, locks, summary,
+      familyEffectSummary, unstableDetails, unstableFamilySummary, unstablePairingSummary,
     });
     writeProgressArtifact('locks', progressFile, {
-      phase: 'complete',
-      profile,
-      baselineProfile,
-      outputPath: path,
-      summary,
+      phase: 'complete', profile, baselineProfile, outputPath: path, summary,
     });
     printLockSummary(summary);
     printVolatilityOnlyGuidance(summary, profile);
@@ -682,293 +414,49 @@ async function main(): Promise<void> {
   }
 
   if (command === 'focus') {
-    const profile = (getArg('--profile') ?? 'quick') as
-      | 'quick'
-      | 'standard'
-      | 'release';
+    const profile = (getArg('--profile') ?? 'quick') as 'quick' | 'standard' | 'release';
     const selectedCardIds = getArgList('--cards');
     if (selectedCardIds.length === 0) {
       throw new Error('focus requires --cards card-001,drug-01');
     }
-
-    const baselineProfile =
-      profile === 'release'
-        ? 'release'
-        : profile === 'standard'
-          ? 'ci'
-          : 'smoke';
-    const progressFile = `focus-${profile}-${selectedCardIds.join('-')}.progress.json`;
-    logPhase(
-      `focus profile=${profile} baseline=${baselineProfile} cards=${selectedCardIds.join(',')}`,
-    );
-    const baseline = runSeededBenchmark(baselineProfile, {
-      includeBalance: true,
-    });
-    writeProgressArtifact('focus', progressFile, {
-      phase: 'baseline_complete',
-      profile,
-      baselineProfile,
-      selectedCardIds,
-      benchmark: createBenchmarkReport(baseline),
-    });
+    const baselineProfile = profile === 'release' ? 'release' : profile === 'standard' ? 'ci' : 'smoke';
+    logPhase(`focus profile=${profile} baseline=${baselineProfile} cards=${selectedCardIds.join(',')}`);
+    const baseline = runSeededBenchmark(baselineProfile, { includeBalance: true });
     const descriptors = resolveCardDescriptors(baseline.summary.catalogSeed);
     const shapes = selectRelevantSweepShapes(selectedCardIds, descriptors);
-    const sweeps = shapes.flatMap((shape) => {
+    const sweeps = shapes.flatMap(shape => {
       logPhase(`running curated sweep ${shape}`);
-      return runCuratedSweep(
-        shape,
-        profile,
-        baseline.summary.catalogSeed,
-        (progress) =>
-          writeSweepProgress('focus', progressFile, {
-            profile,
-            baselineProfile,
-            shape: progress.shape,
-            completed: progress.completed,
-            total: progress.total,
-            forcedIds: progress.forcedIds,
-            permutationCount: progress.completed,
-            selectedCardIds,
-          }),
-      ).permutations;
+      return runCuratedSweep(shape, profile, baseline.summary.catalogSeed).permutations;
     });
-    writeProgressArtifact('focus', progressFile, {
-      phase: 'sweeps_complete',
-      profile,
-      baselineProfile,
-      selectedCardIds,
-      shapes,
-      permutationCount: sweeps.length,
-    });
-    logPhase(`estimating effects across ${sweeps.length} permutations`);
-    const effects = estimateCardEffects(baseline, sweeps, profile, (progress) =>
-      writeProgressArtifact('focus', progressFile, {
-        phase: 'effects_in_progress',
-        profile,
-        baselineProfile,
-        selectedCardIds,
-        permutationCount: sweeps.length,
-        completedEffects: progress.completed,
-        totalEffects: progress.total,
-        cardId: progress.cardId,
-      }),
-    );
-    const focusedEffects = effects.cardEffects.filter((effect) =>
-      selectedCardIds.includes(effect.cardId),
-    );
-    const pairingSummary = createSelectedPairingSummary(
-      selectedCardIds,
-      sweeps,
-      baseline.summary.winRateA,
-    );
+    const effects = estimateCardEffects(baseline, sweeps, profile);
+    const focusedEffects = effects.cardEffects.filter(e => selectedCardIds.includes(e.cardId));
+    const pairingSummary = createSelectedPairingSummary(selectedCardIds, sweeps, baseline.summary.winRateA);
     const path = writeAnalysisJson(
       'focus',
       `focus-${profile}-${selectedCardIds.join('-')}.json`,
-      {
-        benchmark: createBenchmarkReport(baseline),
-        focusedEffects,
-        pairingSummary,
-      },
+      { benchmark: createBenchmarkReport(baseline), focusedEffects, pairingSummary },
     );
-    writeProgressArtifact('focus', progressFile, {
-      phase: 'complete',
-      profile,
-      baselineProfile,
-      selectedCardIds,
-      outputPath: path,
-      focusedCardCount: focusedEffects.length,
-    });
     printFocusedEffects(focusedEffects, descriptors);
     printUnstablePairingSummary(pairingSummary, descriptors);
     console.log(path);
     return;
   }
 
-  if (command === 'backpack-quota') {
-    const profile = (getArg('--profile') ?? 'ci') as 'smoke' | 'ci' | 'release';
-    const minQ = Number.parseInt(getArg('--min') ?? '3', 10);
-    const maxQ = Number.parseInt(getArg('--max') ?? '10', 10);
-
-    interface QuotaSample {
-      quota: number;
-      winRateA: number;
-      passRatePerTurn: number;
-      medianTurns: number;
-      runnerOpportunityUseRate: number;
-      runnerReserveStartUseRate: number;
-      reserveCrewPlacements: number;
-      backpacksEquipped: number;
-    }
-
-    const samples: QuotaSample[] = [];
-
-    logPhase(`backpack-quota profile=${profile} sweeping ${minQ}..${maxQ}`);
-    for (let q = minQ; q <= maxQ; q++) {
-      // Override the deck-builder TOTAL_BACKPACKS at runtime by editing
-      // the shared TURF_SIM_CONFIG.deckBuilder reference. Restored after
-      // each iteration so subsequent commands see the original value.
-      type DeckBuilderCfg = { totalBackpacks: number };
-      const cfg = (TURF_SIM_CONFIG as { deckBuilder: DeckBuilderCfg }).deckBuilder;
-      const originalQuota = cfg.totalBackpacks;
-      cfg.totalBackpacks = q;
-      try {
-        const run = runSeededBenchmark(profile, { includeBalance: false });
-        const s = run.summary;
-        samples.push({
-          quota: q,
-          winRateA: s.winRateA,
-          passRatePerTurn: s.passRatePerTurn,
-          medianTurns: s.medianTurns,
-          runnerOpportunityUseRate: s.runnerOpportunityUseRate,
-          runnerReserveStartUseRate: s.runnerReserveStartUseRate,
-          reserveCrewPlacements: s.reserveCrewPlacements,
-          backpacksEquipped: s.backpacksEquipped,
-        });
-      } finally {
-        cfg.totalBackpacks = originalQuota;
-      }
-    }
-
-    console.log('\nBackpack Quota Sweep');
-    console.log('  quota | winA   | medTurns | passT  | reserve | equip  | runnerUse | resStart');
-    console.log('  ------+--------+----------+--------+---------+--------+-----------+---------');
-    for (const s of samples) {
-      console.log(
-        `  ${String(s.quota).padStart(5)} | ${s.winRateA.toFixed(3)} |   ${String(s.medianTurns).padStart(4)}   | ${s.passRatePerTurn.toFixed(3)} |  ${s.reserveCrewPlacements.toFixed(2)}  |  ${s.backpacksEquipped.toFixed(2)} |   ${s.runnerOpportunityUseRate.toFixed(3)}  |  ${s.runnerReserveStartUseRate.toFixed(3)}`,
-      );
-    }
-
-    // Pick the quota with the closest-to-50% win rate AND non-zero
-    // backpacks equipped.
-    const best = samples
-      .filter((s) => s.backpacksEquipped > 0)
-      .reduce(
-        (acc, s) => (Math.abs(s.winRateA - 0.5) < Math.abs(acc.winRateA - 0.5) ? s : acc),
-        samples[0]!,
-      );
-    console.log(`\nRecommended quota: ${best.quota}  (winA ${best.winRateA.toFixed(3)}, equip ${best.backpacksEquipped.toFixed(2)})`);
-
-    const path = writeAnalysisJson('backpack-quota', `backpack-quota-${profile}.json`, {
-      generatedAt: new Date().toISOString(),
-      profile,
-      range: { min: minQ, max: maxQ },
-      samples,
-      recommended: best.quota,
-    });
-    console.log(path);
-    return;
-  }
-
-  if (command === 'runner-contract') {
-    const profile = (getArg('--profile') ?? 'ci') as 'smoke' | 'ci' | 'release';
-    logPhase(`runner-contract profile=${profile}`);
-    const run = runSeededBenchmark(profile, { includeBalance: false });
-    const s = run.summary;
-
-    function rate(taken: number, turns: number): number {
-      return turns > 0 ? taken / turns : 0;
-    }
-
-    const stages = {
-      reserveStart: {
-        turns: s.runnerReserveOpportunityTurns,
-        taken: s.runnerReserveOpportunityTaken,
-        missed: s.runnerReserveOpportunityMissed,
-        rate: rate(s.runnerReserveOpportunityTaken, s.runnerReserveOpportunityTurns),
-      },
-      equip: {
-        turns: s.runnerEquipOpportunityTurns,
-        taken: s.runnerEquipOpportunityTaken,
-        missed: s.runnerEquipOpportunityMissed,
-        rate: rate(s.runnerEquipOpportunityTaken, s.runnerEquipOpportunityTurns),
-      },
-      deploy: {
-        turns: s.runnerDeployOpportunityTurns,
-        taken: s.runnerDeployOpportunityTaken,
-        missed: s.runnerDeployOpportunityMissed,
-        rate: rate(s.runnerDeployOpportunityTaken, s.runnerDeployOpportunityTurns),
-      },
-      payload: {
-        turns: s.runnerPayloadOpportunityTurns,
-        taken: s.runnerPayloadOpportunityTaken,
-        missed: s.runnerPayloadOpportunityMissed,
-        rate: rate(s.runnerPayloadOpportunityTaken, s.runnerPayloadOpportunityTurns),
-      },
-    };
-
-    console.log('\nRunner Contract (four-stage diagnostic)');
-    for (const [name, stage] of Object.entries(stages)) {
-      console.log(
-        `  ${name.padEnd(14)}  turns=${stage.turns.toFixed(2)}  taken=${stage.taken.toFixed(2)}  missed=${stage.missed.toFixed(2)}  rate=${stage.rate.toFixed(4)}`,
-      );
-    }
-
-    const notes: string[] = [];
-    if (stages.reserveStart.rate < 0.5) {
-      notes.push(
-        `reserve-start rate ${stages.reserveStart.rate.toFixed(4)} below 0.5 — planner either isn't generating reserve-crew placements or scoring them too low`,
-      );
-    }
-    if (stages.equip.rate < 0.5) {
-      notes.push(
-        `equip rate ${stages.equip.rate.toFixed(4)} below 0.5 — planner has backpacks but isn't attaching them to reserves`,
-      );
-    }
-    if (stages.deploy.rate < 0.5) {
-      notes.push(
-        `deploy rate ${stages.deploy.rate.toFixed(4)} below 0.5 — runners are equipped but not promoted to active`,
-      );
-    }
-    if (stages.payload.rate < 0.5) {
-      notes.push(
-        `payload rate ${stages.payload.rate.toFixed(4)} below 0.5 — runners are active but not dispensing payload`,
-      );
-    }
-    if (notes.length === 0) {
-      notes.push('all four stages above 0.5 — contract is healthy');
-    }
-
-    console.log('\nNotes');
-    for (const n of notes) console.log(`  - ${n}`);
-
-    const path = writeAnalysisJson('runner-contract', `runner-contract-${profile}.json`, {
-      generatedAt: new Date().toISOString(),
-      profile,
-      stages,
-      notes,
-      summary: createBenchmarkReport(run),
-    });
-    console.log(path);
-    return;
-  }
-
   if (command === 'autobalance') {
-    const profile = (getArg('--profile') ?? 'standard') as
-      | 'quick'
-      | 'standard'
-      | 'release';
-    const baselineProfile =
-      profile === 'release'
-        ? 'release'
-        : profile === 'standard'
-          ? 'ci'
-          : 'smoke';
+    const profile = (getArg('--profile') ?? 'standard') as 'quick' | 'standard' | 'release';
+    const baselineProfile = profile === 'release' ? 'release' : profile === 'standard' ? 'ci' : 'smoke';
     const iterations = Number.parseInt(getArg('--iterations') ?? '1', 10);
     const noCommit = process.argv.includes('--no-commit');
     const dryRun = process.argv.includes('--dry-run');
     const maxEditsArg = getArg('--max-edits');
     const maxEdits = maxEditsArg ? Number.parseInt(maxEditsArg, 10) : undefined;
 
-    logPhase(
-      `autobalance profile=${profile} iterations=${iterations} commit=${!noCommit} dryRun=${dryRun}`,
-    );
+    logPhase(`autobalance profile=${profile} iterations=${iterations} commit=${!noCommit} dryRun=${dryRun}`);
 
     if (!dryRun && !noCommit) {
       const clean = gitWorkingTreeClean();
       if (!clean.clean) {
-        console.error(
-          '[autobalance] refusing to run: working tree has uncommitted changes. Stash or commit first, or pass --dry-run / --no-commit.',
-        );
+        console.error('[autobalance] refusing: working tree has uncommitted changes.');
         if (clean.details) console.error(clean.details);
         process.exit(2);
       }
@@ -978,22 +466,21 @@ async function main(): Promise<void> {
     for (let iter = 1; iter <= iterations; iter++) {
       logPhase(`iteration ${iter}/${iterations}: benchmark + sweeps`);
       const baseline = runSeededBenchmark(baselineProfile, { includeBalance: true });
-      const crewWeapon = runCuratedSweep('crew_weapon', profile, baseline.summary.catalogSeed).permutations;
-      const crewDrug = runCuratedSweep('crew_drug', profile, baseline.summary.catalogSeed).permutations;
-      const weaponDrug = runCuratedSweep('weapon_drug', profile, baseline.summary.catalogSeed).permutations;
-      const crewWeaponDrug = runCuratedSweep('crew_weapon_drug', profile, baseline.summary.catalogSeed).permutations;
-      const sweeps = [...crewWeapon, ...crewDrug, ...weaponDrug, ...crewWeaponDrug];
+      const sweepShapes = ['crew_weapon', 'crew_drug', 'weapon_drug', 'crew_weapon_drug'] as const;
+      const sweeps = sweepShapes.flatMap(shape =>
+        runCuratedSweep(shape, profile, baseline.summary.catalogSeed).permutations,
+      );
       const effects = estimateCardEffects(baseline, sweeps, profile);
       const locks = deriveLockRecommendations(effects);
       const summary = summarizeLockRecommendations(locks);
       printLockSummary(summary);
 
       const result = runAutobalanceIteration(locks, effects, { dryRun, maxEdits });
-      console.log(`[autobalance] iter ${iter}: edits=${result.edits.length} clamped=${result.clamped.length} skipped=${result.skipped.length}`);
+      console.log(
+        `[autobalance] iter ${iter}: edits=${result.edits.length} clamped=${result.clamped.length} skipped=${result.skipped.length}`,
+      );
       for (const edit of result.edits) {
-        console.log(
-          `  ${edit.cardId}  ${edit.stat} ${edit.from}→${edit.to}  (${edit.direction})  -- ${edit.reason}`,
-        );
+        console.log(`  ${edit.cardId}  ${edit.stat} ${edit.from}→${edit.to}  (${edit.direction})  -- ${edit.reason}`);
       }
 
       if (result.edits.length === 0) {
@@ -1002,16 +489,11 @@ async function main(): Promise<void> {
       }
 
       if (!dryRun) {
-        // Recompile so the next iteration's sim sees the new values.
         logPhase('recompiling card catalog');
         const compile = spawnSync('node', ['scripts/compile-cards.mjs'], {
-          cwd: process.cwd(),
-          encoding: 'utf8',
-          stdio: 'inherit',
+          cwd: process.cwd(), encoding: 'utf8', stdio: 'inherit',
         });
-        if (compile.status !== 0) {
-          throw new Error('compile-cards.mjs failed');
-        }
+        if (compile.status !== 0) throw new Error('compile-cards.mjs failed');
       }
 
       if (!dryRun && !noCommit) {
@@ -1026,11 +508,8 @@ async function main(): Promise<void> {
     }
     writeAnalysisJson('autobalance', `autobalance-${profile}.json`, {
       completedAt: new Date().toISOString(),
-      profile,
-      baselineProfile,
-      iterations,
-      totalEdits: allEdits.length,
-      edits: allEdits,
+      profile, baselineProfile, iterations,
+      totalEdits: allEdits.length, edits: allEdits,
     });
     return;
   }
@@ -1038,7 +517,7 @@ async function main(): Promise<void> {
   throw new Error(`Unknown analysis command: ${command}`);
 }
 
-main().catch((error) => {
+main().catch(error => {
   console.error(error);
   process.exit(1);
 });

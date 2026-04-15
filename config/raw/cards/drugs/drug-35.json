@@ -1,15 +1,21 @@
 {
   "id": "drug-35",
-  "type": "product",
+  "kind": "drug",
   "name": "Tank Slam",
   "category": "steroid",
-  "potency": [
+  "power": [
     4
   ],
-  "offenseAbility": "BULK",
-  "offenseAbilityText": "Crew gets +potency power for attacks.",
-  "defenseAbility": "FORTIFY",
-  "defenseAbilityText": "Crew gets +potency resistance.",
+  "resistance": [
+    1
+  ],
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "BULK",
+    "FORTIFY"
+  ],
   "unlocked": false,
   "unlockCondition": "Win 5 games",
   "locked": false,

@@ -1,7 +1,8 @@
 {
   "id": "card-087",
-  "type": "crew",
-  "displayName": "Frank \"Switch\" Yang",
+  "kind": "tough",
+  "name": "Frank \"Switch\" Yang",
+  "tagline": "Reads rooftops like road signs.",
   "archetype": "lookout",
   "affiliation": "dead_rabbits",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     11
   ],
-  "abilityText": "On play: peek at the top 2 cards of your own deck, reorder them",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On play: peek at the top 2 cards of your own deck, reorder them"
+  ],
   "unlocked": false,
   "unlockCondition": "Win without using any reserves",
   "locked": false,
-  "draft": true,
-  "tagline": "Reads rooftops like road signs."
+  "draft": true
 }

@@ -1,9 +1,9 @@
 {
   "id": "weap-12",
-  "type": "weapon",
+  "kind": "weapon",
   "name": "Brick in a Sock",
   "category": "blunt",
-  "bonus": [
+  "power": [
     3,
     4,
     5,
@@ -11,12 +11,17 @@
     7,
     8
   ],
-  "offenseAbility": "SHATTER",
-  "offenseAbilityText": "On kill, destroys one random modifier on target position.",
-  "defenseAbility": "BRACE",
-  "defenseAbilityText": "Absorb first bonus points of damage before resistance takes hits.",
+  "resistance": [
+    1
+  ],
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "SHATTER",
+    "BRACE"
+  ],
   "unlocked": true,
-  "unlockCondition": null,
   "locked": false,
   "draft": true
 }

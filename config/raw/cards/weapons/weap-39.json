@@ -1,15 +1,21 @@
 {
   "id": "weap-39",
-  "type": "weapon",
+  "kind": "weapon",
   "name": "Staple Gun",
   "category": "ranged",
-  "bonus": [
+  "power": [
     1
   ],
-  "offenseAbility": "REACH",
-  "offenseAbilityText": "Can target any enemy position, not just front-line.",
-  "defenseAbility": "OVERWATCH",
-  "defenseAbilityText": "Deal bonus damage to any crew placed on adjacent positions.",
+  "resistance": [
+    1
+  ],
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "REACH",
+    "OVERWATCH"
+  ],
   "unlocked": false,
   "unlockCondition": "Seize 13 positions total",
   "locked": false,

@@ -1,7 +1,8 @@
 {
   "id": "card-052",
-  "type": "crew",
-  "displayName": "Benny \"Blade\" Yamamoto",
+  "kind": "tough",
+  "name": "Benny \"Blade\" Yamamoto",
+  "tagline": "Grudges have a long memory.",
   "archetype": "enforcer",
   "affiliation": "los_diablos",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     5
   ],
-  "abilityText": "+3 damage against cards from a rival affiliation",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "+3 damage against cards from a rival affiliation"
+  ],
   "unlocked": false,
   "unlockCondition": "Win 1 games with a full Freelance deck",
   "locked": false,
-  "draft": true,
-  "tagline": "Grudges have a long memory."
+  "draft": true
 }

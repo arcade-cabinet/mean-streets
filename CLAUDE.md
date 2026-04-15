@@ -1,6 +1,6 @@
 ---
 title: Claude Code Instructions
-updated: 2026-04-14
+updated: 2026-04-15
 status: current
 ---
 
@@ -8,11 +8,11 @@ status: current
 
 ## What This Is
 
-A gritty tactical turf war card game. 25 toughs + up to 25 quarter-cards packed into backpacks per deck, 5v5 position seizure, simultaneous rounds, no dice.
+A gritty tactical turf war card game. 25 toughs + 25 modifiers (weapons, drugs, currency) per deck, stack-based turfs, single combat phase, 6 difficulty tiers, no dice.
 
 **Doc pillars** — each file owns exactly one area:
 - `docs/DESIGN.md` — vision, identity, philosophy, pivot history
-- `docs/RULES.md` — authoritative gameplay mechanics (cards, phases, attacks, backpacks, runners)
+- `docs/RULES.md` — authoritative gameplay mechanics (cards, turfs, strikes, stacks, affiliations)
 - `docs/ARCHITECTURE.md` — technical stack, directory layout, data flow
 - `docs/PRODUCTION.md` — release readiness, platform targets, blockers, implementation status
 - `docs/VISUAL_REVIEW.md` — how to run and review visual fixtures
@@ -47,31 +47,44 @@ pnpm run cap:sync           # Build + sync web assets to Capacitor
 
 ## Project Structure
 
-- `src/sim/turf/` — Active game engine (types, board, attacks, game loop, AI)
-- `src/sim/cards/` — Card generators, schemas, seeded PRNG
-- `src/sim/analysis/` — Benchmark, sweep, and lock tooling
-- `src/data/pools/` — JSON card data (names, archetypes, affiliations, weapon/drug categories)
-- `src/data/ai/turf-sim.json` — AI config + benchmark thresholds
-- `src/ecs/` — Koota ECS bridge between sim engine and React
-- `src/ui/` — React components (cards, board, hand, screens, filters, theme)
-- `src/platform/` — Capacitor/Device shell, persistence (SQLite), app shell
+- `src/sim/turf/` — Game engine: types, board (stack ops), attacks (3 strike types), environment (stepAction), game (match lifecycle), AI (GOAP planner + fuzzy + difficulty policy)
+- `src/sim/turf/stack-ops.ts` — Stack navigation helpers (topToughIdx, killToughAtIdx, transferMods, modsBelongingToTough)
+- `src/sim/turf/env-query.ts` — Query/read functions split from environment.ts (observations, legal actions, policy keys)
+- `src/sim/cards/` — Zod schemas (Authored*/Compiled*), compile transforms, catalog loaders, seeded PRNG
+- `src/sim/packs/` — Pack generator (rarity stamping 70/25/5), starter grant, match rewards
+- `src/sim/analysis/` — Benchmark, sweep, lock, autobalance, convergence tooling
+- `src/data/pools/` — JSON card data (affiliations graph)
+- `src/data/ai/turf-sim.json` — ALL game tunables (difficulty, combat, AI scoring, packs, rewards)
+- `src/ecs/` — Koota ECS bridge: traits (GameState, PlayerA/B, ActionBudget), actions (delegate to stepAction), hooks (usePlayerTurfs, useHand, useTurfStackComposite)
+- `src/ui/screens/` — MainMenu, Difficulty (2x3 grid), Game (action bar + strike interaction), Collection (category/rarity filters), PackOpening (sealed → reveal → summary), GameOver
+- `src/ui/cards/` — Card (unified v0.2 MTG-style, 4 kinds), CardFrame, ModCard
+- `src/ui/board/` — TurfView, TurfRow, TurfCompositeCard, StackFanModal
+- `src/ui/affiliations/` — AffiliationSymbol (SVG per-affiliation + loyal/rival glow)
+- `src/platform/` — Capacitor/Device shell, persistence (SQLite), collection management
 - `src/test/` — Shared test helpers (render-browser, browser-helpers)
-- `e2e/` — Playwright specs (app-flow, visual-fixtures)
+- `e2e/` — Playwright specs (app-flow, accessibility, difficulty-grid, pack-opening, responsive, visual-fixtures, layout, fold)
 - `.maestro/` — Maestro mobile smoke tests
-- `docs/` — Vision, rules, architecture, production, visual review (see "Doc pillars" at the top)
+- `docs/` — Vision, rules, architecture, production, visual review
 - `config/raw/cards/` — Per-card authored JSON (dev source of truth; compiled to `config/compiled/` for runtime)
 - `sim/reports/turf/balance-history.json` — **Tracked**: source of truth for card lock state
 
 ## Key Types
 
-- `Position` — A street slot with crew + 6 quarter-card modifier slots (drugTop/Bottom, weaponTop/Bottom, cashLeft/Right)
-- `PlayerState` — Board + crewDraw + modifierDraw (unified) + hand (crew + modifiers)
-- `WeaponCard` — Has category (bladed/blunt/explosive/ranged/stealth), bonus, dual offense/defense abilities
-- `ProductCard` — Has category (stimulant/sedative/hallucinogen/steroid/narcotic), potency, dual offense/defense abilities
-- `CashCard` — Two denominations only: $100 or $1000
-- `placeModifier(board, idx, card, 'offense'|'defense')` — Unified modifier placement
-- `positionPower(pos)` — Effective attack (crew power + top weapon + top drug)
-- `positionDefense(pos)` — Effective defense (crew resistance + bottom weapon + bottom drug)
+- `Card` — Discriminated union on `kind`: `ToughCard | WeaponCard | DrugCard | CurrencyCard`
+- `ToughCard` — `{ kind: 'tough', id, name, tagline, archetype, affiliation, power, resistance, rarity, abilities[] }`
+- `WeaponCard` — `{ kind: 'weapon', id, name, category, power, resistance, rarity, abilities[] }`
+- `DrugCard` — `{ kind: 'drug', id, name, category, power, resistance, rarity, abilities[] }`
+- `CurrencyCard` — `{ kind: 'currency', id, name, denomination (100|1000), rarity }`
+- `Turf` — `{ id, stack: Card[], sickTopIdx? }` — open-ended stack, no named slots
+- `PlayerState` — `{ turfs: Turf[], hand: Card[], deck: Card[], discard: Card[], toughsInPlay, actionsRemaining }`
+- `GameConfig` — `{ difficulty, suddenDeath, turfCount, actionsPerTurn, firstTurnActions }`
+- `TurfAction` — `{ kind: TurfActionKind, side, turfIdx?, targetTurfIdx?, cardId? }`
+- `TurfActionKind` — `play_card | direct_strike | pushed_strike | funded_recruit | discard | end_turn | pass`
+- `MatchState` — `{ game: TurfGameState, turnCount, maxTurns }`
+- `positionPower(turf)` — Effective attack (all toughs + modifiers in stack, excludes currency, respects sickTopIdx)
+- `positionResistance(turf)` — Effective defense (all toughs + modifiers in stack)
+- `stepAction(state, action)` — Single entry point for all game mutations (7 action kinds)
+- `createMatch(config, opts?) → MatchState` / `runTurn(match, actions)` / `isGameOver(match)`
 
 ## Testing Conventions
 
@@ -82,6 +95,6 @@ pnpm run cap:sync           # Build + sync web assets to Capacitor
 
 ## Known Gaps
 
-- Category abilities (LACERATE, PARRY, RUSH, etc.) are tracked on cards but not yet fully resolved in combat — `attacks.ts` uses raw bonus/potency only.
-- Archetype abilities are partially implemented — only Bruiser's precision-ignore is active in `attacks.ts`.
-- Release gate (`test:release`) currently requires ≥70% of the balance catalog to be `locked`. Progress by running `pnpm run analysis:lock:persist` — stable runs feed back into `sim/reports/turf/balance-history.json`. Raise `LOCK_COVERAGE_MIN` in `src/sim/turf/__tests__/release-gate.test.ts` once more cards stabilize.
+- Category abilities (LACERATE, PARRY, RUSH, etc.) are tracked on cards but not yet resolved in combat — `attacks.ts` uses raw power/resistance only.
+- Archetype abilities are partially implemented — shark/ghost targeting and bruiser precision-ignore are active in `attacks.ts`. Other archetypes tracked but not resolved.
+- Release gate (`test:release`) currently requires >= 70% of the balance catalog to be `locked`. Progress by running `pnpm run analysis:lock:persist`.

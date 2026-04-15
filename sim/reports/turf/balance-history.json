@@ -1,8 +1,8 @@
 {
-  "version": 1,
+  "version": 2,
   "cards": {
     "card-001": {
-      "consecutiveStableRuns": 44,
+      "consecutiveStableRuns": 0,
       "locked": true
     },
     "card-002": {
@@ -26,7 +26,7 @@
       "locked": true
     },
     "card-007": {
-      "consecutiveStableRuns": 50,
+      "consecutiveStableRuns": 0,
       "locked": true
     },
     "card-008": {
@@ -38,7 +38,7 @@
       "locked": false
     },
     "card-010": {
-      "consecutiveStableRuns": 2,
+      "consecutiveStableRuns": 0,
       "locked": true
     },
     "card-011": {
@@ -82,7 +82,7 @@
       "locked": true
     },
     "card-021": {
-      "consecutiveStableRuns": 45,
+      "consecutiveStableRuns": 0,
       "locked": true
     },
     "card-022": {
@@ -98,306 +98,6 @@
       "locked": true
     },
     "card-025": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-026": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-027": {
-      "consecutiveStableRuns": 45,
-      "locked": true
-    },
-    "card-028": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-029": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-030": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-031": {
-      "consecutiveStableRuns": 0,
-      "locked": false
-    },
-    "card-032": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-033": {
-      "consecutiveStableRuns": 0,
-      "locked": false
-    },
-    "card-034": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-035": {
-      "consecutiveStableRuns": 25,
-      "locked": true
-    },
-    "card-036": {
-      "consecutiveStableRuns": 2,
-      "locked": true
-    },
-    "card-037": {
-      "consecutiveStableRuns": 2,
-      "locked": true
-    },
-    "card-038": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-039": {
-      "consecutiveStableRuns": 0,
-      "locked": false
-    },
-    "card-040": {
-      "consecutiveStableRuns": 2,
-      "locked": true
-    },
-    "card-041": {
-      "consecutiveStableRuns": 2,
-      "locked": true
-    },
-    "card-042": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-043": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-044": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-045": {
-      "consecutiveStableRuns": 0,
-      "locked": false
-    },
-    "card-046": {
-      "consecutiveStableRuns": 0,
-      "locked": false
-    },
-    "card-047": {
-      "consecutiveStableRuns": 2,
-      "locked": true
-    },
-    "card-048": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-049": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-050": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-051": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-052": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-053": {
-      "consecutiveStableRuns": 0,
-      "locked": false
-    },
-    "card-054": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-055": {
-      "consecutiveStableRuns": 0,
-      "locked": false
-    },
-    "card-056": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-057": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-058": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-059": {
-      "consecutiveStableRuns": 2,
-      "locked": true
-    },
-    "card-060": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-061": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-062": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-063": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-064": {
-      "consecutiveStableRuns": 45,
-      "locked": true
-    },
-    "card-065": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-066": {
-      "consecutiveStableRuns": 0,
-      "locked": false
-    },
-    "card-067": {
-      "consecutiveStableRuns": 2,
-      "locked": true
-    },
-    "card-068": {
-      "consecutiveStableRuns": 46,
-      "locked": true
-    },
-    "card-069": {
-      "consecutiveStableRuns": 0,
-      "locked": false
-    },
-    "card-070": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-071": {
-      "consecutiveStableRuns": 0,
-      "locked": false
-    },
-    "card-072": {
-      "consecutiveStableRuns": 0,
-      "locked": false
-    },
-    "card-073": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-074": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-075": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-076": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-077": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-078": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-079": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-080": {
-      "consecutiveStableRuns": 2,
-      "locked": true
-    },
-    "card-081": {
-      "consecutiveStableRuns": 2,
-      "locked": true
-    },
-    "card-082": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-083": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-084": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-085": {
-      "consecutiveStableRuns": 2,
-      "locked": true
-    },
-    "card-086": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-087": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-088": {
-      "consecutiveStableRuns": 0,
-      "locked": false
-    },
-    "card-089": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-090": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-091": {
-      "consecutiveStableRuns": 2,
-      "locked": true
-    },
-    "card-092": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-093": {
-      "consecutiveStableRuns": 0,
-      "locked": false
-    },
-    "card-094": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-095": {
-      "consecutiveStableRuns": 0,
-      "locked": false
-    },
-    "card-096": {
-      "consecutiveStableRuns": 0,
-      "locked": true
-    },
-    "card-097": {
-      "consecutiveStableRuns": 2,
-      "locked": true
-    },
-    "card-098": {
-      "consecutiveStableRuns": 0,
-      "locked": false
-    },
-    "card-099": {
-      "consecutiveStableRuns": 2,
-      "locked": true
-    },
-    "card-100": {
       "consecutiveStableRuns": 0,
       "locked": true
     },
@@ -418,7 +118,7 @@
       "locked": true
     },
     "weap-05": {
-      "consecutiveStableRuns": 0,
+      "consecutiveStableRuns": 1,
       "locked": false
     },
     "weap-06": {
@@ -426,7 +126,7 @@
       "locked": true
     },
     "weap-07": {
-      "consecutiveStableRuns": 0,
+      "consecutiveStableRuns": 1,
       "locked": false
     },
     "weap-08": {
@@ -458,7 +158,7 @@
       "locked": false
     },
     "weap-15": {
-      "consecutiveStableRuns": 0,
+      "consecutiveStableRuns": 1,
       "locked": true
     },
     "weap-16": {
@@ -482,7 +182,7 @@
       "locked": true
     },
     "weap-21": {
-      "consecutiveStableRuns": 0,
+      "consecutiveStableRuns": 1,
       "locked": true
     },
     "weap-22": {
@@ -494,7 +194,7 @@
       "locked": false
     },
     "weap-24": {
-      "consecutiveStableRuns": 0,
+      "consecutiveStableRuns": 1,
       "locked": false
     },
     "weap-25": {
@@ -518,7 +218,7 @@
       "locked": true
     },
     "weap-30": {
-      "consecutiveStableRuns": 0,
+      "consecutiveStableRuns": 1,
       "locked": true
     },
     "weap-31": {
@@ -538,7 +238,7 @@
       "locked": true
     },
     "weap-35": {
-      "consecutiveStableRuns": 0,
+      "consecutiveStableRuns": 1,
       "locked": true
     },
     "weap-36": {
@@ -558,7 +258,7 @@
       "locked": true
     },
     "weap-40": {
-      "consecutiveStableRuns": 0,
+      "consecutiveStableRuns": 1,
       "locked": true
     },
     "weap-41": {
@@ -566,7 +266,7 @@
       "locked": false
     },
     "weap-42": {
-      "consecutiveStableRuns": 0,
+      "consecutiveStableRuns": 1,
       "locked": true
     },
     "weap-43": {
@@ -578,7 +278,7 @@
       "locked": false
     },
     "weap-45": {
-      "consecutiveStableRuns": 2,
+      "consecutiveStableRuns": 3,
       "locked": true
     },
     "weap-46": {
@@ -598,7 +298,7 @@
       "locked": true
     },
     "weap-50": {
-      "consecutiveStableRuns": 2,
+      "consecutiveStableRuns": 0,
       "locked": true
     },
     "drug-01": {
@@ -646,7 +346,7 @@
       "locked": true
     },
     "drug-12": {
-      "consecutiveStableRuns": 0,
+      "consecutiveStableRuns": 1,
       "locked": true
     },
     "drug-13": {
@@ -654,7 +354,7 @@
       "locked": true
     },
     "drug-14": {
-      "consecutiveStableRuns": 0,
+      "consecutiveStableRuns": 1,
       "locked": true
     },
     "drug-15": {
@@ -766,7 +466,7 @@
       "locked": true
     },
     "drug-42": {
-      "consecutiveStableRuns": 0,
+      "consecutiveStableRuns": 1,
       "locked": false
     },
     "drug-43": {

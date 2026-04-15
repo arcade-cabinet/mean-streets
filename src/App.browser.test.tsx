@@ -33,7 +33,7 @@ describe('App flow', () => {
     cleanup?.();
   });
 
-  it('routes through the documented menu to deckbuilder flow before reaching buildup', async () => {
+  it('routes through the documented menu to deckbuilder flow before reaching combat', async () => {
     cleanup = (await renderInBrowser(<App />)).unmount;
 
     expect(document.querySelector('[data-testid="main-menu-screen"]')).not.toBeNull();
@@ -81,14 +81,14 @@ describe('App flow', () => {
       startGameButton.click();
       await settleBrowser();
 
-      const buildup = await waitForSelector('[data-testid="buildup-screen"]', 10000);
-      if (!buildup) {
+      const combat = await waitForSelector('[data-testid="combat-screen"]', 10000);
+      if (!combat) {
         const visibleScreens: string[] = [];
         document.querySelectorAll('[data-testid$="-screen"]').forEach((el) => {
           visibleScreens.push(el.getAttribute('data-testid') ?? '?');
         });
         throw new Error(
-          `buildup-screen did not mount after start click. visible screens=[${visibleScreens.join(',')}] errors=[${errors.join(' | ')}] body length=${document.body.textContent?.length ?? 0}`,
+          `combat-screen did not mount after start click. visible screens=[${visibleScreens.join(',')}] errors=[${errors.join(' | ')}] body length=${document.body.textContent?.length ?? 0}`,
         );
       }
       expect(document.body.textContent).toContain('The Street');

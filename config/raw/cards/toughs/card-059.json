@@ -1,7 +1,8 @@
 {
   "id": "card-059",
-  "type": "crew",
-  "displayName": "Mikey \"Blade\" Aguilar",
+  "kind": "tough",
+  "name": "Mikey \"Blade\" Aguilar",
+  "tagline": "Has never met a fair fight.",
   "archetype": "shark",
   "affiliation": "reapers",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     3
   ],
-  "abilityText": "+1 damage for every point of damage already on the enemy vanguard",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "+1 damage for every point of damage already on the enemy vanguard"
+  ],
   "unlocked": false,
   "unlockCondition": "Deal 46 total damage in a single game",
   "locked": false,
-  "draft": true,
-  "tagline": "Has never met a fair fight."
+  "draft": true
 }

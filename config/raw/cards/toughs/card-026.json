@@ -1,7 +1,8 @@
 {
   "id": "card-026",
-  "type": "crew",
-  "displayName": "Yuki \"Cinder\" Burns",
+  "kind": "tough",
+  "name": "Yuki \"Cinder\" Burns",
+  "tagline": "Sells the truth by the ounce.",
   "archetype": "snitch",
   "affiliation": "freelance",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     4
   ],
-  "abilityText": "On play: opponent must reveal 1 random card from their hand for the rest of the round",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On play: opponent must reveal 1 random card from their hand for the rest of the round"
+  ],
   "unlocked": false,
   "unlockCondition": "Trigger 4 overdraw penalties on opponents",
   "locked": false,
-  "draft": true,
-  "tagline": "Sells the truth by the ounce."
+  "draft": true
 }

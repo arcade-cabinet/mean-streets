@@ -1,7 +1,8 @@
 {
   "id": "card-010",
-  "type": "crew",
-  "displayName": "Mateo \"Chains\" Ishida",
+  "kind": "tough",
+  "name": "Mateo \"Chains\" Ishida",
+  "tagline": "Idles hot and always ready.",
   "archetype": "wheelman",
   "affiliation": "los_diablos",
   "power": [
@@ -10,10 +11,13 @@
   "resistance": [
     2
   ],
-  "abilityText": "On play: swap your vanguard with any card in your active hand (vanguard goes to hand at current HP)",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On play: swap your vanguard with any card in your active hand (vanguard goes to hand at current HP)"
+  ],
   "unlocked": true,
-  "unlockCondition": null,
   "locked": false,
-  "draft": true,
-  "tagline": "Idles hot and always ready."
+  "draft": true
 }

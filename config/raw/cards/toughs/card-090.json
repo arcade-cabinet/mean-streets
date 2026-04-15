@@ -1,7 +1,8 @@
 {
   "id": "card-090",
-  "type": "crew",
-  "displayName": "Min \"Bolt\" Walsh",
+  "kind": "tough",
+  "name": "Min \"Bolt\" Walsh",
+  "tagline": "Seen worse. Fixed worse.",
   "archetype": "medic",
   "affiliation": "neon_snakes",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     11
   ],
-  "abilityText": "When sacrificed to heal: heals double the normal amount",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "When sacrificed to heal: heals double the normal amount"
+  ],
   "unlocked": false,
   "unlockCondition": "Win a game on the first night phase",
   "locked": false,
-  "draft": true,
-  "tagline": "Seen worse. Fixed worse."
+  "draft": true
 }

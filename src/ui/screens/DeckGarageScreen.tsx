@@ -24,8 +24,7 @@ function deckIcon(deck: DeckLoadout): string {
 }
 
 function deckSummary(deck: DeckLoadout): string {
-  const backpackCount = deck.backpackIds?.length ?? 0;
-  return `${deck.crewIds.length} crew • ${deck.modifierIds.length} mods • ${backpackCount} kits`;
+  return `${deck.crewIds.length} crew • ${deck.modifierIds.length} mods`;
 }
 
 export function DeckGarageScreen({

@@ -1,5 +1,12 @@
-import type { TurfPolicyArtifact, TurfPolicyEntry } from '../types';
-import { TURF_AI_CONFIG } from './config';
+import type { Rng } from '../../cards/rng';
+import type { DifficultyTier, TurfAction, TurfPolicyArtifact, TurfPolicyEntry } from '../types';
+import { TURF_AI_CONFIG, TURF_SIM_CONFIG } from './config';
+
+export interface ScoredAction {
+  action: TurfAction;
+  score: number;
+  policyUsed: boolean;
+}
 
 export function policyStateKeys(stateKey: string): string[] {
   if (!stateKey.startsWith('combat|')) return [stateKey];
@@ -100,4 +107,41 @@ export function ensurePolicyEntry(
   }
 
   return entry;
+}
+
+// ── Difficulty-gated action selection ──────────────────────
+
+type DifficultyProfile = {
+  topK: number;
+  noise: number;
+  actionBonus: number;
+  playerActionPenalty: number;
+  lookahead: boolean;
+};
+
+function getProfile(difficulty: DifficultyTier): DifficultyProfile {
+  const profiles = TURF_SIM_CONFIG.difficultyProfiles;
+  return profiles[difficulty] as DifficultyProfile;
+}
+
+export function selectAction(
+  scored: ScoredAction[],
+  difficulty: DifficultyTier,
+  rng: Rng,
+): ScoredAction {
+  if (scored.length === 0) throw new Error('No scored actions to select from');
+  if (scored.length === 1) return scored[0];
+
+  const profile = getProfile(difficulty);
+  const sorted = [...scored].sort((a, b) => b.score - a.score);
+  const candidates = sorted.slice(0, Math.min(profile.topK, sorted.length));
+
+  if (profile.noise === 0) return candidates[0];
+
+  const noised = candidates.map((c) => ({
+    ...c,
+    score: c.score + (rng.next() - 0.5) * 2 * profile.noise * Math.abs(c.score || 1),
+  }));
+  noised.sort((a, b) => b.score - a.score);
+  return noised[0];
 }

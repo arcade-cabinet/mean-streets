@@ -1,8 +1,8 @@
 import { createRng } from '../cards/rng';
 import { generateTurfCardPools } from './catalog';
-import { playTurfGame } from './game';
-import { trainPolicyArtifact, TURF_SIM_CONFIG } from './ai';
-import { DEFAULT_TURF_CONFIG, type TurfGameResult } from './types';
+import { playSimulatedGame } from './benchmark';
+import { TURF_SIM_CONFIG, trainPolicyArtifact } from './ai';
+import type { TurfGameResult } from './types';
 
 export interface PermutationSweepOptions {
   profile?: keyof typeof TURF_SIM_CONFIG.benchmarkProfiles;
@@ -22,23 +22,17 @@ export interface PermutationSummary {
   fundedAttacks: number;
   pushedAttacks: number;
   directAttacks: number;
-  reserveCrewPlacements: number;
-  backpacksEquipped: number;
-  runnerDeployments: number;
-  payloadDeployments: number;
 }
 
 export interface PermutationSweepResult {
   permutations: PermutationSummary[];
 }
 
-function combinations(ids: string[]): string[][] {
-  if (ids.length === 0) return [[]];
-  return ids.map(id => [id]);
-}
-
-function average(results: TurfGameResult[], selector: (result: TurfGameResult) => number): number {
-  return results.reduce((sum, result) => sum + selector(result), 0) / Math.max(1, results.length);
+function average(
+  results: TurfGameResult[],
+  selector: (result: TurfGameResult) => number,
+): number {
+  return results.reduce((sum, r) => sum + selector(r), 0) / Math.max(1, results.length);
 }
 
 function runPermutation(
@@ -59,32 +53,35 @@ function runPermutation(
 
   for (let i = 0; i < warmupGames; i++) {
     const seed = runRng.int(1, 2147483646);
-    warmupEpisodes.push(playTurfGame(DEFAULT_TURF_CONFIG, seed, {
+    warmupEpisodes.push(playSimulatedGame(seed, {
       pools,
       deckPolicyA: { forceIncludeIds: forcedIds },
       capturePolicySamples: true,
       explorationRate: epsilon,
     }));
-    epsilon = Math.max(TURF_SIM_CONFIG.training.epsilonMin, epsilon * TURF_SIM_CONFIG.training.epsilonDecay);
+    epsilon = Math.max(
+      TURF_SIM_CONFIG.training.epsilonMin,
+      epsilon * TURF_SIM_CONFIG.training.epsilonDecay,
+    );
   }
 
   const policyArtifact = trainPolicyArtifact(
-    warmupEpisodes.map(result => result.policySamples ?? []),
+    warmupEpisodes.map(r => r.policySamples ?? []),
     TURF_SIM_CONFIG.version,
   );
 
   const results: TurfGameResult[] = [];
   for (let i = 0; i < evalGames; i++) {
     const seed = runRng.int(1, 2147483646);
-    results.push(playTurfGame(DEFAULT_TURF_CONFIG, seed, {
+    results.push(playSimulatedGame(seed, {
       pools,
       deckPolicyA: { forceIncludeIds: forcedIds },
       policyArtifact,
     }));
   }
 
-  const turns = results.map(result => result.turnCount).sort((a, b) => a - b);
-  const winsA = results.filter(result => result.winner === 'A').length;
+  const turns = results.map(r => r.turnCount).sort((a, b) => a - b);
+  const winsA = results.filter(r => r.winner === 'A').length;
 
   return {
     forcedIds,
@@ -92,17 +89,20 @@ function runPermutation(
     winRateA: winsA / Math.max(1, results.length),
     medianTurns: turns[Math.floor(turns.length / 2)] ?? 0,
     p90Turns: turns[Math.floor(turns.length * 0.9)] ?? 0,
-    fundedAttacks: average(results, result => result.metrics.fundedAttacks),
-    pushedAttacks: average(results, result => result.metrics.pushedAttacks),
-    directAttacks: average(results, result => result.metrics.directAttacks),
-    reserveCrewPlacements: average(results, result => result.metrics.reserveCrewPlaced),
-    backpacksEquipped: average(results, result => result.metrics.backpacksEquipped),
-    runnerDeployments: average(results, result => result.metrics.runnerDeployments),
-    payloadDeployments: average(results, result => result.metrics.payloadDeployments),
+    fundedAttacks: average(results, r => r.metrics.fundedRecruits),
+    pushedAttacks: average(results, r => r.metrics.pushedStrikes),
+    directAttacks: average(results, r => r.metrics.directStrikes),
   };
 }
 
-export function runPermutationSweep(options: PermutationSweepOptions = {}): PermutationSweepResult {
+function combinations(ids: string[]): string[][] {
+  if (ids.length === 0) return [[]];
+  return ids.map(id => [id]);
+}
+
+export function runPermutationSweep(
+  options: PermutationSweepOptions = {},
+): PermutationSweepResult {
   const profile = options.profile ?? 'smoke';
   const profileConfig = TURF_SIM_CONFIG.benchmarkProfiles[profile];
   const games = profileConfig.games;

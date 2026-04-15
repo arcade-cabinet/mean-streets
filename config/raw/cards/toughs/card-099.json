@@ -1,7 +1,8 @@
 {
   "id": "card-099",
-  "type": "crew",
-  "displayName": "Emilio \"Lucky\" Salazar",
+  "kind": "tough",
+  "name": "Emilio \"Lucky\" Salazar",
+  "tagline": "Reads rooftops like road signs.",
   "archetype": "lookout",
   "affiliation": "iron_devils",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     11
   ],
-  "abilityText": "On play: peek at the top 2 cards of your own deck, reorder them",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On play: peek at the top 2 cards of your own deck, reorder them"
+  ],
   "unlocked": false,
   "unlockCondition": "Deal 30 total damage in a single game",
   "locked": false,
-  "draft": true,
-  "tagline": "Reads rooftops like road signs."
+  "draft": true
 }

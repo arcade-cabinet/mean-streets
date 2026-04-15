@@ -1,7 +1,8 @@
 {
   "id": "card-093",
-  "type": "crew",
-  "displayName": "Joey \"Fixer\" Fuentes",
+  "kind": "tough",
+  "name": "Joey \"Fixer\" Fuentes",
+  "tagline": "Makes the problem disappear.",
   "archetype": "fixer",
   "affiliation": "jade_dragon",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     9
   ],
-  "abilityText": "On play: change one card in your active stack's affiliation to match this card's for the round",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On play: change one card in your active stack's affiliation to match this card's for the round"
+  ],
   "unlocked": false,
   "unlockCondition": "Kill 5 vanguards total",
   "locked": false,
-  "draft": true,
-  "tagline": "Makes the problem disappear."
+  "draft": true
 }

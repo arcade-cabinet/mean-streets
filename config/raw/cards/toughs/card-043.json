@@ -1,7 +1,8 @@
 {
   "id": "card-043",
-  "type": "crew",
-  "displayName": "Mickey \"Lucky\" Ishida",
+  "kind": "tough",
+  "name": "Mickey \"Lucky\" Ishida",
+  "tagline": "Brings fire to problems.",
   "archetype": "arsonist",
   "affiliation": "cobalt_syndicate",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     5
   ],
-  "abilityText": "On attack: also deals 1 damage to the card behind the vanguard (next in line)",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On attack: also deals 1 damage to the card behind the vanguard (next in line)"
+  ],
   "unlocked": false,
   "unlockCondition": "Kill 12 vanguards total",
   "locked": false,
-  "draft": true,
-  "tagline": "Brings fire to problems."
+  "draft": true
 }

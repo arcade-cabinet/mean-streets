@@ -1,7 +1,8 @@
 {
   "id": "card-073",
-  "type": "crew",
-  "displayName": "Bao \"Wire\" Suzuki",
+  "kind": "tough",
+  "name": "Bao \"Wire\" Suzuki",
+  "tagline": "Never learned to pull a punch.",
   "archetype": "bruiser",
   "affiliation": "cobalt_syndicate",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     6
   ],
-  "abilityText": "Deals +2 damage when attacking a target with lower ATK than this card",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "Deals +2 damage when attacking a target with lower ATK than this card"
+  ],
   "unlocked": false,
   "unlockCondition": "Kill 9 vanguards total",
   "locked": false,
-  "draft": true,
-  "tagline": "Never learned to pull a punch."
+  "draft": true
 }

@@ -35,10 +35,8 @@ describe('DeckBuilderScreen', () => {
     const screenRoot = document.querySelector<HTMLElement>('[data-testid="deckbuilder-screen"]');
     const saveButton = document.querySelector<HTMLButtonElement>('[data-testid="save-deck-button"]');
     const nameInput = document.querySelector<HTMLInputElement>('[data-testid="deck-name-input"]');
-    const backpackRail = document.querySelector<HTMLElement>('[data-testid="backpack-rail"]');
 
     expect(screenRoot).not.toBeNull();
-    expect(backpackRail).not.toBeNull();
     expect(saveButton?.disabled).toBe(true);
 
     await buildValidDeck();
@@ -77,7 +75,7 @@ describe('DeckBuilderScreen', () => {
     expect(startButton?.disabled).toBe(false);
   });
 
-  it('auto build persists kit ids into the saved deck loadout', async () => {
+  it('auto build produces a valid deck that can be saved', async () => {
     cleanup = (await renderInBrowser(
       <DeckBuilderScreen
         onBack={vi.fn()}
@@ -94,14 +92,15 @@ describe('DeckBuilderScreen', () => {
     await waitForEnabled(startButton);
     expect(startButton?.disabled).toBe(false);
     await userEvent.clear(nameInput!);
-    await userEvent.fill(nameInput!, 'Runner Box');
+    await userEvent.fill(nameInput!, 'Auto Loadout');
     await waitForEnabled(saveButton);
     await userEvent.click(saveButton!);
     await settleBrowser();
 
     const saved = await loadDeckLoadouts();
-    const loadout = saved.find((deck) => deck.name === 'Runner Box');
+    const loadout = saved.find((deck) => deck.name === 'Auto Loadout');
     expect(loadout).toBeTruthy();
-    expect((loadout?.backpackIds ?? []).length).toBeGreaterThan(0);
+    expect(loadout?.crewIds.length).toBe(25);
+    expect(loadout?.modifierIds.length).toBe(25);
   });
 });

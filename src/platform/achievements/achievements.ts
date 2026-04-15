@@ -19,7 +19,7 @@
  * writer hand-wires them in the next pass (Epic J3).
  */
 
-import type { CharacterCard } from '../../sim/cards/schemas';
+import type { CompiledTough } from '../../sim/cards/schemas';
 import type { TurfMetrics } from '../../sim/turf/types';
 import type { PlayerProfile } from '../persistence/storage';
 
@@ -118,7 +118,7 @@ function parseCondition(condition: string): ConditionMatcher | null {
  */
 export function processGameEnd(
   event: GameEndEvent,
-  catalog: CharacterCard[],
+  catalog: CompiledTough[],
   profile: PlayerProfile,
 ): UnlockResult {
   const playerWon = event.winner === event.playerSide;

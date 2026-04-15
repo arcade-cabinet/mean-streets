@@ -1,7 +1,8 @@
 {
   "id": "card-024",
-  "type": "crew",
-  "displayName": "Gabriela \"Smoke\" Hayashi",
+  "kind": "tough",
+  "name": "Gabriela \"Smoke\" Hayashi",
+  "tagline": "Turns a punch into a payday.",
   "archetype": "fence",
   "affiliation": "neon_snakes",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     4
   ],
-  "abilityText": "On sacrifice: draw 2 cards instead of healing",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On sacrifice: draw 2 cards instead of healing"
+  ],
   "unlocked": false,
   "unlockCondition": "Win a game in under 13 turns",
   "locked": false,
-  "draft": true,
-  "tagline": "Turns a punch into a payday."
+  "draft": true
 }

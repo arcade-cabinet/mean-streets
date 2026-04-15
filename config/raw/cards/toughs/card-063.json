@@ -1,7 +1,8 @@
 {
   "id": "card-063",
-  "type": "crew",
-  "displayName": "Sung \"Lookout\" Kwon",
+  "kind": "tough",
+  "name": "Sung \"Lookout\" Kwon",
+  "tagline": "Reads rooftops like road signs.",
   "archetype": "lookout",
   "affiliation": "cobalt_syndicate",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     9
   ],
-  "abilityText": "On play: peek at the top 2 cards of your own deck, reorder them",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On play: peek at the top 2 cards of your own deck, reorder them"
+  ],
   "unlocked": false,
   "unlockCondition": "Kill 14 vanguards total",
   "locked": false,
-  "draft": true,
-  "tagline": "Reads rooftops like road signs."
+  "draft": true
 }

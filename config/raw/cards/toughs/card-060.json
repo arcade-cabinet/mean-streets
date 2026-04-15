@@ -1,7 +1,8 @@
 {
   "id": "card-060",
-  "type": "crew",
-  "displayName": "Ines \"Fence\" Delgado",
+  "kind": "tough",
+  "name": "Ines \"Fence\" Delgado",
+  "tagline": "Liquidates the uncomfortable.",
   "archetype": "fence",
   "affiliation": "dead_rabbits",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     7
   ],
-  "abilityText": "On sacrifice: draw 2 cards instead of healing",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On sacrifice: draw 2 cards instead of healing"
+  ],
   "unlocked": false,
   "unlockCondition": "Win a game on the first night phase",
   "locked": false,
-  "draft": true,
-  "tagline": "Liquidates the uncomfortable."
+  "draft": true
 }

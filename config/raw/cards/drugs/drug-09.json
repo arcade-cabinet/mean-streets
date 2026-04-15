@@ -1,15 +1,21 @@
 {
   "id": "drug-09",
-  "type": "product",
+  "kind": "drug",
   "name": "Surge Buzz",
   "category": "stimulant",
-  "potency": [
+  "power": [
     3
   ],
-  "offenseAbility": "RUSH",
-  "offenseAbilityText": "Crew acts immediately after placement, no setup turn cooldown.",
-  "defenseAbility": "REFLEXES",
-  "defenseAbilityText": "Crew counter-attacks for potency damage when hit.",
+  "resistance": [
+    1
+  ],
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "RUSH",
+    "REFLEXES"
+  ],
   "unlocked": false,
   "unlockCondition": "Win a game in under 13 rounds",
   "locked": false,

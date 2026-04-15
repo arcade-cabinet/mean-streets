@@ -1,7 +1,8 @@
 {
   "id": "card-091",
-  "type": "crew",
-  "displayName": "Kim \"Arsonist\" Silva",
+  "kind": "tough",
+  "name": "Kim \"Arsonist\" Silva",
+  "tagline": "Asks forgiveness, never permission.",
   "archetype": "arsonist",
   "affiliation": "freelance",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     7
   ],
-  "abilityText": "On attack: also deals 1 damage to the card behind the vanguard (next in line)",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On attack: also deals 1 damage to the card behind the vanguard (next in line)"
+  ],
   "unlocked": false,
   "unlockCondition": "Win 3 games",
   "locked": false,
-  "draft": true,
-  "tagline": "Asks forgiveness, never permission."
+  "draft": true
 }

@@ -1,15 +1,21 @@
 {
   "id": "weap-19",
-  "type": "weapon",
+  "kind": "weapon",
   "name": "Crowbar",
   "category": "blunt",
-  "bonus": [
+  "power": [
     5
   ],
-  "offenseAbility": "SHATTER",
-  "offenseAbilityText": "On kill, destroys one random modifier on target position.",
-  "defenseAbility": "BRACE",
-  "defenseAbilityText": "Absorb first bonus points of damage before resistance takes hits.",
+  "resistance": [
+    1
+  ],
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "SHATTER",
+    "BRACE"
+  ],
   "unlocked": false,
   "unlockCondition": "Win a game using only bladed weapons",
   "locked": false,

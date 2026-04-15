@@ -1,7 +1,8 @@
 {
   "id": "card-009",
-  "type": "crew",
-  "displayName": "Kim \"Fats\" Aguilar",
+  "kind": "tough",
+  "name": "Kim \"Fats\" Aguilar",
+  "tagline": "Handles the paperwork nobody writes down.",
   "archetype": "fixer",
   "affiliation": "iron_devils",
   "power": [
@@ -17,10 +18,13 @@
     7,
     8
   ],
-  "abilityText": "On play: change one card in your active stack's affiliation to match this card's for the round",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On play: change one card in your active stack's affiliation to match this card's for the round"
+  ],
   "unlocked": true,
-  "unlockCondition": null,
   "locked": false,
-  "draft": true,
-  "tagline": "Handles the paperwork nobody writes down."
+  "draft": true
 }

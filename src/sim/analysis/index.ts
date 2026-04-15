@@ -1,4 +1,5 @@
 export {
+  checkConvergence,
   createBenchmarkReport,
   runSeededBenchmark,
   writeBenchmarkReport,

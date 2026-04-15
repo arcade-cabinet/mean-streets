@@ -1,7 +1,8 @@
 {
   "id": "card-020",
-  "type": "crew",
-  "displayName": "Gabriela \"Ghost\" Vargas",
+  "kind": "tough",
+  "name": "Gabriela \"Ghost\" Vargas",
+  "tagline": "The one you do not see coming.",
   "archetype": "ghost",
   "affiliation": "freelance",
   "power": [
@@ -10,10 +11,13 @@
   "resistance": [
     2
   ],
-  "abilityText": "After attacking: cannot be targeted for the opponent's next turn",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "After attacking: cannot be targeted for the opponent's next turn"
+  ],
   "unlocked": true,
-  "unlockCondition": null,
   "locked": false,
-  "draft": true,
-  "tagline": "The one you do not see coming."
+  "draft": true
 }

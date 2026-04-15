@@ -1,15 +1,21 @@
 {
   "id": "drug-37",
-  "type": "product",
+  "kind": "drug",
   "name": "Bull Rage",
   "category": "steroid",
-  "potency": [
+  "power": [
     4
   ],
-  "offenseAbility": "BULK",
-  "offenseAbilityText": "Crew gets +potency power for attacks.",
-  "defenseAbility": "FORTIFY",
-  "defenseAbilityText": "Crew gets +potency resistance.",
+  "resistance": [
+    1
+  ],
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "BULK",
+    "FORTIFY"
+  ],
   "unlocked": false,
   "unlockCondition": "Survive 4 killing blows using painkillers",
   "locked": false,

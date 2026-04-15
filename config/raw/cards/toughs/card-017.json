@@ -1,7 +1,8 @@
 {
   "id": "card-017",
-  "type": "crew",
-  "displayName": "Frank \"Hustler\" Silva",
+  "kind": "tough",
+  "name": "Frank \"Hustler\" Silva",
+  "tagline": "Turns nothing into something, twice.",
   "archetype": "hustler",
   "affiliation": "dead_rabbits",
   "power": [
@@ -10,10 +11,13 @@
   "resistance": [
     4
   ],
-  "abilityText": "On play: swap 1 card from your hand with 1 from your reserves",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On play: swap 1 card from your hand with 1 from your reserves"
+  ],
   "unlocked": true,
-  "unlockCondition": null,
   "locked": false,
-  "draft": true,
-  "tagline": "Turns nothing into something, twice."
+  "draft": true
 }

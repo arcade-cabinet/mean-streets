@@ -1,31 +1,33 @@
-/**
- * ECS layer — Koota world + reactive game state bridge.
- */
-
-export { GameState, PlayerA, PlayerB, ActionBudget, ScreenTrait } from './traits';
+export {
+  GameState,
+  PlayerA,
+  PlayerB,
+  ActionBudget,
+  ScreenTrait,
+  CardInStack,
+  TurfOwner,
+  SickFlag,
+  AffiliationSymbol,
+} from './traits';
 export type { ScreenName } from './traits';
 
 export { createGameWorld } from './world';
 
 export {
-  placeCrewAction,
-  placeReserveCrewAction,
-  equipBackpackAction,
-  deployRunnerAction,
-  deployPayloadAction,
-  placeModifierAction,
-  directAttackAction,
-  fundedAttackAction,
-  pushedAttackAction,
-  endRoundAction,
   strikeAction,
+  playCardAction,
+  discardAction,
+  passAction,
+  endTurnAction,
   setScreen,
 } from './actions';
 
 export {
   useGamePhase,
-  usePlayerBoard,
+  usePlayerTurfs,
   useHand,
   useScreen,
   useActionBudget,
+  useTurfStackComposite,
 } from './hooks';
+export type { TurfStackComposite } from './hooks';

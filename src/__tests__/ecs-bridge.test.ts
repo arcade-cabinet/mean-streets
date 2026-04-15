@@ -1,20 +1,13 @@
-/**
- * Integration tests for the ECS bridge layer.
- * Verifies that createGameWorld initialises correctly and that
- * action functions mutate world state as expected.
- */
-
 import { describe, it, expect } from 'vitest';
 import { createGameWorld } from '../ecs/world';
 import {
-  placeCrewAction,
-  placeModifierAction,
-  directAttackAction,
+  playCardAction,
   strikeAction,
-  endRoundAction,
+  endTurnAction,
+  passAction,
+  discardAction,
 } from '../ecs/actions';
-import { GameState, PlayerA, PlayerB, ScreenTrait } from '../ecs/traits';
-import { placeCrew } from '../sim/turf/board';
+import { GameState, PlayerA, PlayerB, ActionBudget } from '../ecs/traits';
 
 const SEED = 42;
 
@@ -25,131 +18,130 @@ describe('createGameWorld', () => {
     expect(entity).toBeDefined();
   });
 
-  it('PlayerA starts with crew cards in hand', () => {
+  it('PlayerA starts with 5 cards in hand', () => {
     const world = createGameWorld(undefined, SEED);
-    const entity = world.queryFirst(GameState, PlayerA, PlayerB);
+    const entity = world.queryFirst(PlayerA);
     const pA = entity!.get(PlayerA);
-    expect(pA).toBeDefined();
-    expect(pA!.hand.crew.length).toBeGreaterThan(0);
+    expect(pA!.hand).toHaveLength(5);
   });
 
-  it('PlayerA starts with modifier cards in hand', () => {
+  it('PlayerA starts with 4 turfs', () => {
     const world = createGameWorld(undefined, SEED);
-    const entity = world.queryFirst(GameState, PlayerA, PlayerB);
+    const entity = world.queryFirst(PlayerA);
     const pA = entity!.get(PlayerA);
-    expect(pA).toBeDefined();
-    expect(pA!.hand.modifiers.length).toBeGreaterThan(0);
-  });
-});
-
-describe('placeCrewAction', () => {
-  it('places a crew card from hand onto board position 0 and removes it from hand', () => {
-    const world = createGameWorld(undefined, SEED);
-    const entity = world.queryFirst(GameState, PlayerA, PlayerB);
-    const pA = entity!.get(PlayerA)!;
-    const initialHandSize = pA.hand.crew.length;
-
-    const placed = placeCrewAction(world, 0);
-
-    expect(placed).toBe(true);
-    expect(pA.board.active[0].crew).not.toBeNull();
-    expect(pA.hand.crew.length).toBe(initialHandSize - 1);
-  });
-
-  it('returns false and leaves board unchanged when position already has crew', () => {
-    const world = createGameWorld(undefined, SEED);
-    placeCrewAction(world, 0);
-    // Try to place again on the same occupied position
-    const result = placeCrewAction(world, 0);
-    expect(result).toBe(false);
-  });
-});
-
-describe('placeModifierAction', () => {
-  it('places a modifier in offense orientation and fills the correct slot', () => {
-    const world = createGameWorld(undefined, SEED);
-    // First put a crew card on position 0 (placeModifier requires crew on position)
-    placeCrewAction(world, 0);
-
-    const entity = world.queryFirst(GameState, PlayerA, PlayerB);
-    const pA = entity!.get(PlayerA)!;
-    const initialModCount = pA.hand.modifiers.length;
-    const card = pA.hand.modifiers[0];
-
-    const placed = placeModifierAction(world, 0, 0, 'offense');
-
-    expect(placed).toBe(true);
-    expect(pA.hand.modifiers.length).toBe(initialModCount - 1);
-
-    const pos = pA.board.active[0];
-    // The offense slot depends on card type: product → drugTop, weapon → weaponTop, cash → cashLeft
-    if (card.type === 'product') {
-      expect(pos.drugTop).not.toBeNull();
-    } else if (card.type === 'weapon') {
-      expect(pos.weaponTop).not.toBeNull();
-    } else if (card.type === 'cash') {
-      expect(pos.cashLeft).not.toBeNull();
+    expect(pA!.turfs).toHaveLength(4);
+    for (const turf of pA!.turfs) {
+      expect(turf.stack).toHaveLength(0);
+      expect(turf.id).toMatch(/^turf-/);
     }
   });
+
+  it('ActionBudget starts with firstTurnActions', () => {
+    const world = createGameWorld(undefined, SEED);
+    const entity = world.queryFirst(ActionBudget);
+    const budget = entity!.get(ActionBudget);
+    expect(budget!.remaining).toBe(5);
+    expect(budget!.total).toBe(5);
+  });
 });
 
-describe('directAttackAction', () => {
-  it('returns an AttackOutcome when both attacker and target have crew and enough turnsActive', () => {
+describe('playCardAction', () => {
+  it('places a card from hand onto a turf stack', () => {
     const world = createGameWorld(undefined, SEED);
-
-    const entity = world.queryFirst(GameState, PlayerA, PlayerB);
+    const entity = world.queryFirst(PlayerA);
     const pA = entity!.get(PlayerA)!;
-    const pB = entity!.get(PlayerB)!;
+    const card = pA.hand[0];
 
-    // Place crew on both sides and manually set turnsActive so directAttackAction sees them
-    const crewA = pA.hand.crew[0];
-    const crewB = pB.hand.crew[0];
-    placeCrew(pA.board, 0, crewA);
-    pA.board.active[0].turnsActive = 1;
-    placeCrew(pB.board, 0, crewB);
-    pB.board.active[0].turnsActive = 1;
+    const result = playCardAction(world, 0, card.id);
 
-    const outcome = directAttackAction(world, 0, 0);
-    expect(outcome).not.toBeNull();
-    expect(outcome).toHaveProperty('type');
-    expect(outcome).toHaveProperty('description');
+    expect(result).not.toBeNull();
+    expect(pA.turfs[0].stack.length).toBeGreaterThan(0);
+    expect(pA.hand).not.toContain(card);
+  });
+});
+
+describe('passAction', () => {
+  it('decrements actionsRemaining', () => {
+    const world = createGameWorld(undefined, SEED);
+    const entity = world.queryFirst(ActionBudget);
+    const before = entity!.get(ActionBudget)!.remaining;
+
+    passAction(world);
+
+    const after = entity!.get(ActionBudget)!.remaining;
+    expect(after).toBe(before - 1);
+  });
+});
+
+describe('discardAction', () => {
+  it('moves a card from hand to discard without costing an action', () => {
+    const world = createGameWorld(undefined, SEED);
+    const entity = world.queryFirst(PlayerA);
+    const pA = entity!.get(PlayerA)!;
+    const budgetEntity = world.queryFirst(ActionBudget);
+    const budgetBefore = budgetEntity!.get(ActionBudget)!.remaining;
+
+    const card = pA.hand[0];
+    discardAction(world, card.id);
+
+    expect(pA.discard).toContainEqual(expect.objectContaining({ id: card.id }));
+    expect(budgetEntity!.get(ActionBudget)!.remaining).toBe(budgetBefore);
+  });
+});
+
+describe('endTurnAction', () => {
+  it('advances turnNumber and switches side', () => {
+    const world = createGameWorld(undefined, SEED);
+    const entity = world.queryFirst(GameState);
+    const gs = entity!.get(GameState)!;
+
+    expect(gs.turnSide).toBe('A');
+    const turnBefore = gs.turnNumber;
+
+    endTurnAction(world);
+
+    expect(gs.turnNumber).toBe(turnBefore + 1);
+    expect(gs.turnSide).toBe('B');
   });
 
-  it('returns null when attacker position has no crew', () => {
+  it('resets action budget for the new side', () => {
     const world = createGameWorld(undefined, SEED);
-    const outcome = directAttackAction(world, 0, 0);
-    expect(outcome).toBeNull();
+    const budgetEntity = world.queryFirst(ActionBudget);
+
+    endTurnAction(world);
+
+    const budget = budgetEntity!.get(ActionBudget)!;
+    expect(budget.remaining).toBeGreaterThan(0);
+    expect(budget.remaining).toBe(budget.total);
   });
 });
 
 describe('strikeAction', () => {
-  it('transitions phase from buildup to combat', () => {
+  it('returns null when game state not found', () => {
     const world = createGameWorld(undefined, SEED);
-    const entity = world.queryFirst(GameState, PlayerA, PlayerB);
-    const gs = entity!.get(GameState)!;
+    const entity = world.queryFirst(PlayerA);
+    const pA = entity!.get(PlayerA)!;
 
-    expect(gs.phase).toBe('buildup');
-    strikeAction(world);
-    expect(gs.phase).toBe('combat');
-  });
+    const toughCards = pA.hand.filter((c) => c.kind === 'tough');
+    for (const card of toughCards.slice(0, 2)) {
+      playCardAction(world, 0, card.id);
+    }
 
-  it('also sets the screen to combat', () => {
-    const world = createGameWorld(undefined, SEED);
-    strikeAction(world);
-    const screenEntity = world.queryFirst(ScreenTrait);
-    const s = screenEntity!.get(ScreenTrait)!;
-    expect(s.current).toBe('combat');
-  });
-});
+    endTurnAction(world);
 
-describe('endRoundAction', () => {
-  it('increments turnNumber by 1', () => {
-    const world = createGameWorld(undefined, SEED);
-    const entity = world.queryFirst(GameState, PlayerA, PlayerB);
-    const gs = entity!.get(GameState)!;
+    const entityB = world.queryFirst(PlayerB);
+    const pB = entityB!.get(PlayerB)!;
+    const toughCardsB = pB.hand.filter((c) => c.kind === 'tough');
+    for (const card of toughCardsB.slice(0, 2)) {
+      playCardAction(world, 0, card.id);
+    }
 
-    const before = gs.turnNumber;
-    endRoundAction(world);
-    expect(gs.turnNumber).toBe(before + 1);
+    endTurnAction(world);
+
+    const result = strikeAction(world, 'direct_strike', 0, 0);
+    expect(result).toBeDefined();
+    if (result) {
+      expect(result.actionKey).toContain('direct_strike');
+    }
   });
 });

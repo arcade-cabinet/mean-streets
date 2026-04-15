@@ -1,7 +1,8 @@
 {
   "id": "card-080",
-  "type": "crew",
-  "displayName": "Hector \"Ghost\" Morales",
+  "kind": "tough",
+  "name": "Hector \"Ghost\" Morales",
+  "tagline": "You will know them by their absence.",
   "archetype": "ghost",
   "affiliation": "kings_row",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     6
   ],
-  "abilityText": "After attacking: cannot be targeted for the opponent's next turn",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "After attacking: cannot be targeted for the opponent's next turn"
+  ],
   "unlocked": false,
   "unlockCondition": "Win a game on the first night phase",
   "locked": false,
-  "draft": true,
-  "tagline": "You will know them by their absence."
+  "draft": true
 }

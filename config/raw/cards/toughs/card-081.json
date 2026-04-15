@@ -1,7 +1,8 @@
 {
   "id": "card-081",
-  "type": "crew",
-  "displayName": "Shin \"Fixer\" Suzuki",
+  "kind": "tough",
+  "name": "Shin \"Fixer\" Suzuki",
+  "tagline": "Makes the problem disappear.",
   "archetype": "fixer",
   "affiliation": "cobalt_syndicate",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     10
   ],
-  "abilityText": "On play: change one card in your active stack's affiliation to match this card's for the round",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On play: change one card in your active stack's affiliation to match this card's for the round"
+  ],
   "unlocked": false,
   "unlockCondition": "Win 5 games",
   "locked": false,
-  "draft": true,
-  "tagline": "Makes the problem disappear."
+  "draft": true
 }

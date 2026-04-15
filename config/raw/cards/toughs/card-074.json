@@ -1,7 +1,8 @@
 {
   "id": "card-074",
-  "type": "crew",
-  "displayName": "Gino \"Snitch\" Ramos",
+  "kind": "tough",
+  "name": "Gino \"Snitch\" Ramos",
+  "tagline": "Your secrets pay the rent.",
   "archetype": "snitch",
   "affiliation": "freelance",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     7
   ],
-  "abilityText": "On play: opponent must reveal 1 random card from their hand for the rest of the round",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On play: opponent must reveal 1 random card from their hand for the rest of the round"
+  ],
   "unlocked": false,
   "unlockCondition": "Win a game in under 11 turns",
   "locked": false,
-  "draft": true,
-  "tagline": "Your secrets pay the rent."
+  "draft": true
 }

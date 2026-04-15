@@ -20,18 +20,6 @@ function assertBenchmarkThresholds(profile: BenchmarkProfileName): void {
   expect(summary.fundedAttacks).toBeGreaterThanOrEqual(thresholds.fundedAttacksMin);
   expect(summary.pushedAttacks).toBeGreaterThanOrEqual(thresholds.pushedAttacksMin);
   expect(summary.policyGuidedActions).toBeGreaterThanOrEqual(thresholds.policyGuidedMin);
-  expect(summary.reserveCrewPlacements).toBeGreaterThanOrEqual(0);
-  expect(summary.backpacksEquipped).toBeGreaterThanOrEqual(0);
-  expect(summary.runnerDeployments).toBeGreaterThanOrEqual(0);
-  expect(summary.payloadDeployments).toBeGreaterThanOrEqual(0);
-  expect(summary.runnerReserveOpportunityTurns).toBeGreaterThanOrEqual(0);
-  expect(summary.runnerEquipOpportunityTurns).toBeGreaterThanOrEqual(0);
-  expect(summary.runnerDeployOpportunityTurns).toBeGreaterThanOrEqual(0);
-  expect(summary.runnerPayloadOpportunityTurns).toBeGreaterThanOrEqual(0);
-  expect(summary.runnerOpportunityUseRate).toBeGreaterThanOrEqual(0);
-  expect(summary.runnerOpportunityUseRate).toBeLessThanOrEqual(1);
-  expect(summary.runnerReserveStartUseRate).toBeGreaterThanOrEqual(0);
-  expect(summary.runnerReserveStartUseRate).toBeLessThanOrEqual(1);
 }
 
 describe('seeded simulation benchmarks', () => {

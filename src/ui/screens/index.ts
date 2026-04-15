@@ -1,6 +1,7 @@
-export { DeckBuilderScreen } from './DeckBuilderScreen';
+export { CollectionScreen } from './CollectionScreen';
 export { DeckGarageScreen } from './DeckGarageScreen';
-export { BuildupScreen } from './BuildupScreen';
-export { CombatScreen } from './CombatScreen';
-export { MainMenuScreen } from './MainMenuScreen';
+export { DifficultyScreen } from './DifficultyScreen';
 export { GameOverScreen } from './GameOverScreen';
+export { GameScreen } from './GameScreen';
+export { MainMenuScreen } from './MainMenuScreen';
+export { PackOpeningScreen } from './PackOpeningScreen';

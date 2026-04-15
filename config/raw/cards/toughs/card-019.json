@@ -1,7 +1,8 @@
 {
   "id": "card-019",
-  "type": "crew",
-  "displayName": "Billy \"Torch\" Doyle",
+  "kind": "tough",
+  "name": "Billy \"Torch\" Doyle",
+  "tagline": "Leaves the block a little louder.",
   "archetype": "arsonist",
   "affiliation": "iron_devils",
   "power": [
@@ -10,10 +11,13 @@
   "resistance": [
     2
   ],
-  "abilityText": "On attack: also deals 1 damage to the card behind the vanguard (next in line)",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On attack: also deals 1 damage to the card behind the vanguard (next in line)"
+  ],
   "unlocked": true,
-  "unlockCondition": null,
   "locked": false,
-  "draft": true,
-  "tagline": "Leaves the block a little louder."
+  "draft": true
 }

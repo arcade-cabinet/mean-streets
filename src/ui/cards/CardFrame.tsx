@@ -1,22 +1,43 @@
+import type { Rarity } from '../../sim/turf/types';
+
 interface CardFrameProps {
-  variant: 'crew' | 'quarter' | 'slot' | 'button';
+  variant: 'crew' | 'quarter' | 'slot' | 'button' | 'card';
+  rarity?: Rarity;
   className?: string;
 }
 
-export function CardFrame({ variant, className }: CardFrameProps) {
-  const stroke = variant === 'crew'
-    ? 'rgba(232, 221, 204, 0.18)'
-    : variant === 'quarter'
-      ? 'rgba(232, 221, 204, 0.16)'
-      : variant === 'button'
-        ? 'rgba(232, 221, 204, 0.14)'
-        : 'rgba(232, 221, 204, 0.12)';
+const RARITY_ACCENT: Record<Rarity, string> = {
+  common: 'rgba(148, 163, 184, 0.32)',
+  rare: 'rgba(56, 189, 248, 0.36)',
+  legendary: 'rgba(245, 158, 11, 0.42)',
+};
 
-  const accent = variant === 'crew'
-    ? 'rgba(178, 42, 30, 0.28)'
-    : variant === 'quarter'
-      ? 'rgba(178, 42, 30, 0.2)'
-      : 'rgba(213, 161, 77, 0.16)';
+const RARITY_STROKE: Record<Rarity, string> = {
+  common: 'rgba(148, 163, 184, 0.18)',
+  rare: 'rgba(56, 189, 248, 0.22)',
+  legendary: 'rgba(245, 158, 11, 0.26)',
+};
+
+export function CardFrame({ variant, rarity, className }: CardFrameProps) {
+  const isCard = variant === 'card';
+  const rarityAccent = isCard && rarity ? RARITY_ACCENT[rarity] : null;
+  const rarityStroke = isCard && rarity ? RARITY_STROKE[rarity] : null;
+
+  const stroke = rarityStroke
+    ?? (variant === 'crew' || variant === 'card'
+      ? 'rgba(232, 221, 204, 0.18)'
+      : variant === 'quarter'
+        ? 'rgba(232, 221, 204, 0.16)'
+        : variant === 'button'
+          ? 'rgba(232, 221, 204, 0.14)'
+          : 'rgba(232, 221, 204, 0.12)');
+
+  const accent = rarityAccent
+    ?? (variant === 'crew' || variant === 'card'
+      ? 'rgba(178, 42, 30, 0.28)'
+      : variant === 'quarter'
+        ? 'rgba(178, 42, 30, 0.2)'
+        : 'rgba(213, 161, 77, 0.16)');
 
   return (
     <svg

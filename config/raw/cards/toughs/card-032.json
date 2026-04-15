@@ -1,7 +1,8 @@
 {
   "id": "card-032",
-  "type": "crew",
-  "displayName": "Sofia \"Ghost\" Liu",
+  "kind": "tough",
+  "name": "Sofia \"Ghost\" Liu",
+  "tagline": "The one you do not see coming.",
   "archetype": "ghost",
   "affiliation": "dead_rabbits",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     4
   ],
-  "abilityText": "After attacking: cannot be targeted for the opponent's next turn",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "After attacking: cannot be targeted for the opponent's next turn"
+  ],
   "unlocked": false,
   "unlockCondition": "Win 2 games with a full Freelance deck",
   "locked": false,
-  "draft": true,
-  "tagline": "The one you do not see coming."
+  "draft": true
 }
