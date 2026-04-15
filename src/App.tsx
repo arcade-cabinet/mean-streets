@@ -10,12 +10,9 @@ import { loadCompiledToughs } from './sim/cards/catalog';
 import { matchRewardPacks } from './sim/packs/generator';
 import { emptyMetrics } from './sim/turf/environment';
 import type { Card, GameConfig, TurfMetrics } from './sim/turf/types';
-import { resolveDeckLoadout } from './ui/deckbuilder/catalog';
 import {
   type AppSettings,
-  type DeckLoadout,
   loadActiveRun,
-  loadDeckLoadouts,
   loadProfile,
   loadSettings,
   saveActiveRun,
@@ -26,7 +23,6 @@ import { GrittyFilters } from './ui/filters';
 import { type DrawerTab, GameMenuDrawer, RulesModal } from './ui/overlays';
 import {
   CollectionScreen,
-  DeckGarageScreen,
   DifficultyScreen,
   GameOverScreen,
   GameScreen,
@@ -37,7 +33,6 @@ import {
 type Screen =
   | 'menu'
   | 'difficulty'
-  | 'deck-garage'
   | 'combat'
   | 'gameover'
   | 'collection'
@@ -71,7 +66,6 @@ export default function App() {
   });
   const [drawerTab, setDrawerTab] = useState<DrawerTab>('settings');
   const [hasActiveRun, setHasActiveRun] = useState(false);
-  const [savedDecks, setSavedDecks] = useState<DeckLoadout[]>([]);
   const [activeConfig, setActiveConfig] = useState<GameConfig | null>(null);
   const [_lastRewardCards, setLastRewardCards] = useState<Card[]>([]);
 
@@ -79,11 +73,9 @@ export default function App() {
     void Promise.all([
       loadSettings(),
       loadActiveRun<unknown>(),
-      loadDeckLoadouts(),
-    ]).then(([nextSettings, activeRun, nextDecks]) => {
+    ]).then(([nextSettings, activeRun]) => {
       setSettingsState(nextSettings);
       setHasActiveRun(activeRun !== null);
-      setSavedDecks(nextDecks);
     });
   }, []);
 
@@ -130,28 +122,12 @@ export default function App() {
     })();
   }
 
-  function handlePlayDeck(deckId: string) {
-    const loadout = savedDecks.find((entry) => entry.id === deckId);
-    if (!loadout) return;
-    const resolved = resolveDeckLoadout(loadout);
-    handleStartGame([...resolved.crew, ...resolved.modifiers]);
-  }
-
   function handleSelectDifficulty(config: GameConfig) {
     const newWorld = createGameWorld(config);
     setWorld(newWorld);
     setActiveConfig(config);
     setHasActiveRun(true);
     void saveActiveRun<ActiveRunState>({ phase: 'combat', deck: undefined });
-    setScreen('combat');
-  }
-
-  function handleStartGame(runtimeDeck: Parameters<typeof createGameWorld>[2]) {
-    if (!runtimeDeck) return;
-    const newWorld = createGameWorld(undefined, undefined, runtimeDeck);
-    setWorld(newWorld);
-    setHasActiveRun(true);
-    void saveActiveRun<ActiveRunState>({ phase: 'combat', deck: runtimeDeck });
     setScreen('combat');
   }
 
@@ -228,16 +204,6 @@ export default function App() {
 
       {screen === 'pack-opening' && (
         <PackOpeningScreen onBack={() => setScreen('collection')} />
-      )}
-
-      {screen === 'deck-garage' && (
-        <DeckGarageScreen
-          loadouts={savedDecks}
-          onCreateDeck={() => {}}
-          onEditDeck={() => {}}
-          onPlayDeck={handlePlayDeck}
-          onBack={() => setScreen('menu')}
-        />
       )}
 
       {world && screen === 'combat' && (

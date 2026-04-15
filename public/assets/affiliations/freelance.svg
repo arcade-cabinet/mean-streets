@@ -1,7 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <!-- Freelance: No crew, no loyalty — lone wolf silhouette -->
-  <path d="M32 12 Q28 12, 26 16 Q24 20, 26 24 L28 26 Q24 30, 22 34 L18 36 L22 38 L20 44 L28 40 L32 52 L36 40 L44 44 L42 38 L46 36 L42 34 Q40 30, 36 26 L38 24 Q40 20, 38 16 Q36 12, 32 12 Z"
+  <!-- Freelance: Lone wolf silhouette — head + shoulders, under a crosshair -->
+  <circle cx="32" cy="22" r="7" stroke="#A9A9A9" stroke-width="2" fill="none"/>
+  <path d="M18 52 Q18 38, 32 36 Q46 38, 46 52 Z"
         stroke="#A9A9A9" stroke-width="2" stroke-linejoin="round" fill="none"/>
-  <circle cx="29" cy="18" r="1.5" fill="#A9A9A9" opacity="0.7"/>
-  <circle cx="35" cy="18" r="1.5" fill="#A9A9A9" opacity="0.7"/>
+  <circle cx="32" cy="22" r="12" stroke="#A9A9A9" stroke-width="0.8" opacity="0.35" fill="none"/>
+  <path d="M32 6 L32 10 M32 34 L32 38 M16 22 L20 22 M44 22 L48 22"
+        stroke="#A9A9A9" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
 </svg>

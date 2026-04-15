@@ -118,7 +118,7 @@
       "locked": true
     },
     "weap-05": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 2,
       "locked": false
     },
     "weap-06": {
@@ -126,7 +126,7 @@
       "locked": true
     },
     "weap-07": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 2,
       "locked": false
     },
     "weap-08": {
@@ -158,7 +158,7 @@
       "locked": false
     },
     "weap-15": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 2,
       "locked": true
     },
     "weap-16": {
@@ -182,7 +182,7 @@
       "locked": true
     },
     "weap-21": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 2,
       "locked": true
     },
     "weap-22": {
@@ -194,7 +194,7 @@
       "locked": false
     },
     "weap-24": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 2,
       "locked": false
     },
     "weap-25": {
@@ -218,7 +218,7 @@
       "locked": true
     },
     "weap-30": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 2,
       "locked": true
     },
     "weap-31": {
@@ -238,7 +238,7 @@
       "locked": true
     },
     "weap-35": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 2,
       "locked": true
     },
     "weap-36": {
@@ -258,7 +258,7 @@
       "locked": true
     },
     "weap-40": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 2,
       "locked": true
     },
     "weap-41": {
@@ -266,7 +266,7 @@
       "locked": false
     },
     "weap-42": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 2,
       "locked": true
     },
     "weap-43": {
@@ -278,7 +278,7 @@
       "locked": false
     },
     "weap-45": {
-      "consecutiveStableRuns": 3,
+      "consecutiveStableRuns": 4,
       "locked": true
     },
     "weap-46": {
@@ -346,7 +346,7 @@
       "locked": true
     },
     "drug-12": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 2,
       "locked": true
     },
     "drug-13": {
@@ -354,7 +354,7 @@
       "locked": true
     },
     "drug-14": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 2,
       "locked": true
     },
     "drug-15": {
@@ -466,7 +466,7 @@
       "locked": true
     },
     "drug-42": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 2,
       "locked": false
     },
     "drug-43": {
