@@ -1,324 +1,362 @@
 ---
-title: Mean Streets — Rules Reference
+title: Mean Streets — Rules Reference (v0.2)
 updated: 2026-04-14
 status: current
 domain: product
 ---
 
-# Mean Streets — Rules Reference
+# Mean Streets — Rules Reference (v0.2 Stack Redesign)
 
-This is the authoritative, implementation-level rules document. Design intent
-lives in [DESIGN.md](./DESIGN.md). When rules disagree with this file, this
-file wins.
+Authoritative, implementation-level rules. Design intent lives in
+[DESIGN.md](./DESIGN.md). When rules disagree with this file, this file
+wins. This document supersedes every prior version; v0.1 concepts
+(quarter-cards, backpacks, runners, buildup/combat split, 5-slot
+active/reserve boards) are removed.
 
 ## 1. Objective
 
-Seize all five of your opponent's active street positions. A position is
-seized when the tough occupying it is killed or flipped (recruited).
+Hold onto your turfs. When all crew on a turf are dead or recruited, the
+opponent **seizes** that turf. You lose the match when you run out of
+turfs.
+
+The number of turfs per player is set by difficulty (§11).
 
 ## 2. Anatomy Of A Card
 
-Every full-sized card has the **same visual frame** with six display slots:
+Every card has the **same full-sized MTG-style frame**:
 
 ```
-  ┌─ top-left ─── top-center ── top-right ─┐
-  │  (backpack-    (power /      (backpack- │
-  │    gated)      archetype)     gated)    │
+  ┌─────────────────────────────────────────┐
+  │ [Affiliation Hero Image]      [Power]   │  ← power (top-right)
   │                                         │
-  ├─ middle-left ─ affiliation ─ middle-rt ─┤
-  │  (pocket)       (badge)      (pocket)   │
+  │   Tough / Weapon / Drug / Currency      │  ← name (center)
+  │              Tagline                    │
   │                                         │
-  ├─ bottom-left ─ bot-center ── bottom-rt ─┤
-  │  (backpack-    (resistance    (backpack- │
-  │    gated)       / role)       gated)    │
-  │                                         │
-  │                 "Name"                  │
+  │ [Rarity]         [Type]       [Resist]  │  ← resistance (bottom-right)
+  │              "Name"                     │
   └─────────────────────────────────────────┘
 ```
 
-- **Pocket slots** (middle-left, middle-right): always usable. A tough can
-  carry up to **two quarter-cards** in its pockets at any time.
-- **Backpack-gated slots** (the four corners): only become active when the
-  tough is carrying a **backpack**. A runner (tough + backpack) can carry up
-  to **2 + 4 = 6** quarter-cards total.
-- **Center column** displays the tough's stats (power top-center, resistance
-  bottom-center) and affiliation badge.
+- **Mobile (`phone-portrait`)**: affiliation hero image is anchored
+  top-left; card name below. Compact landscape layout.
+- **Desktop / tablet-landscape**: affiliation symbol is rendered as the
+  centered portrait; card name top-center. Classic MTG portrait layout.
 
-Backpack cards use the same frame but only the **four corner slots** are
-live — they have no power/resistance of their own.
+There are no quarter-cards. There are no sub-slots. Every card is a
+first-class, full-sized card with its own power and/or resistance value.
 
 ### Card Types
 
-| Type         | Full-sized? | Tunable stat             | Behaviour                             |
-|--------------|-------------|--------------------------|---------------------------------------|
-| Tough (crew) | Yes         | power, resistance        | Occupies active/reserve positions     |
-| Backpack     | Yes         | (carrier for payload)    | Stages to reserve, transfers to tough |
-| Weapon       | No (quarter)| bonus                    | Slot payload (pocket or backpack)     |
-| Drug (product)| No (quarter)| potency                  | Slot payload (pocket or backpack)     |
-| Cash         | No (quarter)| denomination ($100/$1000)| Slot payload (pocket or backpack)     |
+| Type     | Stats                         | Role                              |
+|----------|-------------------------------|-----------------------------------|
+| Tough    | power, resistance, archetype, affiliation | Founds or reinforces a turf |
+| Weapon   | power (offense) OR resist (defense), category | Adds to turf's cumulative power/resist |
+| Drug     | power OR resist, category     | Same as weapon, different category |
+| Currency | denomination ($100 / $1000)   | Funds actions, buffers affiliation clashes |
 
-Quarter-cards never exist independently in a hand or a draw pile. They live
-inside pockets or backpacks only.
+All cards carry a **rarity grade**: `common` / `rare` / `legendary`.
+Rarity drives pack drop rate and factors into autobalance evaluation.
 
 ## 3. Deck Composition
 
-A deck is **50 cards total**, decided during deckbuilding:
+A player has **one deck**. It holds every card the player owns (unlocked
+via packs — see §10). Toughs and modifiers (weapons, drugs, currency)
+are shuffled together into a **single draw pile**.
 
-| Component      | Count                                 |
-|----------------|---------------------------------------|
-| Toughs         | 25                                    |
-| Backpacks      | N (starting quota, simulation-tuned)  |
-| Quarter-cards  | up to 25 — weapons + drugs + cash, all pre-packed into backpacks |
+There is no deckbuilding in v0.2. Your deck is your collection. Balance
+comes from pack drop rates and rarity tuning, not from player curation.
 
-### Starting Backpack Quota
+### Starter Collection
 
-Every player starts with `N` backpack slots by default. `N` is set by
-simulation tuning (target: each backpack carries ~3–4 quarter-cards on
-average). Players can unlock **additional backpack slots** permanently
-through achievements, just like unlocking additional cash denominations.
+On first run, a new player receives:
 
-**Current N: 12** (configurable via `TURF_SIM_CONFIG.deckBuilder.totalBackpacks`).
-Sweep results (`pnpm run analysis:backpack-quota --profile ci`) show
-that N in the 3..10 range produces identical game-length and equip
-metrics — the engine consumes only ~2 backpacks per game in current
-balance, so the quota above ~3 is effectively a deckbuilding quality-
-of-life knob rather than a balance lever. Revisit when AI runner usage
-climbs past 1 backpack/game on average.
+- **4 × Tough Pack (5 cards)** — 20 toughs total
+- **1 × Weapon Pack (5 cards)**
+- **1 × Drug Pack (5 cards)**
+- **1 × Currency Pack (5 cards)**
 
-### Pre-Packing Rule
+Total starter: **35 cards** (20 toughs + 15 modifiers).
 
-**All quarter-cards start the game inside backpacks.** During deckbuilding
-the player:
+Packs follow rarity drop rates (§10). Further cards unlock by opening
+packs earned through wins.
 
-1. Picks 25 toughs.
-2. Decides how many of their N backpack slots to use (unused slots stay
-   empty).
-3. Stuffs weapons/drugs/cash into each backpack, 1–4 quarter-cards per
-   backpack, up to a total of 25 quarter-cards across all backpacks.
+## 4. Turfs (Your Board)
 
-No quarter-card enters the game outside a backpack. Mid-game
-redistribution (through seizure, pocket transfers, payload dispersal) is
-the only way quarter-cards change location.
+Your board is **N turfs**, side by side. N is set by difficulty (§11).
+Each turf is a **cumulative stack of cards** owned by you.
 
-## 4. Setup
+### Stack Display
 
-- Both players' 25 toughs shuffle into their crew draw pile.
-- Both players' packed backpacks shuffle into their backpack draw pile.
-- Each player draws an opening hand of **3 toughs** and **up to 2 backpacks**
-  into reserve (the exact draw numbers come from `TurfGameConfig`).
-- Reserve backpacks begin **staged in reserve positions**. They can be
-  transferred onto reserve toughs before first blood as part of the buildup
-  phase (see §6).
+The stack is **not visibly stacked**. The UI shows a dynamic composite
+"top card" that aggregates what is in play on that turf, in logical
+order:
 
-## 5. Phases
+1. The roster of toughs (names, archetypes, affiliations)
+2. Weapons in play
+3. Drugs in play
+4. Cash in play
+5. Affiliations in play (with loyalty/rivalry symbols)
+6. Cumulative **Power** and **Resistance** totals
 
-The game has two phases:
+Tapping the composite opens a fan modal (desktop) or swipe-through
+pager (mobile) showing every card in the stack with its contribution
+highlighted.
 
-### Buildup (up to 10 rounds)
+### Cumulative Power & Resistance
 
-- Both players act simultaneously each round.
-- Legal actions each round:
-  - **Place tough**: move a tough from hand into an empty active/reserve
-    position.
-  - **Stage backpack**: place a backpack from hand into an empty reserve
-    position, or equip it onto an existing reserve tough.
-  - **Transfer backpack**: move a staged backpack between reserve cards
-    (see §7 — backpacks can only move among reserved cards in buildup).
-- Buildup ends when either player **strikes** (first blood) or after ten
-  rounds have elapsed.
+- **Power** = Σ tough.power + Σ weapon.power + Σ drug.power
+- **Resistance** = Σ tough.resistance + Σ weapon.resistance + Σ drug.resistance
 
-### Combat
+Cash does not contribute to raw power/resistance. Cash fuels actions
+(pushed strikes, reclaims) and can buffer affiliation conflicts (§5).
 
-- Five actions per player per round, simultaneous.
-- First blood draws permanent lane assignments — once combat starts,
-  backpacks cannot be freely transferred between reserve cards. They move
-  only with their carrier (runner) or through seizure.
-- Actions available during combat:
-  - **Direct attack**
-  - **Funded attack** (cash-backed bribe / flip)
-  - **Pushed attack** (drug + cash — splash)
-  - **Equip runner**: swap a reserve tough carrying a backpack into an
-    active position (free-swap rule, see §7).
-  - **Retreat / reposition**: swap an active tough back to reserve (costs
-    the turn).
-  - **Dispense payload**: runner gives a backpack item to an active
-    friendly, or uses it in an action (attack, stack).
-  - **Reclaim**: retake a seized position with a tough + cash.
-  - **Pass**: skip remaining actions for the round.
+### Affiliation Stacking
 
-## 6. Backpacks — Mechanical Container
+Each tough carries an affiliation. When two cards on the same turf have
+**incompatible affiliations** (rivals), the conflict must be resolved
+before either card can enter play:
 
-A backpack is a **mechanical full-sized card**. It has:
+- **Compatible / neutral**: add freely.
+- **Rivals with no buffer**: the incoming card is **discarded from hand**
+  (the player cannot add it to that turf). The player must have a
+  **buffer** — a tough with a neutral or mediating affiliation, or a
+  **Currency card** already on the turf — to absorb the clash.
+- Affiliation compatibility is a directed graph authored in
+  `src/data/pools/affiliations.json` with `loyal` / `rival` /
+  `neutral` / `mediator` relationships.
 
-- Four payload slots (top-left, top-right, bottom-left, bottom-right).
-- No name, no icon beyond a generic backpack glyph, no archetype, no
-  affiliation. Every backpack is interchangeable.
-- No inherent power or resistance. When equipped onto a tough, its four
-  payload slots project onto that tough's four **corner** slots; the tough
-  also gains a **runner symbol** overlay to indicate carrier status.
+The UI surfaces hand-drawn SVG affiliation symbols bound to Koota
+traits so rival pairs glow red and loyal pairs glow gold on the
+composite.
 
-### Backpack Identity In Data
+## 5. Drawing & Playing
 
-Backpacks are **not authored cards**. They do not live under
-`config/raw/cards/` with stat arrays. They are a rule type defined in
-`config/raw/cards/special.json` along with currency. Player-packed
-instances are created during deckbuilding by the engine with IDs like
-`backpack-player-A-1 ... backpack-player-A-N` and the specific payload
-chosen by the player.
+### Draw Rules
 
-## 7. Runner Mechanics
+- Player draws **1 card** at the start of their turn.
+- **Draw gate**: the player cannot *play* a modifier (weapon / drug /
+  currency) unless they have **at least one tough** in play on some
+  turf. If their hand is modifier-only and their board is empty,
+  every action must be "play a tough" — modifiers stay in hand.
+- Hand size: unlimited. There is no discard-to-limit at end of turn.
+- A card may be voluntarily discarded from hand at any time (free
+  action) to get rid of an unplayable affiliation clash.
 
-A **runner** is a tough that is currently carrying a backpack. Runner is
-an overlay role — the tough keeps its archetype, affiliation, stats, and
-name; it gains the runner capabilities on top.
+### Play Rules
 
-### Equipping A Backpack
+- A tough is played onto a specific turf. It joins that turf's stack.
+- A modifier is played onto a specific turf that already has at least
+  one tough. Weapons and drugs contribute power or resistance based on
+  orientation chosen at play time (**offense** → power, **defense** →
+  resistance). Currency joins the turf's cash pool.
+- A turf has no slot cap. A stack can grow arbitrarily large —
+  late-game turfs resemble fortresses.
 
-- Backpacks can only be equipped to **reserve** cards, never active.
-- Equip action:
-  - If staged as an empty reserve position, a backpack equips onto a
-    reserve tough by adjacent transfer.
-  - A player-held backpack in hand can be placed onto a reserve tough as a
-    single action.
+## 6. Actions Per Turn
 
-### Free Swap
+| Turn type                 | Actions |
+|---------------------------|---------|
+| First turn of the match   | 5       |
+| Normal turn (Easy–Medium) | 3       |
+| Normal turn (Hard)        | 4       |
+| Normal turn (Nightmare+)  | 3       |
 
-- Equipping a backpack onto a reserve tough grants **one free swap** —
-  the runner may move into any empty active slot with **no turn
-  penalty**, the one time.
-- This is the runner's "entry" into the front line.
-- After the free swap, any subsequent active ↔ reserve move costs a full
-  turn (normal retreat penalty).
+Actions are spent on:
 
-### Runner Payload Use
+1. **Play a card** — tough or modifier (subject to draw gate in §5).
+2. **Strike (direct)** — attack an opponent's turf stack (§7).
+3. **Strike (pushed)** — cash-backed splash strike (§7).
+4. **Recruit (funded)** — cash-backed flip attempt (§7).
+5. **Discard** — free, does not cost an action.
+6. **End turn** — pass remaining actions (free).
 
-While the runner is in active play:
+There is no first-blood / phase split. Every turn from turn 1 onward
+can strike. The 5-action opener gives the first player setup parity
+against the second player's tempo.
 
-- The runner may **dispense** backpack items to:
-  - itself (stack an item into one of its own pocket or corner slots),
-  - another friendly active tough,
-  - an opposing tough (as the payload of a direct/funded/pushed attack).
-- Each dispense consumes one action.
-- Backpack items can be left in the pack for future actions.
+## 7. Combat — Striking The Stack
 
-### Pocket Vs Backpack Capacity
+Strikes target an **opponent's turf stack** as a single entity. The
+stack's aggregated Power and Resistance (§4) are the combat values.
 
-A full-up runner can carry:
+### Direct Strike
 
-- 2 items in **pockets** (middle-left, middle-right).
-- 4 items in **backpack corners** (top-left, top-right, bottom-left,
-  bottom-right).
+Your turf's **Power** vs. opponent turf's **Resistance**.
 
-Total: **6 quarter-cards** of staged bonuses on a single tough. This is
-the ceiling the mid/late game economy pushes toward and defends against.
+- `P ≥ R` → **kill the top tough** on the target stack. Modifiers
+  carried by that tough (the weapons / drugs / cash stacked since the
+  tough was played) **flip ownership** and transfer to the striker's
+  own turf stack at the top. Affiliation clashes are re-evaluated on
+  transfer — incompatible transfers are **discarded** instead.
+- `P < R` but `P ≥ R / 2` → **sick** the top tough (marked, cannot
+  contribute power next turn).
+- `P < R / 2` → **busted** (nothing happens, action lost).
 
-### Empty Backpacks
+### Striking Position — Bottom vs Anywhere
 
-- An empty backpack is still useful — it reserves the four corner slots
-  on the runner for later payload pickup (e.g., from seized cards or
-  pocket transfers between friendlies).
-- A runner may retreat to reserve, but retreating costs the turn (no
-  free-swap benefit on the way back).
+Some archetypes and legendary cards grant **strike-bottom** or
+**strike-anywhere** rules, replacing the default "top tough" target:
 
-### Seizure
+- **Strike bottom** (Shark archetype, *Foundation Breaker* legendary):
+  target the oldest tough on the stack — bypasses fresh reinforcements.
+- **Strike anywhere** (Ghost archetype, *Phantom Strike* legendary):
+  choose which tough to target.
 
-- If a runner is seized (killed or flipped) while carrying a backpack,
-  the **backpack and all its remaining contents** transfer to the
-  opponent.
-- The opponent may then use the backpack immediately if able (e.g.,
-  dispense its payload to one of their active or reserve cards) or stash
-  it on one of their own reserve toughs.
-- Carrying heavy backpacks into combat therefore trades lethality for
-  logistics risk.
+Default rule remains "top of the stack."
 
-## 8. Precision Rule
+### Pushed Strike
 
-A tough with attack value `A` may target a defender with attack value `D`
-only when `A <= D * precisionMult` (currently `3.0`). The **Bruiser**
-archetype ignores precision.
+Spend **1 Currency card** from your turf as part of the strike. Power
+becomes `P + cash.denomination / 100` (so $100 = +1, $1000 = +10) for
+that strike. On success, the strike also **sicks the tough directly
+beneath** the killed tough.
 
-## 9. Attack Types
+### Funded Recruit
 
-### Direct Attack
+Spend **$1000** total in Currency from your turf. Target an opponent
+tough on the top of their stack. Flip succeeds if
+`sum(your.currency) ≥ target.resistance × affiliationMult`, where:
 
-Attacker's effective power (crew power + top weapon bonus + top drug
-potency, once unlocked) vs defender's effective defense (crew resistance
-+ bottom weapon + bottom drug). If `atk >= def` → kill. Otherwise →
-wound (reduce defender resistance).
+- Freelance target → 0.5
+- Same affiliation as a tough on your striking turf → 0.7
+- Rival affiliation → 1.5
+- Otherwise → 1.0
 
-### Funded Attack
+On success, the target tough **joins your turf** (transfers to top of
+striking stack). On fail, cash is spent, nothing moves.
 
-Attacker stakes **offensive cash** (center-left slot). Flip threshold =
-`defender resistance + defensive cash`, modified by:
+## 8. Seized Turf
 
-- Freelance defender → threshold × 0.5 (easy to recruit).
-- Same affiliation → threshold × 0.7.
+When a turf has **zero living toughs** (all killed or recruited), the
+turf is **seized by the opponent**. The seizing player:
 
-If `offensiveCash >= threshold` → flip (defender joins attacker's side).
-Otherwise → busted (cash spent, no flip).
+- Takes all remaining modifiers on the seized turf (they transfer to
+  one of the seizer's turfs of their choice).
+- Removes the turf from the defender's board.
+- The defender loses **1 turf**. The match continues on their
+  remaining turfs.
 
-### Pushed Attack
+When a player has **zero turfs left**, they lose the match.
 
-Crew + offensive drug + offensive cash. Push power =
-`drug potency + floor(cash / 10)`.
+## 9. AI Difficulty
 
-- `push >= defender defense` → kill/flip + splash damage to adjacent
-  positions (up to `potency - 1` neighbours weakened).
-- `push >= floor(defense / 2)` → partial weaken (sick state).
-- Otherwise → busted.
+AI looseness modulates by difficulty tier — not by changing rules, but
+by changing decision noise and action optimality:
 
-## 10. Win Condition
+| Tier            | AI strategy                                      |
+|-----------------|--------------------------------------------------|
+| Easy            | Top-5 action sampling, 30% random noise          |
+| Medium          | Top-3 action sampling, 15% random noise          |
+| Hard            | Top-2 action sampling, 5% random noise, +1 action |
+| Nightmare       | Best action, 0% noise, −1 player action          |
+| Ultra-Nightmare | Best action + 2-ply lookahead, sudden-death auto-on |
 
-The match ends when one player has seized **5 of the opponent's
-5 active street positions**, or on timeout after `maxRounds` (default
-100). On timeout, the player with more seized positions wins; ties
-break to the player who struck first.
+AI tuning lives in `src/data/ai/turf-sim.json` under `aiDifficulty`.
 
-## 11. Balance Philosophy
+## 10. Pack Economy & Rarity
 
-- Deterministic engine. The only randomness in a match is the draw order
-  (seeded).
-- 50/50 winrate between equal players with equal decks, measured across
-  release-profile seeds.
-- All card types must be meaningfully used — no decorative cards.
-- Games last 12–20 rounds (~60 total actions).
-- `<5%` stall rate, `<2` passes per game.
-- Every card in the catalog must pass the autobalance gate before a
-  release (coverage threshold in `release-gate.test.ts`).
+### Rarity Grades
 
-## 12. Unlock Model
+| Grade     | Base drop rate | Autobalance treatment                 |
+|-----------|----------------|---------------------------------------|
+| Common    | 70%            | Stats near catalog median             |
+| Rare      | 25%            | Stats 1.15–1.3× median                |
+| Legendary | 5%             | Stats 1.4–1.8× median, unique ability |
 
-- **Baseline set**: a curated subset of toughs, weapons, drugs,
-  backpacks, and cash denominations is unlocked by default for all
-  players.
-- **Achievement unlocks**: additional cards and backpack slots unlock
-  permanently through gameplay achievements. Unlocks are additive —
-  once earned, always available.
-- **Expansions ≠ re-tunes**: once a card is shipped and locked, its
-  stats never change. Future expansions add new cards instead of
-  re-tuning existing ones (Brawl Stars model).
+### Packs
 
-## 13. Glossary
+A pack is a bundle of 1, 3, or 5 cards in a specific category.
 
-- **Tough**: a full-sized crew card. Has power, resistance, archetype, and
-  affiliation.
-- **Backpack**: a mechanical full-sized container card with four payload
-  slots. Equipped only in reserve, transfers onto a tough to create a
-  **runner**.
-- **Runner**: a tough currently carrying a backpack. Gains free-swap,
-  payload dispensing, and increased quarter-card capacity (2 pockets + 4
-  backpack corners).
-- **Pocket slot**: middle-left / middle-right display slot on any
-  full-sized card. Holds one quarter-card each. Always active.
-- **Backpack-gated slot**: top-left, top-right, bottom-left, bottom-right
-  corners on a tough. Only activated when the tough is carrying a
-  backpack.
-- **Quarter-card**: weapon, drug, or cash. Never exists independently.
-  Lives inside a pocket slot or a backpack.
-- **Seize**: kill or flip an opponent's tough, clearing their active
-  position and taking their carried stash.
-- **First blood**: the first attack of the combat phase. Ends buildup
-  and locks backpacks to their current carriers.
+| Pack              | Contents                                              |
+|-------------------|-------------------------------------------------------|
+| Tough Pack (5)    | 5 toughs (70/25/5 rarity roll per card)               |
+| Weapon Pack (5)   | 5 weapons                                             |
+| Drug Pack (5)     | 5 drugs                                               |
+| Currency Pack (5) | 5 currency cards (always common — no rarity roll)     |
+| Single Pack (1)   | 1 card of a single category (chosen at open time)     |
+| Triple Pack (3)   | 3 cards of a single category                          |
 
-Implementation status for each rule listed here tracks in
+Packs are the only way to acquire new cards. Wins award packs; harder
+difficulties and sudden-death mode award better packs.
+
+### Sudden-Death Drop Bonus
+
+When Sudden Death is active and the player wins, a **rarity upgrade
+die** rolls on every card in the pack: 30% chance to bump each card
+one rarity tier. Legendary-tier bumps cap there.
+
+### Autobalance With Rarity
+
+Autobalance (`pnpm run analysis:lock`) now:
+
+1. Weights a card's winrate by its **expected deck frequency** (drop
+   rate × collection size distribution).
+2. Treats under-drawn legendaries more leniently (smaller sample size).
+3. Rejects stat changes that would move a common into rare-rangestats
+   without also promoting its rarity.
+
+## 11. Difficulty & Turf Count
+
+| Tier              | Turfs | Actions/turn | Sudden Death |
+|-------------------|-------|--------------|--------------|
+| Easy              | 5     | 3            | Optional     |
+| Medium            | 4     | 3            | Optional     |
+| Hard              | 3     | 4            | Optional     |
+| Nightmare         | 2     | 3            | Optional     |
+| Sudden Death      | 1     | 3            | Forced on    |
+| Ultra-Nightmare   | 1     | 3            | Forced on, +2-ply AI |
+
+The new-game screen presents a **2×3 icon grid**:
+
+```
+┌──────────┬──────────┬──────────┐
+│  Easy    │  Medium  │  Hard    │
+├──────────┼──────────┼──────────┤
+│ Nightmare│  Sudden  │  Ultra-  │
+│          │  Death   │ Nightmare│
+└──────────┴──────────┴──────────┘
+```
+
+Ultra-Nightmare **permanently enables Sudden Death** for that match;
+the toggle visually locks on when Ultra is selected.
+
+## 12. Win Condition
+
+- **Match win**: reduce opponent to zero turfs (all seized).
+- **Sudden Death**: same rule, but each player only has 1 turf, so a
+  single successful seizure ends the match.
+- No timeout. Games terminate on seizure or voluntary forfeit.
+
+## 13. Balance Philosophy
+
+- Deterministic engine. The only randomness in a match is the draw
+  order (seeded) and optional AI noise (seeded per difficulty tier).
+- 50/50 winrate between AI-vs-AI runs on same difficulty with full
+  baseline collection.
+- Every card in the catalog must pass the autobalance gate
+  (coverage threshold in `release-gate.test.ts`).
+- Pack drop rates are simulation-proven to produce collection curves
+  that reach 80% catalog coverage within ~40 pack openings.
+
+## 14. Glossary
+
+- **Turf**: a cumulative stack of cards owned by one player on one
+  board slot. Lost when all its toughs are dead or recruited.
+- **Stack**: the ordered sequence of cards played onto a turf.
+- **Tough**: a crew card. The only card type that counts for turf
+  survival.
+- **Modifier**: any non-tough card (weapon, drug, currency).
+- **Draw gate**: the rule preventing a modifier from being played
+  when the player has zero toughs anywhere on the board.
+- **Strike**: any combat action (direct, pushed, funded recruit).
+- **Seize**: reduce an opponent's turf to zero toughs; take its
+  modifiers and remove the turf from the defender's board.
+- **Sudden Death**: 1-turf mode with rarity-boosted pack rewards on
+  win.
+- **Buffer**: a tough or currency card on a turf that mediates
+  between rival-affiliated cards.
+- **Pack**: a bundle of 1/3/5 cards of a single category. Awarded
+  for wins; only way to acquire new cards.
+
+Implementation status for each rule here tracks in
 [PRODUCTION.md](./PRODUCTION.md).
