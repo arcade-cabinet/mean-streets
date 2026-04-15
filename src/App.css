@@ -1889,6 +1889,15 @@ select {
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: 0.04em;
+  /* Allow up to 2 lines so long display names like
+     "Rafael 'Chains' Murphy" wrap inside narrow deck-card tiles
+     instead of clipping mid-word. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .deck-card-meta,
