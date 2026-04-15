@@ -2,6 +2,10 @@ import { expect, test } from '@playwright/test';
 import type { Locator, Page, TestInfo } from '@playwright/test';
 
 async function activate(target: Locator, testInfo: TestInfo) {
+  // Wait for the target to be both attached and stable before we
+  // try to dispatch — flaky on CI WebKit/xvfb where animations push
+  // the element around in the brief moment between location and tap.
+  await target.waitFor({ state: 'visible' });
   await target.scrollIntoViewIfNeeded().catch(() => undefined);
   if (testInfo.project.use.hasTouch) {
     await target.tap({ force: true });

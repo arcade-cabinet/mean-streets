@@ -14,6 +14,7 @@ import type { Locator, Page, TestInfo } from '@playwright/test';
  */
 
 async function tap(target: Locator, testInfo: TestInfo) {
+  await target.waitFor({ state: 'visible' });
   await target.scrollIntoViewIfNeeded().catch(() => undefined);
   if (testInfo.project.use.hasTouch) {
     await target.tap({ force: true });
