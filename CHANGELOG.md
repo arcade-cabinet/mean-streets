@@ -41,7 +41,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Convergence checking (48-52% winrate band, 3 consecutive runs)
 - Saturation lock state (maxHistoryLength = 8)
 - Balance history v2 format with kind discriminant
-- 281 tests passing: 182 node, 99 DOM, 20 browser, 111 e2e (4 device profiles)
+- 517 tests passing: 280 node, 99 DOM, 27 browser, 111 e2e (4 device profiles)
 - E2E specs: app-flow, accessibility, difficulty-grid, pack-opening, responsive-alignment, visual-fixtures
 
 ### Changed
