@@ -66,7 +66,12 @@ describe('turf planner v0.2', () => {
     state.players.B.toughsInPlay = 1;
 
     const { action, trace } = decideAction(state, 'A');
+    // Must pick a substantive action (play/strike/recruit/discard) —
+    // NOT a pass and NOT end_turn. A regression from the null-action
+    // fallback path would otherwise slip through with just a
+    // not-'pass' assertion.
     expect(action.kind).not.toBe('pass');
+    expect(action.kind).not.toBe('end_turn');
     expect(trace.actionScores.length).toBeGreaterThan(0);
   });
 

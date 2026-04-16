@@ -111,10 +111,18 @@ export function deriveLockRecommendations(
 
     const rarity = rarities?.get(effect.cardId);
     const currentStat = stats?.get(effect.cardId);
-    if (currentStat !== undefined && statExceedsRarityBand(rarity, currentStat)) {
+    // Both rarity AND stat must be known to evaluate the band. Prior
+    // impl used `rarity!` in the reason string, relying on the
+    // implicit truthiness inside statExceedsRarityBand — fragile.
+    if (
+      rarity !== undefined &&
+      currentStat !== undefined &&
+      statExceedsRarityBand(rarity, currentStat)
+    ) {
       if (state === 'provisionally_stable') state = 'unstable';
+      const band = RARITY_STAT_BANDS[rarity];
       reasons.push(
-        `stat ${currentStat} exceeds rarity band for ${rarity} (max ${RARITY_STAT_BANDS[rarity!]?.max})`,
+        `stat ${currentStat} exceeds rarity band for ${rarity} (max ${band?.max ?? '?'})`,
       );
     }
 

@@ -139,9 +139,10 @@ describe('strikeAction', () => {
     endTurnAction(world);
 
     const result = strikeAction(world, 'direct_strike', 0, 0);
-    expect(result).toBeDefined();
-    if (result) {
-      expect(result.actionKey).toContain('direct_strike');
-    }
+    // Strict assertion: `toBeDefined` also passes for `null`, and the
+    // conditional guard would then silently skip the actionKey check.
+    // Require a non-null object so the actionKey assertion always runs.
+    expect(result).not.toBeNull();
+    expect(result!.actionKey).toContain('direct_strike');
   });
 });

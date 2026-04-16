@@ -65,12 +65,18 @@ export function stopAmbience(): void {
 }
 
 export function setMood(): void {
+  // With only one mood wired, `setMood()` is idempotent: ramp the
+  // volume / filter envelopes to the target but DON'T retrigger the
+  // drone note while it's already playing — re-triggering the same
+  // pitch causes audible restarts/artifacts. The rampTo calls are
+  // cheap no-ops when the targets already match.
   const m = MOODS.combat;
   const ramp = '+2';
   drone.volume.rampTo(m.droneVol, 2, ramp);
   noise.volume.rampTo(m.noiseVol, 2, ramp);
   lfo.frequency.rampTo(m.lfoFreq, 2, ramp);
-  if (playing) drone.triggerAttack(m.droneFreq, ramp);
+  // Intentionally no `triggerAttack` here. `startAmbience` owns the
+  // note-on event; setMood is a re-shape of the ongoing ambience.
 }
 
 export function setVolume(level: number): void {
