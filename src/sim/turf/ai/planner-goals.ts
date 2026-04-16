@@ -1,7 +1,47 @@
 // Yuka GOAP plumbing for the v0.2 planner. Holds the generic Goal /
 // CompositeGoal / GoalEvaluator subclasses plus a shared `scoreAll`.
-// @ts-expect-error Yuka does not ship TypeScript declarations
-import { CompositeGoal, Goal, GoalEvaluator, Think } from 'yuka';
+//
+// Yuka ships JSDoc types that treat `owner` as a strict `GameEntity`,
+// which we don't use. We intentionally widen to `any` so our
+// PlannerOwner can flow through. Our own interface (PlannerOwner)
+// provides real type coverage for the fields we actually read.
+// biome-ignore-all lint/suspicious/noExplicitAny: Yuka base types
+// biome-ignore-all lint/complexity/noUselessConstructor: explicit wiring
+// deno-lint-ignore no-explicit-any
+import YukaModule from 'yuka';
+
+const { CompositeGoal, Goal, GoalEvaluator } = YukaModule as unknown as {
+  CompositeGoal: new (owner?: unknown) => CompositeGoalLike;
+  Goal: new (owner?: unknown) => GoalLike;
+  GoalEvaluator: new (bias?: number) => GoalEvaluatorLike;
+};
+
+type GoalStatusKey = 'INACTIVE' | 'ACTIVE' | 'COMPLETED' | 'FAILED';
+interface GoalLike {
+  owner: unknown;
+  status: number;
+  activate(): void;
+  execute(): void;
+  terminate(): void;
+}
+interface CompositeGoalLike extends GoalLike {
+  addSubgoal(g: GoalLike): this;
+  clearSubgoals(): this;
+  currentSubgoal(): GoalLike | null;
+  executeSubgoals(): number;
+  hasSubgoals(): boolean;
+  activateIfInactive(): this;
+}
+interface GoalEvaluatorLike {
+  characterBias: number;
+  calculateDesirability(owner: unknown): number;
+  setGoal(owner: unknown): void;
+}
+
+const STATUS: Record<GoalStatusKey, number> = (Goal as unknown as {
+  STATUS: Record<GoalStatusKey, number>;
+}).STATUS;
+
 import type {
   PlannerMemory,
   TurfAction,
@@ -24,7 +64,7 @@ export type GoalName =
   | 'anti_stall';
 
 export interface PlannerOwner {
-  brain: Think;
+  brain: CompositeGoalLike;
   state: TurfGameState;
   side: 'A' | 'B';
   observation: TurfObservation;
@@ -40,28 +80,35 @@ export interface PlannerOwner {
 }
 
 export class TurfGoalEvaluator extends GoalEvaluator {
+  goalName: GoalName;
+  desirabilityFn: (o: PlannerOwner) => number;
+  goalFactory: (o: PlannerOwner) => CompositeGoalLike;
+
   constructor(
-    private readonly goalName: GoalName,
+    goalName: GoalName,
     bias: number,
-    private readonly desirabilityFn: (o: PlannerOwner) => number,
-    private readonly goalFactory: (o: PlannerOwner) => CompositeGoal,
+    desirabilityFn: (o: PlannerOwner) => number,
+    goalFactory: (o: PlannerOwner) => CompositeGoalLike,
   ) {
     super(bias);
+    this.goalName = goalName;
+    this.desirabilityFn = desirabilityFn;
+    this.goalFactory = goalFactory;
   }
 
-  override calculateDesirability(owner: PlannerOwner): number {
+  calculateDesirability(owner: PlannerOwner): number {
     const s = this.desirabilityFn(owner);
     owner.consideredGoals.push({ goal: this.goalName, score: s });
     return s;
   }
 
-  override setGoal(owner: PlannerOwner): void {
+  setGoal(owner: PlannerOwner): void {
     const brain = owner.brain;
-    const current = brain.currentSubgoal() as CompositeGoal | null;
+    const current = brain.currentSubgoal();
     const next = this.goalFactory(owner) as OrderedActionGoal;
     const cur =
       current && 'goalName' in current
-        ? (current as OrderedActionGoal).goalName
+        ? (current as unknown as OrderedActionGoal).goalName
         : null;
     if (!current || cur !== next.goalName) {
       brain.clearSubgoals();
@@ -102,31 +149,32 @@ export function scoreAll(
 }
 
 export class ChooseActionGoal extends Goal {
-  constructor(
-    owner: PlannerOwner,
-    private readonly gn: GoalName,
-    private readonly kinds: TurfActionKind[],
-  ) {
+  gn: GoalName;
+  kinds: TurfActionKind[];
+
+  constructor(owner: PlannerOwner, gn: GoalName, kinds: TurfActionKind[]) {
     super(owner);
+    this.gn = gn;
+    this.kinds = kinds;
   }
 
-  override activate(): void {
-    this.status = Goal.STATUS.ACTIVE;
+  activate(): void {
+    this.status = STATUS.ACTIVE;
   }
 
-  override execute(): void {
+  execute(): void {
     const owner = this.owner as PlannerOwner;
     const candidates = owner.legalActions.filter((a) =>
       this.kinds.includes(a.kind),
     );
     if (candidates.length === 0) {
-      this.status = Goal.STATUS.FAILED;
+      this.status = STATUS.FAILED;
       return;
     }
     const scored = scoreAll(owner, candidates);
     const viable = scored.filter((s) => s.score > Number.NEGATIVE_INFINITY);
     if (viable.length === 0) {
-      this.status = Goal.STATUS.FAILED;
+      this.status = STATUS.FAILED;
       return;
     }
     const best = selectAction(
@@ -137,20 +185,25 @@ export class ChooseActionGoal extends Goal {
     owner.selectedGoal = this.gn;
     owner.selectedAction = best.action;
     owner.policyUsed = owner.policyUsed || best.policyUsed;
-    this.status = Goal.STATUS.COMPLETED;
+    this.status = STATUS.COMPLETED;
   }
 }
 
 export class OrderedActionGoal extends CompositeGoal {
+  goalName: GoalName;
+  prio: Array<TurfActionKind | TurfActionKind[]>;
+
   constructor(
     owner: PlannerOwner,
-    readonly goalName: GoalName,
-    private readonly prio: Array<TurfActionKind | TurfActionKind[]>,
+    goalName: GoalName,
+    prio: Array<TurfActionKind | TurfActionKind[]>,
   ) {
     super(owner);
+    this.goalName = goalName;
+    this.prio = prio;
   }
 
-  override activate(): void {
+  activate(): void {
     this.clearSubgoals();
     for (const k of this.prio) {
       this.addSubgoal(
@@ -161,24 +214,24 @@ export class OrderedActionGoal extends CompositeGoal {
         ),
       );
     }
-    this.status = Goal.STATUS.ACTIVE;
+    this.status = STATUS.ACTIVE;
   }
 
-  override execute(): void {
+  execute(): void {
     this.activateIfInactive();
-    let status = Goal.STATUS.ACTIVE;
+    let status = STATUS.ACTIVE;
     while (this.hasSubgoals() && !(this.owner as PlannerOwner).selectedAction) {
       status = this.executeSubgoals();
-      if (status === Goal.STATUS.ACTIVE) break;
+      if (status === STATUS.ACTIVE) break;
     }
-    if ((this.owner as PlannerOwner).selectedAction)
-      this.status = Goal.STATUS.COMPLETED;
-    else
-      this.status =
-        status === Goal.STATUS.FAILED ? Goal.STATUS.FAILED : Goal.STATUS.ACTIVE;
+    if ((this.owner as PlannerOwner).selectedAction) {
+      this.status = STATUS.COMPLETED;
+    } else {
+      this.status = status === STATUS.FAILED ? STATUS.FAILED : STATUS.ACTIVE;
+    }
   }
 
-  override terminate(): void {
+  terminate(): void {
     this.clearSubgoals();
   }
 }

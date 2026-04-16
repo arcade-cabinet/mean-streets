@@ -45,7 +45,7 @@ async function loadRawPrefs(): Promise<Record<string, CardPreference>> {
 
 async function saveRawPrefs(prefs: Record<string, CardPreference>): Promise<void> {
   const profile = (await loadProfile()) as ProfileWithPrefs;
-  (profile as Record<string, unknown>)[PREFS_PROFILE_KEY] = prefs;
+  (profile as unknown as Record<string, unknown>)[PREFS_PROFILE_KEY] = prefs;
   await saveProfile(profile);
 }
 
