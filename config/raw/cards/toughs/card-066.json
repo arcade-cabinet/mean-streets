@@ -12,7 +12,8 @@
     10
   ],
   "rarity": [
-    "common"
+    "common",
+    "rare"
   ],
   "abilities": [
     "When sacrificed to heal: heals double the normal amount"

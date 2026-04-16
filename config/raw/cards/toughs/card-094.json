@@ -12,10 +12,12 @@
     10
   ],
   "rarity": [
-    "common"
+    "common",
+    "legendary"
   ],
   "abilities": [
-    "On play: swap your top tough with any card in your hand (top tough goes to hand at current HP)"
+    "On play: swap your top tough with any card in your hand (top tough goes to hand at current HP)",
+    "FIELD_MEDIC"
   ],
   "unlocked": false,
   "unlockCondition": "Win a game in under 10 turns",

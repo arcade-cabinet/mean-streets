@@ -1,10 +1,31 @@
-import type { Card } from '../../sim/turf/types';
+import type { Card, DifficultyTier, Rarity } from '../../sim/turf/types';
 import type { PackReward } from '../../sim/packs/types';
 import { createRng, randomSeed } from '../../sim/cards/rng';
 import { generatePack, starterGrant } from '../../sim/packs/generator';
-import { loadProfile, saveProfile } from './storage';
+import { loadProfile, saveProfile, type StoredCardInstance } from './storage';
 import { loadToughCards } from '../../sim/cards/catalog';
 import { generateWeapons, generateDrugs, generateCurrency } from '../../sim/turf/generators';
+
+// ── v0.3 CardInstance migration ─────────────────────────────
+// Each unlocked card carries (rolledRarity, unlockDifficulty) per §2/§3.
+// For backward compat with pre-v0.3 saves we keep `unlockedCardIds` as
+// the source of truth for *which* cards are unlocked and store per-id
+// instance metadata in a sidecar `cardInstances` map. When we load, any
+// cardId without an instance record uses (baseRarity, 'easy') defaults.
+const DEFAULT_UNLOCK_DIFFICULTY: DifficultyTier = 'easy';
+
+function defaultInstanceForCard(card: Card): StoredCardInstance {
+  return { rolledRarity: card.rarity, unlockDifficulty: DEFAULT_UNLOCK_DIFFICULTY };
+}
+
+function applyInstance(card: Card, instance: StoredCardInstance | undefined): Card {
+  if (!instance) return card;
+  // Rarity on Card is the *rolled* rarity per v0.3 (the authored base
+  // rarity lives in the raw catalog; once an instance is minted the
+  // runtime card carries the rolled tier). We stamp the stored rarity
+  // onto a fresh copy so the catalog snapshot stays pristine.
+  return { ...card, rarity: instance.rolledRarity as Rarity };
+}
 
 // ── Card Preferences ────────────────────────────────────────────────────────
 //
@@ -99,15 +120,32 @@ function getPoolMap(): Map<string, Card> {
   return cachedPoolMap;
 }
 
-function resolveCardIds(ids: string[]): Card[] {
+function resolveCardIds(
+  ids: string[],
+  instances: Record<string, StoredCardInstance> | undefined,
+): Card[] {
   const poolMap = getPoolMap();
-  return ids.map((id) => poolMap.get(id)).filter((c): c is Card => c != null);
+  const out: Card[] = [];
+  for (const id of ids) {
+    const base = poolMap.get(id);
+    if (!base) continue;
+    out.push(applyInstance(base, instances?.[id]));
+  }
+  return out;
+}
+
+function buildInstanceMap(cards: Card[]): Record<string, StoredCardInstance> {
+  const map: Record<string, StoredCardInstance> = {};
+  for (const c of cards) {
+    map[c.id] = defaultInstanceForCard(c);
+  }
+  return map;
 }
 
 export async function loadCollection(): Promise<Card[]> {
   const profile = await loadProfile();
   if (profile.unlockedCardIds.length > 0) {
-    return resolveCardIds(profile.unlockedCardIds);
+    return resolveCardIds(profile.unlockedCardIds, profile.cardInstances);
   }
   // First-run starter grant must serialize with other writers. Without
   // the lock, two concurrent `loadCollection` calls on a fresh install
@@ -118,11 +156,17 @@ export async function loadCollection(): Promise<Card[]> {
   return withProfileLock(async () => {
     const reread = await loadProfile();
     if (reread.unlockedCardIds.length > 0) {
-      return resolveCardIds(reread.unlockedCardIds);
+      return resolveCardIds(reread.unlockedCardIds, reread.cardInstances);
     }
     const rng = createRng(randomSeed());
     const cards = starterGrant(rng);
     reread.unlockedCardIds = cards.map((c) => c.id);
+    // v0.3: every starter instance gets rolled rarity (from the card
+    // returned by the generator) + unlockDifficulty='easy' per §3.3.
+    reread.cardInstances = {
+      ...(reread.cardInstances ?? {}),
+      ...buildInstanceMap(cards),
+    };
     await saveProfile(reread);
     return cards;
   });
@@ -154,6 +198,15 @@ export async function saveCollection(cards: Card[]): Promise<void> {
   await withProfileLock(async () => {
     const profile = await loadProfile();
     profile.unlockedCardIds = cards.map(c => c.id);
+    // Rewrite instance map to exactly match the saved set — drop stale
+    // entries for cards no longer present, preserve instance metadata
+    // for the survivors, and seed fresh defaults for brand-new ids.
+    const prior = profile.cardInstances ?? {};
+    const next: Record<string, StoredCardInstance> = {};
+    for (const c of cards) {
+      next[c.id] = prior[c.id] ?? defaultInstanceForCard(c);
+    }
+    profile.cardInstances = next;
     await saveProfile(profile);
   });
 }
@@ -162,12 +215,17 @@ export async function addCardsToCollection(newCards: Card[]): Promise<Card[]> {
   return withProfileLock(async () => {
     const profile = await loadProfile();
     const existingIds = new Set(profile.unlockedCardIds);
+    const instances: Record<string, StoredCardInstance> = { ...(profile.cardInstances ?? {}) };
     for (const card of newCards) {
       existingIds.add(card.id);
+      // Only seed a default instance if this cardId doesn't already
+      // have one — preserves rolled rarity on re-adds (pack dupes).
+      if (!instances[card.id]) instances[card.id] = defaultInstanceForCard(card);
     }
     profile.unlockedCardIds = [...existingIds];
+    profile.cardInstances = instances;
     await saveProfile(profile);
-    return resolveCardIds(profile.unlockedCardIds);
+    return resolveCardIds(profile.unlockedCardIds, profile.cardInstances);
   });
 }
 
@@ -181,6 +239,7 @@ export async function grantStarterCollection(): Promise<Card[]> {
 export async function openRewardPacks(
   rewards: PackReward[],
   suddenDeathWin: boolean,
+  unlockDifficulty: DifficultyTier = DEFAULT_UNLOCK_DIFFICULTY,
 ): Promise<Card[]> {
   const baseCollection = await loadCollection();
   const rng = createRng(randomSeed());
@@ -204,8 +263,37 @@ export async function openRewardPacks(
   }
 
   if (newCards.length > 0) {
-    await addCardsToCollection(newCards);
+    await addCardsToCollectionWithDifficulty(newCards, unlockDifficulty);
   }
 
   return newCards;
+}
+
+/**
+ * Internal variant of `addCardsToCollection` that tags new instances with
+ * the given unlock difficulty. Extracted so the public `addCardsToCollection`
+ * signature stays stable for existing callers (they get 'easy' by default).
+ */
+async function addCardsToCollectionWithDifficulty(
+  newCards: Card[],
+  unlockDifficulty: DifficultyTier,
+): Promise<Card[]> {
+  return withProfileLock(async () => {
+    const profile = await loadProfile();
+    const existingIds = new Set(profile.unlockedCardIds);
+    const instances: Record<string, StoredCardInstance> = { ...(profile.cardInstances ?? {}) };
+    for (const card of newCards) {
+      existingIds.add(card.id);
+      // Pack-opened cards get the *difficulty of the winning war* per
+      // §3.3. Pre-existing instances are left untouched — re-earning a
+      // card doesn't upgrade its unlock-difficulty tag.
+      if (!instances[card.id]) {
+        instances[card.id] = { rolledRarity: card.rarity, unlockDifficulty };
+      }
+    }
+    profile.unlockedCardIds = [...existingIds];
+    profile.cardInstances = instances;
+    await saveProfile(profile);
+    return resolveCardIds(profile.unlockedCardIds, profile.cardInstances);
+  });
 }

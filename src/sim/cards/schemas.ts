@@ -2,7 +2,13 @@ import { z } from 'zod';
 
 // ── Shared enums & helpers ─────────────────────────────────────
 
-export const RaritySchema = z.enum(['common', 'rare', 'legendary']);
+export const RaritySchema = z.enum([
+  'common',
+  'uncommon',
+  'rare',
+  'legendary',
+  'mythic',
+]);
 
 export const WeaponCategoryEnum = z.enum([
   'bladed',
@@ -144,6 +150,54 @@ export const CompiledCurrencySchema = z.object({
   locked: z.boolean(),
 });
 
+// ── Mythic schemas (§11) ──────────────────────────────────────
+//
+// Mythics mirror ToughCard but lock rarity at 'mythic'. Authored via the
+// same tuning-history format as other toughs; compiled to flat values.
+// `mythic_signature` carries design-side documentation (description +
+// balance notes) and is preserved onto the compiled record so tooling
+// and UI can surface it without re-reading raw JSON.
+
+export const MythicSignatureSchema = z.object({
+  description: z.string(),
+  balance_note: z.string().optional(),
+});
+
+export const AuthoredMythicSchema = z.object({
+  id: z.string(),
+  kind: z.literal('tough'),
+  name: z.string(),
+  tagline: z.string().optional(),
+  archetype: z.string(),
+  affiliation: z.string(),
+  power: StatHistorySchema,
+  resistance: StatHistorySchema,
+  rarity: z.array(z.literal('mythic')).min(1),
+  abilities: z.array(z.string()),
+  mythic_signature: MythicSignatureSchema.optional(),
+  unlocked: z.boolean(),
+  unlockCondition: z.string().nullable().optional(),
+  locked: z.boolean(),
+  draft: z.boolean().optional(),
+});
+
+export const CompiledMythicSchema = z.object({
+  kind: z.literal('tough'),
+  id: z.string(),
+  name: z.string(),
+  tagline: z.string().optional(),
+  archetype: z.string(),
+  affiliation: z.string(),
+  power: z.number().int().min(1).max(12),
+  resistance: z.number().int().min(1).max(12),
+  rarity: z.literal('mythic'),
+  abilities: z.array(z.string()),
+  mythic_signature: MythicSignatureSchema.optional(),
+  unlocked: z.boolean(),
+  unlockCondition: z.string().optional(),
+  locked: z.boolean(),
+});
+
 export const CompiledCardSchema = z.discriminatedUnion('kind', [
   CompiledToughSchema,
   CompiledWeaponSchema,
@@ -204,9 +258,12 @@ export type AuthoredTough = z.infer<typeof AuthoredToughSchema>;
 export type AuthoredWeapon = z.infer<typeof AuthoredWeaponSchema>;
 export type AuthoredDrug = z.infer<typeof AuthoredDrugSchema>;
 export type AuthoredCurrency = z.infer<typeof AuthoredCurrencySchema>;
+export type AuthoredMythic = z.infer<typeof AuthoredMythicSchema>;
 
 export type CompiledTough = z.infer<typeof CompiledToughSchema>;
 export type CompiledWeapon = z.infer<typeof CompiledWeaponSchema>;
 export type CompiledDrug = z.infer<typeof CompiledDrugSchema>;
 export type CompiledCurrency = z.infer<typeof CompiledCurrencySchema>;
+export type CompiledMythic = z.infer<typeof CompiledMythicSchema>;
 export type CompiledCard = z.infer<typeof CompiledCardSchema>;
+export type MythicSignature = z.infer<typeof MythicSignatureSchema>;

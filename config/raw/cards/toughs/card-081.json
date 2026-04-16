@@ -12,7 +12,8 @@
     10
   ],
   "rarity": [
-    "common"
+    "common",
+    "rare"
   ],
   "abilities": [
     "On play: change one card in your stack's affiliation to match this card's for the round"

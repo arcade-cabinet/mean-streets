@@ -12,7 +12,8 @@
     9
   ],
   "rarity": [
-    "common"
+    "common",
+    "uncommon"
   ],
   "abilities": [
     "On play: swap 1 card from your hand with 1 from your stack"

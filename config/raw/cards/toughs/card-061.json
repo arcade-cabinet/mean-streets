@@ -12,7 +12,8 @@
     6
   ],
   "rarity": [
-    "common"
+    "common",
+    "uncommon"
   ],
   "abilities": [
     "Deals +2 damage when attacking a target with lower power than this card"

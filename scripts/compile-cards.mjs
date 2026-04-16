@@ -2,7 +2,7 @@
 /**
  * compile-cards.mjs
  *
- * Walks config/raw/cards/{toughs,weapons,drugs},
+ * Walks config/raw/cards/{toughs,weapons,drugs,currency,mythics},
  * validates each entry structurally, reduces every stat/rarity history
  * array to its last element, and writes flat compiled catalogs to:
  *
@@ -10,6 +10,7 @@
  *   config/compiled/weapons.json
  *   config/compiled/drugs.json
  *   config/compiled/currency.json
+ *   config/compiled/mythics.json
  *
  * Runs during `postinstall` and `prebuild`. Also invokable directly via
  * `pnpm run cards:compile`.
@@ -121,28 +122,60 @@ function compileCurrency({ file, data }) {
   };
 }
 
+function compileMythic({ file, data }) {
+  requireFields(data, ['id', 'kind', 'name', 'archetype', 'affiliation', 'power', 'resistance', 'rarity', 'abilities', 'unlocked', 'locked'], `mythics/${file}`);
+  if (data.kind !== 'tough') throw new Error(`mythics/${file}: expected kind=tough (mythics are toughs), got ${data.kind}`);
+  const rarity = latest(data.rarity);
+  if (rarity !== 'mythic') throw new Error(`mythics/${file}: expected rarity=mythic, got ${rarity}`);
+  return {
+    kind: 'tough',
+    id: data.id,
+    name: data.name,
+    ...(data.tagline ? { tagline: data.tagline } : {}),
+    archetype: data.archetype,
+    affiliation: data.affiliation,
+    power: latest(data.power),
+    resistance: latest(data.resistance),
+    rarity,
+    abilities: data.abilities,
+    ...(data.mythic_signature ? { mythic_signature: data.mythic_signature } : {}),
+    unlocked: data.unlocked,
+    ...(data.unlockCondition ? { unlockCondition: data.unlockCondition } : {}),
+    locked: data.locked,
+  };
+}
+
 function main() {
   const toughsRaw = readJsonDir(join(RAW_DIR, 'toughs'));
   const weaponsRaw = readJsonDir(join(RAW_DIR, 'weapons'));
   const drugsRaw = readJsonDir(join(RAW_DIR, 'drugs'));
   const currencyRaw = readJsonDir(join(RAW_DIR, 'currency'));
+  const mythicsRaw = readJsonDir(join(RAW_DIR, 'mythics'));
   if (toughsRaw.length === 0) throw new Error(`No raw tough cards in ${join(RAW_DIR, 'toughs')}`);
   if (weaponsRaw.length === 0) throw new Error(`No raw weapon cards in ${join(RAW_DIR, 'weapons')}`);
   if (drugsRaw.length === 0) throw new Error(`No raw drug cards in ${join(RAW_DIR, 'drugs')}`);
   if (currencyRaw.length === 0) throw new Error(`No raw currency cards in ${join(RAW_DIR, 'currency')}`);
+  // Mythics are authored separately (§11 v0.3). Empty pool is legal —
+  // the game treats `mythicPool` as optional and the retagger never
+  // seeds it — so we only warn, not throw.
+  if (mythicsRaw.length === 0) {
+    console.warn('[compile-cards] WARN: no mythic cards found in config/raw/cards/mythics/');
+  }
 
   const toughs = toughsRaw.map(compileTough);
   const weapons = weaponsRaw.map(compileWeapon);
   const drugs = drugsRaw.map(compileDrug);
   const currency = currencyRaw.map(compileCurrency);
+  const mythics = mythicsRaw.map(compileMythic);
 
   mkdirSync(COMPILED_DIR, { recursive: true });
   writeFileSync(join(COMPILED_DIR, 'toughs.json'), JSON.stringify(toughs, null, 2) + '\n');
   writeFileSync(join(COMPILED_DIR, 'weapons.json'), JSON.stringify(weapons, null, 2) + '\n');
   writeFileSync(join(COMPILED_DIR, 'drugs.json'), JSON.stringify(drugs, null, 2) + '\n');
   writeFileSync(join(COMPILED_DIR, 'currency.json'), JSON.stringify(currency, null, 2) + '\n');
+  writeFileSync(join(COMPILED_DIR, 'mythics.json'), JSON.stringify(mythics, null, 2) + '\n');
 
-  console.log(`[compile-cards] compiled ${toughs.length} toughs, ${weapons.length} weapons, ${drugs.length} drugs, ${currency.length} currency`);
+  console.log(`[compile-cards] compiled ${toughs.length} toughs, ${weapons.length} weapons, ${drugs.length} drugs, ${currency.length} currency, ${mythics.length} mythics`);
 }
 
 try {

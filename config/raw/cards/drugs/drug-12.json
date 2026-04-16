@@ -15,11 +15,13 @@
     1
   ],
   "rarity": [
-    "common"
+    "common",
+    "legendary"
   ],
   "abilities": [
     "SUPPRESS",
-    "NUMB"
+    "NUMB",
+    "RESUSCITATE"
   ],
   "unlocked": true,
   "locked": false,
