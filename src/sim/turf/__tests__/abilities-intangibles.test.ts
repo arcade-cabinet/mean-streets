@@ -1,152 +1,28 @@
 import { describe, expect, it } from 'vitest';
-import { createRng } from '../../cards/rng';
 import {
   applyTangibles,
+  hasAbsolute,
+  hasChainThree,
+  hasImmunity,
+  hasInsight,
+  hasLaunder,
+  hasLowProfile,
+  hasNoReveal,
+  hasStrikeTwo,
+  hasTranscend,
   runIntangiblesPhase,
   stackCardsByRarityDesc,
 } from '../abilities';
-import type {
-  CurrencyCard,
-  PlayerState,
-  QueuedAction,
-  StackedCard,
-  ToughCard,
-  Turf,
-  TurfGameState,
-  WeaponCard,
-} from '../types';
-
-// Minimal fixture factories — bypass board/environment (those are
-// mid-rewrite) so tests exercise `abilities.ts` in isolation.
-
-function mkTough(overrides: Partial<ToughCard> = {}): ToughCard {
-  return {
-    kind: 'tough',
-    id: overrides.id ?? 'tough-1',
-    name: overrides.name ?? 'Grunt',
-    tagline: 'test',
-    archetype: overrides.archetype ?? 'brawler',
-    affiliation: overrides.affiliation ?? 'freelance',
-    power: overrides.power ?? 5,
-    resistance: overrides.resistance ?? 5,
-    rarity: overrides.rarity ?? 'common',
-    abilities: overrides.abilities ?? [],
-  };
-}
-
-function mkWeapon(overrides: Partial<WeaponCard> = {}): WeaponCard {
-  return {
-    kind: 'weapon',
-    id: overrides.id ?? 'w-1',
-    name: overrides.name ?? 'Shiv',
-    category: overrides.category ?? 'bladed',
-    power: overrides.power ?? 2,
-    resistance: overrides.resistance ?? 1,
-    rarity: overrides.rarity ?? 'common',
-    abilities: overrides.abilities ?? [],
-  };
-}
-
-function mkCurrency(denomination: 100 | 1000, id: string): CurrencyCard {
-  return {
-    kind: 'currency',
-    id,
-    name: `$${denomination}`,
-    denomination,
-    rarity: 'common',
-  };
-}
-
-function up(
-  card: ToughCard | WeaponCard | CurrencyCard,
-  faceUp = true,
-): StackedCard {
-  return { card, faceUp };
-}
-
-function mkTurf(id: string, stack: StackedCard[]): Turf {
-  return { id, stack, sickTopIdx: null, closedRanks: false };
-}
-
-function emptyPlayer(turfs: Turf[]): PlayerState {
-  return {
-    turfs,
-    deck: [],
-    discard: [],
-    toughsInPlay: turfs.length,
-    actionsRemaining: 3,
-    pending: null,
-    queued: [],
-    turnEnded: false,
-  };
-}
-
-function mkState(A: Turf[], B: Turf[]): TurfGameState {
-  return {
-    config: {
-      difficulty: 'medium',
-      suddenDeath: false,
-      turfCount: 3,
-      actionsPerTurn: 3,
-      firstTurnActions: 5,
-    },
-    players: { A: emptyPlayer(A), B: emptyPlayer(B) },
-    firstPlayer: 'A',
-    turnNumber: 1,
-    phase: 'resolve',
-    aiState: { A: 'idle', B: 'idle' },
-    aiTurnsInState: { A: 0, B: 0 },
-    aiMemory: {
-      A: emptyMemory(),
-      B: emptyMemory(),
-    },
-    plannerTrace: [],
-    policySamples: [],
-    rng: createRng(1),
-    seed: 1,
-    winner: null,
-    endReason: null,
-    metrics: {
-      turns: 0,
-      draws: 0,
-      retreats: 0,
-      closedRanksEnds: 0,
-      directStrikes: 0,
-      pushedStrikes: 0,
-      fundedRecruits: 0,
-      kills: 0,
-      spiked: 0,
-      seizures: 0,
-      busts: 0,
-      cardsPlayed: 0,
-      cardsDiscarded: 0,
-      toughsPlayed: 0,
-      modifiersPlayed: 0,
-      passes: 0,
-      goalSwitches: 0,
-      failedPlans: 0,
-      stallTurns: 0,
-      deadHandTurns: 0,
-      policyGuidedActions: 0,
-      totalActions: 0,
-      firstStrike: null,
-    },
-  };
-}
-
-function emptyMemory() {
-  return {
-    lastGoal: null,
-    lastActionKind: null,
-    consecutivePasses: 0,
-    failedPlans: 0,
-    blockedLanes: {},
-    pressuredLanes: {},
-    laneRoles: {},
-    focusLane: null,
-    focusRole: null,
-  };
-}
+import type { QueuedAction } from '../types';
+import {
+  mkCurrency,
+  mkDrug,
+  mkState,
+  mkTough,
+  mkTurf,
+  mkWeapon,
+  up,
+} from './fixtures';
 
 const Q: QueuedAction = {
   kind: 'direct_strike',
@@ -156,7 +32,6 @@ const Q: QueuedAction = {
 };
 
 // ── Counter ─────────────────────────────────────────────────
-
 describe('runIntangiblesPhase — counter', () => {
   it('cancels the strike and consumes the PARRY weapon', () => {
     const attacker = mkTurf('a', [up(mkTough({ id: 'ta' }))]);
@@ -168,109 +43,217 @@ describe('runIntangiblesPhase — counter', () => {
 
     expect(out.kind).toBe('canceled');
     if (out.kind === 'canceled') expect(out.reason).toBe('countered');
-    // PARRY weapon consumed.
     expect(defender.stack.some((sc) => sc.card.id === 'parry')).toBe(false);
   });
 
-  it('proceeds when defender has no counter-tagged weapon', () => {
+  it('proceeds when defender has no counter-tagged weapon or currency', () => {
     const attacker = mkTurf('a', [up(mkTough())]);
     const defender = mkTurf('d', [up(mkTough())]);
-    const state = mkState([attacker], [defender]);
-
-    expect(runIntangiblesPhase(state, Q).kind).toBe('proceed');
+    expect(runIntangiblesPhase(mkState([attacker], [defender]), Q).kind).toBe(
+      'proceed',
+    );
   });
 });
 
-// ── Bribe ───────────────────────────────────────────────────
-
-describe('runIntangiblesPhase — bribe', () => {
-  it('cancels when defender has ≥ $500 currency and affiliations are loyal', () => {
-    // kings_row is loyal to cobalt_syndicate.
-    const attacker = mkTurf('a', [up(mkTough({ affiliation: 'kings_row' }))]);
-    const defender = mkTurf('d', [
-      up(mkTough({ affiliation: 'cobalt_syndicate' })),
-      up(mkCurrency(1000, 'cash')),
-    ]);
-    const state = mkState([attacker], [defender]);
-
+// ── Probabilistic bribe (RULES §10.3) ──────────────────────
+describe('runIntangiblesPhase — probabilistic bribe', () => {
+  it('cancels strike deterministically when rng below threshold ($1000 → 85%)', () => {
+    // seed=1 → first rng.next() ≈ 0.1366 < 0.85 → bribe succeeds.
+    const attacker = mkTurf('a', [up(mkTough())]);
+    const defender = mkTurf('d', [up(mkTough()), up(mkCurrency(1000, 'c1k'))]);
+    const state = mkState([attacker], [defender], 1);
     const out = runIntangiblesPhase(state, Q);
     expect(out.kind).toBe('canceled');
     if (out.kind === 'canceled') expect(out.reason).toBe('bribed');
-    expect(defender.stack.some((sc) => sc.card.id === 'cash')).toBe(false);
+    expect(defender.stack.some((sc) => sc.card.id === 'c1k')).toBe(false);
+    expect(state.metrics.bribesAccepted).toBe(1);
   });
 
-  it('proceeds when affiliations are not loyal (even with cash)', () => {
-    // kings_row vs iron_devils → rival, not loyal.
-    const attacker = mkTurf('a', [up(mkTough({ affiliation: 'kings_row' }))]);
-    const defender = mkTurf('d', [
-      up(mkTough({ affiliation: 'iron_devils' })),
-      up(mkCurrency(1000, 'cash')),
-    ]);
-    const state = mkState([attacker], [defender]);
-
-    expect(runIntangiblesPhase(state, Q).kind).toBe('proceed');
+  it('proceeds when no currency ≥ $500 on defender stack', () => {
+    const attacker = mkTurf('a', [up(mkTough())]);
+    const defender = mkTurf('d', [up(mkTough()), up(mkCurrency(100, 'c1'))]);
+    const state = mkState([attacker], [defender], 1);
+    const out = runIntangiblesPhase(state, Q);
+    expect(out.kind).toBe('proceed');
+    expect(defender.stack.some((sc) => sc.card.id === 'c1')).toBe(true);
   });
 
-  it('proceeds when currency total is below $500', () => {
-    const attacker = mkTurf('a', [up(mkTough({ affiliation: 'kings_row' }))]);
-    const defender = mkTurf('d', [
-      up(mkTough({ affiliation: 'kings_row' })), // self-loyal OK
-      up(mkCurrency(100, 'coin-a')),
-      up(mkCurrency(100, 'coin-b')),
-    ]);
-    const state = mkState([attacker], [defender]);
-
-    expect(runIntangiblesPhase(state, Q).kind).toBe('proceed');
+  it('failed bribe increments bribesFailed and leaves cash on stack', () => {
+    // Rig state.rng to return 0.99 — above $1000's 85% threshold → fail.
+    const attacker = mkTurf('a', [up(mkTough())]);
+    const defender = mkTurf('d', [up(mkTough()), up(mkCurrency(1000, 'c1k'))]);
+    const state = mkState([attacker], [defender], 1);
+    state.rng = { ...state.rng, next: () => 0.99 };
+    const out = runIntangiblesPhase(state, Q);
+    expect(out.kind).toBe('proceed');
+    expect(defender.stack.some((sc) => sc.card.id === 'c1k')).toBe(true);
+    expect(state.metrics.bribesFailed).toBe(1);
+    expect(state.metrics.bribesAccepted).toBe(0);
   });
 });
 
-// ── Tangibles & helper sanity ───────────────────────────────
-
-describe('applyTangibles', () => {
-  it('sums LACERATE (+1 atk) from attacker bladed weapon', () => {
+// ── Tangibles — rarity-scaled ───────────────────────────────
+describe('applyTangibles — rarity scaling', () => {
+  it('common LACERATE = +1 atk', () => {
     const attacker = mkTurf('a', [
       up(mkTough()),
       up(mkWeapon({ abilities: ['LACERATE'] })),
     ]);
     const defender = mkTurf('d', [up(mkTough())]);
-
-    const bonus = applyTangibles(attacker, defender);
-    expect(bonus.atkPowerDelta).toBe(1);
-    expect(bonus.defResistDelta).toBe(0);
+    expect(applyTangibles(attacker, defender).atkPowerDelta).toBe(1);
   });
 
-  it('sets ignoreResistance when attacker has bruiser archetype', () => {
+  it('legendary LACERATE scales to +2 atk (round(1 × 1.5))', () => {
+    const attacker = mkTurf('a', [
+      up(mkTough()),
+      up(mkWeapon({ abilities: ['LACERATE'], rarity: 'legendary' })),
+    ]);
+    const defender = mkTurf('d', [up(mkTough())]);
+    expect(applyTangibles(attacker, defender).atkPowerDelta).toBe(2);
+  });
+
+  it('mythic BERSERK drug scales to +3 atk + sickOnHit (round(2 × 1.7))', () => {
+    const attacker = mkTurf('a', [
+      up(mkTough()),
+      up(mkDrug({ abilities: ['BERSERK'], rarity: 'mythic' })),
+    ]);
+    const defender = mkTurf('d', [up(mkTough())]);
+    const bonus = applyTangibles(attacker, defender);
+    expect(bonus.atkPowerDelta).toBe(3);
+    expect(bonus.sickOnHit).toBe(true);
+  });
+
+  it('sets ignoreResistance for attacker bruiser', () => {
     const attacker = mkTurf('a', [up(mkTough({ archetype: 'bruiser' }))]);
     const defender = mkTurf('d', [up(mkTough())]);
-
-    const bonus = applyTangibles(attacker, defender);
-    expect(bonus.ignoreResistance).toBe(true);
-  });
-
-  it('sets targetOverride to bottom for shark, anywhere for ghost', () => {
-    const shark = applyTangibles(
-      mkTurf('a', [up(mkTough({ archetype: 'shark' }))]),
-      mkTurf('d', [up(mkTough())]),
-    );
-    expect(shark.targetOverride).toBe('bottom');
-
-    const ghost = applyTangibles(
-      mkTurf('a', [up(mkTough({ archetype: 'ghost' }))]),
-      mkTurf('d', [up(mkTough())]),
-    );
-    expect(ghost.targetOverride).toBe('anywhere');
+    expect(applyTangibles(attacker, defender).ignoreResistance).toBe(true);
   });
 });
 
-describe('stackCardsByRarityDesc', () => {
-  it('sorts legendary → rare → common, stable within ties', () => {
-    const t1 = mkTough({ id: 't1', rarity: 'common' });
-    const t2 = mkTough({ id: 't2', rarity: 'legendary' });
-    const t3 = mkTough({ id: 't3', rarity: 'rare' });
-    const t4 = mkTough({ id: 't4', rarity: 'common' });
-    const turf = mkTurf('x', [up(t1), up(t2), up(t3), up(t4)]);
+// ── Mythic intangibles ──────────────────────────────────────
+describe('runIntangiblesPhase — mythic CLEAN_SLATE', () => {
+  it('resets state.heat to 0 when carrier is attacker', () => {
+    const cleanSlate = mkTough({
+      id: 'accountant',
+      rarity: 'mythic',
+      abilities: ['CLEAN_SLATE'],
+    });
+    const attacker = mkTurf('a', [up(cleanSlate)]);
+    const defender = mkTurf('d', [up(mkTough())]);
+    const state = mkState([attacker], [defender]);
+    state.heat = 0.9;
+    runIntangiblesPhase(state, Q);
+    expect(state.heat).toBe(0);
+  });
+});
 
-    const sorted = stackCardsByRarityDesc(turf);
-    expect(sorted.map((sc) => sc.card.id)).toEqual(['t2', 't3', 't1', 't4']);
+describe('runIntangiblesPhase — mythic BUILD_TURF', () => {
+  it('adds a new reserve turf for the attacker side', () => {
+    const architect = mkTough({
+      id: 'arch',
+      rarity: 'mythic',
+      abilities: ['BUILD_TURF'],
+    });
+    const attacker = mkTurf('a', [up(architect)]);
+    const defender = mkTurf('d', [up(mkTough())]);
+    const state = mkState([attacker], [defender]);
+    const before = state.players.A.turfs.length;
+    runIntangiblesPhase(state, Q);
+    expect(state.players.A.turfs.length).toBe(before + 1);
+    expect(state.players.A.turfs.at(-1)!.id).toMatch(/^built-A-/);
+  });
+});
+
+describe('runIntangiblesPhase — mythic STRIKE_RETREATED', () => {
+  it('redirects to a face-up tough below the top when present', () => {
+    const ghost = mkTough({
+      id: 'ghost',
+      rarity: 'mythic',
+      abilities: ['STRIKE_RETREATED'],
+    });
+    const attacker = mkTurf('a', [up(ghost)]);
+    const defender = mkTurf('d', [
+      { card: mkTough({ id: 'top' }), faceUp: false },
+      { card: mkTough({ id: 'retreated' }), faceUp: true },
+    ]);
+    const state = mkState([attacker], [defender]);
+    const out = runIntangiblesPhase(state, Q);
+    expect(out.kind).toBe('redirected');
+    if (out.kind === 'redirected') {
+      expect(out.newTargetStackIdx).toBe(1);
+      expect(out.reason).toBe('strike-retreated');
+    }
+  });
+
+  it('proceeds when no face-up non-top tough exists', () => {
+    const ghost = mkTough({
+      id: 'ghost',
+      rarity: 'mythic',
+      abilities: ['STRIKE_RETREATED'],
+    });
+    const attacker = mkTurf('a', [up(ghost)]);
+    const defender = mkTurf('d', [up(mkTough({ id: 'top' }))]);
+    expect(runIntangiblesPhase(mkState([attacker], [defender]), Q).kind).toBe(
+      'proceed',
+    );
+  });
+});
+
+// ── Passive query hooks ─────────────────────────────────────
+describe('passive ability hooks', () => {
+  it('tough-scoped predicates (IMMUNITY/TRANSCEND/ABSOLUTE/NO_REVEAL/STRIKE_TWO/CHAIN_THREE)', () => {
+    expect(hasImmunity(mkTough({ abilities: ['IMMUNITY'] }))).toBe(true);
+    expect(hasTranscend(mkTough({ abilities: ['TRANSCEND'] }))).toBe(true);
+    expect(hasAbsolute(mkTough({ abilities: ['ABSOLUTE'] }))).toBe(true);
+    expect(hasNoReveal(mkTough({ abilities: ['NO_REVEAL'] }))).toBe(true);
+    expect(hasStrikeTwo(mkTough({ abilities: ['STRIKE_TWO'] }))).toBe(true);
+    expect(hasChainThree(mkTough({ abilities: ['CHAIN_THREE'] }))).toBe(true);
+    expect(hasImmunity(mkTough())).toBe(false);
+  });
+
+  it('hasLaunder detects the LAUNDER tag on a non-currency carrier', () => {
+    // Currency has no abilities[] in v0.3 types; test stubs via weapon.
+    const turf = mkTurf('t', [
+      up(mkTough()),
+      up(mkWeapon({ abilities: ['LAUNDER'] })),
+    ]);
+    expect(hasLaunder(turf)).toBe(true);
+    expect(hasLaunder(mkTurf('empty', [up(mkTough())]))).toBe(false);
+  });
+
+  it('hasLowProfile flag on owning tough', () => {
+    expect(hasLowProfile(mkTough({ abilities: ['LOW_PROFILE'] }))).toBe(true);
+    expect(hasLowProfile(mkTough())).toBe(false);
+  });
+
+  it('hasInsight scans state.players[side] for an INSIGHT tough', () => {
+    const informer = mkTough({ abilities: ['INSIGHT'] });
+    const attacker = mkTurf('a', [up(informer)]);
+    const defender = mkTurf('d', [up(mkTough())]);
+    const state = mkState([attacker], [defender]);
+    expect(hasInsight(state, 'A')).toBe(true);
+    expect(hasInsight(state, 'B')).toBe(false);
+  });
+});
+
+// ── Helper sanity ────────────────────────────────────────────
+describe('stackCardsByRarityDesc', () => {
+  it('sorts mythic → legendary → rare → uncommon → common, stable within ties', () => {
+    const turf = mkTurf('x', [
+      up(mkTough({ id: 't1', rarity: 'common' })),
+      up(mkTough({ id: 't2', rarity: 'legendary' })),
+      up(mkTough({ id: 't3', rarity: 'rare' })),
+      up(mkTough({ id: 't4', rarity: 'common' })),
+      up(mkTough({ id: 't5', rarity: 'mythic' })),
+      up(mkTough({ id: 't6', rarity: 'uncommon' })),
+    ]);
+    expect(stackCardsByRarityDesc(turf).map((sc) => sc.card.id)).toEqual([
+      't5',
+      't2',
+      't3',
+      't6',
+      't1',
+      't4',
+    ]);
   });
 });
