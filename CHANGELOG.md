@@ -1,6 +1,6 @@
 ---
 title: Changelog
-updated: 2026-04-15
+updated: 2026-04-16
 status: current
 ---
 
@@ -8,6 +8,131 @@ status: current
 
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+
+## [0.3.0] - unreleased
+
+This is the v0.3 single-lane rewrite. The v0.2 parallel-turf model
+is gone. Sudden Death is gone (covered by turf progression + raids).
+The hand is still gone (from v0.2). New core systems: heat, Black
+Market, Holding/Lockup, Mythic pool, damage tiers with HP, modifier
+swap, rarity-scaled abilities, parallel AI collection progression.
+
+Authoritative spec: [docs/RULES.md](docs/RULES.md) v0.3.
+Archived: [docs/archive/RULES-v0.2.md](docs/archive/RULES-v0.2.md).
+
+### Added
+- **Single-lane turf progression** — each player defends ONE active
+  turf at a time; reserves promote up on seizure. Match = best-of-N
+  where N is turf count by difficulty.
+- **Damage tiers + HP**: toughs track `hp` starting at `rolledResistance`.
+  Strikes hit glance / wound / serious wound / crushing tiers
+  based on P/R ratio. Wounded toughs have effective P/R clamped
+  to `hp/maxHp` ratio.
+- **Base + rolled rarity model**: every card has an authored base
+  rarity (the floor); instances roll rarity at pack-open time per
+  base distribution. 5 tiers: common / uncommon / rare / legendary /
+  mythic. Rolled rarity applies a ×1.0 / ×1.15 / ×1.3 / ×1.5 / ×1.7
+  stat + ability scaling multiplier.
+- **Card merging** (collection management):
+  - Pyramid cost: 2 commons → 1 uncommon, 2 uncommons → 1 rare,
+    2 rares → 1 legendary. Merge ceiling = legendary.
+  - Merged result takes the higher unlock-difficulty of the two
+    source instances.
+  - Auto-merge + auto-prioritize toggles surface AI recommendations
+    to the player.
+- **Modifier ownership + modifier_swap action**: modifiers travel
+  with their owning tough through retreat/lockup. On owner death,
+  modifiers go to Black Market (no orphans). Modifier_swap (1
+  action) moves a mod between toughs on the same active turf.
+- **Black Market**: shared pool of displaced mods, supports:
+  - **Trade** — spend mods (+ optional currency) to pull a higher-
+    tier mod from the pool.
+  - **Heal** — spend toughs (common floor 1→+2 HP, same-rarity 2→1
+    full heal) to restore a wounded tough's HP.
+- **Holding + Lockup**: cops take toughs into custody.
+  - Per-turn holding-check fires probabilistically, weighted by
+    heat.
+  - Bribe success = base + rolled-rarity multiplier + bribe amount.
+  - Legendary tough offering $500 ≈ common tough offering $2000.
+  - Lockup duration: easy/medium 1 turn, hard 2, nightmare 3.
+  - **Ultra-Nightmare perma-lockup**: toughs never return.
+  - Bail at time of raid: pay $500 (cops pocket the full tribute,
+    no change).
+- **Heat & Raid system**: shared scalar [0, 1] accumulates from
+  stack rarity concentration + currency pressure.
+  - Raid probability = heat² × difficulty_coef (0.5/0.7/1.0/1.3/1.5).
+  - Raid fires BEFORE combat resolution each turn. Wipes Black
+    Market. Sweeps face-up active tops to Lockup.
+  - Heat relief: LAUNDER (legendary currency, -0.1/turn),
+    LOW_PROFILE (rare drug, halves owner contribution),
+    CLEAN_SLATE (Mythic Accountant, one-shot total wipe).
+- **Mythic cards** — fixed pool of 10 hand-authored signatures:
+  - Silhouette (STRIKE_TWO), Accountant (CLEAN_SLATE),
+    Architect (BUILD_TURF), Informer (INSIGHT),
+    Ghost (STRIKE_RETREATED), Warlord (CHAIN_THREE),
+    Fixer (TRANSCEND), Magistrate (IMMUNITY),
+    Phantom (NO_REVEAL), Reaper (ABSOLUTE).
+  - Acquired only via Perfect War draws OR by defeating an
+    opponent's mythic in combat (mythic moves to victor's
+    collection).
+  - Never appear in packs. Cannot be merged. Cannot be healed at
+    Black Market.
+  - Shared gold-ring SVG treatment + per-mythic unique art.
+- **Victory rating per turf**: Absolute (1 turn) / Overwhelming
+  (2) / Decisive (≤3) / Standard (>3) — each awards a progressively
+  smaller pack.
+- **War outcome rating**: Perfect (all Absolute, no losses) /
+  Flawless (all Decisive+, no losses) / Dominant (no losses) /
+  Won — winner earns a Mythic draw / 5-card / 3-card / 1-card
+  pack respectively.
+- **Unlock-difficulty tag + high-difficulty bonus**: cards tagged
+  with the difficulty where they were unlocked; higher-difficulty
+  cards earn reward multipliers that diminish at lower tiers.
+- **Parallel AI progression**: SQLite-tracked AI collection grows
+  the same way the player's does. AI earns identical rewards from
+  AI-vs-player matches, never visible to player. AI runs its own
+  pre-war collection curation (merge + priority + enable-disable).
+- **Probabilistic bribes** at combat resolution: $500=70%,
+  $1000=85%, $2000=95%, $5000=99%. Currency spent only on success.
+- **Per-card information visibility during AI turns**: opponent's
+  draws, plays, retreats, modifier swaps, sends-to-market,
+  sends-to-holding all animate visibly. Identities stay hidden per
+  face-state.
+
+### Changed
+- **RULES.md** rewritten top-to-bottom for v0.3 model.
+- **ARCHITECTURE.md** — new module map: `heat.ts`, `market.ts`,
+  `holding.ts`, `mythic-pool.ts`, `rewards.ts`, `ai-profile.ts`.
+- **Turf.stack** still `StackedCard[]` but now carries
+  `StackedCard.owner` (tough id) for modifier attribution.
+- **TurfGameState** adds `heat`, `blackMarket`, `holding`, `lockup`,
+  `mythicPool`, `mythicAssignments`, `warStats`.
+- **PlayerState.turfs**: index 0 = active, 1+ = reserves in
+  progression queue order.
+- **Strikes target active turf only** (no lane picker). Targeting
+  within the stack (top/bottom/anywhere/retreated/long-shot)
+  controlled by abilities.
+
+### Removed
+- **Sudden Death difficulty tier** — progression + raids cover the
+  "fast-end" use case naturally.
+- **Parallel N-lane turf model** — single-lane only.
+- **Phase `'combat'`** — replaced by `'action' | 'resolve'`.
+- **hasStruck** / **turnSide** state fields.
+- **Coup mechanic** (briefly designed, dropped) — mythics now flip
+  only on combat defeat, matching the loyalty narrative.
+
+### Fixed
+- None yet. (v0.3 is architectural; follow-up patches track issues.)
+
+### Infrastructure
+- Task batch driven execution via `docs/plans/v0.3-task-batch.md`
+  with 13 specialist-owned epics (Rex/Maya/Kira/Iris/Ollie/Dex/Noa/
+  Luna/Vera/Maven).
+- Paper playtests captured at `docs/plans/v0.3-paper-playtest.md`
+  and `v0.3-paper-playtest-2.md` — design validation before code.
+- Mythic design pass with 3 review rounds in
+  `config/raw/cards/mythics/` and `public/assets/mythics/`.
 
 ## [0.2.0] - 2026-04-15
 
