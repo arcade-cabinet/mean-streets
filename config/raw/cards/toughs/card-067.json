@@ -18,7 +18,7 @@
     "On attack: also deals 1 damage to the card behind your top tough (next in line)"
   ],
   "unlocked": false,
-  "unlockCondition": "Win without using any reserves",
+  "unlockCondition": "Win without discarding any cards",
   "locked": false,
   "draft": true
 }

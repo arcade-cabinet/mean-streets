@@ -18,7 +18,7 @@
     "On play: swap 1 card from your hand with 1 from your stack"
   ],
   "unlocked": false,
-  "unlockCondition": "Win without using any reserves",
+  "unlockCondition": "Win without discarding any cards",
   "locked": false,
   "draft": true
 }

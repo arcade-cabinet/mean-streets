@@ -18,7 +18,7 @@
     "+1 damage for every point of damage already on the enemy top tough"
   ],
   "unlocked": false,
-  "unlockCondition": "Win without using any reserves",
+  "unlockCondition": "Win without discarding any cards",
   "locked": false,
   "draft": true
 }

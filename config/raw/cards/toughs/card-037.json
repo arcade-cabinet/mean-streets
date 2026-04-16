@@ -18,7 +18,7 @@
     "Deals +2 damage when attacking a target with lower power than this card"
   ],
   "unlocked": false,
-  "unlockCondition": "Win without using any reserves",
+  "unlockCondition": "Win without discarding any cards",
   "locked": false,
   "draft": true
 }

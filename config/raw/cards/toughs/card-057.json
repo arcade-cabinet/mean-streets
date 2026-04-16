@@ -18,7 +18,7 @@
     "On play: change one card in your stack's affiliation to match this card's for the round"
   ],
   "unlocked": false,
-  "unlockCondition": "Win without using any reserves",
+  "unlockCondition": "Win without discarding any cards",
   "locked": false,
   "draft": true
 }

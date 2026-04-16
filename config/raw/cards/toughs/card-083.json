@@ -18,7 +18,7 @@
     "+1 damage for every point of damage already on the enemy top tough"
   ],
   "unlocked": false,
-  "unlockCondition": "Kill 14 vanguards total",
+  "unlockCondition": "Kill 14 top toughs total",
   "locked": false,
   "draft": true
 }

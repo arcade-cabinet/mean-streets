@@ -18,7 +18,7 @@
     "On play: peek at the top 2 cards of your own deck, reorder them"
   ],
   "unlocked": false,
-  "unlockCondition": "Kill 14 vanguards total",
+  "unlockCondition": "Kill 14 top toughs total",
   "locked": false,
   "draft": true
 }

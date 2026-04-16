@@ -18,7 +18,7 @@
     "On play: change one card in your stack's affiliation to match this card's for the round"
   ],
   "unlocked": false,
-  "unlockCondition": "Kill 5 vanguards total",
+  "unlockCondition": "Kill 5 top toughs total",
   "locked": false,
   "draft": true
 }

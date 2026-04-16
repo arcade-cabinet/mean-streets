@@ -18,7 +18,7 @@
     "On play: peek at the top 2 cards of your own deck, reorder them"
   ],
   "unlocked": false,
-  "unlockCondition": "Win without using any reserves",
+  "unlockCondition": "Win without discarding any cards",
   "locked": false,
   "draft": true
 }

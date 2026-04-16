@@ -18,7 +18,7 @@
     "On play: swap 1 card from your hand with 1 from your stack"
   ],
   "unlocked": false,
-  "unlockCondition": "Kill 11 vanguards total",
+  "unlockCondition": "Kill 11 top toughs total",
   "locked": false,
   "draft": true
 }

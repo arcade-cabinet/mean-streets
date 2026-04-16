@@ -18,7 +18,7 @@
     "On attack: also deals 1 damage to the card behind your top tough (next in line)"
   ],
   "unlocked": false,
-  "unlockCondition": "Kill 12 vanguards total",
+  "unlockCondition": "Kill 12 top toughs total",
   "locked": false,
   "draft": true
 }
