@@ -97,6 +97,13 @@ export function resolvePhase(state: TurfGameState): void {
   // Defensive inertia is already baked into the `dominance` calc.
   ranked.sort((a, b) => b.dominance - a.dominance);
 
+  // Track (defenderSide, turfIdx, attackerSide) for every attack that
+  // resolved — only these turfs are seizable if their toughs are wiped.
+  // A turf that never had a tough (fresh turf on turn 1) is NOT seized
+  // by an unrelated side's resolve pass.
+  const attackedBy: Map<string, 'A' | 'B'> = new Map();
+  const attackKey = (defSide: 'A' | 'B', idx: number) => `${defSide}:${idx}`;
+
   for (const ra of ranked) {
     const q = ra.queued;
     const verdict = runIntangiblesPhase(state, q);
@@ -106,22 +113,22 @@ export function resolvePhase(state: TurfGameState): void {
     }
     const result = resolveStrikeNow(state, q);
     accrueMetrics(state, q, result.outcome);
+    // Record attacker-of-record for this defender turf (last-writer-wins
+    // is fine — the seize sweep only cares that *someone* struck here).
+    attackedBy.set(attackKey(opponent(q.side), q.targetTurfIdx), q.side);
   }
 
-  // Seize sweep: any defender turf with zero living toughs.
+  // Seize sweep: only turfs that were attacked this resolve phase AND now
+  // have zero living toughs. Empty-from-the-start turfs are left alone.
   for (const atkSide of ['A', 'B'] as const) {
     const defSide = opponent(atkSide);
     const defender = state.players[defSide];
     const attacker = state.players[atkSide];
     for (let i = defender.turfs.length - 1; i >= 0; i--) {
-      if (!hasToughOnTurf(defender.turfs[i])) {
-        // Only attack-side seizes a defender whose turfs were attacked;
-        // we don't know "who struck last", so we seize toward attacker A
-        // if defender is B, else toward B — simpler: attacker is the
-        // side that targeted this turf. Fallback: default destination 0.
-        seizeTurf(defender, i, attacker, 0);
-        state.metrics.seizures++;
-      }
+      if (attackedBy.get(attackKey(defSide, i)) !== atkSide) continue;
+      if (hasToughOnTurf(defender.turfs[i])) continue;
+      seizeTurf(defender, i, attacker, 0);
+      state.metrics.seizures++;
     }
   }
 

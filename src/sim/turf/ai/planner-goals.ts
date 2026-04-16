@@ -1,20 +1,12 @@
 // Yuka GOAP plumbing for the v0.2 planner. Holds the generic Goal /
 // CompositeGoal / GoalEvaluator subclasses plus a shared `scoreAll`.
 //
-// Yuka ships JSDoc types that treat `owner` as a strict `GameEntity`,
-// which we don't use. We intentionally widen to `any` so our
-// PlannerOwner can flow through. Our own interface (PlannerOwner)
-// provides real type coverage for the fields we actually read.
-// biome-ignore-all lint/suspicious/noExplicitAny: Yuka base types
-// biome-ignore-all lint/complexity/noUselessConstructor: explicit wiring
-// deno-lint-ignore no-explicit-any
-import YukaModule from 'yuka';
-
-const { CompositeGoal, Goal, GoalEvaluator } = YukaModule as unknown as {
-  CompositeGoal: new (owner?: unknown) => CompositeGoalLike;
-  Goal: new (owner?: unknown) => GoalLike;
-  GoalEvaluator: new (bias?: number) => GoalEvaluatorLike;
-};
+// Yuka ships JSDoc types that treat `owner` as a strict `GameEntity`
+// with ~40 fields we don't use. The imports are re-typed via local
+// *Like interfaces so we can extend them with `PlannerOwner`.
+// biome-ignore lint/suspicious/noExplicitAny: Yuka's JS base types
+// @ts-expect-error Yuka does not ship TypeScript declarations
+import { CompositeGoal as RawCompositeGoal, Goal as RawGoal, GoalEvaluator as RawGoalEvaluator } from 'yuka';
 
 type GoalStatusKey = 'INACTIVE' | 'ACTIVE' | 'COMPLETED' | 'FAILED';
 interface GoalLike {
@@ -38,9 +30,17 @@ interface GoalEvaluatorLike {
   setGoal(owner: unknown): void;
 }
 
-const STATUS: Record<GoalStatusKey, number> = (Goal as unknown as {
+const CompositeGoal = RawCompositeGoal as unknown as new (
+  owner?: unknown,
+) => CompositeGoalLike;
+const Goal = RawGoal as unknown as (new (owner?: unknown) => GoalLike) & {
   STATUS: Record<GoalStatusKey, number>;
-}).STATUS;
+};
+const GoalEvaluator = RawGoalEvaluator as unknown as new (
+  bias?: number,
+) => GoalEvaluatorLike;
+
+const STATUS = Goal.STATUS;
 
 import type {
   PlannerMemory,

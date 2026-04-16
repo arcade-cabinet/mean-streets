@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createRng } from '../../cards/rng';
-import { addToStack, createTurf, resetTurfIdCounter } from '../board';
+import { createTurf, resetTurfIdCounter } from '../board';
 import { emptyMetrics, emptyPlannerMemory, stepAction } from '../environment';
 import { resolvePhase } from '../resolve';
 import { DEFAULT_GAME_CONFIG } from '../types';
