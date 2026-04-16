@@ -1,175 +1,128 @@
-import type { AttackOutcome, Card, Turf, ToughCard } from './types';
+import { applyTangibles } from './abilities';
+import { TURF_SIM_CONFIG } from './ai/config';
 import {
+  busted,
+  chooseTarget,
+  fmt,
+  handleKill,
+  mk,
+  resolvePR,
+  type StrikeResult,
+} from './attack-helpers';
+import {
+  addToStack,
   positionPower,
   positionResistance,
-  turfToughs,
-  turfCurrency,
-  turfAffiliationConflict,
-  addToStack,
   removeFromStack,
+  setTopFaceUp,
+  turfAffiliationConflict,
+  turfCurrency,
+  turfToughs,
 } from './board';
-import {
-  topToughIdx,
-  toughBelowIdx,
-  resolveTargetToughIdx,
-  transferMods,
-  killToughAtIdx,
-  toughName,
-} from './stack-ops';
-import { TURF_SIM_CONFIG } from './ai/config';
+import { topToughIdx, toughName } from './stack-ops';
+import type {
+  AttackOutcome,
+  PlayerState,
+  QueuedAction,
+  ToughCard,
+  Turf,
+  TurfAction,
+  TurfGameState,
+} from './types';
 
-// ── Result type ────────────────────────────────────────────
+export type { StrikeOutcome, StrikeResult } from './attack-helpers';
 
-export type StrikeOutcome = 'kill' | 'sick' | 'busted';
+// ── Queue-phase: append to player.queued ───────────────────
 
-export interface StrikeResult {
-  outcome: StrikeOutcome;
-  killedTough: ToughCard | null;
-  transferredMods: Card[];
-  discardedMods: Card[];
-  sickedIdx: number | null;
-  description: string;
+/** Pure: validate & append a strike/recruit action to player.queued. */
+export function queueStrike(player: PlayerState, action: TurfAction): void {
+  if (
+    action.kind !== 'direct_strike' &&
+    action.kind !== 'pushed_strike' &&
+    action.kind !== 'funded_recruit'
+  ) {
+    throw new Error(`queueStrike: unsupported kind "${action.kind}"`);
+  }
+  if (action.turfIdx === undefined || action.targetTurfIdx === undefined) {
+    throw new Error('queueStrike: missing turfIdx/targetTurfIdx');
+  }
+  player.queued.push({
+    kind: action.kind,
+    side: action.side,
+    turfIdx: action.turfIdx,
+    targetTurfIdx: action.targetTurfIdx,
+  });
 }
 
-// ── Direct Strike ──────────────────────────────────────────
+// ── Strike core ────────────────────────────────────────────
 
-export function resolveDirectStrike(
-  attackerTurf: Turf,
-  defenderTurf: Turf,
+function runStrike(
+  atk: Turf,
+  def: Turf,
+  label: 'Strike' | 'Pushed',
+  cashBonus: number,
+  prefix: string,
 ): StrikeResult {
-  const P = positionPower(attackerTurf);
-  const R = positionResistance(defenderTurf);
-  const targetIdx = resolveTargetToughIdx(defenderTurf, attackerTurf);
+  const bonus = applyTangibles(atk, def);
+  const P = Math.max(0, positionPower(atk) + cashBonus + bonus.atkPowerDelta);
+  const R = bonus.ignoreResistance
+    ? 0
+    : Math.max(0, positionResistance(def) + bonus.defResistDelta);
+  const notes: string[] = [];
+  if (bonus.atkPowerDelta) notes.push(`+${bonus.atkPowerDelta} atk`);
+  if (bonus.defResistDelta) notes.push(`+${bonus.defResistDelta} def`);
+  if (bonus.ignoreResistance) notes.push('IGNORE-RES');
 
-  if (targetIdx < 0) {
-    return {
-      outcome: 'busted',
-      killedTough: null,
-      transferredMods: [],
-      discardedMods: [],
-      sickedIdx: null,
-      description: 'No tough to target',
-    };
+  const targetIdx = chooseTarget(atk, def, bonus.targetOverride);
+  if (targetIdx < 0) return busted(`${label}: no tough to target`, notes);
+
+  const name = toughName(def, targetIdx);
+  const branch = resolvePR(P, R);
+
+  if (branch === 'kill') {
+    const r = handleKill(atk, def, targetIdx, label, bonus.sickOnHit, notes);
+    return mk(
+      'kill',
+      `${prefix}${name} killed (${P} vs ${R})${fmt(notes)}`,
+      {
+        killedTough: r.k,
+        transferredMods: r.transferred,
+        discardedMods: r.discarded,
+        sickedIdx: r.sickedIdx,
+      },
+      notes,
+    );
   }
 
-  const name = toughName(defenderTurf, targetIdx);
-
-  if (P >= R) {
-    const { tough, mods } = killToughAtIdx(defenderTurf, targetIdx);
-    const { transferred, discarded } = transferMods(mods, attackerTurf);
-    return {
-      outcome: 'kill',
-      killedTough: tough,
-      transferredMods: transferred,
-      discardedMods: discarded,
-      sickedIdx: null,
-      description: `${name} killed (${P} vs ${R})`,
-    };
+  if (branch === 'sick') {
+    def.sickTopIdx = targetIdx;
+    return mk(
+      'sick',
+      `${prefix}${name} sicked (${P} vs ${R})${fmt(notes)}`,
+      { sickedIdx: targetIdx },
+      notes,
+    );
   }
 
-  if (P >= Math.floor(R / TURF_SIM_CONFIG.combat.sickThresholdDivisor)) {
-    defenderTurf.sickTopIdx = targetIdx;
-    return {
-      outcome: 'sick',
-      killedTough: null,
-      transferredMods: [],
-      discardedMods: [],
-      sickedIdx: targetIdx,
-      description: `${name} sicked (${P} vs ${R})`,
-    };
-  }
-
-  return {
-    outcome: 'busted',
-    killedTough: null,
-    transferredMods: [],
-    discardedMods: [],
-    sickedIdx: null,
-    description: `Strike busted (${P} vs ${R})`,
-  };
+  return busted(`${label} busted (${P} vs ${R})${fmt(notes)}`, notes);
 }
 
-// ── Pushed Strike ──────────────────────────────────────────
+// ── Direct / Pushed ────────────────────────────────────────
 
-export function resolvePushedStrike(
-  attackerTurf: Turf,
-  defenderTurf: Turf,
-): StrikeResult {
-  const currency = turfCurrency(attackerTurf);
-  if (currency.length === 0) {
-    return {
-      outcome: 'busted',
-      killedTough: null,
-      transferredMods: [],
-      discardedMods: [],
-      sickedIdx: null,
-      description: 'No currency to spend on pushed strike',
-    };
-  }
+export function resolveDirectStrike(atk: Turf, def: Turf): StrikeResult {
+  return runStrike(atk, def, 'Strike', 0, '');
+}
 
+export function resolvePushedStrike(atk: Turf, def: Turf): StrikeResult {
+  const currency = turfCurrency(atk);
+  if (currency.length === 0)
+    return busted('No currency to spend on pushed strike');
   const spent = currency[0];
-  const spentIdx = attackerTurf.stack.indexOf(spent);
-  removeFromStack(attackerTurf, spentIdx);
-
-  const cashBonus = spent.denomination / TURF_SIM_CONFIG.combat.pushedDenominationScale;
-  const P = positionPower(attackerTurf) + cashBonus;
-  const R = positionResistance(defenderTurf);
-  const targetIdx = resolveTargetToughIdx(defenderTurf, attackerTurf);
-
-  if (targetIdx < 0) {
-    return {
-      outcome: 'busted',
-      killedTough: null,
-      transferredMods: [],
-      discardedMods: [],
-      sickedIdx: null,
-      description: 'No tough to target',
-    };
-  }
-
-  const name = toughName(defenderTurf, targetIdx);
-
-  if (P >= R) {
-    const { tough, mods } = killToughAtIdx(defenderTurf, targetIdx);
-    const { transferred, discarded } = transferMods(mods, attackerTurf);
-
-    const beneathIdx = toughBelowIdx(defenderTurf, targetIdx);
-    let sickedIdx: number | null = null;
-    if (beneathIdx >= 0) {
-      defenderTurf.sickTopIdx = beneathIdx;
-      sickedIdx = beneathIdx;
-    }
-
-    return {
-      outcome: 'kill',
-      killedTough: tough,
-      transferredMods: transferred,
-      discardedMods: discarded,
-      sickedIdx,
-      description: `Pushed: ${name} killed (${P} vs ${R}), +${cashBonus} from $${spent.denomination}`,
-    };
-  }
-
-  if (P >= Math.floor(R / TURF_SIM_CONFIG.combat.sickThresholdDivisor)) {
-    defenderTurf.sickTopIdx = targetIdx;
-    return {
-      outcome: 'sick',
-      killedTough: null,
-      transferredMods: [],
-      discardedMods: [],
-      sickedIdx: targetIdx,
-      description: `Pushed: ${name} sicked (${P} vs ${R})`,
-    };
-  }
-
-  return {
-    outcome: 'busted',
-    killedTough: null,
-    transferredMods: [],
-    discardedMods: [],
-    sickedIdx: null,
-    description: `Pushed strike busted (${P} vs ${R})`,
-  };
+  const spentIdx = atk.stack.findIndex((e) => e.card === spent);
+  removeFromStack(atk, spentIdx);
+  const cashBonus =
+    spent.denomination / TURF_SIM_CONFIG.combat.pushedDenominationScale;
+  return runStrike(atk, def, 'Pushed', cashBonus, 'Pushed: ');
 }
 
 // ── Funded Recruit ─────────────────────────────────────────
@@ -177,110 +130,102 @@ export function resolvePushedStrike(
 type AffiliationRelation = 'freelance' | 'same' | 'rival' | 'other';
 
 function classifyAffiliation(
-  attackerTurf: Turf,
-  targetTough: ToughCard,
+  atk: Turf,
+  target: ToughCard,
 ): AffiliationRelation {
-  if (targetTough.affiliation === 'freelance') return 'freelance';
-  const attackerAffs = turfToughs(attackerTurf).map((t) => t.affiliation);
-  if (attackerAffs.includes(targetTough.affiliation)) return 'same';
-  if (turfAffiliationConflict(attackerTurf, targetTough)) return 'rival';
+  if (target.affiliation === 'freelance') return 'freelance';
+  const atkAffs = turfToughs(atk).map((t) => t.affiliation);
+  if (atkAffs.includes(target.affiliation)) return 'same';
+  if (turfAffiliationConflict(atk, target)) return 'rival';
   return 'other';
 }
 
-const AFFILIATION_MULT = TURF_SIM_CONFIG.combat.affiliationMult as Record<AffiliationRelation, number>;
+const AFFILIATION_MULT = TURF_SIM_CONFIG.combat.affiliationMult as Record<
+  AffiliationRelation,
+  number
+>;
 
-export function resolveFundedRecruit(
-  attackerTurf: Turf,
-  defenderTurf: Turf,
-): StrikeResult {
-  const currency = turfCurrency(attackerTurf);
-  const totalCash = currency.reduce((sum, c) => sum + c.denomination, 0);
-
+export function resolveFundedRecruit(atk: Turf, def: Turf): StrikeResult {
+  const currency = turfCurrency(atk);
+  const totalCash = currency.reduce((s, c) => s + c.denomination, 0);
   const minCash = TURF_SIM_CONFIG.combat.fundedRecruitMinCash;
+
   if (totalCash < minCash) {
-    return {
-      outcome: 'busted',
-      killedTough: null,
-      transferredMods: [],
-      discardedMods: [],
-      sickedIdx: null,
-      description: `Not enough currency for funded recruit ($${totalCash} < $${minCash})`,
-    };
+    return busted(
+      `Not enough currency for funded recruit ($${totalCash} < $${minCash})`,
+    );
   }
 
   let spent = 0;
   const toRemove: number[] = [];
-  for (let i = 0; i < attackerTurf.stack.length && spent < minCash; i++) {
-    const card = attackerTurf.stack[i];
-    if (card.kind === 'currency') {
-      spent += card.denomination;
+  for (let i = 0; i < atk.stack.length && spent < minCash; i++) {
+    const entry = atk.stack[i];
+    if (entry.card.kind === 'currency') {
+      spent += entry.card.denomination;
       toRemove.push(i);
     }
   }
-  for (let i = toRemove.length - 1; i >= 0; i--) {
-    removeFromStack(attackerTurf, toRemove[i]);
-  }
+  for (let i = toRemove.length - 1; i >= 0; i--)
+    removeFromStack(atk, toRemove[i]);
 
-  const targetIdx = topToughIdx(defenderTurf);
-  if (targetIdx < 0) {
-    return {
-      outcome: 'busted',
-      killedTough: null,
-      transferredMods: [],
-      discardedMods: [],
-      sickedIdx: null,
-      description: 'No tough to recruit',
-    };
-  }
+  const targetIdx = topToughIdx(def);
+  if (targetIdx < 0) return busted('No tough to recruit');
 
-  const targetTough = defenderTurf.stack[targetIdx] as ToughCard;
-  const relation = classifyAffiliation(attackerTurf, targetTough);
+  const target = def.stack[targetIdx].card as ToughCard;
+  const relation = classifyAffiliation(atk, target);
   const mult = AFFILIATION_MULT[relation];
-  const threshold = targetTough.resistance * mult;
+  const threshold = target.resistance * mult;
 
   if (spent >= threshold) {
-    removeFromStack(defenderTurf, targetIdx);
-    // Re-evaluate affiliation geometry on arrival. Rivals cannot coexist
-    // without a buffer; if the recruited tough would conflict, it is
-    // discarded (cash still spent) rather than violating the turf rule.
-    if (turfAffiliationConflict(attackerTurf, targetTough)) {
-      return {
-        outcome: 'kill',
-        killedTough: null,
-        transferredMods: [],
-        discardedMods: [targetTough],
-        sickedIdx: null,
-        description: `Recruited ${targetTough.name} but discarded — rival affiliation without buffer on attacker turf`,
-      };
+    removeFromStack(def, targetIdx);
+    if (turfAffiliationConflict(atk, target)) {
+      return mk(
+        'kill',
+        `Recruited ${target.name} but discarded — rival without buffer`,
+        { discardedMods: [target] },
+      );
     }
-    addToStack(attackerTurf, targetTough);
-    return {
-      outcome: 'kill',
-      killedTough: null,
-      transferredMods: [targetTough],
-      discardedMods: [],
-      sickedIdx: null,
-      description: `Recruited ${targetTough.name} ($${spent} vs ${threshold}, ${relation} ×${mult})`,
-    };
+    addToStack(atk, target, false);
+    return mk(
+      'kill',
+      `Recruited ${target.name} ($${spent} vs ${threshold}, ${relation} x${mult.toFixed(2)})`,
+      { transferredMods: [target] },
+    );
   }
 
-  return {
-    outcome: 'busted',
-    killedTough: null,
-    transferredMods: [],
-    discardedMods: [],
-    sickedIdx: null,
-    description: `Funded recruit failed ($${spent} < ${threshold}, ${relation} ×${mult})`,
-  };
+  return busted(
+    `Funded recruit failed ($${spent} < ${threshold}, ${relation} x${mult.toFixed(2)})`,
+  );
 }
 
-// ── Legacy bridge (AttackOutcome adapter) ──────────────────
+// ── resolveStrikeNow (resolve-phase entry point) ───────────
+
+/**
+ * Resolve a single queued action. Flips defender top face-up, then
+ * dispatches by kind. Seizure sweep is the caller's responsibility.
+ */
+export function resolveStrikeNow(
+  state: TurfGameState,
+  queued: QueuedAction,
+): StrikeResult {
+  const player = state.players[queued.side];
+  const opp = state.players[queued.side === 'A' ? 'B' : 'A'];
+  const aTurf = player.turfs[queued.turfIdx];
+  const dTurf = opp.turfs[queued.targetTurfIdx];
+  if (!aTurf || !dTurf) return busted('Turf no longer exists');
+  setTopFaceUp(dTurf);
+  if (queued.kind === 'direct_strike') return resolveDirectStrike(aTurf, dTurf);
+  if (queued.kind === 'pushed_strike') return resolvePushedStrike(aTurf, dTurf);
+  return resolveFundedRecruit(aTurf, dTurf);
+}
+
+// ── Legacy bridge ──────────────────────────────────────────
 
 export function strikeToAttackOutcome(result: StrikeResult): AttackOutcome {
-  const typeMap: Record<StrikeOutcome, AttackOutcome['type']> = {
-    kill: 'kill',
-    sick: 'sick',
-    busted: 'busted',
+  const typeMap = {
+    kill: 'kill' as const,
+    sick: 'sick' as const,
+    busted: 'busted' as const,
   };
   return {
     type: typeMap[result.outcome],

@@ -1,28 +1,28 @@
-import type { Card, Turf, ToughCard } from './types';
 import {
-  turfToughs,
-  turfAffiliationConflict,
   addToStack,
   removeFromStack,
+  turfAffiliationConflict,
+  turfToughs,
 } from './board';
+import type { Card, ToughCard, Turf } from './types';
 
 export function topToughIdx(turf: Turf): number {
   for (let i = turf.stack.length - 1; i >= 0; i--) {
-    if (turf.stack[i].kind === 'tough') return i;
+    if (turf.stack[i].card.kind === 'tough') return i;
   }
   return -1;
 }
 
 export function bottomToughIdx(turf: Turf): number {
   for (let i = 0; i < turf.stack.length; i++) {
-    if (turf.stack[i].kind === 'tough') return i;
+    if (turf.stack[i].card.kind === 'tough') return i;
   }
   return -1;
 }
 
 export function toughBelowIdx(turf: Turf, aboveIdx: number): number {
   for (let i = aboveIdx - 1; i >= 0; i--) {
-    if (turf.stack[i].kind === 'tough') return i;
+    if (turf.stack[i].card.kind === 'tough') return i;
   }
   return -1;
 }
@@ -30,7 +30,7 @@ export function toughBelowIdx(turf: Turf, aboveIdx: number): number {
 function modsBelongingToTough(turf: Turf, toughIdx: number): number[] {
   const nextToughAbove = (() => {
     for (let i = toughIdx + 1; i < turf.stack.length; i++) {
-      if (turf.stack[i].kind === 'tough') return i;
+      if (turf.stack[i].card.kind === 'tough') return i;
     }
     return turf.stack.length;
   })();
@@ -46,26 +46,16 @@ export function resolveTargetToughIdx(
   attackerTurf: Turf,
 ): number {
   const attackerToughs = turfToughs(attackerTurf);
-  const hasStrikeBottom = attackerToughs.some(
-    (t) => t.archetype === 'shark',
-  );
+  const hasStrikeBottom = attackerToughs.some((t) => t.archetype === 'shark');
   if (hasStrikeBottom) return bottomToughIdx(defenderTurf);
 
-  const hasStrikeAnywhere = attackerToughs.some(
-    (t) => t.archetype === 'ghost',
-  );
+  const hasStrikeAnywhere = attackerToughs.some((t) => t.archetype === 'ghost');
   if (hasStrikeAnywhere) {
-    // Ghost / Phantom Strike: "choose which tough to target" (RULES.md §7).
-    // UI-level target picking isn't wired yet, so the AI-facing
-    // resolution picks the tough that is most strategically valuable to
-    // remove: lowest resistance wins (easiest kill). Ties broken by
-    // stack position (topmost — matches default striker behaviour for
-    // flavor consistency). Previously returned `bottomToughIdx`, making
-    // Ghost indistinguishable from Shark.
+    // Ghost: pick tough with lowest resistance; ties break to topmost.
     let bestIdx = -1;
     let bestResistance = Number.POSITIVE_INFINITY;
     for (let i = defenderTurf.stack.length - 1; i >= 0; i--) {
-      const c = defenderTurf.stack[i];
+      const c = defenderTurf.stack[i].card;
       if (c.kind !== 'tough') continue;
       if (c.resistance < bestResistance) {
         bestResistance = c.resistance;
@@ -78,6 +68,11 @@ export function resolveTargetToughIdx(
   return topToughIdx(defenderTurf);
 }
 
+/**
+ * Transfer modifier cards into `attackerTurf`. Rival cards relative to the
+ * attacker's current affiliation get discarded. Transferred cards are added
+ * face-down — the attacker hasn't "seen" them yet from the defender's pov.
+ */
 export function transferMods(
   modCards: Card[],
   attackerTurf: Turf,
@@ -88,7 +83,7 @@ export function transferMods(
     if (turfAffiliationConflict(attackerTurf, mod)) {
       discarded.push(mod);
     } else {
-      addToStack(attackerTurf, mod);
+      addToStack(attackerTurf, mod, false);
       transferred.push(mod);
     }
   }
@@ -110,7 +105,8 @@ export function killToughAtIdx(
 }
 
 export function toughName(turf: Turf, idx: number): string {
-  const card = turf.stack[idx];
+  const entry = turf.stack[idx];
+  const card = entry?.card;
   if (card?.kind === 'tough') return card.name;
   return 'target';
 }
