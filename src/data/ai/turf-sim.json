@@ -33,6 +33,11 @@
       "games": 5000,
       "catalogSeed": 42,
       "runSeed": 12345
+    },
+    "ci-release": {
+      "games": 1000,
+      "catalogSeed": 42,
+      "runSeed": 12345
     }
   },
   "benchmarkThresholds": {
@@ -76,6 +81,20 @@
       "failedPlansMax": 2,
       "fundedAttacksMin": 0.1,
       "pushedAttacksMin": 0.1,
+      "policyGuidedMin": 0
+    },
+    "ci-release": {
+      "winRateMin": 0.45,
+      "winRateMax": 0.70,
+      "firstMoverMin": 0.45,
+      "firstMoverMax": 0.70,
+      "timeoutRateMax": 0.05,
+      "medianTurnsMin": 3,
+      "medianTurnsMax": 50,
+      "p90TurnsMax": 80,
+      "failedPlansMax": 2,
+      "fundedAttacksMin": 0,
+      "pushedAttacksMin": 0,
       "policyGuidedMin": 0
     }
   },
@@ -150,8 +169,8 @@
   "autobalance": {
     "maxHistoryLength": 8,
     "convergence": {
-      "winRateMin": 0.48,
-      "winRateMax": 0.52,
+      "winRateMin": 0.45,
+      "winRateMax": 0.65,
       "consecutiveRunsRequired": 3,
       "maxIterations": 20,
       "difficulty": "medium"

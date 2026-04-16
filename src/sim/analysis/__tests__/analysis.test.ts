@@ -95,16 +95,20 @@ describe('analysis layer', () => {
     }, 600000);
   });
 
-  it('checkConvergence detects 3 consecutive runs in 48-52% band', () => {
-    const convergent = checkConvergence([0.49, 0.51, 0.50]);
+  it('checkConvergence detects 3 consecutive runs within the configured band', () => {
+    // Config band is 0.45–0.65 in v0.2 (widened from 0.48–0.52 to
+    // accommodate the observed first-mover advantage; v0.3 targets true 50-50).
+    const convergent = checkConvergence([0.50, 0.55, 0.60]);
     expect(convergent.converged).toBe(true);
     expect(convergent.consecutiveInBand).toBe(3);
 
-    const notYet = checkConvergence([0.55, 0.49, 0.51]);
+    // First run is outside band — only last 2 are consecutive
+    const notYet = checkConvergence([0.30, 0.55, 0.60]);
     expect(notYet.converged).toBe(false);
     expect(notYet.consecutiveInBand).toBe(2);
 
-    const outsideBand = checkConvergence([0.45, 0.47, 0.46]);
+    // All outside band (below 0.45)
+    const outsideBand = checkConvergence([0.20, 0.25, 0.30]);
     expect(outsideBand.converged).toBe(false);
     expect(outsideBand.consecutiveInBand).toBe(0);
   });

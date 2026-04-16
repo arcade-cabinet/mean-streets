@@ -36,7 +36,7 @@ jobs:
       - name: Release gate (balance lock coverage)
         run: pnpm run test:release
         env:
-          NODE_OPTIONS: --max-old-space-size=4096
+          NODE_OPTIONS: --max-old-space-size=6144
 
       - name: Build
         run: pnpm run build
