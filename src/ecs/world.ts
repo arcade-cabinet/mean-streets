@@ -46,24 +46,22 @@ function initPlayerState(
   deck: Card[],
   rng: ReturnType<typeof createRng>,
   side: 'A' | 'B',
-  firstPlayer: 'A' | 'B',
 ): PlayerState {
   const shuffled = rng.shuffle(deck.map((c) => ({ ...c })));
   const turfs = Array.from({ length: config.turfCount }, () => createTurf());
 
-  // Only the starting side (A per rules) gets an action budget on the
-  // opening frame. B's budget is assigned on turn transition via
-  // `actionsForTurn` when `advanceTurn` fires, matching `game.ts:runTurn`.
-  const isStarter = side === firstPlayer;
-  const initialActions = isStarter ? actionsForTurn(config, 1, side) : 0;
-
+  // v0.2 handless model: both sides act in parallel each turn; both
+  // receive turn-1 action budgets on spawn. No opening hand — players
+  // draw via the `draw` action into `pending`.
   return {
     turfs,
-    hand: shuffled.slice(0, TURF_SIM_CONFIG.starterCollection.openingHandSize),
-    deck: shuffled.slice(TURF_SIM_CONFIG.starterCollection.openingHandSize),
+    deck: shuffled,
     discard: [],
     toughsInPlay: 0,
-    actionsRemaining: initialActions,
+    actionsRemaining: actionsForTurn(config, 1, side),
+    pending: null,
+    queued: [],
+    turnEnded: false,
   };
 }
 
@@ -82,24 +80,23 @@ export function createGameWorld(
   const playerADeck = playerDeck ?? defaultDeck;
   const playerBDeck = buildDeck(crewPool, rng);
   const firstPlayer: 'A' | 'B' = 'A';
-  const playerA = initPlayerState(config, playerADeck, rng, 'A', firstPlayer);
-  const playerB = initPlayerState(config, playerBDeck, rng, 'B', firstPlayer);
+  const playerA = initPlayerState(config, playerADeck, rng, 'A');
+  const playerB = initPlayerState(config, playerBDeck, rng, 'B');
 
   const world = createWorld();
 
-  // Turn numbering is 1-based; turn 1 belongs to `firstPlayer` and
-  // receives `firstTurnActions` via `actionsForTurn` (see environment.ts).
+  // Turn numbering is 1-based. ActionBudget mirrors player A (the local
+  // human seat). In the handless model both players have live budgets,
+  // so UI reads its own side through `useActionBudget` / sim state.
   const initialTurn = 1;
-  const initialBudget = actionsForTurn(config, initialTurn, firstPlayer);
+  const initialBudget = playerA.actionsRemaining;
 
   const initialGameState = {
     config,
     players: { A: playerA, B: playerB },
-    turnSide: firstPlayer,
     firstPlayer,
     turnNumber: initialTurn,
-    phase: 'combat' as const,
-    hasStruck: { A: false, B: false },
+    phase: 'action' as const,
     aiState: { A: 'BUILDING', B: 'BUILDING' },
     aiTurnsInState: { A: 0, B: 0 },
     aiMemory: { A: emptyPlannerMemory(), B: emptyPlannerMemory() },

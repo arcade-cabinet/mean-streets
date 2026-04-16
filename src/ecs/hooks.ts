@@ -1,7 +1,19 @@
 import { useQueryFirst, useTrait } from 'koota/react';
-import type { Card, GamePhase, Turf } from '../sim/turf/types';
-import { turfToughs, turfModifiers, positionPower, positionResistance } from '../sim/turf/board';
-import { GameState, PlayerA, PlayerB, ActionBudget, ScreenTrait } from './traits';
+import type {
+  Card,
+  GamePhase,
+  QueuedAction,
+  ToughCard,
+  ModifierCard,
+  Turf,
+} from '../sim/turf/types';
+import {
+  turfToughs,
+  turfModifiers,
+  positionPower,
+  positionResistance,
+} from '../sim/turf/board';
+import { ActionBudget, GameState, PlayerA, PlayerB, ScreenTrait } from './traits';
 import type { ScreenName } from './traits';
 
 export function useGamePhase(): GamePhase | undefined {
@@ -17,11 +29,36 @@ export function usePlayerTurfs(side: 'A' | 'B'): Turf[] {
   return state?.turfs ?? [];
 }
 
-export function useHand(side: 'A' | 'B'): Card[] {
+/** The single drawn-but-unplaced card for `side`, or null. Replaces `useHand`. */
+export function useDeckPending(side: 'A' | 'B'): Card | null {
   const Trait = side === 'A' ? PlayerA : PlayerB;
   const entity = useQueryFirst(Trait);
   const state = useTrait(entity, Trait);
-  return state?.hand ?? [];
+  return state?.pending ?? null;
+}
+
+/** Has `side` committed end_turn this round? Clears on resolvePhase. */
+export function useTurnEnded(side: 'A' | 'B'): boolean {
+  const Trait = side === 'A' ? PlayerA : PlayerB;
+  const entity = useQueryFirst(Trait);
+  const state = useTrait(entity, Trait);
+  return state?.turnEnded ?? false;
+}
+
+/** Pending queued actions for `side` this turn. Visualized as chips. */
+export function useQueuedStrikes(side: 'A' | 'B'): QueuedAction[] {
+  const Trait = side === 'A' ? PlayerA : PlayerB;
+  const entity = useQueryFirst(Trait);
+  const state = useTrait(entity, Trait);
+  return state?.queued ?? [];
+}
+
+/** Deck size for `side` (after whatever's been drawn). */
+export function useDeckCount(side: 'A' | 'B'): number {
+  const Trait = side === 'A' ? PlayerA : PlayerB;
+  const entity = useQueryFirst(Trait);
+  const state = useTrait(entity, Trait);
+  return state?.deck.length ?? 0;
 }
 
 export function useActionBudget(): { remaining: number; total: number; turnNumber: number } {
@@ -32,13 +69,18 @@ export function useActionBudget(): { remaining: number; total: number; turnNumbe
 
 export interface TurfStackComposite {
   turf: Turf;
-  toughs: Card[];
-  modifiers: Card[];
+  toughs: ToughCard[];
+  modifiers: ModifierCard[];
   power: number;
   resistance: number;
   sickIdx: number | null;
 }
 
+/**
+ * Derived read for each turf — toughs, modifiers, power, resistance.
+ * `turfToughs` / `turfModifiers` already unwrap `StackedCard.card`, so
+ * consumers receive plain card objects.
+ */
 export function useTurfStackComposite(side: 'A' | 'B'): TurfStackComposite[] {
   const turfs = usePlayerTurfs(side);
   return turfs.map((turf) => ({

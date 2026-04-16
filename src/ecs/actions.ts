@@ -1,42 +1,61 @@
-import type { World, Entity } from 'koota';
+import type { Entity, World } from 'koota';
+import { stepAction } from '../sim/turf/environment';
 import type { TurfAction, TurfGameState } from '../sim/turf/types';
-import { stepAction, advanceTurn } from '../sim/turf/environment';
-import { GameState, PlayerA, PlayerB, ActionBudget, ScreenTrait } from './traits';
+import { ActionBudget, GameState, PlayerA, PlayerB, ScreenTrait } from './traits';
 import type { ScreenName } from './traits';
 
-const getEntity = (world: World) => world.queryFirst(GameState, PlayerA, PlayerB, ActionBudget);
+const getEntity = (world: World) =>
+  world.queryFirst(GameState, PlayerA, PlayerB, ActionBudget);
 
+/**
+ * Re-publish the ActionBudget trait from the viewpoint of the local
+ * player (side A). The handless model keeps both players' budgets live
+ * on the sim simultaneously; UI chrome tracks A via this trait.
+ */
 function syncBudget(e: Entity, gs: TurfGameState): void {
-  const player = gs.players[gs.turnSide];
+  const a = gs.players.A;
   e.set(ActionBudget, {
-    remaining: player.actionsRemaining,
-    total: e.get(ActionBudget)?.total ?? player.actionsRemaining,
+    remaining: a.actionsRemaining,
+    total: e.get(ActionBudget)?.total ?? a.actionsRemaining,
     turnNumber: gs.turnNumber,
   });
 }
 
-export function strikeAction(
-  world: World,
-  kind: 'direct_strike' | 'pushed_strike' | 'funded_recruit',
-  turfIdx: number,
-  targetTurfIdx: number,
-) {
+/**
+ * Broadcast "state changed" to Koota subscribers. Re-assigning the
+ * trait values (not just marking changed) ensures `useTrait` consumers
+ * receive the fresh reference and re-render.
+ */
+function syncAll(e: Entity, gs: TurfGameState): void {
+  syncBudget(e, gs);
+  e.set(PlayerA, gs.players.A);
+  e.set(PlayerB, gs.players.B);
+  e.changed(GameState);
+  e.changed(PlayerA);
+  e.changed(PlayerB);
+}
+
+type StrikeKind = 'direct_strike' | 'pushed_strike' | 'funded_recruit';
+
+/** Draw the top of deck into `pending`. Costs 1 action. */
+export function drawAction(world: World, side: 'A' | 'B') {
   const e = getEntity(world);
   const gs = e?.get(GameState);
   if (!e || !gs) return null;
 
-  const action: TurfAction = { kind, side: gs.turnSide, turfIdx, targetTurfIdx };
+  const action: TurfAction = { kind: 'draw', side };
   const result = stepAction(gs, action);
-
-  syncBudget(e, gs);
-  e.changed(GameState);
-  e.changed(PlayerA);
-  e.changed(PlayerB);
+  syncAll(e, gs);
   return result;
 }
 
+/**
+ * Place `pending` onto a turf. Validates that the cardId matches the
+ * current pending card for `side` (prevents stale-UI double-play).
+ */
 export function playCardAction(
   world: World,
+  side: 'A' | 'B',
   turfIdx: number,
   cardId: string,
 ) {
@@ -44,67 +63,106 @@ export function playCardAction(
   const gs = e?.get(GameState);
   if (!e || !gs) return null;
 
-  const action: TurfAction = { kind: 'play_card', side: gs.turnSide, turfIdx, cardId };
-  const result = stepAction(gs, action);
+  const pending = gs.players[side].pending;
+  if (!pending || pending.id !== cardId) return null;
 
-  syncBudget(e, gs);
-  e.changed(GameState);
-  e.changed(gs.turnSide === 'A' ? PlayerA : PlayerB);
+  const action: TurfAction = { kind: 'play_card', side, turfIdx, cardId };
+  const result = stepAction(gs, action);
+  syncAll(e, gs);
   return result;
 }
 
-export function discardAction(world: World, cardId: string) {
+/** Move a face-up tough at `stackIdx` to the top of its turf's stack. */
+export function retreatAction(
+  world: World,
+  side: 'A' | 'B',
+  turfIdx: number,
+  stackIdx: number,
+) {
   const e = getEntity(world);
   const gs = e?.get(GameState);
   if (!e || !gs) return null;
 
-  const action: TurfAction = { kind: 'discard', side: gs.turnSide, cardId };
+  const action: TurfAction = { kind: 'retreat', side, turfIdx, stackIdx };
   const result = stepAction(gs, action);
-
-  e.changed(GameState);
-  e.changed(gs.turnSide === 'A' ? PlayerA : PlayerB);
+  syncAll(e, gs);
   return result;
 }
 
-export function passAction(world: World) {
+/**
+ * Queue a strike or funded recruit. Resolves at end-of-turn when both
+ * sides' `turnEnded` flags are set (sim handles the resolvePhase call).
+ */
+export function queueStrikeAction(
+  world: World,
+  side: 'A' | 'B',
+  kind: StrikeKind,
+  sourceTurfIdx: number,
+  targetTurfIdx: number,
+) {
   const e = getEntity(world);
   const gs = e?.get(GameState);
   if (!e || !gs) return null;
 
-  const action: TurfAction = { kind: 'pass', side: gs.turnSide };
+  const action: TurfAction = {
+    kind,
+    side,
+    turfIdx: sourceTurfIdx,
+    targetTurfIdx,
+  };
   const result = stepAction(gs, action);
-
-  syncBudget(e, gs);
-  e.changed(GameState);
+  syncAll(e, gs);
   return result;
 }
 
-export function endTurnAction(world: World): void {
+/** Voluntarily discard the current `pending` card. Free (no action cost). */
+export function discardPendingAction(world: World, side: 'A' | 'B') {
   const e = getEntity(world);
   const gs = e?.get(GameState);
-  if (!e || !gs) return;
+  if (!e || !gs) return null;
 
-  // Delegate all sim mutations to the environment. `stepAction` zeroes
-  // the outgoing side's remaining actions; `advanceTurn` swaps sides,
-  // bumps turnNumber, draws for the new side, and resets the incoming
-  // side's action budget via `actionsForTurn`.
-  const action: TurfAction = { kind: 'end_turn', side: gs.turnSide };
-  stepAction(gs, action);
-  advanceTurn(gs);
+  const pending = gs.players[side].pending;
+  if (!pending) return null;
 
-  const newBudget = gs.players[gs.turnSide].actionsRemaining;
-  e.set(ActionBudget, {
-    remaining: newBudget,
-    total: newBudget,
-    turnNumber: gs.turnNumber,
-  });
-  e.changed(GameState);
-  e.changed(PlayerA);
-  e.changed(PlayerB);
+  const action: TurfAction = { kind: 'discard', side, cardId: pending.id };
+  const result = stepAction(gs, action);
+  syncAll(e, gs);
+  return result;
+}
+
+/** Pass (no-op, costs 1 action). Used by AI; rarely useful for humans. */
+export function passAction(world: World, side: 'A' | 'B') {
+  const e = getEntity(world);
+  const gs = e?.get(GameState);
+  if (!e || !gs) return null;
+
+  const action: TurfAction = { kind: 'pass', side };
+  const result = stepAction(gs, action);
+  syncAll(e, gs);
+  return result;
+}
+
+/**
+ * Mark `side` as turn-ended. When both sides are ended, sim's stepAction
+ * auto-triggers resolvePhase (see environment.ts:179). After resolve the
+ * turn counter bumps and both sides' action budgets refresh.
+ */
+export function endTurnAction(world: World, side: 'A' | 'B') {
+  const e = getEntity(world);
+  const gs = e?.get(GameState);
+  if (!e || !gs) return null;
+
+  const action: TurfAction = { kind: 'end_turn', side };
+  const result = stepAction(gs, action);
+  syncAll(e, gs);
+  return result;
 }
 
 export function setScreen(world: World, screen: ScreenName): void {
   const e = world.queryFirst(ScreenTrait);
   const s = e?.get(ScreenTrait);
-  if (s) { s.current = screen; e!.changed(ScreenTrait); }
+  if (s) {
+    s.current = screen;
+    e!.changed(ScreenTrait);
+  }
 }

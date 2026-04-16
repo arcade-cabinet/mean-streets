@@ -26,11 +26,10 @@ function handsAndDecks(world: ReturnType<typeof createGameWorld>) {
   const bEntity = world.queryFirst(PlayerB);
   const pA = aEntity!.get(PlayerA)!;
   const pB = bEntity!.get(PlayerB)!;
+  // v0.2 handless model: no opening hand, deck is the full shuffled start.
   return {
-    aHand: pA.hand.map(c => c.id),
-    aDeck: pA.deck.map(c => c.id),
-    bHand: pB.hand.map(c => c.id),
-    bDeck: pB.deck.map(c => c.id),
+    aDeck: pA.deck.map((c) => c.id),
+    bDeck: pB.deck.map((c) => c.id),
   };
 }
 

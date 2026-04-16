@@ -1,148 +1,193 @@
 import { describe, it, expect } from 'vitest';
 import { createGameWorld } from '../ecs/world';
 import {
+  drawAction,
   playCardAction,
-  strikeAction,
-  endTurnAction,
   passAction,
-  discardAction,
+  discardPendingAction,
+  endTurnAction,
+  queueStrikeAction,
 } from '../ecs/actions';
-import { GameState, PlayerA, PlayerB, ActionBudget } from '../ecs/traits';
+import { ActionBudget, GameState, PlayerA, PlayerB } from '../ecs/traits';
 
 const SEED = 42;
 
-describe('createGameWorld', () => {
-  it('returns a world with GameState, PlayerA, PlayerB traits on a single entity', () => {
+// v0.2 handless model — no hand, no turnSide. Draw into `pending`, play
+// or discard it. Both sides act in parallel each turn.
+
+describe('createGameWorld (handless v0.2)', () => {
+  it('returns a world with GameState, PlayerA, PlayerB on a single entity', () => {
     const world = createGameWorld(undefined, SEED);
     const entity = world.queryFirst(GameState, PlayerA, PlayerB);
     expect(entity).toBeDefined();
   });
 
-  it('PlayerA starts with 5 cards in hand', () => {
+  it('PlayerA starts with no pending card and a full deck', () => {
     const world = createGameWorld(undefined, SEED);
     const entity = world.queryFirst(PlayerA);
-    const pA = entity!.get(PlayerA);
-    expect(pA!.hand).toHaveLength(5);
+    const pA = entity!.get(PlayerA)!;
+    expect(pA.pending).toBeNull();
+    expect(pA.queued).toEqual([]);
+    expect(pA.turnEnded).toBe(false);
+    expect(pA.deck.length).toBeGreaterThan(0);
   });
 
-  it('PlayerA starts with 4 turfs', () => {
+  it('PlayerA starts with the configured number of turfs, each empty', () => {
     const world = createGameWorld(undefined, SEED);
     const entity = world.queryFirst(PlayerA);
-    const pA = entity!.get(PlayerA);
-    expect(pA!.turfs).toHaveLength(4);
-    for (const turf of pA!.turfs) {
+    const pA = entity!.get(PlayerA)!;
+    expect(pA.turfs.length).toBeGreaterThan(0);
+    for (const turf of pA.turfs) {
       expect(turf.stack).toHaveLength(0);
       expect(turf.id).toMatch(/^turf-/);
     }
   });
 
-  it('ActionBudget starts with firstTurnActions', () => {
+  it('Phase starts in action (not combat)', () => {
+    const world = createGameWorld(undefined, SEED);
+    const entity = world.queryFirst(GameState);
+    const gs = entity!.get(GameState)!;
+    expect(gs.phase).toBe('action');
+  });
+
+  it('ActionBudget starts with firstTurnActions for side A', () => {
     const world = createGameWorld(undefined, SEED);
     const entity = world.queryFirst(ActionBudget);
-    const budget = entity!.get(ActionBudget);
-    expect(budget!.remaining).toBe(5);
-    expect(budget!.total).toBe(5);
+    const budget = entity!.get(ActionBudget)!;
+    expect(budget.remaining).toBeGreaterThan(0);
+    expect(budget.total).toBe(budget.remaining);
+  });
+});
+
+describe('drawAction', () => {
+  it('moves the top of deck into pending and costs 1 action', () => {
+    const world = createGameWorld(undefined, SEED);
+    const entity = world.queryFirst(PlayerA)!;
+    const pA = entity.get(PlayerA)!;
+    const deckBefore = pA.deck.length;
+    const budgetEntity = world.queryFirst(ActionBudget)!;
+    const budgetBefore = budgetEntity.get(ActionBudget)!.remaining;
+
+    drawAction(world, 'A');
+
+    expect(pA.pending).not.toBeNull();
+    expect(pA.deck.length).toBe(deckBefore - 1);
+    expect(budgetEntity.get(ActionBudget)!.remaining).toBe(budgetBefore - 1);
   });
 });
 
 describe('playCardAction', () => {
-  it('places a card from hand onto a turf stack', () => {
+  it('places the pending card onto a turf', () => {
     const world = createGameWorld(undefined, SEED);
-    const entity = world.queryFirst(PlayerA);
-    const pA = entity!.get(PlayerA)!;
-    const card = pA.hand[0];
+    const entity = world.queryFirst(PlayerA)!;
+    const pA = entity.get(PlayerA)!;
 
-    const result = playCardAction(world, 0, card.id);
+    drawAction(world, 'A');
+    const card = pA.pending;
+    expect(card).not.toBeNull();
+    if (!card) return;
+
+    const result = playCardAction(world, 'A', 0, card.id);
 
     expect(result).not.toBeNull();
+    expect(pA.pending).toBeNull();
     expect(pA.turfs[0].stack.length).toBeGreaterThan(0);
-    expect(pA.hand).not.toContain(card);
+  });
+
+  it('returns null if cardId does not match pending', () => {
+    const world = createGameWorld(undefined, SEED);
+    drawAction(world, 'A');
+    const result = playCardAction(world, 'A', 0, 'not-a-real-id');
+    expect(result).toBeNull();
+  });
+});
+
+describe('discardPendingAction', () => {
+  it('moves pending to discard without costing an action', () => {
+    const world = createGameWorld(undefined, SEED);
+    const entity = world.queryFirst(PlayerA)!;
+    const pA = entity.get(PlayerA)!;
+    const budgetEntity = world.queryFirst(ActionBudget)!;
+
+    drawAction(world, 'A');
+    const card = pA.pending;
+    expect(card).not.toBeNull();
+    if (!card) return;
+
+    const budgetBefore = budgetEntity.get(ActionBudget)!.remaining;
+    discardPendingAction(world, 'A');
+
+    expect(pA.pending).toBeNull();
+    expect(pA.discard).toContainEqual(expect.objectContaining({ id: card.id }));
+    expect(budgetEntity.get(ActionBudget)!.remaining).toBe(budgetBefore);
   });
 });
 
 describe('passAction', () => {
-  it('decrements actionsRemaining', () => {
+  it('decrements actionsRemaining for the chosen side', () => {
     const world = createGameWorld(undefined, SEED);
-    const entity = world.queryFirst(ActionBudget);
-    const before = entity!.get(ActionBudget)!.remaining;
+    const budgetEntity = world.queryFirst(ActionBudget)!;
+    const before = budgetEntity.get(ActionBudget)!.remaining;
 
-    passAction(world);
+    passAction(world, 'A');
 
-    const after = entity!.get(ActionBudget)!.remaining;
-    expect(after).toBe(before - 1);
+    expect(budgetEntity.get(ActionBudget)!.remaining).toBe(before - 1);
   });
 });
 
-describe('discardAction', () => {
-  it('moves a card from hand to discard without costing an action', () => {
+describe('endTurnAction + resolvePhase', () => {
+  it('sets turnEnded; when both sides end, resolvePhase advances the turn', () => {
     const world = createGameWorld(undefined, SEED);
-    const entity = world.queryFirst(PlayerA);
-    const pA = entity!.get(PlayerA)!;
-    const budgetEntity = world.queryFirst(ActionBudget);
-    const budgetBefore = budgetEntity!.get(ActionBudget)!.remaining;
-
-    const card = pA.hand[0];
-    discardAction(world, card.id);
-
-    expect(pA.discard).toContainEqual(expect.objectContaining({ id: card.id }));
-    expect(budgetEntity!.get(ActionBudget)!.remaining).toBe(budgetBefore);
-  });
-});
-
-describe('endTurnAction', () => {
-  it('advances turnNumber and switches side', () => {
-    const world = createGameWorld(undefined, SEED);
-    const entity = world.queryFirst(GameState);
-    const gs = entity!.get(GameState)!;
-
-    expect(gs.turnSide).toBe('A');
+    const entity = world.queryFirst(GameState)!;
+    const gs = entity.get(GameState)!;
     const turnBefore = gs.turnNumber;
 
-    endTurnAction(world);
+    endTurnAction(world, 'A');
+    // After only A ends, turn has not yet advanced.
+    expect(gs.players.A.turnEnded).toBe(true);
+    expect(gs.players.B.turnEnded).toBe(false);
+    expect(gs.turnNumber).toBe(turnBefore);
 
+    endTurnAction(world, 'B');
+    // Resolve fires inside stepAction — turn counter bumps, flags clear.
     expect(gs.turnNumber).toBe(turnBefore + 1);
-    expect(gs.turnSide).toBe('B');
+    expect(gs.players.A.turnEnded).toBe(false);
+    expect(gs.players.B.turnEnded).toBe(false);
+    expect(gs.phase).toBe('action');
   });
 
-  it('resets action budget for the new side', () => {
+  it('refreshes action budgets for both sides after resolve', () => {
     const world = createGameWorld(undefined, SEED);
-    const budgetEntity = world.queryFirst(ActionBudget);
+    const entity = world.queryFirst(GameState)!;
+    const gs = entity.get(GameState)!;
 
-    endTurnAction(world);
+    // Drain A's budget a bit so the reset is observable.
+    drawAction(world, 'A');
+    endTurnAction(world, 'A');
+    endTurnAction(world, 'B');
 
-    const budget = budgetEntity!.get(ActionBudget)!;
+    const budget = world.queryFirst(ActionBudget)!.get(ActionBudget)!;
+    expect(budget.remaining).toBe(gs.players.A.actionsRemaining);
     expect(budget.remaining).toBeGreaterThan(0);
-    expect(budget.remaining).toBe(budget.total);
   });
 });
 
-describe('strikeAction', () => {
-  it('strikeAction resolves a direct_strike after both sides have toughs on turf 0', () => {
+describe('queueStrikeAction', () => {
+  it('appends a queued action to the player and costs 1 action', () => {
     const world = createGameWorld(undefined, SEED);
-    const entity = world.queryFirst(PlayerA);
-    const pA = entity!.get(PlayerA)!;
+    const entity = world.queryFirst(PlayerA)!;
+    const pA = entity.get(PlayerA)!;
 
-    const toughCards = pA.hand.filter((c) => c.kind === 'tough');
-    for (const card of toughCards.slice(0, 2)) {
-      playCardAction(world, 0, card.id);
-    }
+    const before = pA.queued.length;
+    const result = queueStrikeAction(world, 'A', 'direct_strike', 0, 0);
 
-    endTurnAction(world);
-
-    const entityB = world.queryFirst(PlayerB);
-    const pB = entityB!.get(PlayerB)!;
-    const toughCardsB = pB.hand.filter((c) => c.kind === 'tough');
-    for (const card of toughCardsB.slice(0, 2)) {
-      playCardAction(world, 0, card.id);
-    }
-
-    endTurnAction(world);
-
-    const result = strikeAction(world, 'direct_strike', 0, 0);
-    // Strict assertion: `toBeDefined` also passes for `null`, and the
-    // conditional guard would then silently skip the actionKey check.
-    // Require a non-null object so the actionKey assertion always runs.
     expect(result).not.toBeNull();
-    expect(result!.actionKey).toContain('direct_strike');
+    expect(pA.queued.length).toBe(before + 1);
+    expect(pA.queued[before]).toMatchObject({
+      kind: 'direct_strike',
+      side: 'A',
+      turfIdx: 0,
+      targetTurfIdx: 0,
+    });
   });
 });

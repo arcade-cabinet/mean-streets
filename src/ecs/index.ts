@@ -4,7 +4,6 @@ export {
   PlayerB,
   ActionBudget,
   ScreenTrait,
-  CardInStack,
   TurfOwner,
   SickFlag,
   AffiliationSymbol,
@@ -14,9 +13,11 @@ export type { ScreenName } from './traits';
 export { createGameWorld } from './world';
 
 export {
-  strikeAction,
+  drawAction,
   playCardAction,
-  discardAction,
+  retreatAction,
+  queueStrikeAction,
+  discardPendingAction,
   passAction,
   endTurnAction,
   setScreen,
@@ -25,7 +26,10 @@ export {
 export {
   useGamePhase,
   usePlayerTurfs,
-  useHand,
+  useDeckPending,
+  useTurnEnded,
+  useQueuedStrikes,
+  useDeckCount,
   useScreen,
   useActionBudget,
   useTurfStackComposite,
