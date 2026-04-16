@@ -95,10 +95,35 @@ describe('resolveTargetToughIdx', () => {
     expect(resolveTargetToughIdx(defender, attacker)).toBe(0);
   });
 
-  it('ghost archetype: targets bottom tough (strike-anywhere)', () => {
-    const defender = turfWith(tough('bottom'), tough('top'));
+  it('ghost archetype: strike-anywhere picks lowest-resistance tough', () => {
+    // Ghost's strike-anywhere (RULES.md §7: "choose which tough to target")
+    // now picks the easiest kill — the tough with the lowest resistance —
+    // rather than blindly hitting bottom. "bottom" here has resistance 8;
+    // "top" has 3. Ghost targets "top".
+    const defender = turfWith(tough('bottom', 4, 8), tough('top', 4, 3));
     const attacker = turfWith(tough('ghost', 5, 5, 'ghost'));
-    expect(resolveTargetToughIdx(defender, attacker)).toBe(0);
+    expect(resolveTargetToughIdx(defender, attacker)).toBe(1);
+  });
+
+  it('ghost targets differently from shark when weakest tough is not at the bottom', () => {
+    // Regression pin for the prior bug where ghost and shark both
+    // hit bottom. Now they diverge: shark hits bottom (oldest
+    // reinforcement), ghost hits lowest-resistance anywhere.
+    const defender = turfWith(
+      tough('bottom', 4, 9), // hardest
+      tough('middle', 4, 2), // easiest
+      tough('top', 4, 6),
+    );
+    const shark = turfWith(tough('s', 5, 5, 'shark'));
+    const ghost = turfWith(tough('g', 5, 5, 'ghost'));
+    expect(resolveTargetToughIdx(defender, shark)).toBe(0);
+    expect(resolveTargetToughIdx(defender, ghost)).toBe(1);
+  });
+
+  it('ghost falls back to -1 when defender has no toughs', () => {
+    const defender = turfWith(weapon('w1'));
+    const attacker = turfWith(tough('g', 5, 5, 'ghost'));
+    expect(resolveTargetToughIdx(defender, attacker)).toBe(-1);
   });
 
   it('returns -1 when no toughs on defender', () => {

@@ -47,16 +47,20 @@ describe('archetype abilities — strike targeting', () => {
     expect(defender.stack.some(c => c.id === 'top')).toBe(true);
   });
 
-  it('ghost targets bottom tough (strike-anywhere)', () => {
+  it('ghost targets the lowest-resistance tough (strike-anywhere)', () => {
+    // Updated behavior: ghost's strike-anywhere ("choose which tough to
+    // target" per RULES.md §7) picks the easiest kill by resistance, not
+    // the bottom of the stack. Prior impl was a copy of strike-bottom,
+    // making Ghost indistinguishable from Shark.
     const attacker = turfWith(makeTough({ archetype: 'ghost', power: 20 }));
-    const bottom = makeTough({ id: 'bottom', name: 'Bottom', resistance: 3 });
+    const bottom = makeTough({ id: 'bottom', name: 'Bottom', resistance: 8 });
     const top = makeTough({ id: 'top', name: 'Top', resistance: 3 });
     const defender = turfWith(bottom, top);
 
     const result = resolveDirectStrike(attacker, defender);
 
     expect(result.outcome).toBe('kill');
-    expect(result.killedTough?.id).toBe('bottom');
+    expect(result.killedTough?.id).toBe('top');
   });
 
   it('bruiser targets top tough (default)', () => {
@@ -92,16 +96,18 @@ describe('archetype abilities — strike targeting', () => {
     expect(result.killedTough?.id).toBe('t1');
   });
 
-  it('ghost targeting with interleaved modifiers still gets bottom tough', () => {
+  it('ghost targeting with interleaved modifiers picks lowest-resistance tough', () => {
+    // Updated behavior. Mods between toughs are ignored when scoring
+    // target choice — ghost picks the lowest-resistance tough.
     const attacker = turfWith(makeTough({ archetype: 'ghost', power: 20 }));
     const w = makeWeapon('w1');
-    const bottom = makeTough({ id: 'bottom', resistance: 3 });
+    const bottom = makeTough({ id: 'bottom', resistance: 7 });
     const top = makeTough({ id: 'top', resistance: 3 });
     const defender = turfWith(bottom, w, top);
 
     const result = resolveDirectStrike(attacker, defender);
 
-    expect(result.killedTough?.id).toBe('bottom');
+    expect(result.killedTough?.id).toBe('top');
   });
 });
 

@@ -28,6 +28,12 @@ function listJson(dir: string): string[] {
   if (!existsSync(dir)) return [];
   return readdirSync(dir)
     .filter((f: string) => f.endsWith('.json'))
+    // Skip transient test fixtures written by the autobalance test suite
+    // (card-zz*, weap-zz*, drug-zz*). Without this, parallel workers can
+    // race: schemas.test.ts enumerates the dir, then autobalance.test.ts's
+    // afterEach rmSync removes the fixture before schemas.test.ts reads
+    // it — producing a flaky ENOENT.
+    .filter((f: string) => !/^(card-zz|weap-zz|drug-zz)/.test(f))
     .sort();
 }
 

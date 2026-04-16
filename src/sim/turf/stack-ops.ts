@@ -54,7 +54,26 @@ export function resolveTargetToughIdx(
   const hasStrikeAnywhere = attackerToughs.some(
     (t) => t.archetype === 'ghost',
   );
-  if (hasStrikeAnywhere) return bottomToughIdx(defenderTurf);
+  if (hasStrikeAnywhere) {
+    // Ghost / Phantom Strike: "choose which tough to target" (RULES.md §7).
+    // UI-level target picking isn't wired yet, so the AI-facing
+    // resolution picks the tough that is most strategically valuable to
+    // remove: lowest resistance wins (easiest kill). Ties broken by
+    // stack position (topmost — matches default striker behaviour for
+    // flavor consistency). Previously returned `bottomToughIdx`, making
+    // Ghost indistinguishable from Shark.
+    let bestIdx = -1;
+    let bestResistance = Number.POSITIVE_INFINITY;
+    for (let i = defenderTurf.stack.length - 1; i >= 0; i--) {
+      const c = defenderTurf.stack[i];
+      if (c.kind !== 'tough') continue;
+      if (c.resistance < bestResistance) {
+        bestResistance = c.resistance;
+        bestIdx = i;
+      }
+    }
+    return bestIdx;
+  }
 
   return topToughIdx(defenderTurf);
 }

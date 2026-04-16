@@ -188,16 +188,19 @@ describe('resolveDirectStrike — strike-bottom and strike-anywhere', () => {
     expect(defender.stack.some((c) => c.id === 'top')).toBe(true);
   });
 
-  it('ghost targets the bottom tough (strike-anywhere)', () => {
+  it('ghost targets the lowest-resistance tough (strike-anywhere)', () => {
+    // Updated: Ghost's strike-anywhere picks lowest resistance, not
+    // bottom of stack. With bottomTough.resistance=7 and
+    // topTough.resistance=3, ghost goes for the 3.
     const attacker = turfWith(makeTough({ archetype: 'ghost', power: 20 }));
-    const bottomTough = makeTough({ id: 'bottom', name: 'Bottom', resistance: 3 });
+    const bottomTough = makeTough({ id: 'bottom', name: 'Bottom', resistance: 7 });
     const topTough = makeTough({ id: 'top', name: 'Top', resistance: 3 });
     const defender = turfWith(bottomTough, topTough);
 
     const result = resolveDirectStrike(attacker, defender);
 
     expect(result.outcome).toBe('kill');
-    expect(result.killedTough?.id).toBe('bottom');
+    expect(result.killedTough?.id).toBe('top');
   });
 });
 
