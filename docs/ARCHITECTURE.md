@@ -162,7 +162,7 @@ scripts/                          # Dev-time build helpers
 e2e/                              # Playwright specs (4 device profiles)
   app-flow.spec.ts                # Menu → difficulty → game flow
   accessibility.spec.ts           # Tap-only, landmarks, keyboard navigation
-  difficulty-grid.spec.ts         # Difficulty selection + sudden death toggle
+  difficulty-grid.spec.ts         # Difficulty selection (5 tiers, no Sudden Death in v0.3)
   pack-opening.spec.ts            # Sealed → reveal → summary flow
   responsive-alignment.spec.ts    # Overflow checks across fixtures
   visual-fixtures.spec.ts         # Fixture screenshots for review
