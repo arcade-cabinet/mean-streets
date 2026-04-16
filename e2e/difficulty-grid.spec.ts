@@ -1,15 +1,5 @@
 import { expect, test } from '@playwright/test';
-import type { Locator, TestInfo } from '@playwright/test';
-
-async function activate(target: Locator, testInfo: TestInfo) {
-  await target.waitFor({ state: 'visible' });
-  await target.scrollIntoViewIfNeeded().catch(() => undefined);
-  if (testInfo.project.use.hasTouch) {
-    await target.tap({ force: true });
-    return;
-  }
-  await target.click({ force: true });
-}
+import { activate } from './helpers/activate';
 
 const TIERS = ['easy', 'medium', 'hard', 'nightmare', 'sudden-death', 'ultra-nightmare'] as const;
 

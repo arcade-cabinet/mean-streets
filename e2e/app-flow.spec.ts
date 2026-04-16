@@ -1,15 +1,5 @@
 import { expect, test } from '@playwright/test';
-import type { Locator, TestInfo } from '@playwright/test';
-
-async function activate(target: Locator, testInfo: TestInfo) {
-  await target.waitFor({ state: 'visible' });
-  await target.scrollIntoViewIfNeeded().catch(() => undefined);
-  if (testInfo.project.use.hasTouch) {
-    await target.tap({ force: true });
-    return;
-  }
-  await target.click({ force: true });
-}
+import { activate } from './helpers/activate';
 
 test('menu → difficulty → game flow works on the live app', async ({ page }, testInfo) => {
   await page.goto('/');

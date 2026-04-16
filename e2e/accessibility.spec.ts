@@ -1,15 +1,6 @@
 import { expect, test } from '@playwright/test';
-import type { Locator, Page, TestInfo } from '@playwright/test';
-
-async function tap(target: Locator, testInfo: TestInfo) {
-  await target.waitFor({ state: 'visible' });
-  await target.scrollIntoViewIfNeeded().catch(() => undefined);
-  if (testInfo.project.use.hasTouch) {
-    await target.tap({ force: true });
-    return;
-  }
-  await target.click({ force: true });
-}
+import type { Page } from '@playwright/test';
+import { activate as tap } from './helpers/activate';
 
 async function assertHasAccessibleName(page: Page, testId: string) {
   const el = page.getByTestId(testId);
@@ -100,10 +91,15 @@ test('pack opening is keyboard navigable', async ({ page }, testInfo) => {
 
   await expect(page.getByTestId('pack-reveal-stage')).toBeVisible({ timeout: 5_000 });
 
-  for (let i = 0; i < 5; i++) {
+  // Press Space up to 10 times to advance through every revealed card.
+  // Stop as soon as `pack-done-btn` appears — no hardcoded sleeps;
+  // waiting on the actual state change is both faster and more robust
+  // to reveal-animation timing drift across CI runners.
+  const summaryBtn = page.getByTestId('pack-done-btn');
+  for (let i = 0; i < 10; i++) {
+    if (await summaryBtn.isVisible().catch(() => false)) break;
     await page.keyboard.press('Space');
-    await page.waitForTimeout(300);
   }
 
-  await expect(page.getByTestId('pack-done-btn')).toBeVisible({ timeout: 5_000 });
+  await expect(summaryBtn).toBeVisible({ timeout: 5_000 });
 });
