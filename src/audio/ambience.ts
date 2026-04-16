@@ -1,7 +1,10 @@
 import * as Tone from 'tone';
 
-type Mood = 'combat';
-
+// Only one mood is shipped today ('combat'); keeping the constant as an
+// object lets us introduce additional moods later without changing
+// callers. Until then, the helpers below take no mood argument — the
+// previous `Mood = 'combat'` union parameter was a misleading API
+// (accepted a value but always ignored it).
 const MOODS = {
   combat: { droneFreq: 'C2', droneVol: -20, noiseVol: -34, lfoFreq: 0.15 },
 } as const;
@@ -43,7 +46,7 @@ export function initAmbience(): void {
   lfo.start();
 }
 
-export function startAmbience(_mood: Mood = 'combat'): void {
+export function startAmbience(): void {
   if (playing) return;
   const m = MOODS.combat;
   drone.volume.value = m.droneVol;
@@ -61,7 +64,7 @@ export function stopAmbience(): void {
   playing = false;
 }
 
-export function setMood(_mood: Mood): void {
+export function setMood(): void {
   const m = MOODS.combat;
   const ramp = '+2';
   drone.volume.rampTo(m.droneVol, 2, ramp);

@@ -5,10 +5,10 @@ import { createTurf, addToStack, resetTurfIdCounter } from '../board';
 import { DEFAULT_GAME_CONFIG } from '../types';
 import type { ToughCard, CurrencyCard, WeaponCard, TurfGameState } from '../types';
 
-function tough(id: string, power: number, resistance: number): ToughCard {
+function tough(id: string, power: number, resistance: number, affiliation = 'freelance'): ToughCard {
   return {
     kind: 'tough', id, name: id, tagline: '', archetype: 'bruiser',
-    affiliation: 'freelance', power, resistance, rarity: 'common', abilities: [],
+    affiliation, power, resistance, rarity: 'common', abilities: [],
   };
 }
 
@@ -88,22 +88,35 @@ describe('turf planner v0.2', () => {
     expect(kinds.size).toBeGreaterThanOrEqual(2);
   });
 
-  it('scores funded_recruit higher when enough currency on turf', () => {
+  it('funded_recruit is enumerated with a positive score when $1k is available', () => {
+    // The prior assertion (`expect(['funded_recruit', 'direct_strike',
+    // 'pushed_strike']).toContain(action.kind)`) passed even when recruit
+    // was *never* considered — any strike kind satisfied it. Tighten to:
+    // (a) funded_recruit MUST appear in the enumerated action-score set,
+    // and (b) its score MUST be positive, meaning the planner scored it
+    // as a real candidate rather than filtering it out.
     const state = makeState();
     const turfA = createTurf();
-    addToStack(turfA, tough('recruiter', 4, 4));
+    addToStack(turfA, tough('recruiter', 4, 4, 'kings_row'));
     addToStack(turfA, currency('c-1k', 1000));
     state.players.A.turfs = [turfA];
     state.players.A.toughsInPlay = 1;
     state.players.A.hand = [];
     state.players.A.actionsRemaining = 3;
     const turfB = createTurf();
-    addToStack(turfB, tough('target', 3, 3));
+    addToStack(turfB, tough('target', 3, 3, 'freelance'));
     state.players.B.turfs = [turfB];
     state.players.B.toughsInPlay = 1;
 
-    const { action } = decideAction(state, 'A');
-    expect(['funded_recruit', 'direct_strike', 'pushed_strike']).toContain(action.kind);
+    const { trace } = decideAction(state, 'A');
+    const recruitScores = trace.actionScores.filter((s) =>
+      s.action.startsWith('funded_recruit'),
+    );
+    expect(recruitScores.length, 'funded_recruit must be enumerated').toBeGreaterThan(0);
+    expect(
+      recruitScores[0].score,
+      `funded_recruit should score positively with $1k in hand, got ${recruitScores[0].score}`,
+    ).toBeGreaterThan(0);
   });
 
   it('does not crash with empty hand and empty turfs', () => {
