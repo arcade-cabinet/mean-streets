@@ -79,9 +79,32 @@ function matchWinWithoutLoss(condition: string): ConditionMatcher | null {
   return (ctx) => ctx.playerWon && ctx.event.ownPositionsLost === 0;
 }
 
+function matchKillNTopToughsTotal(condition: string): ConditionMatcher | null {
+  // Cumulative tough-kill counter. Added in v0.2 to replace the v0.1
+  // "Kill N vanguards total" phrasing; the metric source is the same
+  // (each game's `metrics.kills` accumulates in profile meta).
+  const match = /^kill (\d+) top toughs total$/i.exec(condition);
+  if (!match) return null;
+  const n = Number.parseInt(match[1]!, 10);
+  return (ctx) => cumulativeKills(ctx.profile) >= n;
+}
+
+function matchWinWithoutDiscarding(condition: string): ConditionMatcher | null {
+  // Replaces the v0.1 "Win without using any reserves" — v0.2 has no
+  // reserves, but discards are still a signal of sub-optimal play, so
+  // "win with zero discards this game" is the modernized analog.
+  if (!/^win without discarding any cards$/i.test(condition)) return null;
+  return (ctx) => ctx.playerWon && ctx.event.metrics.cardsDiscarded === 0;
+}
+
 function cumulativeSeizures(profile: PlayerProfile): number {
   const meta = (profile as { _meta?: { cumulativeSeizures?: number } })._meta;
   return meta?.cumulativeSeizures ?? 0;
+}
+
+function cumulativeKills(profile: PlayerProfile): number {
+  const meta = (profile as { _meta?: { cumulativeKills?: number } })._meta;
+  return meta?.cumulativeKills ?? 0;
 }
 
 function writeCumulativeSeizures(
@@ -96,12 +119,26 @@ function writeCumulativeSeizures(
   } as PlayerProfile;
 }
 
+function writeCumulativeKills(
+  profile: PlayerProfile,
+  value: number,
+): PlayerProfile {
+  const meta =
+    (profile as PlayerProfile & { _meta?: Record<string, number> })._meta ?? {};
+  return {
+    ...profile,
+    _meta: { ...meta, cumulativeKills: value },
+  } as PlayerProfile;
+}
+
 const MATCHERS: Array<(condition: string) => ConditionMatcher | null> = [
   matchWinNGames,
   matchWinUnderNRounds,
   matchKillsInSingleGame,
   matchSeizeNTotal,
   matchWinWithoutLoss,
+  matchKillNTopToughsTotal,
+  matchWinWithoutDiscarding,
 ];
 
 function parseCondition(condition: string): ConditionMatcher | null {
@@ -131,6 +168,10 @@ export function processGameEnd(
   nextProfile = writeCumulativeSeizures(
     nextProfile,
     cumulativeSeizures(profile) + event.metrics.seizures,
+  );
+  nextProfile = writeCumulativeKills(
+    nextProfile,
+    cumulativeKills(profile) + event.metrics.kills,
   );
 
   const alreadyUnlocked = new Set(nextProfile.unlockedCardIds);

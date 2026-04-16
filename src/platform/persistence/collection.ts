@@ -29,21 +29,47 @@ export async function loadCollection(): Promise<Card[]> {
   return resolveCardIds(profile.unlockedCardIds);
 }
 
+// ── Profile update serialization ────────────────────────────
+//
+// `saveCollection` and `addCardsToCollection` both do read-modify-write
+// on `profile.unlockedCardIds`. JS is single-threaded but async ops
+// interleave across `await` points, so two concurrent calls can both
+// read the same snapshot, each apply their delta, and race to save —
+// the loser's changes silently vanish.
+//
+// Use a single-slot promise chain as a serialization lock. Every caller
+// awaits the previous update before reading the profile. Any error
+// inside a critical section propagates to its own caller without
+// poisoning subsequent waiters (the `.catch` below resets the chain).
+
+let profileUpdateChain: Promise<unknown> = Promise.resolve();
+
+async function withProfileLock<T>(fn: () => Promise<T>): Promise<T> {
+  const prior = profileUpdateChain.catch(() => undefined);
+  const next = prior.then(() => fn());
+  profileUpdateChain = next.catch(() => undefined);
+  return next;
+}
+
 export async function saveCollection(cards: Card[]): Promise<void> {
-  const profile = await loadProfile();
-  profile.unlockedCardIds = cards.map(c => c.id);
-  await saveProfile(profile);
+  await withProfileLock(async () => {
+    const profile = await loadProfile();
+    profile.unlockedCardIds = cards.map(c => c.id);
+    await saveProfile(profile);
+  });
 }
 
 export async function addCardsToCollection(newCards: Card[]): Promise<Card[]> {
-  const profile = await loadProfile();
-  const existingIds = new Set(profile.unlockedCardIds);
-  for (const card of newCards) {
-    existingIds.add(card.id);
-  }
-  profile.unlockedCardIds = [...existingIds];
-  await saveProfile(profile);
-  return resolveCardIds(profile.unlockedCardIds);
+  return withProfileLock(async () => {
+    const profile = await loadProfile();
+    const existingIds = new Set(profile.unlockedCardIds);
+    for (const card of newCards) {
+      existingIds.add(card.id);
+    }
+    profile.unlockedCardIds = [...existingIds];
+    await saveProfile(profile);
+    return resolveCardIds(profile.unlockedCardIds);
+  });
 }
 
 export async function grantStarterCollection(): Promise<Card[]> {

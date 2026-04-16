@@ -179,4 +179,64 @@ describe('processGameEnd', () => {
 
     expect(result.newlyUnlocked).toHaveLength(0);
   });
+
+  it('"Kill N top toughs total" accumulates across games', () => {
+    const card = makeCard('card-hunter', 'Kill 5 top toughs total');
+    let profile = makeProfile();
+
+    // First game: 2 kills — below threshold
+    let result = processGameEnd(
+      makeEvent({ metrics: { ...emptyMetrics(), kills: 2 } }),
+      [card],
+      profile,
+    );
+    expect(result.newlyUnlocked).toHaveLength(0);
+    profile = result.updatedProfile;
+
+    // Second game: 2 more (4 total) — still below
+    result = processGameEnd(
+      makeEvent({ metrics: { ...emptyMetrics(), kills: 2 } }),
+      [card],
+      profile,
+    );
+    expect(result.newlyUnlocked).toHaveLength(0);
+    profile = result.updatedProfile;
+
+    // Third game: 1 more (5 total) — unlocks
+    result = processGameEnd(
+      makeEvent({ metrics: { ...emptyMetrics(), kills: 1 } }),
+      [card],
+      profile,
+    );
+    expect(result.newlyUnlocked).toEqual(['card-hunter']);
+  });
+
+  it('"Win without discarding any cards" fires on win with zero discards', () => {
+    const card = makeCard('card-patient', 'Win without discarding any cards');
+    const profile = makeProfile();
+
+    // Win but discarded → no unlock
+    const discardWin = processGameEnd(
+      makeEvent({ winner: 'A', metrics: { ...emptyMetrics(), cardsDiscarded: 2 } }),
+      [card],
+      profile,
+    );
+    expect(discardWin.newlyUnlocked).toHaveLength(0);
+
+    // Loss with zero discards → no unlock (must win)
+    const cleanLoss = processGameEnd(
+      makeEvent({ winner: 'B', metrics: { ...emptyMetrics(), cardsDiscarded: 0 } }),
+      [card],
+      profile,
+    );
+    expect(cleanLoss.newlyUnlocked).toHaveLength(0);
+
+    // Win with zero discards → unlocks
+    const cleanWin = processGameEnd(
+      makeEvent({ winner: 'A', metrics: { ...emptyMetrics(), cardsDiscarded: 0 } }),
+      [card],
+      profile,
+    );
+    expect(cleanWin.newlyUnlocked).toEqual(['card-patient']);
+  });
 });
