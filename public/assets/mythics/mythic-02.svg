@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- The Accountant: Balanced ledger scales, one empty (heat wiped to 0) -->
+  <path d="M32 12 L32 50" stroke="#D4A017" stroke-width="2" stroke-linecap="round"/>
+  <path d="M16 22 L48 22" stroke="#D4A017" stroke-width="2" stroke-linecap="round"/>
+  <!-- Left pan (empty) -->
+  <path d="M10 22 L22 22 L19 30 L13 30 Z"
+        stroke="#D4A017" stroke-width="1.5" stroke-linejoin="round"
+        fill="#1A1A1A" fill-opacity="0.3"/>
+  <!-- Right pan (heavy, with symbols representing ledger entries) -->
+  <path d="M42 22 L54 22 L51 36 L45 36 Z"
+        stroke="#D4A017" stroke-width="1.5" stroke-linejoin="round"
+        fill="#D4A017" fill-opacity="0.25"/>
+  <circle cx="46" cy="28" r="1" fill="#D4A017"/>
+  <circle cx="50" cy="28" r="1" fill="#D4A017"/>
+  <circle cx="48" cy="32" r="1" fill="#D4A017"/>
+  <!-- Base -->
+  <path d="M22 52 L42 52" stroke="#D4A017" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- The Magistrate: Judge's gavel with broken handcuff -->
+  <!-- Gavel head -->
+  <rect x="20" y="14" width="24" height="12" rx="2"
+        stroke="#D4A017" stroke-width="2" stroke-linejoin="round"
+        fill="#D4A017" fill-opacity="0.2"/>
+  <!-- Gavel handle -->
+  <path d="M32 26 L32 46" stroke="#D4A017" stroke-width="3" stroke-linecap="round"/>
+  <!-- Strike plate -->
+  <rect x="22" y="48" width="20" height="4" rx="1"
+        stroke="#D4A017" stroke-width="1.5" stroke-linejoin="round"
+        fill="#D4A017" fill-opacity="0.3"/>
+  <!-- Broken handcuff (immunity from Holding) -->
+  <path d="M14 38 Q10 34 14 30" stroke="#D4A017" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.7"/>
+  <path d="M16 28 L12 32" stroke="#D4A017" stroke-width="1" stroke-linecap="round" opacity="0.6"/>
+  <!-- Small crown above -->
+  <path d="M24 12 L28 8 L32 12 L36 8 L40 12" stroke="#D4A017" stroke-width="1.2" stroke-linejoin="round" fill="none"/>
+</svg>
