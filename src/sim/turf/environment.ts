@@ -237,6 +237,15 @@ export function stepAction(
   state: TurfGameState,
   action: TurfAction,
 ): TurfStepResult {
+  // Guard: the acting side must match the current turn. Misaligned
+  // action.side would silently mutate the wrong player (e.g. AI
+  // steals a player-side action). Explicit throw surfaces the bug
+  // at the ECS/call boundary.
+  if (action.side !== state.turnSide) {
+    throw new Error(
+      `stepAction side mismatch: action.side=${action.side} but turnSide=${state.turnSide}`,
+    );
+  }
   const player = state.players[action.side];
   const opp = state.players[action.side === 'A' ? 'B' : 'A'];
   let reward = 0;

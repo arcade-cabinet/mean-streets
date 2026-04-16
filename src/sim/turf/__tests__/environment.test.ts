@@ -135,6 +135,18 @@ describe('stepAction — play_card', () => {
     }).toThrow('Draw-gate');
   });
 
+  it('rejects action from the wrong side (turn ownership guard)', () => {
+    // Regression pin: stepAction must refuse to mutate state for a
+    // side that doesn't own the current turn. Without this, a
+    // misrouted ECS call (or a stale action payload after a turn
+    // advance) could silently mutate the other player's state.
+    const state = makeState();
+    state.turnSide = 'A';
+    expect(() =>
+      stepAction(state, { kind: 'end_turn', side: 'B' }),
+    ).toThrow(/side mismatch/);
+  });
+
   it('a failed play_card does not consume the card from hand (atomicity)', () => {
     // Regression pin: prior impl removed the card before validating
     // preconditions, leaving the card neither on a turf nor in hand
