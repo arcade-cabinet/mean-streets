@@ -1,6 +1,6 @@
 ---
 title: Production Checklist
-updated: 2026-04-15
+updated: 2026-04-17
 status: current
 domain: release
 ---
@@ -29,66 +29,84 @@ each system sits on the path to launch. Vision lives in
 Tracks every system named in the other docs. When `Status` is anything
 other than `Ready`, the release is blocked.
 
-### Rules Engine (v0.2 Stack Redesign)
+### Rules Engine (v0.3 Single-Lane)
 
 | System                                | Status         |
 |---------------------------------------|----------------|
-| Stack-based turf model (no named slots)| Ready         |
-| Seeded draw order, deterministic      | Ready          |
-| 3 strike types (direct/pushed/funded recruit)| Ready   |
-| Draw-gate (modifiers require tough in play)| Ready     |
-| Affiliation conflict (rival graph + currency buffer + mediator)| Ready |
-| Seizure (last tough killed → turf seized)| Ready       |
-| 6 difficulty tiers with turf/action scaling| Ready     |
-| Sudden death toggle                   | Ready          |
-| Free actions (discard, end_turn cost 0)| Ready         |
-| Per-category weapon abilities (5 categories)| Partial (tracked on cards, not resolved in combat) |
-| Per-category drug abilities (5 categories)| Partial (tracked on cards, not resolved in combat) |
-| Archetype abilities (12)              | Partial (shark/ghost targeting active, bruiser precision-ignore active, others tracked but not resolved) |
+| Single-lane turf progression (active + reserves) | In progress (Epic B) |
+| HP + damage tiers (glance/wound/serious/crushing) | In progress (Epic B) |
+| Wounded P/R clamping by HP ratio      | In progress (Epic B) |
+| Queue-and-resolve end-of-turn model   | In progress (Epic B) |
+| Raid resolution before combat         | In progress (Epic B) |
+| Heat scalar + raid probability curve  | In progress (Epic B: heat.ts) |
+| Black Market module (trade + heal)    | In progress (Epic B: market.ts) |
+| Holding + Lockup module               | In progress (Epic B: holding.ts) |
+| Probabilistic bribes ($500/1k/2k/5k)  | In progress (Epic C) |
+| Modifier ownership + modifier_swap    | In progress (Epic B + E) |
+| Close Ranks (disabled when revealed)  | Done (v0.2 carried forward) |
+| Base + rolled rarity 5-tier system    | In progress (Epic A + F) |
+| Rarity-scaled tangible/intangible effects | Done (Epic C: b543a24) |
+| Mythic signature abilities (10 cards) | Done (pre-batch + Epic C: abilities registered) |
+| Mythic flip-on-combat-defeat          | In progress (Epic B + H) |
+| Victory ratings per turf + war outcome | In progress (Epic H) |
+| Unlock-difficulty tagging + bonus multiplier | In progress (Epic F) |
+| Sudden Death removal                  | Done (RULES.md v0.3) |
 
 ### Card System
 
 | System                                | Status         |
 |---------------------------------------|----------------|
-| Tough cards authored as per-card files| Ready (100 files) |
-| Weapons authored as per-card files    | Ready (50 files) |
-| Drugs authored as per-card files      | Ready (50 files) |
-| Currency cards (2: $100, $1000)       | Ready          |
-| Zod schemas with tuning-history arrays| Ready (Authored* + Compiled* schemas) |
-| raw/ → compiled/ build step           | Ready (compile-cards.mjs, 4 categories) |
-| Autobalance loop with auto-commit     | Ready (plus saturation cap + convergence check) |
-| Runtime loaders read compiled output  | Ready          |
-| Pack generator (rarity stamping 70/25/5)| Ready        |
-| Collection persistence (unlockedCardIds)| Ready        |
-| Starter collection grant              | Ready          |
-| Match reward packs (per-difficulty)   | Ready          |
+| Tough cards authored (100 files)      | Ready          |
+| Weapons authored (50 files)           | Ready          |
+| Drugs authored (50 files)             | Ready          |
+| Currency cards ($100, $1000)          | Ready          |
+| Mythic cards authored (10 files + SVG)| Done (commit 2942179) |
+| Rarity rebalance to 55/25/15/5        | In progress (Epic F) |
+| 5-tier Rarity Zod schema              | In progress (Epic F) |
+| CardInstance migration (unlockDifficulty + rolledRarity) | In progress (Epic F) |
+| HP/maxHp defaults set at compile time | In progress (Epic F) |
+| Pack generator with rolled-rarity roll | In progress (Epic H) |
+| Per-turf reward generator             | In progress (Epic H) |
+| War-outcome reward generator          | In progress (Epic H) |
+| Mythic pool + flip-on-defeat tracker  | In progress (Epic H) |
+| AI profile mirror (parallel progression) | In progress (Epic H) |
+| Card merging (pyramid cost)           | In progress (Epic F + G) |
 
 ### AI
 
 | System                                | Status         |
 |---------------------------------------|----------------|
-| Yuka GOAP planner (5 goals)           | Ready          |
-| Fuzzy logic context (aggression/patience/desperation)| Ready |
-| Difficulty-gated policy (top-K + noise)| Ready (6 tiers) |
-| All v0.2 action kinds scored          | Ready          |
-| AI memory (goal switching heuristics) | Ready          |
+| Yuka GOAP planner                     | In progress (Epic D) |
+| Fuzzy logic context (aggression/patience/desperation) | Ready (carried from v0.2) |
+| Difficulty-gated policy (top-K + noise)| In progress (Epic D: minor) |
+| v0.3 goal set (10 composite goals)    | In progress (Epic D) |
+| Scoring for draw/play/retreat/swap/market/holding/queued-strikes | In progress (Epic D) |
+| Heat-aware strike scoring             | In progress (Epic D) |
+| Pre-war collection curator            | In progress (Epic D: curator.ts) |
 
 ### UI / UX
 
 | System                                | Status         |
 |---------------------------------------|----------------|
-| Screen flow (menu → difficulty → game → gameover)| Ready |
-| Card component (unified MTG-style, 4 kinds)| Ready    |
-| TurfView + TurfCompositeCard          | Ready          |
-| StackFanModal (carousel per-card inspection)| Ready   |
-| AffiliationSymbol (per-affiliation SVG + glow)| Ready |
-| DifficultyScreen (2x3 grid, 6 tiers) | Ready          |
-| CollectionScreen (category + rarity filters)| Ready   |
-| PackOpeningScreen (sealed → reveal → summary)| Ready  |
-| GameScreen (action menu + strike interaction)| Ready  |
-| Responsive layouts (4 device profiles)| Ready          |
-| Gritty noir SVG filter system         | Ready          |
-| Accessibility (tap input + keyboard navigation + landmarks)| Ready |
+| Screen flow (menu → difficulty → game → gameover) | In progress (Epic G) |
+| Card component (unlock-difficulty icon + rolled-rarity border + mythic treatment) | In progress (Epic G) |
+| Single-lane TurfView (1v1 + reserves indicator) | In progress (Epic G) |
+| TurfCompositeCard (HP bar per tough)  | In progress (Epic G) |
+| StackFanModal (face-down opponent fan)| Ready (v0.2 carried) |
+| AffiliationSymbol + MythicSymbol      | Done (MythicSymbol commit 2942179) |
+| Difficulty selection (Sudden Death removed) | In progress (Epic G) |
+| CardGarageScreen (merge UI + auto-toggles + unlock-difficulty filter) | In progress (Epic G) |
+| PackOpeningScreen (v0.3 rolled-rarity reveal) | In progress (Epic G) |
+| GameScreen (single-lane action menu + strike interaction) | In progress (Epic G) |
+| HeatMeter panel                       | In progress (Epic G) |
+| BlackMarketPanel                      | In progress (Epic G) |
+| HoldingPanel (+ Lockup indicator)     | In progress (Epic G) |
+| MythicBadge                           | In progress (Epic G) |
+| Card movement animations              | In progress (Epic G) |
+| Resolution overlay (dominance order)  | In progress (Epic G) |
+| Responsive layouts (4 device profiles)| In progress (Epic G) |
+| Gritty noir SVG filter system         | Ready (carried)|
+| Accessibility (tap + keyboard + landmarks) | In progress (Epic G) |
 | Visual polish (designer pass)         | Pending        |
 
 ### Platform / Mobile
@@ -108,38 +126,48 @@ other than `Ready`, the release is blocked.
 
 | System                                | Status         |
 |---------------------------------------|----------------|
-| Node tests (sim engine, pure logic)   | Ready (280 tests) |
-| DOM tests (jsdom, presentational)     | Ready (99 tests)  |
-| Browser tests (real Chromium)         | Ready (27 tests)  |
-| E2E tests (Playwright, 4 profiles)   | Ready (111 tests across 9 specs) |
-| Release gate (lock coverage >= 70%)   | Ready          |
+| Node tests (sim engine, pure logic)   | In progress (Epic I — v0.3 rewrite) |
+| New test files: heat / market / holding / damage / turf-progression / mythic / victory-rating | In progress (Epic I) |
+| DOM tests (jsdom, presentational)     | Partial — MythicSymbol 8/8 green; rest pending Epic G + I |
+| Browser tests (real Chromium)         | In progress (Epic I) |
+| E2E tests (Playwright, 4 profiles)    | In progress (Epic I) — new specs: single-lane-flow, market-and-holding, mythic-engagement, card-garage, war-outcome |
+| Release gate (lock coverage + winrate convergence) | Blocked by Epic I-benchmark |
+| Integration smoke skeleton            | Done (v03-integration.test.ts, describe.skip gated) |
 
 ### CI / Release Governance
 
 | System                                | Status         |
 |---------------------------------------|----------------|
-| CI: lint + typecheck + test:node+dom  | Ready          |
+| CI: lint + typecheck + test:node+dom  | Ready (v0.2 green; will re-green with Epic I) |
 | CI: browser tests + e2e (4 profiles)  | Ready          |
-| CI: release gate (coverage >= 70%)    | Ready          |
+| CI: release gate (coverage >= 70%)    | Blocked by Epic I-benchmark re-baseline |
 | CD: deploy to GitHub Pages            | Ready          |
 | Release benchmark profile             | Ready          |
-| Lock coverage >= 70% in balance-history| Ready         |
+| Lock coverage >= 70% in balance-history| Blocked by Epic I-benchmark |
 | Lock coverage = 100%                  | Tracked via weekly cron autobalance |
 | Concurrency guard on Pages deploy     | Ready          |
+| curated-sweep test split (fast config + slow sim gate) | Ready (commit cacc7e2) |
 
 ## Release Blockers
 
-These are all required for a store-ready launch:
+These are all required for a store-ready launch of **v0.3**:
 
-- [x] `pnpm run build` green
-- [x] `pnpm run test` (node + DOM) green — 379 tests (280 node + 99 DOM)
-- [x] `pnpm run test:browser` green — 27 tests
-- [x] `pnpm run test:e2e` green — 111 tests across 4 device profiles
-- [x] `pnpm run test:release` green (70% lock coverage floor)
+### Merge blockers
+- [ ] `pnpm run lint` clean
+- [ ] `pnpm run build` green
+- [ ] `pnpm run test` green on all three suites (node + DOM + browser)
+- [ ] `pnpm run test:e2e` green on all 4 device profiles (desktop-chromium, iphone-14, pixel-7, ipad-pro-landscape)
+- [ ] `pnpm run analysis:benchmark` Medium AI-vs-AI winrate in [0.48, 0.52] for 3 consecutive seeded runs
+- [ ] `pnpm run test:release` green with updated lock-coverage bar
+- [ ] `pnpm run cards:compile` emits `mythics.json` alongside existing compiled outputs
+- [ ] v0.3 e2e smoke: fresh profile → curate collection → play a 4-turf Medium war → earn rewards → merge duplicates → confirm state persists
+
+### Post-merge
 - [ ] 100% of the balance catalog in `locked` state (weekly cron drives this)
-- [ ] Category abilities fully resolved in combat (weapons + drugs)
-- [ ] Remaining archetype abilities resolved in combat
+- [ ] v0.3 integration suite promoted from describe.skip → active (Vera follow-up)
+- [ ] Mythic balance manually validated (each of 10 mythics through paper playtesting)
 - [ ] Runtime visuals match design direction (designer pass)
+- [ ] Mythic art replaced from geometric SVG placeholders with editorial illustration pass
 - [ ] Maestro smoke flows executed on physical devices
 - [ ] Designer sign-off on visual polish
 - [ ] Writer sign-off on lore + achievement copy
