@@ -113,7 +113,9 @@ describe('resolveDirectStrike', () => {
     expect(attacker.stack.some((c) => c.id === 'w-transfer')).toBe(true);
   });
 
-  it('discards incompatible affiliation transfers', () => {
+  it('transfers modifiers from killed tough regardless of affiliation (mods have no affiliation)', () => {
+    // Modifiers carry no affiliation, so they always transfer on direct strike.
+    // Affiliation conflicts only gate incoming toughs (see funded-recruit test).
     const attacker = turfWith(
       makeTough({ power: 10, affiliation: 'kings_row' }),
     );
@@ -122,11 +124,16 @@ describe('resolveDirectStrike', () => {
       affiliation: 'iron_devils',
       resistance: 5,
     });
-    const defender = turfWith(rivalTough);
+    const weapon = makeWeapon({ id: 'w-spoil' });
+    const defender = turfWith(rivalTough, weapon);
 
     const result = resolveDirectStrike(attacker, defender);
 
     expect(result.outcome).toBe('kill');
+    expect(result.transferredMods).toHaveLength(1);
+    expect(result.transferredMods[0].id).toBe('w-spoil');
+    expect(result.discardedMods).toHaveLength(0);
+    expect(attacker.stack.some((c) => c.id === 'w-spoil')).toBe(true);
   });
 
   it('P includes weapon and drug power in stack', () => {
@@ -383,6 +390,54 @@ describe('resolveFundedRecruit', () => {
     resolveFundedRecruit(attacker, defender);
 
     expect(attacker.stack.every((c) => c.kind !== 'currency')).toBe(true);
+  });
+
+  it('discards recruited rival tough when no buffer on attacker turf', () => {
+    // Attacker has a kings_row tough; recruited target is iron_devils (rival).
+    // No currency buffer remains (all spent on recruit), no neutral buffer.
+    // Rule per RULES.md §4: rival affiliations cannot coexist without buffer.
+    // Expected: kill succeeds (target removed from defender), but the recruited
+    // tough is discarded instead of joining the attacker stack.
+    const attacker = turfWith(
+      makeTough({ affiliation: 'kings_row' }),
+      makeCurrency(1000),
+    );
+    const defender = turfWith(
+      makeTough({ name: 'Rival', affiliation: 'iron_devils', resistance: 500 }),
+    );
+    // threshold = 500 * 1.5 (rival) = 750, spent = 1000 >= 750 → success
+
+    const result = resolveFundedRecruit(attacker, defender);
+
+    expect(result.outcome).toBe('kill');
+    expect(result.transferredMods).toHaveLength(0);
+    expect(result.discardedMods).toHaveLength(1);
+    expect((result.discardedMods[0] as ToughCard).name).toBe('Rival');
+    // Defender is cleared of the target
+    expect(defender.stack.every((c) => c.kind !== 'tough' || c.name !== 'Rival')).toBe(true);
+    // Attacker did NOT gain the rival tough
+    expect(attacker.stack.every((c) => c.kind !== 'tough' || c.name !== 'Rival')).toBe(true);
+  });
+
+  it('accepts recruited rival tough when currency buffer remains on attacker turf', () => {
+    // Attacker has kings_row + extra currency beyond the recruit cost, providing
+    // a buffer for the incoming iron_devils tough per the affiliation rule.
+    const attacker = turfWith(
+      makeTough({ affiliation: 'kings_row' }),
+      makeCurrency(1000), // spent on recruit
+      makeCurrency(1000), // remains as buffer
+    );
+    const defender = turfWith(
+      makeTough({ name: 'Rival', affiliation: 'iron_devils', resistance: 500 }),
+    );
+    // threshold = 500 * 1.5 = 750, spent = 1000 >= 750 → success; buffer present
+
+    const result = resolveFundedRecruit(attacker, defender);
+
+    expect(result.outcome).toBe('kill');
+    expect(result.transferredMods).toHaveLength(1);
+    expect(result.discardedMods).toHaveLength(0);
+    expect(attacker.stack.some((c) => c.kind === 'tough' && c.name === 'Rival')).toBe(true);
   });
 });
 

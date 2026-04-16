@@ -47,8 +47,8 @@ function migrateTough(data) {
     ...(data.tagline ? { tagline: data.tagline } : {}),
     archetype: data.archetype,
     affiliation: data.affiliation,
-    power: Array.isArray(data.power) ? data.power : [data.power],
-    resistance: Array.isArray(data.resistance) ? data.resistance : [data.resistance],
+    power: Array.isArray(data.power) ? data.power : data.power != null ? [data.power] : [1],
+    resistance: Array.isArray(data.resistance) ? data.resistance : data.resistance != null ? [data.resistance] : [1],
     rarity: Array.isArray(data.rarity) ? data.rarity : ['common'],
     abilities: data.abilities
       ? data.abilities

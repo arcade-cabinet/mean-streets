@@ -11,7 +11,7 @@ function makeCard(id: string, unlockCondition?: string): CompiledTough {
     id,
     name: id,
     archetype: 'bruiser',
-    affiliation: 'kings-row',
+    affiliation: 'kings_row',
     power: 5,
     resistance: 5,
     rarity: 'common',

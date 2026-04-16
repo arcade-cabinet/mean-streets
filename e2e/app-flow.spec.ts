@@ -54,7 +54,7 @@ test('collection flow navigates and returns to menu', async ({ page }, testInfo)
   await expect(page.getByTestId('main-menu-screen')).toBeVisible();
 });
 
-test('pack opening flow navigates from menu and back to collection', async ({ page }, testInfo) => {
+test('pack opening flow: sealed → reveal → summary → back to collection', async ({ page }, testInfo) => {
   await page.goto('/');
   await expect(page.getByTestId('main-menu-screen')).toBeVisible();
 
@@ -62,7 +62,23 @@ test('pack opening flow navigates from menu and back to collection', async ({ pa
   await expect(page.getByTestId('pack-opening-screen')).toBeVisible();
   await expect(page.getByTestId('pack-open-btn')).toBeVisible();
 
-  await activate(page.getByTestId('pack-back'), testInfo);
+  // Open the pack — enters reveal phase
+  await activate(page.getByTestId('pack-open-btn'), testInfo);
+  await expect(page.getByTestId('pack-reveal-stage')).toBeVisible({ timeout: 5_000 });
+
+  // Advance through card reveals by tapping the reveal stage until summary appears.
+  // Bound the loop at 10 clicks — default pack size is 5 cards.
+  for (let i = 0; i < 10; i++) {
+    const summary = page.getByTestId('pack-summary-stats');
+    if (await summary.isVisible().catch(() => false)) break;
+    await activate(page.getByTestId('pack-reveal-stage'), testInfo);
+  }
+
+  await expect(page.getByTestId('pack-summary-stats')).toBeVisible({ timeout: 5_000 });
+  await expect(page.getByTestId('pack-summary-grid')).toBeVisible();
+  await expect(page.getByTestId('pack-done-btn')).toBeVisible();
+
+  await activate(page.getByTestId('pack-done-btn'), testInfo);
   await expect(page.getByTestId('collection-screen')).toBeVisible();
 });
 

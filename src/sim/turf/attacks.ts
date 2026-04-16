@@ -240,6 +240,19 @@ export function resolveFundedRecruit(
 
   if (spent >= threshold) {
     removeFromStack(defenderTurf, targetIdx);
+    // Re-evaluate affiliation geometry on arrival. Rivals cannot coexist
+    // without a buffer; if the recruited tough would conflict, it is
+    // discarded (cash still spent) rather than violating the turf rule.
+    if (turfAffiliationConflict(attackerTurf, targetTough)) {
+      return {
+        outcome: 'kill',
+        killedTough: null,
+        transferredMods: [],
+        discardedMods: [targetTough],
+        sickedIdx: null,
+        description: `Recruited ${targetTough.name} but discarded — rival affiliation without buffer on attacker turf`,
+      };
+    }
     addToStack(attackerTurf, targetTough);
     return {
       outcome: 'kill',
