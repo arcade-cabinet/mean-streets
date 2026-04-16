@@ -2,7 +2,15 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { AppShellProvider } from '../../../platform';
 import { TurfCompositeCard } from '../TurfCompositeCard';
-import type { Turf, ToughCard, WeaponCard, DrugCard, CurrencyCard } from '../../../sim/turf/types';
+import type {
+  Card,
+  CurrencyCard,
+  DrugCard,
+  StackedCard,
+  ToughCard,
+  Turf,
+  WeaponCard,
+} from '../../../sim/turf/types';
 
 function tough(overrides: Partial<ToughCard> = {}): ToughCard {
   return {
@@ -56,8 +64,20 @@ function currency(denomination: 100 | 1000 = 100): CurrencyCard {
   };
 }
 
-function makeTurf(stack: (ToughCard | WeaponCard | DrugCard | CurrencyCard)[] = [], id = '0'): Turf {
-  return { id, stack };
+function stacked(card: Card, faceUp = true): StackedCard {
+  return { card, faceUp };
+}
+
+function makeTurf(
+  cards: Card[] = [],
+  id = '0',
+  opts: { closedRanks?: boolean; faceUp?: boolean } = {},
+): Turf {
+  return {
+    id,
+    closedRanks: opts.closedRanks ?? false,
+    stack: cards.map((c) => stacked(c, opts.faceUp ?? true)),
+  };
 }
 
 function wrap(ui: React.ReactElement) {
@@ -84,9 +104,11 @@ describe('TurfCompositeCard', () => {
   });
 
   it('displays power and resistance badges', () => {
+    // kings_row grants +1 atkBonus loyal-stack bonus (affiliations.json), so
+    // a single kings_row tough at power 8 reports 9 on the composite badge.
     const turf = makeTurf([tough({ power: 8, resistance: 6 })]);
     const { container } = render(wrap(<TurfCompositeCard turf={turf} />));
-    expect(container.querySelector('.turf-composite-power-badge')!.textContent).toBe('8');
+    expect(container.querySelector('.turf-composite-power-badge')!.textContent).toBe('9');
     expect(container.querySelector('.turf-composite-resistance-badge')!.textContent).toBe('6');
   });
 
@@ -115,7 +137,12 @@ describe('TurfCompositeCard', () => {
 
   it('shows SICK badge when sickTopIdx is set', () => {
     const t = tough();
-    const turf: Turf = { id: '0', stack: [t], sickTopIdx: 0 };
+    const turf: Turf = {
+      id: '0',
+      closedRanks: false,
+      stack: [stacked(t)],
+      sickTopIdx: 0,
+    };
     const { container } = render(wrap(<TurfCompositeCard turf={turf} />));
     expect(container.querySelector('.turf-composite-sick-badge')).not.toBeNull();
   });
@@ -172,5 +199,26 @@ describe('TurfCompositeCard', () => {
     const { container } = render(wrap(<TurfCompositeCard turf={turf} />));
     const symbols = container.querySelectorAll('.turf-composite-affiliations .affiliation-symbol');
     expect(symbols.length).toBe(2);
+  });
+
+  it('shows CLOSED RANKS label on own turf when closedRanks is true', () => {
+    const turf = makeTurf([tough()], '0', { closedRanks: true });
+    const { container } = render(wrap(<TurfCompositeCard turf={turf} isOwn />));
+    expect(container.querySelector('.turf-composite-closed-ranks-badge')).not.toBeNull();
+  });
+
+  it('renders a face-down back on opponent turf with hidden top', () => {
+    const turf = makeTurf([tough()], '0', { faceUp: false });
+    const { container } = render(
+      wrap(<TurfCompositeCard turf={turf} isOwn={false} />),
+    );
+    expect(container.querySelector('.turf-composite-facedown')).not.toBeNull();
+    expect(container.querySelector('.turf-composite-back')).not.toBeNull();
+  });
+
+  it('reveals opponent turf when top is face-up', () => {
+    const turf = makeTurf([tough()], '0', { faceUp: true });
+    render(wrap(<TurfCompositeCard turf={turf} isOwn={false} />));
+    expect(screen.getByText('Brick Malone')).not.toBeNull();
   });
 });

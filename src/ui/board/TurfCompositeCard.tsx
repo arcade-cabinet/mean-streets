@@ -6,6 +6,9 @@ import { CardFrame } from '../cards/CardFrame';
 interface TurfCompositeCardProps {
   turf: Turf;
   compact?: boolean;
+  /** True = player's own turf (always revealed). False = opponent turf
+   * where a face-down top should hide the composite. */
+  isOwn?: boolean;
   onClick?: () => void;
 }
 
@@ -49,7 +52,28 @@ function modifierSummary(mods: Card[]): { weapons: number; drugs: number } {
   return { weapons, drugs };
 }
 
-export function TurfCompositeCard({ turf, compact, onClick }: TurfCompositeCardProps) {
+function renderFaceDown(turf: Turf, compact: boolean, onClick: (() => void) | undefined, stackSize: number) {
+  return (
+    <div
+      className={`turf-composite turf-composite-facedown ${compact ? 'turf-composite-compact' : ''}`}
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={(e) => e.key === 'Enter' && onClick?.()}
+      aria-label={`Opponent turf ${turf.id}, hidden top card`}
+      data-testid={`turf-composite-${turf.id}`}
+    >
+      <div className="card-shell card-back turf-composite-back">
+        <div className="card-back-inner">
+          <div className="card-back-mark">MS</div>
+          <div className="card-back-subtext">#{stackSize}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function TurfCompositeCard({ turf, compact, isOwn = true, onClick }: TurfCompositeCardProps) {
   const toughs = turfToughs(turf);
   const mods = turfModifiers(turf);
   const currency = turfCurrency(turf);
@@ -60,6 +84,11 @@ export function TurfCompositeCard({ turf, compact, onClick }: TurfCompositeCardP
   const { weapons, drugs } = modifierSummary(mods);
   const cashTotal = currency.reduce((sum, c) => sum + c.denomination, 0);
   const stackSize = turf.stack.length;
+
+  // Opponent + top face-down → show the card back. Own-side always reveals.
+  if (!isOwn && stackSize > 0 && !turf.stack[stackSize - 1].faceUp) {
+    return renderFaceDown(turf, !!compact, onClick, stackSize);
+  }
 
   if (toughs.length === 0) {
     return (
@@ -80,11 +109,12 @@ export function TurfCompositeCard({ turf, compact, onClick }: TurfCompositeCardP
 
   const topTough = toughs[toughs.length - 1];
   const topAffClass = `card-affiliation-${topTough.affiliation.replace(/_/g, '-')}`;
+  const closedRanks = turf.closedRanks && isOwn;
 
   if (compact) {
     return (
       <div
-        className={`turf-composite turf-composite-compact card-rarity-${rarity}`}
+        className={`turf-composite turf-composite-compact card-rarity-${rarity} ${closedRanks ? 'turf-composite-closed-ranks' : ''}`}
         onClick={onClick}
         role={onClick ? 'button' : undefined}
         tabIndex={onClick ? 0 : undefined}
@@ -109,6 +139,7 @@ export function TurfCompositeCard({ turf, compact, onClick }: TurfCompositeCardP
             <span className="turf-composite-stat turf-composite-stat-power">{power}</span>
             <span className="turf-composite-stat turf-composite-stat-resistance">{resistance}</span>
           </div>
+          {closedRanks && <div className="turf-composite-closed-ranks-badge">CLOSED RANKS</div>}
         </div>
       </div>
     );
@@ -116,7 +147,7 @@ export function TurfCompositeCard({ turf, compact, onClick }: TurfCompositeCardP
 
   return (
     <div
-      className={`turf-composite card-rarity-${rarity}`}
+      className={`turf-composite card-rarity-${rarity} ${closedRanks ? 'turf-composite-closed-ranks' : ''}`}
       onClick={onClick}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
@@ -169,6 +200,7 @@ export function TurfCompositeCard({ turf, compact, onClick }: TurfCompositeCardP
             {drugs > 0 && <span className="turf-composite-mod-tag turf-composite-mod-drug">{drugs} drg</span>}
             {cashTotal > 0 && <span className="turf-composite-mod-tag turf-composite-mod-cash">${cashTotal}</span>}
           </div>
+          {closedRanks && <div className="turf-composite-closed-ranks-badge">CLOSED RANKS</div>}
         </div>
 
         <div className="turf-composite-footer">

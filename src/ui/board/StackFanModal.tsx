@@ -1,14 +1,38 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Turf } from '../../sim/turf/types';
+import type { StackedCard, Turf } from '../../sim/turf/types';
 import { Card } from '../cards';
 
 interface StackFanModalProps {
   turf: Turf;
   open: boolean;
   onClose: () => void;
+  /** When true (default), every card renders face-up. When false, any
+   * StackedCard with faceUp === false renders as a face-down back. */
+  isOwn?: boolean;
+  /** Called when a face-up card in the stack is tapped. Pass in retreat
+   * flow; undefined otherwise. */
+  onCardPick?: (stackIdx: number) => void;
 }
 
-export function StackFanModal({ turf, open, onClose }: StackFanModalProps) {
+/** Face-down back tile. Simple CSS-driven placeholder — no asset art. */
+function CardBack({ position }: { position: string }) {
+  return (
+    <div className="card-shell card-back" data-testid="card-back">
+      <div className="card-back-inner">
+        <div className="card-back-mark">MS</div>
+        <div className="card-back-subtext">{position}</div>
+      </div>
+    </div>
+  );
+}
+
+export function StackFanModal({
+  turf,
+  open,
+  onClose,
+  isOwn = true,
+  onCardPick,
+}: StackFanModalProps) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const touchStartX = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -46,6 +70,36 @@ export function StackFanModal({ turf, open, onClose }: StackFanModalProps) {
 
   if (!open || stackLen === 0) return null;
 
+  function renderStacked(sc: StackedCard, i: number, positionLabel: string) {
+    const showFace = isOwn || sc.faceUp;
+    const pickable = !!onCardPick && showFace;
+    const handleClick = pickable
+      ? (e: React.MouseEvent) => {
+          e.stopPropagation();
+          onCardPick?.(i);
+        }
+      : undefined;
+    return (
+      <div
+        key={`${sc.card.id}-${i}`}
+        className={`stack-fan-card ${i === currentIdx ? 'stack-fan-card-active' : 'stack-fan-card-inactive'} ${pickable ? 'stack-fan-card-pickable' : ''}`}
+        style={{
+          transform: `translateX(${(i - currentIdx) * 110}%) scale(${i === currentIdx ? 1 : 0.85})`,
+          zIndex: i === currentIdx ? 10 : stackLen - Math.abs(i - currentIdx),
+          opacity: Math.abs(i - currentIdx) > 2 ? 0 : i === currentIdx ? 1 : 0.6,
+        }}
+        onClick={handleClick}
+        role={pickable ? 'button' : undefined}
+        tabIndex={pickable ? 0 : undefined}
+        aria-label={pickable ? `Pick ${sc.card.id}` : undefined}
+        data-testid={`stack-fan-card-${i}`}
+      >
+        {showFace ? <Card card={sc.card} /> : <CardBack position={positionLabel} />}
+        <div className="stack-fan-card-position">{positionLabel}</div>
+      </div>
+    );
+  }
+
   return (
     <div
       className="stack-fan-backdrop"
@@ -74,28 +128,17 @@ export function StackFanModal({ turf, open, onClose }: StackFanModalProps) {
         </div>
 
         <div className="stack-fan-cards">
-          {turf.stack.map((card, i) => (
-            <div
-              key={card.id}
-              className={`stack-fan-card ${i === currentIdx ? 'stack-fan-card-active' : 'stack-fan-card-inactive'}`}
-              style={{
-                transform: `translateX(${(i - currentIdx) * 110}%) scale(${i === currentIdx ? 1 : 0.85})`,
-                zIndex: i === currentIdx ? 10 : stackLen - Math.abs(i - currentIdx),
-                opacity: Math.abs(i - currentIdx) > 2 ? 0 : i === currentIdx ? 1 : 0.6,
-              }}
-            >
-              <Card card={card} />
-              <div className="stack-fan-card-position">
-                {i === 0 ? 'Bottom' : i === stackLen - 1 ? 'Top' : `#${i + 1}`}
-              </div>
-            </div>
-          ))}
+          {turf.stack.map((sc, i) => {
+            const positionLabel =
+              i === 0 ? 'Bottom' : i === stackLen - 1 ? 'Top' : `#${i + 1}`;
+            return renderStacked(sc, i, positionLabel);
+          })}
         </div>
 
         <div className="stack-fan-pips">
-          {turf.stack.map((_, i) => (
+          {turf.stack.map((sc, i) => (
             <button
-              key={i}
+              key={`pip-${sc.card.id}-${i}`}
               className={`stack-fan-pip ${i === currentIdx ? 'stack-fan-pip-active' : ''}`}
               onClick={() => setCurrentIdx(i)}
               aria-label={`View card ${i + 1}`}

@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { AppShellProvider } from '../../../platform';
 import { StackFanModal } from '../StackFanModal';
-import type { Turf, ToughCard, WeaponCard } from '../../../sim/turf/types';
+import type { Card, Turf, ToughCard, WeaponCard, StackedCard } from '../../../sim/turf/types';
 
 function tough(id: string, name: string): ToughCard {
   return {
@@ -32,13 +32,18 @@ function weapon(): WeaponCard {
   };
 }
 
+function stacked(card: Card, faceUp = true): StackedCard {
+  return { card, faceUp };
+}
+
 function makeTurf(): Turf {
   return {
     id: 'test',
+    closedRanks: false,
     stack: [
-      tough('tough-a', 'Alpha'),
-      weapon(),
-      tough('tough-b', 'Bravo'),
+      stacked(tough('tough-a', 'Alpha')),
+      stacked(weapon()),
+      stacked(tough('tough-b', 'Bravo')),
     ],
   };
 }
@@ -56,7 +61,7 @@ describe('StackFanModal', () => {
   });
 
   it('renders nothing for empty stack even when open', () => {
-    const turf: Turf = { id: 'empty', stack: [] };
+    const turf: Turf = { id: 'empty', stack: [], closedRanks: false };
     const { container } = render(
       wrap(<StackFanModal turf={turf} open={true} onClose={vi.fn()} />),
     );
@@ -174,5 +179,36 @@ describe('StackFanModal', () => {
   it('has aria-modal attribute', () => {
     render(wrap(<StackFanModal turf={makeTurf()} open={true} onClose={vi.fn()} />));
     expect(screen.getByRole('dialog').getAttribute('aria-modal')).toBe('true');
+  });
+
+  it('renders face-down backs for hidden cards when isOwn is false', () => {
+    const turf: Turf = {
+      id: 'opp',
+      closedRanks: false,
+      stack: [
+        stacked(tough('tough-a', 'Alpha'), false),
+        stacked(tough('tough-b', 'Bravo'), false),
+      ],
+    };
+    const { container } = render(
+      wrap(<StackFanModal turf={turf} open={true} isOwn={false} onClose={vi.fn()} />),
+    );
+    expect(container.querySelectorAll('[data-testid="card-back"]').length).toBe(2);
+  });
+
+  it('invokes onCardPick when a face-up card is tapped', () => {
+    const onPick = vi.fn();
+    render(
+      wrap(
+        <StackFanModal
+          turf={makeTurf()}
+          open={true}
+          onClose={vi.fn()}
+          onCardPick={onPick}
+        />,
+      ),
+    );
+    fireEvent.click(screen.getByTestId('stack-fan-card-2'));
+    expect(onPick).toHaveBeenCalledWith(2);
   });
 });

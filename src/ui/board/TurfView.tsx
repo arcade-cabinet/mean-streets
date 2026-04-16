@@ -15,6 +15,7 @@ export function TurfRow({ turfs, side, dimmed, onTurfClick }: TurfRowProps) {
   const { layout } = useAppShell();
   const compact = layout.id === 'phone-portrait' || layout.id === 'folded';
   const [fanTurf, setFanTurf] = useState<Turf | null>(null);
+  const isOwn = side === 'A';
 
   const handleTurfClick = useCallback((turf: Turf, idx: number) => {
     if (onTurfClick) {
@@ -35,6 +36,7 @@ export function TurfRow({ turfs, side, dimmed, onTurfClick }: TurfRowProps) {
             key={turf.id}
             turf={turf}
             compact={compact}
+            isOwn={isOwn}
             onClick={() => handleTurfClick(turf, i)}
           />
         ))}
@@ -44,6 +46,7 @@ export function TurfRow({ turfs, side, dimmed, onTurfClick }: TurfRowProps) {
         <StackFanModal
           turf={fanTurf}
           open={fanTurf !== null}
+          isOwn={isOwn}
           onClose={() => setFanTurf(null)}
         />
       )}

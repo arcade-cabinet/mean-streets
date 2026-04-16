@@ -1,24 +1,42 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { World } from 'koota';
-import { useQueryFirst, useTrait } from 'koota/react';
 import { useAppShell } from '../../platform';
 import {
+  drawAction,
   playCardAction,
-  strikeAction,
-  discardAction,
+  retreatAction,
+  queueStrikeAction,
+  discardPendingAction,
   endTurnAction,
 } from '../../ecs/actions';
-import { useActionBudget, usePlayerTurfs, useHand } from '../../ecs/hooks';
-import { GameState } from '../../ecs/traits';
+import {
+  useActionBudget,
+  useDeckCount,
+  useDeckPending,
+  usePlayerTurfs,
+  useQueuedStrikes,
+  useTurnEnded,
+} from '../../ecs/hooks';
 import { hasToughOnTurf, turfCurrency } from '../../sim/turf/board';
-import type { Card, TurfActionKind } from '../../sim/turf/types';
+import type { Turf } from '../../sim/turf/types';
 import { TurfView } from '../board';
+import { StackFanModal } from '../board/StackFanModal';
 import { Card as CardComponent } from '../cards';
+import {
+  GameActionBar,
+  QueuedChips,
+  type ActionMode,
+} from './GameScreenActionBar';
+import {
+  buildPrompt,
+  isStrikeMode,
+  retreatViable,
+  type StrikeKind,
+  type StrikePhase,
+} from './gameScreenHelpers';
+import { useOpponentTurn } from './useOpponentTurn';
 
-type ActionMode = TurfActionKind | null;
-type StrikePhase = 'pick-source' | 'pick-target';
-
-const AI_DELAY_MS = 1800;
+const RESOLVE_FLASH_MS = 1200;
 
 interface GameScreenProps {
   world: World;
@@ -28,142 +46,151 @@ interface GameScreenProps {
 
 export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
   const { layout } = useAppShell();
-  const [actionMode, setActionMode] = useState<ActionMode>(null);
+  const [mode, setMode] = useState<ActionMode>(null);
   const [strikePhase, setStrikePhase] = useState<StrikePhase>('pick-source');
   const [sourceTurfIdx, setSourceTurfIdx] = useState<number | null>(null);
-  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
-  const [aiThinking, setAiThinking] = useState(false);
+  const [retreatTurfIdx, setRetreatTurfIdx] = useState<number | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
 
-  const gsEntity = useQueryFirst(GameState);
-  const gs = useTrait(gsEntity, GameState);
   const budget = useActionBudget();
   const playerTurfs = usePlayerTurfs('A');
   const opponentTurfs = usePlayerTurfs('B');
-  const hand = useHand('A');
+  const pending = useDeckPending('A');
+  const deckCount = useDeckCount('A');
+  const queuedStrikes = useQueuedStrikes('A');
+  const turnEndedA = useTurnEnded('A');
+  const turnEndedB = useTurnEnded('B');
+  const turnNumber = budget.turnNumber;
 
-  const turnNumber = gs?.turnNumber ?? 0;
   const sideHand = layout.handPlacement === 'side';
   const compact = layout.id === 'phone-portrait' || layout.id === 'folded';
+  const prevTurnRef = useRef(turnNumber);
 
   const showFlash = useCallback((msg: string, durationMs = 1400) => {
     setFlash(msg);
-    setTimeout(() => setFlash(null), durationMs);
+    const id = setTimeout(() => setFlash(null), durationMs);
+    return () => clearTimeout(id);
   }, []);
 
-  function resetAction() {
-    setActionMode(null);
-    setStrikePhase('pick-source');
-    setSourceTurfIdx(null);
-    setSelectedCardId(null);
-  }
-
-  function checkWin(): boolean {
+  const checkWin = useCallback((): boolean => {
     if (opponentTurfs.length === 0) { onGameOver('A'); return true; }
     if (playerTurfs.length === 0) { onGameOver('B'); return true; }
     return false;
+  }, [playerTurfs.length, opponentTurfs.length, onGameOver]);
+
+  const { aiThinking } = useOpponentTurn({
+    world,
+    turnEndedA,
+    turnEndedB,
+    onFinish: checkWin,
+  });
+
+  // Turn-advance detector: after both sides end_turn, sim resolves
+  // synchronously and turnNumber bumps. Surface a brief "Resolved" flash.
+  useEffect(() => {
+    if (turnNumber !== prevTurnRef.current && prevTurnRef.current !== 0) {
+      showFlash(`RESOLVED — Turn ${turnNumber}`, RESOLVE_FLASH_MS);
+    }
+    prevTurnRef.current = turnNumber;
+  }, [turnNumber, showFlash]);
+
+  const resetMode = useCallback(() => {
+    setMode(null);
+    setStrikePhase('pick-source');
+    setSourceTurfIdx(null);
+    setRetreatTurfIdx(null);
+  }, []);
+
+  // ── Action selection ────────────────────────────────────────
+  function handleModeSelect(kind: NonNullable<ActionMode> | 'draw') {
+    if (kind === 'draw') {
+      drawAction(world, 'A');
+      showFlash('Drew a card', 900);
+      return;
+    }
+    if (kind === mode) { resetMode(); return; }
+    resetMode();
+    setMode(kind);
   }
 
-  const runAiTurn = useCallback(() => {
-    setAiThinking(true);
-    setTimeout(() => {
-      endTurnAction(world);
-      setAiThinking(false);
-      showFlash(`Turn ${turnNumber + 1}`);
-    }, AI_DELAY_MS);
-  }, [world, turnNumber, showFlash]);
+  function handlePlaceTurf(index: number) {
+    if (!pending) return;
+    const result = playCardAction(world, 'A', index, pending.id);
+    resetMode();
+    if (result?.reason === 'play_card_discarded_rival') {
+      showFlash('RIVAL DISCARDED — no buffer on that turf', 2000);
+    }
+    if (checkWin()) return;
+  }
 
-  function handleActionSelect(kind: TurfActionKind) {
-    if (kind === actionMode) { resetAction(); return; }
-    resetAction();
-    setActionMode(kind);
+  function handleStrikeSource(index: number) {
+    const t = playerTurfs[index];
+    if (!hasToughOnTurf(t)) return;
+    if (mode === 'pushed_strike' && turfCurrency(t).length === 0) return;
+    if (mode === 'pushed_strike' && t.closedRanks) return;
+    setSourceTurfIdx(index);
+    setStrikePhase('pick-target');
+  }
+
+  function handleStrikeTarget(index: number) {
+    if (sourceTurfIdx === null || !mode) return;
+    const t = opponentTurfs[index];
+    if (!hasToughOnTurf(t)) return;
+    const kind = mode as StrikeKind;
+    const result = queueStrikeAction(world, 'A', kind, sourceTurfIdx, index);
+    resetMode();
+    if (result) showFlash(kind.replace('_', ' ').toUpperCase() + ' QUEUED', 1200);
   }
 
   function handleTurfClick(side: 'A' | 'B', index: number) {
-    if (!actionMode) return;
-
-    if (actionMode === 'play_card' && side === 'A' && selectedCardId) {
-      const result = playCardAction(world, index, selectedCardId);
-      resetAction();
-      // Surface the affiliation-discard case so the player understands
-      // why the card vanished instead of landing on the turf. Sim layer
-      // reports `play_card_discarded_rival` when a rival affiliation
-      // arrives without a buffer (RULES.md §4).
-      if (result?.reason === 'play_card_discarded_rival') {
-        showFlash('RIVAL DISCARDED — no buffer on that turf', 2400);
-      }
-      if (checkWin()) return;
+    // Pending placement takes priority: any tap on your own turf with a
+    // pending card routes to place, unless the user is mid-retreat/strike.
+    if (pending && side === 'A' && mode !== 'retreat' && !isStrikeMode(mode)) {
+      handlePlaceTurf(index);
       return;
     }
-
-    const isStrike = actionMode === 'direct_strike' || actionMode === 'pushed_strike' || actionMode === 'funded_recruit';
-    if (isStrike) {
-      if (strikePhase === 'pick-source' && side === 'A') {
-        if (!hasToughOnTurf(playerTurfs[index])) return;
-        if (actionMode === 'pushed_strike' && turfCurrency(playerTurfs[index]).length === 0) return;
-        setSourceTurfIdx(index);
-        setStrikePhase('pick-target');
-        return;
-      }
-      if (strikePhase === 'pick-target' && side === 'B' && sourceTurfIdx !== null) {
-        if (!hasToughOnTurf(opponentTurfs[index])) return;
-        const result = strikeAction(world, actionMode, sourceTurfIdx, index);
-        resetAction();
-        if (result) {
-          const label = actionMode.replace('_', ' ').toUpperCase();
-          showFlash(label, 1800);
-        }
-        if (checkWin()) return;
-        return;
-      }
+    if (!mode) return;
+    if (mode === 'play_card' && side === 'A') { handlePlaceTurf(index); return; }
+    if (mode === 'retreat' && side === 'A') { setRetreatTurfIdx(index); return; }
+    if (isStrikeMode(mode)) {
+      if (strikePhase === 'pick-source' && side === 'A') handleStrikeSource(index);
+      else if (strikePhase === 'pick-target' && side === 'B') handleStrikeTarget(index);
     }
   }
 
-  function handleCardClick(card: Card) {
-    if (actionMode === 'discard') {
-      discardAction(world, card.id);
-      resetAction();
-      return;
-    }
-    if (actionMode === 'play_card') {
-      setSelectedCardId(card.id);
-      return;
-    }
-    setActionMode('play_card');
-    setSelectedCardId(card.id);
+  function handleRetreatPick(stackIdx: number) {
+    if (retreatTurfIdx === null) return;
+    const result = retreatAction(world, 'A', retreatTurfIdx, stackIdx);
+    resetMode();
+    if (result) showFlash('RETREAT', 900);
   }
 
-  function handleEndTurn() {
-    resetAction();
-    runAiTurn();
+  function handleEndTurn() { endTurnAction(world, 'A'); resetMode(); }
+  function handleDiscardPending() {
+    discardPendingAction(world, 'A');
+    resetMode();
+    showFlash('PENDING DISCARDED', 800);
   }
 
-  const playerState = gs?.players.A;
+  // ── Derived flags ───────────────────────────────────────────
+  const exhausted = budget.remaining <= 0;
   const hasStrikableSource = playerTurfs.some(hasToughOnTurf);
   const hasStrikableTarget = opponentTurfs.some(hasToughOnTurf);
-  const canStrike = hasStrikableSource && hasStrikableTarget;
-  const hasCurrencyOnAnyTurf = playerTurfs.some(t => turfCurrency(t).length > 0);
-  const exhausted = budget.remaining <= 0;
+  const canStrike = !exhausted && !turnEndedA && hasStrikableSource && hasStrikableTarget;
+  const hasCurrencyOnAnyTurf = playerTurfs.some(
+    (t) => !t.closedRanks && turfCurrency(t).length > 0,
+  );
+  const canRetreat = !exhausted && !turnEndedA && playerTurfs.some(retreatViable);
 
-  const actionButtons: { kind: TurfActionKind; label: string; disabled: boolean }[] = [
-    { kind: 'play_card', label: 'Play', disabled: exhausted || hand.length === 0 },
-    { kind: 'direct_strike', label: 'Direct Strike', disabled: exhausted || !canStrike },
-    { kind: 'pushed_strike', label: 'Pushed Strike', disabled: exhausted || !canStrike || !hasCurrencyOnAnyTurf },
-    { kind: 'funded_recruit', label: 'Recruit', disabled: exhausted || !canStrike || !hasCurrencyOnAnyTurf },
-  ];
-
-  const promptText = (() => {
-    if (actionMode === 'play_card' && !selectedCardId) return 'Select a card from your hand';
-    if (actionMode === 'play_card' && selectedCardId) return 'Select a turf to place the card';
-    if (actionMode === 'direct_strike' || actionMode === 'pushed_strike' || actionMode === 'funded_recruit') {
-      return strikePhase === 'pick-source' ? 'Select your turf to attack from' : 'Select opponent turf to target';
-    }
-    if (actionMode === 'discard') return 'Select a card to discard';
-    return null;
-  })();
+  const promptText = buildPrompt(mode, strikePhase, pending !== null, retreatTurfIdx);
+  const retreatTurf: Turf | null =
+    retreatTurfIdx !== null ? playerTurfs[retreatTurfIdx] : null;
 
   return (
-    <div className={`game-screen ${sideHand ? 'game-screen-side' : 'game-screen-bottom'}`} data-testid="game-screen">
+    <div
+      className={`game-screen ${sideHand ? 'game-screen-side' : 'game-screen-bottom'}`}
+      data-testid="game-screen"
+    >
       <div className="game-hud-bar">
         <span className="game-hud-bar-turn">Turn {turnNumber}</span>
         <span className="game-hud-bar-budget" data-testid="action-budget">
@@ -172,9 +199,7 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
         <span className="game-hud-bar-turfs">
           Turfs {playerTurfs.length} vs {opponentTurfs.length}
         </span>
-        <span className="game-hud-bar-deck">
-          Hand {hand.length} | Deck {playerState?.deck.length ?? 0}
-        </span>
+        <span className="game-hud-bar-deck">Deck {deckCount}</span>
         {onOpenMenu && (
           <button className="game-hud-bar-menu" onClick={onOpenMenu} aria-label="Open game menu">
             Menu
@@ -189,10 +214,9 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
               <span className="game-flash-pill">{flash}</span>
             </div>
           )}
-
-          {aiThinking && (
-            <div className="game-overlay">
-              <div className="game-overlay-pill">OPPONENT THINKING...</div>
+          {(aiThinking || (turnEndedA && !turnEndedB)) && (
+            <div className="game-overlay" data-testid="opponent-turn-overlay">
+              <div className="game-overlay-pill">Waiting for opponent…</div>
             </div>
           )}
 
@@ -204,51 +228,49 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
           />
         </div>
 
+        <QueuedChips strikes={queuedStrikes} />
+
         {promptText && (
           <div className="game-prompt">
             <span className="game-prompt-text">{promptText}</span>
-            <button className="game-prompt-cancel" onClick={resetAction}>Cancel</button>
+            <button className="game-prompt-cancel" onClick={resetMode}>Cancel</button>
           </div>
         )}
 
-        <div className={`game-action-bar ${sideHand ? 'game-action-bar-side' : 'game-action-bar-bottom'}`}>
-          {actionButtons.map(({ kind, label, disabled }) => (
-            <button
-              key={kind}
-              className={`game-action-btn ${actionMode === kind ? 'game-action-btn-active' : ''} ${disabled ? 'game-action-btn-disabled' : ''}`}
-              onClick={() => !disabled && handleActionSelect(kind)}
-              disabled={disabled}
-              data-testid={`action-${kind}`}
-            >
-              {label}
-            </button>
-          ))}
-          <div className="game-action-separator" />
-          <button
-            className="game-action-btn"
-            onClick={handleEndTurn}
-            data-testid="action-end_turn"
-          >
-            End Turn
-          </button>
-        </div>
+        {pending && (
+          <div className="game-pending" data-testid="pending-card">
+            <div className="game-pending-label">Pending — tap a turf to place</div>
+            <CardComponent card={pending} compact={compact} />
+          </div>
+        )}
 
-        <div className={`game-hand-row ${sideHand ? 'game-hand-row-side' : 'game-hand-row-bottom'}`} data-testid="hand-row">
-          {hand.map((card) => (
-            <button
-              key={card.id}
-              className={`game-hand-card ${selectedCardId === card.id ? 'game-hand-card-selected' : ''} ${actionMode === 'discard' ? 'game-hand-card-discard' : ''}`}
-              onClick={() => handleCardClick(card)}
-              data-testid={`hand-card-${card.id}`}
-            >
-              <CardComponent card={card} compact={compact} />
-            </button>
-          ))}
-          {hand.length === 0 && (
-            <div className="game-hand-empty">No cards in hand</div>
-          )}
-        </div>
+        <GameActionBar
+          mode={mode}
+          deckCount={deckCount}
+          hasPending={pending !== null}
+          canDraw={!exhausted && !turnEndedA && !pending && deckCount > 0}
+          canPlay={!exhausted && !turnEndedA && pending !== null}
+          canRetreat={canRetreat}
+          canStrike={canStrike}
+          canPushed={canStrike && hasCurrencyOnAnyTurf}
+          canRecruit={canStrike && hasCurrencyOnAnyTurf}
+          turnEnded={turnEndedA}
+          onSelect={handleModeSelect}
+          onDiscardPending={handleDiscardPending}
+          onEndTurn={handleEndTurn}
+          sideHand={sideHand}
+        />
       </div>
+
+      {retreatTurf && (
+        <StackFanModal
+          turf={retreatTurf}
+          open={retreatTurfIdx !== null}
+          isOwn
+          onCardPick={handleRetreatPick}
+          onClose={() => setRetreatTurfIdx(null)}
+        />
+      )}
     </div>
   );
 }

@@ -5611,3 +5611,111 @@ select {
   .diff-footer { flex-direction: column; align-items: stretch; text-align: center; }
   .diff-start { width: 100%; }
 }
+
+/* ── v0.2 handless additions: pending, queued, closed-ranks, backs ──── */
+
+.game-pending {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem;
+  background: rgba(20, 20, 30, 0.85);
+  border: 1px solid rgba(220, 200, 120, 0.55);
+  border-radius: 8px;
+  box-shadow: 0 0 18px rgba(220, 200, 120, 0.2);
+  margin: 0.5rem auto;
+  max-width: 260px;
+}
+.game-pending-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06rem;
+  color: rgba(240, 220, 160, 0.95);
+}
+
+.game-queued-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0.35rem 0.5rem;
+  justify-content: center;
+}
+.game-queued-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.7rem;
+  background: rgba(200, 60, 60, 0.2);
+  border: 1px solid rgba(220, 80, 80, 0.65);
+  border-radius: 12px;
+  color: rgba(240, 220, 220, 0.95);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.game-queued-chip:hover { background: rgba(200, 60, 60, 0.35); }
+.game-queued-chip-kind { font-weight: 600; letter-spacing: 0.05rem; }
+.game-queued-chip-arrow { opacity: 0.85; }
+
+.game-action-btn-badge {
+  display: inline-block;
+  margin-left: 0.3rem;
+  padding: 0 0.35rem;
+  font-size: 0.7rem;
+  background: rgba(80, 120, 180, 0.6);
+  border-radius: 8px;
+}
+.game-action-btn-danger {
+  background: rgba(160, 50, 50, 0.45);
+  border-color: rgba(200, 70, 70, 0.7);
+}
+.game-action-btn-danger:hover { background: rgba(180, 60, 60, 0.65); }
+
+.turf-composite-closed-ranks { filter: grayscale(0.35) brightness(0.85); }
+.turf-composite-closed-ranks-badge {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.08rem;
+  background: rgba(40, 40, 50, 0.9);
+  color: rgba(220, 200, 120, 0.95);
+  border: 1px solid rgba(220, 200, 120, 0.55);
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.card-back {
+  background: linear-gradient(135deg, #1a1f2c 0%, #2d1a1f 60%, #0f1118 100%);
+  border: 1px solid rgba(220, 200, 120, 0.35);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.card-back-inner {
+  text-align: center;
+  color: rgba(220, 200, 120, 0.85);
+}
+.card-back-mark {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: 0.12rem;
+}
+.card-back-subtext {
+  font-size: 0.65rem;
+  letter-spacing: 0.08rem;
+  opacity: 0.7;
+  margin-top: 0.2rem;
+}
+
+.turf-composite-facedown { padding: 0.35rem; }
+.turf-composite-back { min-height: 110px; }
+
+.stack-fan-card-pickable { cursor: pointer; }
+.stack-fan-card-pickable:hover { transform: scale(1.02); }
