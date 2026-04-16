@@ -247,14 +247,19 @@ export function stepAction(
     case 'play_card': {
       if (action.turfIdx === undefined || !action.cardId)
         throw new Error('Invalid play_card action');
-      const card = removeCardFromHand(player, action.cardId);
-      if (!card) throw new Error('Card not in hand');
-      if (isModifierCard(card) && !playerHasToughInPlay(player))
+      // Validate BEFORE mutating hand so a failed validation doesn't leave
+      // the card in limbo (removed from hand but never placed on a turf).
+      const cardInHand = player.hand.find((c) => c.id === action.cardId);
+      if (!cardInHand) throw new Error('Card not in hand');
+      if (isModifierCard(cardInHand) && !playerHasToughInPlay(player))
         throw new Error('Draw-gate: cannot play modifier with no toughs in play');
       const turf = player.turfs[action.turfIdx];
       if (!turf) throw new Error('Invalid turf index');
-      if (isModifierCard(card) && !hasToughOnTurf(turf))
+      if (isModifierCard(cardInHand) && !hasToughOnTurf(turf))
         throw new Error('Cannot play modifier on empty turf');
+      // All preconditions satisfied — now mutate. removeCardFromHand
+      // cannot return null here because we already located cardInHand.
+      const card = removeCardFromHand(player, action.cardId)!;
       // RULES.md §4: rivals cannot coexist on a turf without a buffer.
       // If the incoming card is a tough that would create an unresolved
       // clash, the play is discarded (card lost, action spent). Mirrors

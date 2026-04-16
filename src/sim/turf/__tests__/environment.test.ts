@@ -135,6 +135,23 @@ describe('stepAction — play_card', () => {
     }).toThrow('Draw-gate');
   });
 
+  it('a failed play_card does not consume the card from hand (atomicity)', () => {
+    // Regression pin: prior impl removed the card before validating
+    // preconditions, leaving the card neither on a turf nor in hand
+    // when the validation threw. Now the validation happens first.
+    const state = makeState();
+    state.players.A.hand = [weapon('w1')];
+    state.players.A.toughsInPlay = 0; // draw-gate will fire
+
+    expect(() =>
+      stepAction(state, { kind: 'play_card', side: 'A', turfIdx: 0, cardId: 'w1' }),
+    ).toThrow('Draw-gate');
+
+    // Card is still in hand after the failed action
+    expect(state.players.A.hand).toHaveLength(1);
+    expect(state.players.A.hand[0].id).toBe('w1');
+  });
+
   it('rejects modifier on empty turf even if toughs exist elsewhere', () => {
     const state = makeState();
     addToStack(state.players.A.turfs[0], tough('t1'));
