@@ -27,6 +27,7 @@ import {
   CollectionScreen,
   DifficultyScreen,
   GameOverScreen,
+  CardGarageScreen,
   GameScreen,
   MainMenuScreen,
   PackOpeningScreen,
@@ -38,7 +39,8 @@ type Screen =
   | 'combat'
   | 'gameover'
   | 'collection'
-  | 'pack-opening';
+  | 'pack-opening'
+  | 'card-garage';
 type Modal = 'rules-onboarding' | 'game-menu' | null;
 interface ActiveRunState {
   phase: 'combat';
@@ -191,8 +193,13 @@ export default function App() {
           onLoadGame={handleLoadGame}
           onCollection={() => setScreen('collection')}
           onOpenPack={() => setScreen('pack-opening')}
+          onCardGarage={() => setScreen('card-garage')}
           canLoadGame={hasActiveRun}
         />
+      )}
+
+      {screen === 'card-garage' && (
+        <CardGarageScreen onBack={() => setScreen('menu')} />
       )}
 
       {screen === 'difficulty' && (

@@ -144,6 +144,7 @@ function renderFixture(fixture: FixtureName) {
           onLoadGame={() => {}}
           onCollection={() => {}}
           onOpenPack={() => {}}
+          onCardGarage={() => {}}
           canLoadGame={false}
         />
       );

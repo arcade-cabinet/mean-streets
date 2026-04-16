@@ -1,7 +1,8 @@
 import { useAppShell } from '../../platform';
-import type { Card as CardType, Rarity } from '../../sim/turf/types';
+import type { Card as CardType, DifficultyTier, Rarity } from '../../sim/turf/types';
 import { AffiliationSymbol } from '../affiliations';
 import { CardFrame } from './CardFrame';
+import { MythicBadge } from '../board/MythicBadge';
 
 type GlowContext = 'none' | 'loyal' | 'rival';
 
@@ -9,12 +10,30 @@ interface CardProps {
   card: CardType;
   compact?: boolean;
   affiliationContext?: GlowContext;
+  /** v0.3 rolled instance overlay — overrides the authored rarity frame
+   * when a specific pack roll is shown (Collection, PackOpening, etc.). */
+  rolledRarity?: Rarity;
+  /** Difficulty the card instance was unlocked at. Shown as top-left chip. */
+  unlockDifficulty?: DifficultyTier;
+  /** Visually mark as a mythic. Forces mythic frame + glow regardless of rarity. */
+  isMythic?: boolean;
 }
 
 const RARITY_CLASS: Record<Rarity, string> = {
   common: 'card-rarity-common',
+  uncommon: 'card-rarity-uncommon',
   rare: 'card-rarity-rare',
   legendary: 'card-rarity-legendary',
+  mythic: 'card-rarity-mythic',
+};
+
+const DIFFICULTY_GLYPH: Record<DifficultyTier, string> = {
+  'easy': 'E',
+  'medium': 'M',
+  'hard': 'H',
+  'nightmare': 'N',
+  'sudden-death': 'SD',
+  'ultra-nightmare': 'UN',
 };
 
 const AFFILIATION_COLORS: Record<string, string> = {
@@ -35,25 +54,53 @@ function affiliationLabel(id: string): string {
   return id.replace(/_/g, ' ');
 }
 
-function renderTough(card: CardType & { kind: 'tough' }, compact: boolean, context: GlowContext) {
-  const rarityClass = RARITY_CLASS[card.rarity];
+function renderUnlockBadge(unlock: DifficultyTier | undefined) {
+  if (!unlock) return null;
+  return (
+    <span
+      className={`card-unlock-badge card-unlock-${unlock}`}
+      title={`Unlocked at ${unlock}`}
+      data-testid="card-unlock-badge"
+      aria-label={`Unlocked at ${unlock}`}
+    >
+      {DIFFICULTY_GLYPH[unlock]}
+    </span>
+  );
+}
+
+interface RenderExtras {
+  effectiveRarity: Rarity;
+  unlock?: DifficultyTier;
+  isMythic: boolean;
+}
+
+function renderTough(
+  card: CardType & { kind: 'tough' },
+  compact: boolean,
+  context: GlowContext,
+  extras: RenderExtras,
+) {
+  const rarityClass = RARITY_CLASS[extras.effectiveRarity];
   const affiliationClass = AFFILIATION_COLORS[card.affiliation] ?? 'card-affiliation-freelance';
+  const mythicClass = extras.isMythic ? 'card-mythic' : '';
 
   if (compact) {
     return (
       <div
-        className={`card-shell card-shell-compact card-tough ${rarityClass}`}
+        className={`card-shell card-shell-compact card-tough ${rarityClass} ${mythicClass}`}
         data-testid={`card-${card.id}`}
       >
-        <CardFrame variant="card" rarity={card.rarity} className="card-frame-svg card-frame-svg-card" />
+        <CardFrame variant="card" rarity={extras.effectiveRarity} className="card-frame-svg card-frame-svg-card" />
         <div className="card-noise" />
         <div className="card-sheen" />
+        {renderUnlockBadge(extras.unlock)}
+        {extras.isMythic && <MythicBadge compact />}
         <div className="card-compact-header">
           <span className={`card-affiliation-badge ${affiliationClass}`}>
             <AffiliationSymbol affiliation={card.affiliation} size={14} context={context} />
             {affiliationLabel(card.affiliation)}
           </span>
-          <span className="card-rarity-badge">{card.rarity[0].toUpperCase()}</span>
+          <span className="card-rarity-badge">{extras.effectiveRarity[0].toUpperCase()}</span>
         </div>
         <div className="card-compact-name">{card.name}</div>
         <div className="card-compact-stats">
@@ -66,12 +113,14 @@ function renderTough(card: CardType & { kind: 'tough' }, compact: boolean, conte
 
   return (
     <div
-      className={`card-shell card-tough ${rarityClass}`}
+      className={`card-shell card-tough ${rarityClass} ${mythicClass}`}
       data-testid={`card-${card.id}`}
     >
-      <CardFrame variant="card" rarity={card.rarity} className="card-frame-svg card-frame-svg-card" />
+      <CardFrame variant="card" rarity={extras.effectiveRarity} className="card-frame-svg card-frame-svg-card" />
       <div className="card-noise" />
       <div className="card-sheen" />
+      {renderUnlockBadge(extras.unlock)}
+      {extras.isMythic && <MythicBadge />}
       <div className="card-inner">
         <div className="card-header">
           <div className={`card-affiliation-hero ${affiliationClass}`}>
@@ -89,7 +138,7 @@ function renderTough(card: CardType & { kind: 'tough' }, compact: boolean, conte
         <div className="card-body">
           <div className="card-name-row">
             <span className="card-name">{card.name}</span>
-            <span className="card-rarity-badge">{card.rarity[0].toUpperCase()}</span>
+            <span className="card-rarity-badge">{extras.effectiveRarity[0].toUpperCase()}</span>
           </div>
           <div className="card-meta">
             <span className="card-archetype">{card.archetype}</span>
@@ -108,20 +157,30 @@ function renderTough(card: CardType & { kind: 'tough' }, compact: boolean, conte
   );
 }
 
-function renderWeapon(card: CardType & { kind: 'weapon' }, compact: boolean) {
-  const rarityClass = RARITY_CLASS[card.rarity];
+function renderModifier(
+  card: (CardType & { kind: 'weapon' }) | (CardType & { kind: 'drug' }),
+  compact: boolean,
+  extras: RenderExtras,
+) {
+  const rarityClass = RARITY_CLASS[extras.effectiveRarity];
+  const mythicClass = extras.isMythic ? 'card-mythic' : '';
+  const kindClass = card.kind === 'weapon' ? 'card-weapon' : 'card-drug';
+  const portraitClass = card.kind === 'weapon' ? 'card-portrait-weapon' : 'card-portrait-drug';
+  const icon = card.kind === 'weapon' ? '⚔' : '💊';
 
   if (compact) {
     return (
       <div
-        className={`card-shell card-shell-compact card-weapon ${rarityClass}`}
+        className={`card-shell card-shell-compact ${kindClass} ${rarityClass} ${mythicClass}`}
         data-testid={`card-${card.id}`}
       >
-        <CardFrame variant="card" rarity={card.rarity} className="card-frame-svg card-frame-svg-card" />
+        <CardFrame variant="card" rarity={extras.effectiveRarity} className="card-frame-svg card-frame-svg-card" />
         <div className="card-noise" />
+        {renderUnlockBadge(extras.unlock)}
+        {extras.isMythic && <MythicBadge compact />}
         <div className="card-compact-header">
           <span className="card-category-badge">{card.category}</span>
-          <span className="card-rarity-badge">{card.rarity[0].toUpperCase()}</span>
+          <span className="card-rarity-badge">{extras.effectiveRarity[0].toUpperCase()}</span>
         </div>
         <div className="card-compact-name">{card.name}</div>
         <div className="card-compact-stats">
@@ -134,24 +193,26 @@ function renderWeapon(card: CardType & { kind: 'weapon' }, compact: boolean) {
 
   return (
     <div
-      className={`card-shell card-weapon ${rarityClass}`}
+      className={`card-shell ${kindClass} ${rarityClass} ${mythicClass}`}
       data-testid={`card-${card.id}`}
     >
-      <CardFrame variant="card" rarity={card.rarity} className="card-frame-svg card-frame-svg-card" />
+      <CardFrame variant="card" rarity={extras.effectiveRarity} className="card-frame-svg card-frame-svg-card" />
       <div className="card-noise" />
       <div className="card-sheen" />
+      {renderUnlockBadge(extras.unlock)}
+      {extras.isMythic && <MythicBadge />}
       <div className="card-inner">
         <div className="card-header">
           <span className="card-category-badge">{card.category}</span>
           <span className="card-power-badge">{card.power}</span>
         </div>
-        <div className="card-portrait card-portrait-weapon">
-          <span className="card-portrait-icon">⚔</span>
+        <div className={`card-portrait ${portraitClass}`}>
+          <span className="card-portrait-icon">{icon}</span>
         </div>
         <div className="card-body">
           <div className="card-name-row">
             <span className="card-name">{card.name}</span>
-            <span className="card-rarity-badge">{card.rarity[0].toUpperCase()}</span>
+            <span className="card-rarity-badge">{extras.effectiveRarity[0].toUpperCase()}</span>
           </div>
           {card.abilities.length > 0 && (
             <div className="card-abilities">
@@ -167,77 +228,24 @@ function renderWeapon(card: CardType & { kind: 'weapon' }, compact: boolean) {
   );
 }
 
-function renderDrug(card: CardType & { kind: 'drug' }, compact: boolean) {
-  const rarityClass = RARITY_CLASS[card.rarity];
-
-  if (compact) {
-    return (
-      <div
-        className={`card-shell card-shell-compact card-drug ${rarityClass}`}
-        data-testid={`card-${card.id}`}
-      >
-        <CardFrame variant="card" rarity={card.rarity} className="card-frame-svg card-frame-svg-card" />
-        <div className="card-noise" />
-        <div className="card-compact-header">
-          <span className="card-category-badge">{card.category}</span>
-          <span className="card-rarity-badge">{card.rarity[0].toUpperCase()}</span>
-        </div>
-        <div className="card-compact-name">{card.name}</div>
-        <div className="card-compact-stats">
-          <span className="card-stat card-stat-power">{card.power}</span>
-          <span className="card-stat card-stat-resistance">{card.resistance}</span>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className={`card-shell card-drug ${rarityClass}`}
-      data-testid={`card-${card.id}`}
-    >
-      <CardFrame variant="card" rarity={card.rarity} className="card-frame-svg card-frame-svg-card" />
-      <div className="card-noise" />
-      <div className="card-sheen" />
-      <div className="card-inner">
-        <div className="card-header">
-          <span className="card-category-badge">{card.category}</span>
-          <span className="card-power-badge">{card.power}</span>
-        </div>
-        <div className="card-portrait card-portrait-drug">
-          <span className="card-portrait-icon">💊</span>
-        </div>
-        <div className="card-body">
-          <div className="card-name-row">
-            <span className="card-name">{card.name}</span>
-            <span className="card-rarity-badge">{card.rarity[0].toUpperCase()}</span>
-          </div>
-          {card.abilities.length > 0 && (
-            <div className="card-abilities">
-              {card.abilities[0]}
-            </div>
-          )}
-        </div>
-        <div className="card-footer">
-          <span className="card-resistance-badge">{card.resistance}</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function renderCurrency(card: CardType & { kind: 'currency' }, compact: boolean) {
-  const rarityClass = RARITY_CLASS[card.rarity];
+function renderCurrency(
+  card: CardType & { kind: 'currency' },
+  compact: boolean,
+  extras: RenderExtras,
+) {
+  const rarityClass = RARITY_CLASS[extras.effectiveRarity];
+  const mythicClass = extras.isMythic ? 'card-mythic' : '';
   const label = card.denomination === 1000 ? '$1,000' : '$100';
 
   if (compact) {
     return (
       <div
-        className={`card-shell card-shell-compact card-currency ${rarityClass}`}
+        className={`card-shell card-shell-compact card-currency ${rarityClass} ${mythicClass}`}
         data-testid={`card-${card.id}`}
       >
-        <CardFrame variant="card" rarity={card.rarity} className="card-frame-svg card-frame-svg-card" />
+        <CardFrame variant="card" rarity={extras.effectiveRarity} className="card-frame-svg card-frame-svg-card" />
         <div className="card-noise" />
+        {renderUnlockBadge(extras.unlock)}
         <div className="card-compact-name card-currency-label">{label}</div>
       </div>
     );
@@ -245,12 +253,13 @@ function renderCurrency(card: CardType & { kind: 'currency' }, compact: boolean)
 
   return (
     <div
-      className={`card-shell card-currency ${rarityClass}`}
+      className={`card-shell card-currency ${rarityClass} ${mythicClass}`}
       data-testid={`card-${card.id}`}
     >
-      <CardFrame variant="card" rarity={card.rarity} className="card-frame-svg card-frame-svg-card" />
+      <CardFrame variant="card" rarity={extras.effectiveRarity} className="card-frame-svg card-frame-svg-card" />
       <div className="card-noise" />
       <div className="card-sheen" />
+      {renderUnlockBadge(extras.unlock)}
       <div className="card-inner card-inner-currency">
         <div className="card-currency-denomination">{label}</div>
         <div className="card-currency-subtext">{card.name}</div>
@@ -259,18 +268,23 @@ function renderCurrency(card: CardType & { kind: 'currency' }, compact: boolean)
   );
 }
 
-export function Card({ card, compact: compactOverride, affiliationContext = 'none' }: CardProps) {
+export function Card({
+  card, compact: compactOverride, affiliationContext = 'none',
+  rolledRarity, unlockDifficulty, isMythic,
+}: CardProps) {
   const { layout } = useAppShell();
   const compact = compactOverride ?? (layout.id === 'phone-portrait' || layout.id === 'folded');
+  const effectiveRarity: Rarity = rolledRarity ?? card.rarity;
+  const mythic = isMythic ?? effectiveRarity === 'mythic';
+  const extras: RenderExtras = { effectiveRarity, unlock: unlockDifficulty, isMythic: mythic };
 
   switch (card.kind) {
     case 'tough':
-      return renderTough(card, compact, affiliationContext);
+      return renderTough(card, compact, affiliationContext, extras);
     case 'weapon':
-      return renderWeapon(card, compact);
     case 'drug':
-      return renderDrug(card, compact);
+      return renderModifier(card, compact, extras);
     case 'currency':
-      return renderCurrency(card, compact);
+      return renderCurrency(card, compact, extras);
   }
 }

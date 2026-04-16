@@ -3,6 +3,9 @@ import type { QueuedAction, TurfActionKind } from '../../sim/turf/types';
 export type ActionMode =
   | 'play_card'
   | 'retreat'
+  | 'modifier_swap'
+  | 'send_to_market'
+  | 'send_to_holding'
   | 'direct_strike'
   | 'pushed_strike'
   | 'funded_recruit'
@@ -22,19 +25,16 @@ interface QueuedChipsProps {
 
 /** Row of chips showing already-declared strike / recruit actions for
  * this turn. Placed above the action bar so the player can see what will
- * resolve after End Turn. Cancellation is not wired (sim does not expose
- * dequeue yet); placeholder callback kept for future. */
+ * resolve after End Turn. */
 export function QueuedChips({ strikes, onCancel }: QueuedChipsProps) {
   if (strikes.length === 0) return null;
   return (
     <div className="game-queued-chips" data-testid="queued-chips">
       {strikes.map((q, i) => {
         const label =
-          q.kind === 'direct_strike'
-            ? 'DIRECT'
-            : q.kind === 'pushed_strike'
-              ? 'PUSHED'
-              : 'RECRUIT';
+          q.kind === 'direct_strike' ? 'DIRECT'
+          : q.kind === 'pushed_strike' ? 'PUSHED'
+          : 'RECRUIT';
         return (
           <button
             key={`${q.kind}-${q.turfIdx}-${q.targetTurfIdx}-${i}`}
@@ -60,58 +60,75 @@ interface ActionBarProps {
   canDraw: boolean;
   canPlay: boolean;
   canRetreat: boolean;
+  canModifierSwap: boolean;
+  canSendToMarket: boolean;
+  canSendToHolding: boolean;
   canStrike: boolean;
   canPushed: boolean;
   canRecruit: boolean;
   turnEnded: boolean;
-  onSelect: (
-    kind: 'draw' | 'play_card' | 'retreat' | 'direct_strike' | 'pushed_strike' | 'funded_recruit',
-  ) => void;
+  onSelect: (kind: 'draw' | NonNullable<ActionMode>) => void;
   onDiscardPending: () => void;
   onEndTurn: () => void;
   sideHand: boolean;
 }
 
+interface BtnSpec {
+  mode: NonNullable<ActionMode> | 'draw';
+  label: string;
+  enabled: boolean;
+  badge?: number | string;
+  testid: string;
+}
+
 export function GameActionBar(props: ActionBarProps) {
   const {
-    mode,
-    deckCount,
-    hasPending,
-    canDraw,
-    canPlay,
-    canRetreat,
-    canStrike,
-    canPushed,
-    canRecruit,
-    turnEnded,
-    onSelect,
-    onDiscardPending,
-    onEndTurn,
-    sideHand,
+    mode, deckCount, hasPending,
+    canDraw, canPlay, canRetreat,
+    canModifierSwap, canSendToMarket, canSendToHolding,
+    canStrike, canPushed, canRecruit,
+    turnEnded, onSelect, onDiscardPending, onEndTurn, sideHand,
   } = props;
+
+  const buttons: BtnSpec[] = [
+    { mode: 'draw', label: 'Draw', enabled: canDraw, badge: deckCount, testid: 'action-draw' },
+    { mode: 'play_card', label: 'Play', enabled: canPlay, testid: 'action-play_card' },
+    { mode: 'retreat', label: 'Retreat', enabled: canRetreat, testid: 'action-retreat' },
+    { mode: 'modifier_swap', label: 'Swap', enabled: canModifierSwap, testid: 'action-modifier_swap' },
+    { mode: 'send_to_market', label: 'Market', enabled: canSendToMarket, testid: 'action-send_to_market' },
+    { mode: 'send_to_holding', label: 'Holding', enabled: canSendToHolding, testid: 'action-send_to_holding' },
+    { mode: 'direct_strike', label: 'Direct', enabled: canStrike, testid: 'action-direct_strike' },
+    { mode: 'pushed_strike', label: 'Pushed', enabled: canPushed, testid: 'action-pushed_strike' },
+    { mode: 'funded_recruit', label: 'Recruit', enabled: canRecruit, testid: 'action-funded_recruit' },
+  ];
 
   return (
     <div
       className={`game-action-bar ${sideHand ? 'game-action-bar-side' : 'game-action-bar-bottom'}`}
     >
-      <button
-        type="button"
-        className={`game-action-btn ${!canDraw ? 'game-action-btn-disabled' : ''}`}
-        disabled={!canDraw}
-        onClick={() => canDraw && onSelect('draw')}
-        data-testid="action-draw"
-      >
-        Draw <span className="game-action-btn-badge">{deckCount}</span>
-      </button>
-      <button
-        type="button"
-        className={`game-action-btn ${mode === 'play_card' ? 'game-action-btn-active' : ''} ${!canPlay ? 'game-action-btn-disabled' : ''}`}
-        disabled={!canPlay}
-        onClick={() => canPlay && onSelect('play_card')}
-        data-testid="action-play_card"
-      >
-        Play
-      </button>
+      {buttons.map((b) => {
+        const active = b.mode !== 'draw' && mode === b.mode;
+        const cls =
+          `game-action-btn`
+          + (active ? ' game-action-btn-active' : '')
+          + (!b.enabled ? ' game-action-btn-disabled' : '');
+        return (
+          <button
+            key={b.mode}
+            type="button"
+            className={cls}
+            disabled={!b.enabled}
+            onClick={() => b.enabled && onSelect(b.mode)}
+            data-testid={b.testid}
+          >
+            {b.label}
+            {b.badge !== undefined && (
+              <span className="game-action-btn-badge">{b.badge}</span>
+            )}
+          </button>
+        );
+      })}
+
       {hasPending && (
         <button
           type="button"
@@ -122,46 +139,11 @@ export function GameActionBar(props: ActionBarProps) {
           Discard
         </button>
       )}
-      <button
-        type="button"
-        className={`game-action-btn ${mode === 'retreat' ? 'game-action-btn-active' : ''} ${!canRetreat ? 'game-action-btn-disabled' : ''}`}
-        disabled={!canRetreat}
-        onClick={() => canRetreat && onSelect('retreat')}
-        data-testid="action-retreat"
-      >
-        Retreat
-      </button>
-      <button
-        type="button"
-        className={`game-action-btn ${mode === 'direct_strike' ? 'game-action-btn-active' : ''} ${!canStrike ? 'game-action-btn-disabled' : ''}`}
-        disabled={!canStrike}
-        onClick={() => canStrike && onSelect('direct_strike')}
-        data-testid="action-direct_strike"
-      >
-        Direct
-      </button>
-      <button
-        type="button"
-        className={`game-action-btn ${mode === 'pushed_strike' ? 'game-action-btn-active' : ''} ${!canPushed ? 'game-action-btn-disabled' : ''}`}
-        disabled={!canPushed}
-        onClick={() => canPushed && onSelect('pushed_strike')}
-        data-testid="action-pushed_strike"
-      >
-        Pushed
-      </button>
-      <button
-        type="button"
-        className={`game-action-btn ${mode === 'funded_recruit' ? 'game-action-btn-active' : ''} ${!canRecruit ? 'game-action-btn-disabled' : ''}`}
-        disabled={!canRecruit}
-        onClick={() => canRecruit && onSelect('funded_recruit')}
-        data-testid="action-funded_recruit"
-      >
-        Recruit
-      </button>
+
       <div className="game-action-separator" />
       <button
         type="button"
-        className={`game-action-btn ${turnEnded ? 'game-action-btn-disabled' : ''}`}
+        className={`game-action-btn game-action-btn-end-turn ${turnEnded ? 'game-action-btn-disabled' : ''}`}
         disabled={turnEnded}
         onClick={onEndTurn}
         data-testid="action-end_turn"

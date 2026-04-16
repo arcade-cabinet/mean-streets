@@ -5761,3 +5761,512 @@ select {
 
 .stack-fan-card-pickable { cursor: pointer; }
 .stack-fan-card-pickable:hover { transform: scale(1.02); }
+
+/* ── v0.3 additions: heat, market, holding, mythic, HP, single-lane, animations ── */
+
+/* ---- Heat Meter ---- */
+.heat-meter {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.25rem;
+  min-width: 180px;
+  padding: 0.35rem 0.55rem;
+  border-radius: 4px;
+  background: rgba(10, 10, 12, 0.45);
+  border: 1px solid rgba(232, 221, 204, 0.08);
+}
+.heat-meter-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.72rem;
+  letter-spacing: 0.08rem;
+  text-transform: uppercase;
+}
+.heat-meter-title { color: #a9a29a; font-weight: 600; }
+.heat-meter-label { font-weight: 700; }
+.heat-meter-value { font-variant-numeric: tabular-nums; font-weight: 600; color: #e8ddcc; }
+.heat-meter-track {
+  position: relative;
+  height: 8px;
+  background: rgba(20, 20, 24, 0.7);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.heat-meter-fill {
+  height: 100%;
+  transition: width 180ms ease-out, background-color 200ms ease-out;
+}
+.heat-meter-threshold {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 1.5px;
+  background: rgba(239, 68, 68, 0.75);
+}
+.heat-meter-compact {
+  min-width: 0;
+  padding: 0.2rem 0.5rem;
+  flex-direction: row;
+  align-items: center;
+}
+.heat-meter-chip-label { color: #a9a29a; font-size: 0.7rem; letter-spacing: 0.06rem; }
+.heat-meter-chip-value { font-weight: 700; font-variant-numeric: tabular-nums; }
+.heat-meter-chip-pulse {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #ef4444;
+  animation: heat-pulse 900ms infinite alternate;
+}
+.heat-meter-imminent {
+  border-color: rgba(239, 68, 68, 0.4);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.18);
+}
+@keyframes heat-pulse {
+  from { opacity: 0.4; transform: scale(0.9); }
+  to   { opacity: 1;   transform: scale(1.15); }
+}
+
+/* ---- HP Bars ---- */
+.turf-composite-hp-bar {
+  height: 3px;
+  background: rgba(20, 20, 24, 0.7);
+  border-radius: 1px;
+  overflow: hidden;
+  margin-top: 3px;
+}
+.turf-composite-hp-fill {
+  height: 100%;
+  transition: width 200ms ease-out;
+}
+.stack-fan-hp {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.4rem;
+  background: rgba(12, 12, 16, 0.85);
+  border-radius: 3px;
+  font-size: 0.7rem;
+  color: #e8ddcc;
+}
+.stack-fan-hp-label { color: #a9a29a; font-size: 0.66rem; letter-spacing: 0.05rem; }
+.stack-fan-hp-bar { flex: 1; height: 4px; background: rgba(30, 30, 34, 0.8); border-radius: 1px; overflow: hidden; }
+.stack-fan-hp-fill { height: 100%; background: #22c55e; transition: width 160ms ease-out; }
+.stack-fan-hp-value { font-variant-numeric: tabular-nums; font-size: 0.65rem; }
+
+/* ---- Owner arrows ---- */
+.stack-fan-owner-arrow {
+  position: absolute;
+  top: 50%;
+  font-size: 1.5rem;
+  color: rgba(245, 158, 11, 0.7);
+  text-shadow: 0 0 4px rgba(0,0,0,0.8);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+.stack-fan-owner-arrow-left { left: -0.75rem; }
+.stack-fan-owner-arrow-right { right: -0.75rem; }
+
+/* ---- Mythic ---- */
+.mythic-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.2rem 0.4rem;
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.25), rgba(160, 32, 32, 0.4));
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  border-radius: 2px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1rem;
+  color: #fde4dd;
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 6;
+}
+.mythic-badge-compact { padding: 0.15rem 0.25rem; }
+.mythic-badge-crest { width: 11px; height: 11px; color: #fecaca; }
+.mythic-badge-owner { margin-left: 0.15rem; font-weight: 800; }
+.mythic-badge-owner-A { color: #7dd3fc; }
+.mythic-badge-owner-B { color: #fca5a5; }
+.card-mythic { box-shadow: 0 0 18px rgba(239, 68, 68, 0.18); }
+.card-mythic .card-frame-svg { filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.25)); }
+.turf-composite-mythic-chip {
+  background: rgba(239, 68, 68, 0.35);
+  color: #fecaca;
+  font-weight: 700;
+  padding: 0 0.25rem;
+  border-radius: 2px;
+  font-size: 0.6rem;
+}
+
+.card-rarity-uncommon { border-color: rgba(52, 211, 153, 0.3); }
+.card-rarity-mythic { border-color: rgba(239, 68, 68, 0.45); }
+
+/* Unlock-difficulty badge (top-left) */
+.card-unlock-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.02rem;
+  background: rgba(18, 18, 22, 0.85);
+  border: 1px solid rgba(232, 221, 204, 0.25);
+  border-radius: 50%;
+  color: #e8ddcc;
+  z-index: 5;
+}
+.card-unlock-easy { color: #86efac; }
+.card-unlock-medium { color: #fde68a; }
+.card-unlock-hard { color: #fdba74; }
+.card-unlock-nightmare { color: #fca5a5; }
+.card-unlock-sudden-death { color: #c4b5fd; }
+.card-unlock-ultra-nightmare { color: #fca5a5; }
+
+/* ---- Black Market panel ---- */
+.black-market-panel,
+.black-market-modal {
+  background: rgba(14, 14, 18, 0.9);
+  border: 1px solid rgba(178, 42, 30, 0.25);
+  border-radius: 4px;
+  padding: 0.5rem;
+  min-width: 200px;
+}
+.black-market-modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 40;
+  padding: 1rem;
+}
+.black-market-modal { max-width: 90vw; max-height: 80vh; overflow-y: auto; }
+.black-market-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid rgba(232, 221, 204, 0.1);
+  margin-bottom: 0.4rem;
+}
+.black-market-title { font-weight: 700; letter-spacing: 0.08rem; font-size: 0.8rem; text-transform: uppercase; color: #e8ddcc; }
+.black-market-count { background: rgba(178, 42, 30, 0.35); color: #fecaca; padding: 0.15rem 0.4rem; border-radius: 2px; font-size: 0.7rem; font-weight: 700; }
+.black-market-close {
+  background: transparent; border: none; color: #e8ddcc; font-size: 1.1rem;
+  cursor: pointer; padding: 0.1rem 0.4rem;
+}
+.black-market-pool { display: flex; flex-wrap: wrap; gap: 0.35rem; min-height: 60px; }
+.black-market-cell {
+  background: transparent; border: 2px solid transparent; padding: 2px;
+  border-radius: 3px; cursor: pointer; transition: border-color 120ms;
+}
+.black-market-cell-selected { border-color: rgba(245, 158, 11, 0.8); }
+.black-market-cell:hover { border-color: rgba(245, 158, 11, 0.35); }
+.black-market-empty { color: #6b6660; font-style: italic; padding: 0.5rem; }
+.black-market-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; align-items: center; }
+.black-market-target { display: flex; flex-direction: column; gap: 0.2rem; }
+.black-market-target-label { font-size: 0.68rem; color: #a9a29a; letter-spacing: 0.04rem; }
+.black-market-rarity-row { display: flex; gap: 0.2rem; }
+.black-market-rarity-btn {
+  padding: 0.15rem 0.4rem; font-size: 0.7rem; border-radius: 2px; cursor: pointer;
+  background: rgba(30, 30, 34, 0.6); border: 1px solid rgba(232, 221, 204, 0.12);
+  color: #e8ddcc;
+}
+.black-market-rarity-btn-active { background: rgba(178, 42, 30, 0.35); border-color: rgba(178, 42, 30, 0.6); }
+.black-market-trade-btn,
+.black-market-heal-btn,
+.black-market-clear-btn {
+  padding: 0.3rem 0.6rem; font-size: 0.75rem; border-radius: 3px; cursor: pointer;
+  background: rgba(40, 40, 44, 0.8); border: 1px solid rgba(232, 221, 204, 0.16); color: #e8ddcc;
+}
+.black-market-trade-btn[disabled],
+.black-market-heal-btn[disabled] { opacity: 0.35; cursor: not-allowed; }
+.black-market-heal-btn { background: rgba(34, 197, 94, 0.25); border-color: rgba(34, 197, 94, 0.45); }
+
+/* ---- Holding / Lockup panel ---- */
+.holding-panel {
+  background: rgba(14, 14, 18, 0.9);
+  border: 1px solid rgba(232, 221, 204, 0.1);
+  border-radius: 4px;
+  padding: 0.4rem;
+  min-width: 200px;
+  margin-bottom: 0.5rem;
+}
+.holding-panel-opponent { border-color: rgba(178, 42, 30, 0.22); }
+.holding-panel-compact { min-width: 0; width: 100%; }
+.holding-panel-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid rgba(232, 221, 204, 0.08);
+  margin-bottom: 0.35rem;
+}
+.holding-panel-title { font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08rem; color: #e8ddcc; }
+.holding-panel-count { background: rgba(60, 60, 70, 0.6); padding: 0.1rem 0.35rem; border-radius: 2px; font-size: 0.7rem; }
+.holding-panel-empty { font-style: italic; color: #6b6660; font-size: 0.72rem; padding: 0.2rem; }
+.holding-panel-group { margin-top: 0.25rem; }
+.holding-panel-group-label { font-size: 0.64rem; color: #a9a29a; letter-spacing: 0.08rem; text-transform: uppercase; margin-bottom: 0.2rem; }
+.holding-row {
+  display: flex; align-items: center; gap: 0.4rem;
+  padding: 0.2rem;
+  border-radius: 2px;
+  background: rgba(20, 20, 24, 0.5);
+}
+.holding-row + .holding-row { margin-top: 0.2rem; }
+.holding-row-lockup { border-left: 3px solid rgba(239, 68, 68, 0.5); }
+.holding-row-holding { border-left: 3px solid rgba(52, 211, 153, 0.4); }
+.holding-row-card { width: 48px; flex-shrink: 0; }
+.holding-row-card .card-shell { transform: scale(0.55); transform-origin: left center; width: 100px; height: 140px; margin: 0; }
+.holding-row-meta { display: flex; flex-direction: column; gap: 0.1rem; font-size: 0.7rem; flex: 1; }
+.holding-row-name { font-weight: 600; color: #e8ddcc; }
+.holding-row-hp { color: #a9a29a; font-size: 0.65rem; font-variant-numeric: tabular-nums; }
+.holding-row-mods { color: #a9a29a; font-size: 0.65rem; }
+.holding-row-clock {
+  background: rgba(239, 68, 68, 0.3); color: #fecaca; padding: 0.1rem 0.3rem;
+  border-radius: 2px; font-weight: 700; font-size: 0.7rem;
+}
+.holding-row-release {
+  background: rgba(40, 40, 44, 0.7); border: 1px solid rgba(232, 221, 204, 0.12);
+  color: #e8ddcc; padding: 0.1rem 0.4rem; font-size: 0.65rem; border-radius: 2px; cursor: pointer;
+}
+
+/* ---- Single-lane TurfView additions ---- */
+.turf-lane {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 140px;
+  padding: 0.5rem;
+}
+.turf-lane-opponent { flex-direction: row-reverse; }
+.turf-lane-active { flex: 1; display: flex; justify-content: center; }
+.turf-lane-empty {
+  padding: 2rem;
+  border: 1px dashed rgba(232, 221, 204, 0.18);
+  border-radius: 3px;
+  color: #6b6660;
+  font-style: italic;
+}
+.turf-reserves {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.4rem 0.5rem;
+  background: rgba(14, 14, 18, 0.8);
+  border: 1px solid rgba(232, 221, 204, 0.1);
+  border-radius: 3px;
+  color: #e8ddcc;
+  cursor: pointer;
+  min-width: 48px;
+}
+.turf-reserves-count { font-size: 1.2rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.turf-reserves-label { font-size: 0.6rem; letter-spacing: 0.1rem; color: #a9a29a; }
+.turf-reserves-pips { display: flex; flex-direction: column; gap: 2px; }
+.turf-reserves-pip { width: 14px; height: 3px; background: rgba(232, 221, 204, 0.4); border-radius: 1px; }
+.turf-reserves-pip-more { font-size: 0.6rem; color: #a9a29a; }
+.turf-reserves-peek-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.78);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 35;
+}
+.turf-reserves-peek {
+  background: rgba(14,14,18,0.95); border-radius: 4px; padding: 1rem; min-width: 300px;
+  max-height: 80vh; overflow-y: auto;
+}
+.turf-reserves-peek-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.turf-reserves-peek-close { background: transparent; border: none; color: #e8ddcc; font-size: 1.2rem; cursor: pointer; }
+.turf-reserves-peek-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.turf-reserves-peek-row { display: flex; align-items: center; gap: 0.5rem; }
+.turf-reserves-peek-position { font-weight: 700; color: #a9a29a; width: 28px; }
+
+/* ---- v0.3 GameScreen layout ---- */
+.game-screen-v3 .game-shell {
+  display: grid;
+  grid-template-columns: 220px 1fr 220px;
+  gap: 0.75rem;
+  padding: 0 0.5rem;
+}
+.game-sidebar { display: flex; flex-direction: column; gap: 0.5rem; }
+.game-sidebar-left { justify-content: flex-start; }
+.game-sidebar-right { justify-content: flex-start; }
+.game-mobile-modal-triggers {
+  display: flex; gap: 0.5rem; padding: 0.25rem 0.5rem; justify-content: center;
+}
+.game-mobile-trigger {
+  flex: 1;
+  background: rgba(40, 40, 44, 0.7);
+  border: 1px solid rgba(232, 221, 204, 0.12);
+  color: #e8ddcc;
+  padding: 0.4rem; font-size: 0.75rem; border-radius: 3px; cursor: pointer;
+}
+.game-mobile-custody-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.8);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 38;
+}
+.game-mobile-custody {
+  background: rgba(14,14,18,0.95); padding: 0.75rem; border-radius: 4px;
+  max-width: 92vw; max-height: 85vh; overflow-y: auto;
+}
+.game-hud-bar-mythic { font-size: 0.72rem; color: #fecaca; }
+
+/* ---- Card Garage v0.3 ---- */
+.garage-filter-bar {
+  display: flex; flex-wrap: wrap; gap: 0.35rem;
+  padding: 0.4rem 0.8rem;
+  border-bottom: 1px solid rgba(232, 221, 204, 0.08);
+}
+.garage-filter-btn {
+  background: rgba(30, 30, 34, 0.6);
+  border: 1px solid rgba(232, 221, 204, 0.12);
+  color: #e8ddcc;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.72rem;
+  border-radius: 2px;
+  cursor: pointer;
+}
+.garage-filter-btn-active { background: rgba(178, 42, 30, 0.3); border-color: rgba(178, 42, 30, 0.5); }
+.garage-toast {
+  position: sticky; top: 0; z-index: 5;
+  background: rgba(34, 197, 94, 0.3);
+  padding: 0.4rem 0.8rem; font-size: 0.8rem; color: #e8ddcc; font-weight: 600;
+}
+.garage-section-title { display: flex; align-items: center; gap: 0.5rem; }
+.garage-auto-toggles { display: flex; gap: 0.35rem; margin-left: auto; }
+.garage-auto-btn {
+  background: rgba(40, 40, 44, 0.7);
+  border: 1px solid rgba(232, 221, 204, 0.1);
+  color: #e8ddcc; padding: 0.15rem 0.4rem; font-size: 0.7rem; border-radius: 2px; cursor: pointer;
+}
+.garage-row-dupes {
+  padding: 0.1rem 0.35rem;
+  background: rgba(30, 30, 34, 0.7);
+  color: #a9a29a;
+  border-radius: 2px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+.garage-row-dupes-mergeable { background: rgba(245, 158, 11, 0.3); color: #fde68a; }
+.garage-row-merge {
+  display: inline-flex; align-items: center; gap: 0.2rem;
+  background: rgba(245, 158, 11, 0.25);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  color: #fde68a;
+  padding: 0.15rem 0.4rem;
+  font-size: 0.7rem;
+  border-radius: 2px;
+  cursor: pointer;
+}
+.garage-row-merge-disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  background: rgba(40, 40, 44, 0.5);
+  border-color: rgba(232, 221, 204, 0.08);
+  color: #6b6660;
+}
+.garage-rarity-uncommon { background: rgba(52, 211, 153, 0.18); }
+.garage-rarity-mythic { background: rgba(239, 68, 68, 0.28); }
+
+/* ---- Resolution overlay animations ---- */
+.resolution-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 1rem;
+  z-index: 60;
+  cursor: pointer;
+  animation: resolution-fade-in 260ms ease-out;
+}
+@keyframes resolution-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.resolution-raid-flash {
+  background: radial-gradient(circle, rgba(239, 68, 68, 0.45) 0%, rgba(150, 20, 20, 0.35) 60%, transparent 100%);
+  padding: 2rem 3rem;
+  text-align: center;
+  animation: raid-pulse 450ms ease-out;
+}
+.resolution-raid-title {
+  display: block; font-size: 3rem; font-weight: 900;
+  color: #fecaca; letter-spacing: 0.25rem;
+  text-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+}
+.resolution-raid-sub {
+  display: block;
+  font-size: 0.9rem; color: #e8ddcc; letter-spacing: 0.15rem; margin-top: 0.5rem;
+}
+@keyframes raid-pulse {
+  0% { transform: scale(0.7); opacity: 0; }
+  40% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.resolution-strike {
+  padding: 1rem 2rem;
+  background: rgba(14, 14, 18, 0.85);
+  border: 1px solid rgba(232, 221, 204, 0.25);
+  border-radius: 4px;
+  display: flex; flex-direction: column; align-items: center; gap: 0.35rem;
+  animation: strike-slide 300ms ease-out;
+}
+.resolution-strike-side { font-size: 0.75rem; color: #a9a29a; letter-spacing: 0.1rem; }
+.resolution-strike-kind {
+  font-size: 1.6rem; font-weight: 800; color: #fde68a; letter-spacing: 0.15rem;
+}
+.resolution-strike-arrow { color: #e8ddcc; font-weight: 700; letter-spacing: 0.1rem; }
+.resolution-strike-direct_strike { border-color: rgba(245, 158, 11, 0.5); }
+.resolution-strike-pushed_strike { border-color: rgba(239, 68, 68, 0.5); }
+.resolution-strike-funded_recruit { border-color: rgba(34, 197, 94, 0.5); }
+@keyframes strike-slide {
+  from { transform: translateY(16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.resolution-mythic {
+  padding: 1rem 2rem;
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.25), rgba(160, 32, 32, 0.45));
+  border: 2px solid rgba(239, 68, 68, 0.6);
+  border-radius: 4px;
+  display: flex; flex-direction: column; align-items: center; gap: 0.35rem;
+  animation: mythic-triumph 500ms ease-out;
+}
+.resolution-mythic-title {
+  font-size: 1.8rem; font-weight: 900; color: #fecaca;
+  letter-spacing: 0.2rem; text-shadow: 0 0 12px rgba(239, 68, 68, 0.45);
+}
+.resolution-mythic-sub { font-size: 0.85rem; color: #fde4dd; }
+@keyframes mythic-triumph {
+  0% { transform: scale(0.6) rotate(-4deg); opacity: 0; }
+  60% { transform: scale(1.12) rotate(2deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+.resolution-skip {
+  position: absolute; bottom: 1.5rem;
+  color: #a9a29a; font-size: 0.75rem; letter-spacing: 0.1rem;
+}
+
+/* ---- Mobile layout overrides ---- */
+@media (max-width: 900px) {
+  .game-screen-v3 .game-shell {
+    grid-template-columns: 1fr;
+  }
+  .turf-lane { min-height: 120px; padding: 0.3rem; }
+  .turf-reserves { min-width: 38px; }
+  .holding-row-card .card-shell { transform: scale(0.45); width: 80px; height: 110px; }
+}
+
+/* ---- Pack Opening uncommon/mythic pills ---- */
+.pack-stat-uncommon { background: rgba(52, 211, 153, 0.3); color: #a7f3d0; }
+.pack-stat-mythic { background: rgba(239, 68, 68, 0.4); color: #fecaca; }
+.coll-rarity-uncommon { background: rgba(52, 211, 153, 0.18); }
+.coll-rarity-mythic { background: rgba(239, 68, 68, 0.28); }

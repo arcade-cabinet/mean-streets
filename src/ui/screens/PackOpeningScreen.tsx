@@ -14,7 +14,9 @@ interface PackOpeningScreenProps {
 
 type Phase = 'sealed' | 'revealing' | 'summary';
 
-const RARITY_ORDER: Record<Rarity, number> = { common: 0, rare: 1, legendary: 2 };
+const RARITY_ORDER: Record<Rarity, number> = {
+  common: 0, uncommon: 1, rare: 2, legendary: 3, mythic: 4,
+};
 
 function buildPackCards(allCards: CardType[]): CardType[] {
   const shuffled = [...allCards].sort(() => Math.random() - 0.5);
@@ -96,7 +98,9 @@ export function PackOpeningScreen({ onBack }: PackOpeningScreenProps) {
   const isNew = useCallback((card: CardType) => !seenIds.has(card.id), [seenIds]);
 
   const rarityStats = useMemo(() => {
-    const counts: Record<Rarity, number> = { common: 0, rare: 0, legendary: 0 };
+    const counts: Record<Rarity, number> = {
+      common: 0, uncommon: 0, rare: 0, legendary: 0, mythic: 0,
+    };
     for (const c of packCards) counts[c.rarity]++;
     return counts;
   }, [packCards]);
@@ -182,8 +186,10 @@ export function PackOpeningScreen({ onBack }: PackOpeningScreenProps) {
       </header>
       <div className="pack-summary-stats" data-testid="pack-summary-stats">
         {newCount > 0 && <span className="pack-stat pack-stat-new">{newCount} New</span>}
+        {rarityStats.mythic > 0 && <span className="pack-stat pack-stat-mythic">{rarityStats.mythic} Mythic</span>}
         {rarityStats.legendary > 0 && <span className="pack-stat pack-stat-legendary">{rarityStats.legendary} Legendary</span>}
         {rarityStats.rare > 0 && <span className="pack-stat pack-stat-rare">{rarityStats.rare} Rare</span>}
+        {rarityStats.uncommon > 0 && <span className="pack-stat pack-stat-uncommon">{rarityStats.uncommon} Uncommon</span>}
         {rarityStats.common > 0 && <span className="pack-stat pack-stat-common">{rarityStats.common} Common</span>}
       </div>
       <section className="pack-summary-grid" aria-label="Pack cards" data-testid="pack-summary-grid">
