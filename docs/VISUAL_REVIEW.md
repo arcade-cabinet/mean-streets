@@ -119,4 +119,5 @@ characters.
 
 ### Change-log
 
+- 2026-04-17 — Updated fixture set for v0.3 single-lane rewrite: HeatMeter, BlackMarketPanel, HoldingPanel, MythicBadge, and TurfCompositeCard with HP bars replace v0.2 parallel-turf fixtures.
 - 2026-04-15 — Updated fixture set and review targets for v0.2 (stack redesign).
