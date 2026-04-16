@@ -16,10 +16,10 @@ import { createTurf, addToStack, resetTurfIdCounter } from '../board';
 import { createRng } from '../../cards/rng';
 import type { ToughCard, WeaponCard, DrugCard, CurrencyCard } from '../types';
 
-function tough(id: string, power = 4, resistance = 4): ToughCard {
+function tough(id: string, power = 4, resistance = 4, affiliation = 'freelance'): ToughCard {
   return {
     kind: 'tough', id, name: id, tagline: '', archetype: 'bruiser',
-    affiliation: 'freelance', power, resistance, rarity: 'common', abilities: [],
+    affiliation, power, resistance, rarity: 'common', abilities: [],
   };
 }
 
@@ -144,6 +144,44 @@ describe('stepAction — play_card', () => {
     expect(() => {
       stepAction(state, { kind: 'play_card', side: 'A', turfIdx: 1, cardId: 'w1' });
     }).toThrow('Cannot play modifier on empty turf');
+  });
+
+  it('discards a rival-affiliation tough played onto a turf with no buffer (RULES.md §4)', () => {
+    // Turf has a kings_row tough. Playing an iron_devils tough (rival)
+    // onto the same turf with no buffer (no currency, no mediator) must
+    // discard the incoming card rather than violate the turf rule.
+    const state = makeState();
+    addToStack(state.players.A.turfs[0], tough('kr', 4, 4, 'kings_row'));
+    state.players.A.toughsInPlay = 1;
+    state.players.A.hand = [tough('id', 5, 5, 'iron_devils')];
+
+    const result = stepAction(state, { kind: 'play_card', side: 'A', turfIdx: 0, cardId: 'id' });
+
+    // Rival discarded — still counts as an action spent, card is not in
+    // the stack, metric records a discard (not a play).
+    expect(result.reason).toBe('play_card_discarded_rival');
+    expect(state.players.A.turfs[0].stack).toHaveLength(1); // only original kr
+    expect(state.players.A.turfs[0].stack[0].id).toBe('kr');
+    expect(state.players.A.hand).toHaveLength(0);
+    expect(state.metrics.cardsDiscarded).toBe(1);
+    expect(state.metrics.cardsPlayed).toBe(0);
+    expect(state.metrics.toughsPlayed).toBe(0);
+  });
+
+  it('accepts a rival-affiliation tough when a currency buffer is present', () => {
+    const state = makeState();
+    addToStack(state.players.A.turfs[0], tough('kr', 4, 4, 'kings_row'));
+    addToStack(state.players.A.turfs[0], {
+      kind: 'currency', id: 'c1', name: '$1000', denomination: 1000, rarity: 'common',
+    });
+    state.players.A.toughsInPlay = 1;
+    state.players.A.hand = [tough('id', 5, 5, 'iron_devils')];
+
+    const result = stepAction(state, { kind: 'play_card', side: 'A', turfIdx: 0, cardId: 'id' });
+
+    expect(result.reason).not.toBe('play_card_discarded_rival');
+    expect(state.players.A.turfs[0].stack).toHaveLength(3);
+    expect(state.metrics.toughsPlayed).toBe(1);
   });
 });
 

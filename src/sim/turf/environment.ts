@@ -11,6 +11,7 @@ import {
   addToStack,
   hasToughOnTurf,
   seizeTurf,
+  turfAffiliationConflict,
 } from './board';
 import {
   resolveDirectStrike,
@@ -69,8 +70,19 @@ export function emptyMetrics(): TurfMetrics {
 export function actionsForTurn(config: GameConfig, turnNumber: number, side?: 'A' | 'B'): number {
   const base = turnNumber <= 1 ? config.firstTurnActions : config.actionsPerTurn;
   if (!side) return base;
-  const profiles = TURF_SIM_CONFIG.difficultyProfiles as Record<string, { actionBonus: number; playerActionPenalty: number }>;
+  const profiles = TURF_SIM_CONFIG.difficultyProfiles as Record<
+    string,
+    { actionBonus: number; playerActionPenalty: number } | undefined
+  >;
   const profile = profiles[config.difficulty];
+  if (!profile) {
+    // Missing difficulty profile is a config bug — surface immediately
+    // rather than silently returning `base` and masking the miswire.
+    throw new Error(
+      `actionsForTurn: missing difficulty profile for "${config.difficulty}" in ` +
+        `turf-sim.json. Known tiers: ${Object.keys(profiles).join(', ')}`,
+    );
+  }
   const isAI = side === 'B';
   if (isAI && profile.actionBonus) return base + profile.actionBonus;
   if (!isAI && profile.playerActionPenalty) return Math.max(1, base - profile.playerActionPenalty);
@@ -243,6 +255,16 @@ export function stepAction(
       if (!turf) throw new Error('Invalid turf index');
       if (isModifierCard(card) && !hasToughOnTurf(turf))
         throw new Error('Cannot play modifier on empty turf');
+      // RULES.md §4: rivals cannot coexist on a turf without a buffer.
+      // If the incoming card is a tough that would create an unresolved
+      // clash, the play is discarded (card lost, action spent). Mirrors
+      // the funded-recruit re-evaluation behaviour.
+      if (turfAffiliationConflict(turf, card)) {
+        state.metrics.cardsDiscarded++;
+        reward += TURF_SIM_CONFIG.rewards.discard;
+        reason = 'play_card_discarded_rival';
+        break;
+      }
       addToStack(turf, card);
       state.metrics.cardsPlayed++;
       if (card.kind === 'tough') {

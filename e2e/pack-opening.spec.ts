@@ -17,13 +17,18 @@ test.describe('pack opening flow', () => {
 
     await expect(page.getByTestId('pack-reveal-stage')).toBeVisible({ timeout: 5_000 });
 
-    for (let i = 0; i < 5; i++) {
-      const stage = page.getByTestId('pack-reveal-stage');
+    // Advance reveals by tapping the stage until the summary grid
+    // appears. Cap iterations at 10 (pack default size is 5) and poll
+    // on the actual state change rather than blind waitForTimeouts —
+    // faster and robust to reveal animation drift across CI runners.
+    const stage = page.getByTestId('pack-reveal-stage');
+    const summaryGrid = page.getByTestId('pack-summary-grid');
+    for (let i = 0; i < 10; i++) {
+      if (await summaryGrid.isVisible().catch(() => false)) break;
       await activate(stage, testInfo);
-      await page.waitForTimeout(400);
     }
 
-    await expect(page.getByTestId('pack-summary-grid')).toBeVisible({ timeout: 5_000 });
+    await expect(summaryGrid).toBeVisible({ timeout: 5_000 });
     await expect(page.getByTestId('pack-summary-stats')).toBeVisible();
     await expect(page.getByTestId('pack-done-btn')).toBeVisible();
 
