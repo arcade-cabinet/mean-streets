@@ -11,7 +11,6 @@
     "predev": "node scripts/compile-cards.mjs",
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "build:cards": "node scripts/compile-cards.mjs",
     "cards:compile": "node scripts/compile-cards.mjs",
     "cards:validate": "tsx scripts/validate-raw-cards.ts",
     "lint": "biome lint .",

@@ -6,19 +6,29 @@ import { loadProfile, saveProfile } from './storage';
 import { loadToughCards } from '../../sim/cards/catalog';
 import { generateWeapons, generateDrugs, generateCurrency } from '../../sim/turf/generators';
 
-function allCardPool(): Card[] {
-  return [
+// Lazily build the catalog pool and cache its id→card map. The pool is
+// deterministic (toughs from compiled JSON, weapons/drugs/currency from
+// seeded generators with no arg) so one build is enough for the process
+// lifetime — every prior call to `resolveCardIds` rebuilt ~200 cards
+// plus a Map, turning an O(1) lookup into an O(n) allocation spike
+// hot-called from loadCollection / addCardsToCollection.
+let cachedPoolMap: Map<string, Card> | null = null;
+
+function getPoolMap(): Map<string, Card> {
+  if (cachedPoolMap !== null) return cachedPoolMap;
+  const pool: Card[] = [
     ...loadToughCards(),
     ...generateWeapons(),
     ...generateDrugs(),
     ...generateCurrency(),
   ];
+  cachedPoolMap = new Map(pool.map((c) => [c.id, c]));
+  return cachedPoolMap;
 }
 
 function resolveCardIds(ids: string[]): Card[] {
-  const pool = allCardPool();
-  const poolMap = new Map(pool.map(c => [c.id, c]));
-  return ids.map(id => poolMap.get(id)).filter((c): c is Card => c != null);
+  const poolMap = getPoolMap();
+  return ids.map((id) => poolMap.get(id)).filter((c): c is Card => c != null);
 }
 
 export async function loadCollection(): Promise<Card[]> {

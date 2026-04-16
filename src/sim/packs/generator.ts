@@ -8,6 +8,33 @@ import { PACK_CATEGORY, PACK_SIZE } from './types';
 
 const RARITY_TIERS: Rarity[] = ['common', 'rare', 'legendary'];
 
+const VALID_PACK_KINDS: ReadonlySet<string> = new Set([
+  'tough-5', 'weapon-5', 'drug-5', 'currency-5', 'single', 'triple',
+]);
+
+function isPackRewardArray(value: unknown): value is PackReward[] {
+  if (!Array.isArray(value)) return false;
+  return value.every(
+    (r) =>
+      r != null &&
+      typeof r === 'object' &&
+      typeof (r as { kind?: unknown }).kind === 'string' &&
+      VALID_PACK_KINDS.has((r as { kind: string }).kind) &&
+      typeof (r as { count?: unknown }).count === 'number' &&
+      (r as { count: number }).count >= 0,
+  );
+}
+
+function coercePackRewards(value: unknown, source: string): PackReward[] {
+  if (!isPackRewardArray(value)) {
+    throw new Error(
+      `${source}: expected PackReward[] (array of {kind, count}) with known kinds ` +
+        `[${[...VALID_PACK_KINDS].join(', ')}], got: ${JSON.stringify(value)}`,
+    );
+  }
+  return value;
+}
+
 function rollRarity(rng: Rng, suddenDeathWin: boolean): Rarity {
   const cfg = TURF_SIM_CONFIG.packEconomy.rarityWeights;
   const total = cfg.common + cfg.rare + cfg.legendary;
@@ -92,7 +119,10 @@ export function generatePack(
 }
 
 export function starterGrant(rng: Rng): Card[] {
-  const grants = TURF_SIM_CONFIG.packEconomy.starterGrant as PackReward[];
+  const grants = coercePackRewards(
+    TURF_SIM_CONFIG.packEconomy.starterGrant,
+    'turf-sim.json packEconomy.starterGrant',
+  );
   const cards: Card[] = [];
   for (const grant of grants) {
     for (let i = 0; i < grant.count; i++) {
@@ -112,5 +142,8 @@ export function matchRewardPacks(
   const tier = rewardCfg[difficulty as keyof typeof rewardCfg];
   if (!tier) return [];
   const rewards = suddenDeath ? tier.suddenDeath : tier.base;
-  return rewards as PackReward[];
+  return coercePackRewards(
+    rewards,
+    `turf-sim.json packEconomy.rewards.${difficulty}.${suddenDeath ? 'suddenDeath' : 'base'}`,
+  );
 }

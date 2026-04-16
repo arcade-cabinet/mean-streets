@@ -18,7 +18,10 @@ function toToughCard(card: CompiledTough): ToughCard {
     power: card.power,
     resistance: card.resistance,
     rarity: card.rarity,
-    abilities: card.abilities,
+    // Defensive copy: each callsite gets its own abilities array so a
+    // downstream mutation (e.g. ECS system appending a buff tag) cannot
+    // bleed into the shared catalog snapshot.
+    abilities: [...card.abilities],
   };
 }
 
@@ -30,6 +33,12 @@ export function loadStarterToughCards(starterCount = simConfig.starterCollection
   return loadToughCards().slice(0, starterCount);
 }
 
+/**
+ * Return a fresh copy of every compiled tough. `parsed` is a module-level
+ * Zod-parsed array; returning it directly would hand callers the shared
+ * mutable reference and any push/splice would corrupt every other
+ * consumer for the life of the process.
+ */
 export function loadCompiledToughs(): CompiledTough[] {
-  return parsed;
+  return parsed.map((t) => ({ ...t, abilities: [...t.abilities] }));
 }
