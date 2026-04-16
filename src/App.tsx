@@ -43,7 +43,6 @@ interface ActiveRunState {
   phase: 'combat';
   config: GameConfig;
   seed: number;
-  deck?: Parameters<typeof createGameWorld>[2];
 }
 
 const EMPTY_METRICS: TurfMetrics = emptyMetrics();
@@ -115,11 +114,10 @@ export default function App() {
         return;
       }
 
-      const resumedWorld = createGameWorld(
-        activeRun.config,
-        activeRun.seed,
-        activeRun.deck,
-      );
+      // Resume from seed only — the seed-driven shuffle in createGameWorld
+      // deterministically reproduces the original deck order without
+      // persisting the full card array.
+      const resumedWorld = createGameWorld(activeRun.config, activeRun.seed);
       setWorld(resumedWorld);
       setActiveConfig(activeRun.config);
       setScreen(activeRun.phase);
