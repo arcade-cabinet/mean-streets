@@ -14,24 +14,49 @@ import type {
 
 function tough(id: string, power = 4, resistance = 4): ToughCard {
   return {
-    kind: 'tough', id, name: id, tagline: '', archetype: 'brawler',
-    affiliation: 'freelance', power, resistance, rarity: 'common', abilities: [],
+    kind: 'tough',
+    id,
+    name: id,
+    tagline: '',
+    archetype: 'brawler',
+    affiliation: 'freelance',
+    power,
+    resistance,
+    rarity: 'common',
+    abilities: [],
+    maxHp: resistance,
+    hp: resistance,
   };
 }
 
 function weapon(id: string): WeaponCard {
   return {
-    kind: 'weapon', id, name: id, category: 'bladed',
-    power: 2, resistance: 1, rarity: 'common', abilities: [],
+    kind: 'weapon',
+    id,
+    name: id,
+    category: 'bladed',
+    power: 2,
+    resistance: 1,
+    rarity: 'common',
+    abilities: [],
   };
 }
 
-function makePlayer(turfsCount: number, pending: Card | null = null): PlayerState {
+function makePlayer(
+  turfsCount: number,
+  pending: Card | null = null,
+): PlayerState {
   const turfs = [];
   for (let i = 0; i < turfsCount; i++) turfs.push(createTurf());
   return {
-    turfs, deck: [], discard: [], toughsInPlay: 0,
-    actionsRemaining: 5, pending, queued: [], turnEnded: false,
+    turfs,
+    deck: [],
+    discard: [],
+    toughsInPlay: 0,
+    actionsRemaining: 5,
+    pending,
+    queued: [],
+    turnEnded: false,
   };
 }
 
@@ -40,12 +65,26 @@ function mkState(): TurfGameState {
   return {
     config: { ...DEFAULT_GAME_CONFIG },
     players: { A: makePlayer(2), B: makePlayer(2) },
-    firstPlayer: 'A', turnNumber: 1, phase: 'action',
-    aiState: { A: 'idle', B: 'idle' }, aiTurnsInState: { A: 0, B: 0 },
+    firstPlayer: 'A',
+    turnNumber: 1,
+    phase: 'action',
+    aiState: { A: 'idle', B: 'idle' },
+    aiTurnsInState: { A: 0, B: 0 },
     aiMemory: { A: emptyPlannerMemory(), B: emptyPlannerMemory() },
-    plannerTrace: [], policySamples: [],
-    rng: createRng(42), seed: 42, winner: null, endReason: null,
+    plannerTrace: [],
+    policySamples: [],
+    rng: createRng(42),
+    seed: 42,
+    winner: null,
+    endReason: null,
     metrics: emptyMetrics(),
+    heat: 0,
+    blackMarket: [],
+    holding: { A: [], B: [] },
+    lockup: { A: [], B: [] },
+    mythicPool: [],
+    mythicAssignments: {},
+    warStats: { seizures: [] },
   };
 }
 
@@ -54,7 +93,7 @@ describe('closed ranks — end-of-turn flipping', () => {
     const state = mkState();
     stepAction(state, { kind: 'end_turn', side: 'A' });
     // Both empty-stack turfs are now in closed ranks.
-    expect(state.players.A.turfs.every(t => t.closedRanks)).toBe(true);
+    expect(state.players.A.turfs.every((t) => t.closedRanks)).toBe(true);
   });
 
   it('turf with a living tough is NOT in closed ranks', () => {
@@ -77,7 +116,7 @@ describe('closed ranks — end-of-turn flipping', () => {
     // The modifier popped; only the tough remains on top.
     expect(state.players.A.turfs[0].stack).toHaveLength(1);
     expect(state.players.A.turfs[0].stack[0].card.id).toBe('anchor');
-    expect(state.players.A.discard.some(c => c.id === 'stranded')).toBe(true);
+    expect(state.players.A.discard.some((c) => c.id === 'stranded')).toBe(true);
   });
 
   it('closedRanksEnds metric increments per transition into closed ranks', () => {
@@ -110,7 +149,9 @@ describe('closed ranks — offensive restriction', () => {
     state.players.B.toughsInPlay = 1;
 
     const actions = enumerateLegalActions(state, 'A');
-    const strikes = actions.filter(a => a.kind === 'direct_strike' && a.turfIdx === 0);
+    const strikes = actions.filter(
+      (a) => a.kind === 'direct_strike' && a.turfIdx === 0,
+    );
     // Even though there's a tough on the turf, closedRanks gates offense.
     expect(strikes).toHaveLength(0);
   });
@@ -124,7 +165,9 @@ describe('closed ranks — offensive restriction', () => {
     state.players.B.toughsInPlay = 1;
 
     const actions = enumerateLegalActions(state, 'A');
-    const strikes = actions.filter(a => a.kind === 'direct_strike' && a.turfIdx === 0);
+    const strikes = actions.filter(
+      (a) => a.kind === 'direct_strike' && a.turfIdx === 0,
+    );
     expect(strikes.length).toBeGreaterThan(0);
   });
 });

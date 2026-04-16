@@ -7,32 +7,56 @@ import {
   emptyPlannerMemory,
   stepAction,
 } from '../environment';
-import {
-  createObservation,
-  enumerateLegalActions,
-} from '../env-query';
+import { createObservation, enumerateLegalActions } from '../env-query';
 import { createTurf, addToStack, resetTurfIdCounter } from '../board';
 import { createRng } from '../../cards/rng';
 import type { ToughCard, WeaponCard, DrugCard, CurrencyCard } from '../types';
 
-function tough(id: string, power = 4, resistance = 4, affiliation = 'freelance'): ToughCard {
+function tough(
+  id: string,
+  power = 4,
+  resistance = 4,
+  affiliation = 'freelance',
+): ToughCard {
   return {
-    kind: 'tough', id, name: id, tagline: '', archetype: 'brawler',
-    affiliation, power, resistance, rarity: 'common', abilities: [],
+    kind: 'tough',
+    id,
+    name: id,
+    tagline: '',
+    archetype: 'brawler',
+    affiliation,
+    power,
+    resistance,
+    rarity: 'common',
+    abilities: [],
+    maxHp: resistance,
+    hp: resistance,
   };
 }
 
 function weapon(id: string, power = 3): WeaponCard {
   return {
-    kind: 'weapon', id, name: id, category: 'ranged',
-    power, resistance: 2, rarity: 'common', abilities: [],
+    kind: 'weapon',
+    id,
+    name: id,
+    category: 'ranged',
+    power,
+    resistance: 2,
+    rarity: 'common',
+    abilities: [],
   };
 }
 
 function drug(id: string): DrugCard {
   return {
-    kind: 'drug', id, name: id, category: 'stimulant',
-    power: 2, resistance: 2, rarity: 'common', abilities: [],
+    kind: 'drug',
+    id,
+    name: id,
+    category: 'stimulant',
+    power: 2,
+    resistance: 2,
+    rarity: 'common',
+    abilities: [],
   };
 }
 
@@ -76,6 +100,13 @@ function makeState(overrides: Partial<TurfGameState> = {}): TurfGameState {
     winner: null,
     endReason: null,
     metrics: emptyMetrics(),
+    heat: 0,
+    blackMarket: [],
+    holding: { A: [], B: [] },
+    lockup: { A: [], B: [] },
+    mythicPool: [],
+    mythicAssignments: {},
+    warStats: { seizures: [] },
     ...overrides,
   };
 }
@@ -91,7 +122,11 @@ describe('actionsForTurn', () => {
   });
 
   it('respects custom config', () => {
-    const config: GameConfig = { ...DEFAULT_GAME_CONFIG, actionsPerTurn: 4, firstTurnActions: 6 };
+    const config: GameConfig = {
+      ...DEFAULT_GAME_CONFIG,
+      actionsPerTurn: 4,
+      firstTurnActions: 6,
+    };
     expect(actionsForTurn(config, 1)).toBe(6);
     expect(actionsForTurn(config, 3)).toBe(4);
   });
@@ -103,7 +138,12 @@ describe('stepAction — play_card', () => {
     const t = tough('t1');
     state.players.A.pending = t;
 
-    const result = stepAction(state, { kind: 'play_card', side: 'A', turfIdx: 0, cardId: 't1' });
+    const result = stepAction(state, {
+      kind: 'play_card',
+      side: 'A',
+      turfIdx: 0,
+      cardId: 't1',
+    });
 
     expect(result.reward).toBeGreaterThan(0);
     expect(state.players.A.turfs[0].stack).toHaveLength(1);
@@ -122,7 +162,12 @@ describe('stepAction — play_card', () => {
     state.players.A.toughsInPlay = 1;
     state.players.A.pending = w;
 
-    const result = stepAction(state, { kind: 'play_card', side: 'A', turfIdx: 0, cardId: 'w1' });
+    const result = stepAction(state, {
+      kind: 'play_card',
+      side: 'A',
+      turfIdx: 0,
+      cardId: 'w1',
+    });
 
     expect(result.reward).toBeGreaterThan(0);
     expect(state.players.A.turfs[0].stack).toHaveLength(2);
@@ -134,7 +179,12 @@ describe('stepAction — play_card', () => {
     state.players.A.pending = weapon('w1');
 
     expect(() => {
-      stepAction(state, { kind: 'play_card', side: 'A', turfIdx: 0, cardId: 'w1' });
+      stepAction(state, {
+        kind: 'play_card',
+        side: 'A',
+        turfIdx: 0,
+        cardId: 'w1',
+      });
     }).toThrow(/modifier/);
   });
 
@@ -144,7 +194,12 @@ describe('stepAction — play_card', () => {
     state.players.A.toughsInPlay = 0;
 
     expect(() =>
-      stepAction(state, { kind: 'play_card', side: 'A', turfIdx: 0, cardId: 'w1' }),
+      stepAction(state, {
+        kind: 'play_card',
+        side: 'A',
+        turfIdx: 0,
+        cardId: 'w1',
+      }),
     ).toThrow(/modifier/);
 
     expect(state.players.A.pending?.id).toBe('w1');
@@ -157,7 +212,12 @@ describe('stepAction — play_card', () => {
     state.players.A.pending = weapon('w1');
 
     expect(() => {
-      stepAction(state, { kind: 'play_card', side: 'A', turfIdx: 1, cardId: 'w1' });
+      stepAction(state, {
+        kind: 'play_card',
+        side: 'A',
+        turfIdx: 1,
+        cardId: 'w1',
+      });
     }).toThrow(/modifier/);
   });
 
@@ -167,7 +227,12 @@ describe('stepAction — play_card', () => {
     state.players.A.toughsInPlay = 1;
     state.players.A.pending = tough('id', 5, 5, 'iron_devils');
 
-    const result = stepAction(state, { kind: 'play_card', side: 'A', turfIdx: 0, cardId: 'id' });
+    const result = stepAction(state, {
+      kind: 'play_card',
+      side: 'A',
+      turfIdx: 0,
+      cardId: 'id',
+    });
 
     expect(result.reason).toBe('play_card_discarded_rival');
     expect(state.players.A.turfs[0].stack).toHaveLength(1);
@@ -182,12 +247,21 @@ describe('stepAction — play_card', () => {
     const state = makeState();
     addToStack(state.players.A.turfs[0], tough('kr', 4, 4, 'kings_row'));
     addToStack(state.players.A.turfs[0], {
-      kind: 'currency', id: 'c1', name: '$1000', denomination: 1000, rarity: 'common',
+      kind: 'currency',
+      id: 'c1',
+      name: '$1000',
+      denomination: 1000,
+      rarity: 'common',
     });
     state.players.A.toughsInPlay = 1;
     state.players.A.pending = tough('id', 5, 5, 'iron_devils');
 
-    const result = stepAction(state, { kind: 'play_card', side: 'A', turfIdx: 0, cardId: 'id' });
+    const result = stepAction(state, {
+      kind: 'play_card',
+      side: 'A',
+      turfIdx: 0,
+      cardId: 'id',
+    });
 
     expect(result.reason).not.toBe('play_card_discarded_rival');
     expect(state.players.A.turfs[0].stack).toHaveLength(3);
@@ -201,7 +275,11 @@ describe('stepAction — discard', () => {
     state.players.A.pending = weapon('w1');
     const before = state.players.A.actionsRemaining;
 
-    const result = stepAction(state, { kind: 'discard', side: 'A', cardId: 'w1' });
+    const result = stepAction(state, {
+      kind: 'discard',
+      side: 'A',
+      cardId: 'w1',
+    });
 
     expect(state.players.A.actionsRemaining).toBe(before);
     expect(state.players.A.discard).toHaveLength(1);
@@ -233,7 +311,10 @@ describe('stepAction — direct_strike (queue)', () => {
     state.players.B.toughsInPlay = 1;
 
     const result = stepAction(state, {
-      kind: 'direct_strike', side: 'A', turfIdx: 0, targetTurfIdx: 0,
+      kind: 'direct_strike',
+      side: 'A',
+      turfIdx: 0,
+      targetTurfIdx: 0,
     });
 
     expect(result.reason).toBe('direct_strike_queued');
@@ -254,7 +335,10 @@ describe('stepAction — funded_recruit (queue)', () => {
     state.players.B.toughsInPlay = 1;
 
     const result = stepAction(state, {
-      kind: 'funded_recruit', side: 'A', turfIdx: 0, targetTurfIdx: 0,
+      kind: 'funded_recruit',
+      side: 'A',
+      turfIdx: 0,
+      targetTurfIdx: 0,
     });
 
     expect(result.reason).toBe('funded_recruit_queued');
@@ -283,7 +367,10 @@ describe('win detection', () => {
 
     // Queue a strike, end both turns, expect resolve phase to seize and win.
     stepAction(state, {
-      kind: 'direct_strike', side: 'A', turfIdx: 0, targetTurfIdx: 0,
+      kind: 'direct_strike',
+      side: 'A',
+      turfIdx: 0,
+      targetTurfIdx: 0,
     });
     stepAction(state, { kind: 'end_turn', side: 'A' });
     stepAction(state, { kind: 'end_turn', side: 'B' });
@@ -320,9 +407,9 @@ describe('stepAction — draw', () => {
     state.players.A.deck = [tough('d1'), weapon('w1')];
     stepAction(state, { kind: 'draw', side: 'A' });
 
-    expect(() =>
-      stepAction(state, { kind: 'draw', side: 'A' }),
-    ).toThrow(/pending/);
+    expect(() => stepAction(state, { kind: 'draw', side: 'A' })).toThrow(
+      /pending/,
+    );
   });
 });
 
@@ -332,7 +419,7 @@ describe('enumerateLegalActions', () => {
     state.players.A.pending = weapon('w1');
 
     const actions = enumerateLegalActions(state, 'A');
-    const playActions = actions.filter(a => a.kind === 'play_card');
+    const playActions = actions.filter((a) => a.kind === 'play_card');
 
     expect(playActions).toHaveLength(0);
   });
@@ -342,7 +429,7 @@ describe('enumerateLegalActions', () => {
     state.players.A.pending = tough('t1');
 
     const actions = enumerateLegalActions(state, 'A');
-    const playActions = actions.filter(a => a.kind === 'play_card');
+    const playActions = actions.filter((a) => a.kind === 'play_card');
 
     expect(playActions.length).toBeGreaterThan(0);
   });
@@ -359,7 +446,7 @@ describe('enumerateLegalActions', () => {
     state.players.A.deck = [tough('d1')];
 
     const actions = enumerateLegalActions(state, 'A');
-    expect(actions.some(a => a.kind === 'draw')).toBe(true);
+    expect(actions.some((a) => a.kind === 'draw')).toBe(true);
   });
 
   // Suppress unused import warnings in our fixture surface.

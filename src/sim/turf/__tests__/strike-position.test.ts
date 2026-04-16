@@ -10,17 +10,38 @@ import {
   transferMods,
 } from '../stack-ops';
 
-function tough(id: string, power = 5, resistance = 5, archetype = 'bruiser'): ToughCard {
+function tough(
+  id: string,
+  power = 5,
+  resistance = 5,
+  archetype = 'bruiser',
+): ToughCard {
   return {
-    kind: 'tough', id, name: id, tagline: '', archetype,
-    affiliation: 'freelance', power, resistance, rarity: 'common', abilities: [],
+    kind: 'tough',
+    id,
+    name: id,
+    tagline: '',
+    archetype,
+    affiliation: 'freelance',
+    power,
+    resistance,
+    rarity: 'common',
+    abilities: [],
+    maxHp: resistance,
+    hp: resistance,
   };
 }
 
 function weapon(id: string, power = 3): WeaponCard {
   return {
-    kind: 'weapon', id, name: id, category: 'bladed',
-    power, resistance: 1, rarity: 'common', abilities: [],
+    kind: 'weapon',
+    id,
+    name: id,
+    category: 'bladed',
+    power,
+    resistance: 1,
+    rarity: 'common',
+    abilities: [],
   };
 }
 
@@ -150,11 +171,16 @@ describe('killToughAtIdx', () => {
   });
 
   it('only removes mods belonging to the killed tough', () => {
-    const turf = turfWith(tough('t1'), weapon('w-for-t1'), tough('t2'), weapon('w-for-t2'));
+    const turf = turfWith(
+      tough('t1'),
+      weapon('w-for-t1'),
+      tough('t2'),
+      weapon('w-for-t2'),
+    );
     const { mods } = killToughAtIdx(turf, 2);
     expect(mods).toHaveLength(1);
     expect(mods[0].id).toBe('w-for-t2');
-    expect(turf.stack.map(c => c.card.id)).toEqual(['t1', 'w-for-t1']);
+    expect(turf.stack.map((c) => c.card.id)).toEqual(['t1', 'w-for-t1']);
   });
 
   it('handles killing bottom tough with mods above until next tough', () => {

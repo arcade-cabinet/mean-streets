@@ -57,7 +57,8 @@ describe('App flow', () => {
     expect(document.querySelector('[data-testid="diff-tile-hard"]')).not.toBeNull();
     expect(document.querySelector('[data-testid="diff-tile-nightmare"]')).not.toBeNull();
     expect(document.querySelector('[data-testid="diff-tile-ultra-nightmare"]')).not.toBeNull();
-    expect(document.querySelector('[data-testid="diff-sudden-death"]')).not.toBeNull();
+    // v0.3 removed the Sudden Death toggle.
+    expect(document.querySelector('[data-testid="diff-sudden-death"]')).toBeNull();
     expect(document.querySelector('[data-testid="diff-start"]')).not.toBeNull();
   });
 

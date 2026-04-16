@@ -14,24 +14,49 @@ import type {
 
 function tough(id: string, power = 4, resistance = 4): ToughCard {
   return {
-    kind: 'tough', id, name: id, tagline: '', archetype: 'brawler',
-    affiliation: 'freelance', power, resistance, rarity: 'common', abilities: [],
+    kind: 'tough',
+    id,
+    name: id,
+    tagline: '',
+    archetype: 'brawler',
+    affiliation: 'freelance',
+    power,
+    resistance,
+    rarity: 'common',
+    abilities: [],
+    maxHp: resistance,
+    hp: resistance,
   };
 }
 
 function weapon(id: string): WeaponCard {
   return {
-    kind: 'weapon', id, name: id, category: 'bladed',
-    power: 2, resistance: 1, rarity: 'common', abilities: [],
+    kind: 'weapon',
+    id,
+    name: id,
+    category: 'bladed',
+    power: 2,
+    resistance: 1,
+    rarity: 'common',
+    abilities: [],
   };
 }
 
-function makePlayer(turfsCount: number, pending: Card | null = null): PlayerState {
+function makePlayer(
+  turfsCount: number,
+  pending: Card | null = null,
+): PlayerState {
   const turfs = [];
   for (let i = 0; i < turfsCount; i++) turfs.push(createTurf());
   return {
-    turfs, deck: [], discard: [], toughsInPlay: 0,
-    actionsRemaining: 5, pending, queued: [], turnEnded: false,
+    turfs,
+    deck: [],
+    discard: [],
+    toughsInPlay: 0,
+    actionsRemaining: 5,
+    pending,
+    queued: [],
+    turnEnded: false,
   };
 }
 
@@ -40,12 +65,26 @@ function mkState(): TurfGameState {
   return {
     config: { ...DEFAULT_GAME_CONFIG },
     players: { A: makePlayer(2), B: makePlayer(2) },
-    firstPlayer: 'A', turnNumber: 1, phase: 'action',
-    aiState: { A: 'idle', B: 'idle' }, aiTurnsInState: { A: 0, B: 0 },
+    firstPlayer: 'A',
+    turnNumber: 1,
+    phase: 'action',
+    aiState: { A: 'idle', B: 'idle' },
+    aiTurnsInState: { A: 0, B: 0 },
     aiMemory: { A: emptyPlannerMemory(), B: emptyPlannerMemory() },
-    plannerTrace: [], policySamples: [],
-    rng: createRng(42), seed: 42, winner: null, endReason: null,
+    plannerTrace: [],
+    policySamples: [],
+    rng: createRng(42),
+    seed: 42,
+    winner: null,
+    endReason: null,
     metrics: emptyMetrics(),
+    heat: 0,
+    blackMarket: [],
+    holding: { A: [], B: [] },
+    lockup: { A: [], B: [] },
+    mythicPool: [],
+    mythicAssignments: {},
+    warStats: { seizures: [] },
   };
 }
 
@@ -57,7 +96,7 @@ describe('drawing as an action', () => {
     stepAction(state, { kind: 'draw', side: 'A' });
 
     expect(state.players.A.pending?.id).toBe('d1');
-    expect(state.players.A.deck.map(c => c.id)).toEqual(['d2']);
+    expect(state.players.A.deck.map((c) => c.id)).toEqual(['d2']);
   });
 
   it('draw costs exactly one action', () => {
@@ -82,16 +121,16 @@ describe('drawing as an action', () => {
     state.players.A.pending = tough('already');
     state.players.A.deck = [tough('d1')];
 
-    expect(() =>
-      stepAction(state, { kind: 'draw', side: 'A' }),
-    ).toThrow(/pending/);
+    expect(() => stepAction(state, { kind: 'draw', side: 'A' })).toThrow(
+      /pending/,
+    );
   });
 
   it('throws when deck is empty', () => {
     const state = mkState();
-    expect(() =>
-      stepAction(state, { kind: 'draw', side: 'A' }),
-    ).toThrow(/empty/);
+    expect(() => stepAction(state, { kind: 'draw', side: 'A' })).toThrow(
+      /empty/,
+    );
   });
 });
 
@@ -101,7 +140,10 @@ describe('pending-slot placement lifecycle', () => {
     state.players.A.pending = tough('t1');
 
     stepAction(state, {
-      kind: 'play_card', side: 'A', turfIdx: 0, cardId: 't1',
+      kind: 'play_card',
+      side: 'A',
+      turfIdx: 0,
+      cardId: 't1',
     });
 
     expect(state.players.A.pending).toBeNull();
@@ -117,7 +159,7 @@ describe('pending-slot placement lifecycle', () => {
 
     expect(state.players.A.pending).toBeNull();
     expect(state.players.A.actionsRemaining).toBe(before);
-    expect(state.players.A.discard.some(c => c.id === 'burn')).toBe(true);
+    expect(state.players.A.discard.some((c) => c.id === 'burn')).toBe(true);
   });
 
   it('a stuck modifier in pending at resolve time is discarded — not returned', () => {
@@ -130,12 +172,12 @@ describe('pending-slot placement lifecycle', () => {
     resolvePhase(state);
 
     expect(state.players.A.pending).toBeNull();
-    expect(state.players.A.discard.some(c => c.id === 'orphan')).toBe(true);
+    expect(state.players.A.discard.some((c) => c.id === 'orphan')).toBe(true);
     // Critically: the card is NOT back on the deck.
-    expect(state.players.A.deck.some(c => c.id === 'orphan')).toBe(false);
+    expect(state.players.A.deck.some((c) => c.id === 'orphan')).toBe(false);
   });
 
-  it('a tough in pending at resolve is also discarded (can\'t be held)', () => {
+  it("a tough in pending at resolve is also discarded (can't be held)", () => {
     const state = mkState();
     state.players.A.pending = tough('held-over');
     state.players.A.turnEnded = true;
@@ -144,6 +186,8 @@ describe('pending-slot placement lifecycle', () => {
     resolvePhase(state);
 
     expect(state.players.A.pending).toBeNull();
-    expect(state.players.A.discard.some(c => c.id === 'held-over')).toBe(true);
+    expect(state.players.A.discard.some((c) => c.id === 'held-over')).toBe(
+      true,
+    );
   });
 });
