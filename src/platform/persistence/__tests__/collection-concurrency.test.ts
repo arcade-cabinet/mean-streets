@@ -66,6 +66,34 @@ describe('collection concurrency', () => {
     expect(current.unlockedCardIds.sort()).toEqual(cards.map((c) => c.id).sort());
   });
 
+  it('concurrent loadCollection on a fresh install grants the starter exactly once', async () => {
+    // Regression pin: prior `loadCollection` did
+    //   if (profile.unlockedCardIds.length === 0) grantStarterCollection()
+    // without holding the profile lock. Two concurrent callers on a
+    // first-run install both saw 0 ids, both granted, and the second
+    // save won → starter was effectively granted twice (wasteful at
+    // best, cause of RNG drift at worst). Now the fast path returns
+    // without the lock; the slow path re-reads under the lock and the
+    // second caller sees the populated collection, returning it.
+    expect(current.unlockedCardIds).toHaveLength(0);
+
+    // Dynamically import inside the test so the cached module state
+    // from any prior test run doesn't leak.
+    const { loadCollection } = await import('../collection');
+
+    const [a, b] = await Promise.all([loadCollection(), loadCollection()]);
+
+    // Both callers got the same starter set (by id).
+    expect(a.map((c) => c.id).sort()).toEqual(b.map((c) => c.id).sort());
+
+    // Save was called at most once during the grant — subsequent loads
+    // should not re-grant (the second caller sees the populated state).
+    // We can't introspect call count without leaky behaviour, so assert
+    // that a third loadCollection returns the same ids without doubling.
+    const third = await loadCollection();
+    expect(third.map((c) => c.id).sort()).toEqual(a.map((c) => c.id).sort());
+  });
+
   it('saveCollection does not clobber an interleaved addCardsToCollection', async () => {
     current.unlockedCardIds = ['existing-1'];
 

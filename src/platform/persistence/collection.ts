@@ -33,10 +33,26 @@ function resolveCardIds(ids: string[]): Card[] {
 
 export async function loadCollection(): Promise<Card[]> {
   const profile = await loadProfile();
-  if (profile.unlockedCardIds.length === 0) {
-    return grantStarterCollection();
+  if (profile.unlockedCardIds.length > 0) {
+    return resolveCardIds(profile.unlockedCardIds);
   }
-  return resolveCardIds(profile.unlockedCardIds);
+  // First-run starter grant must serialize with other writers. Without
+  // the lock, two concurrent `loadCollection` calls on a fresh install
+  // would both see an empty collection and both produce a starter
+  // grant — granting twice. `withProfileLock` ensures only the first
+  // caller grants; the second sees the populated collection after the
+  // first finishes.
+  return withProfileLock(async () => {
+    const reread = await loadProfile();
+    if (reread.unlockedCardIds.length > 0) {
+      return resolveCardIds(reread.unlockedCardIds);
+    }
+    const rng = createRng(randomSeed());
+    const cards = starterGrant(rng);
+    reread.unlockedCardIds = cards.map((c) => c.id);
+    await saveProfile(reread);
+    return cards;
+  });
 }
 
 // ── Profile update serialization ────────────────────────────
