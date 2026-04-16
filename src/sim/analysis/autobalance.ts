@@ -120,11 +120,22 @@ function planModifierEdit(
     resistance: number[];
   };
   const currentPower = raw.power[raw.power.length - 1];
+  const currentRes = raw.resistance[raw.resistance.length - 1];
   const direction: 'buff' | 'nerf' = effect.winRateDelta > 0 ? 'nerf' : 'buff';
   const step = direction === 'buff' ? +1 : -1;
-  const to = clampModifier(currentPower + step);
-  if (to === currentPower) return null;
-  return { stat: 'power', from: currentPower, to, direction };
+  // Mirror planToughEdit: tune the offense-oriented stat if the card's
+  // contribution shows up on the offensive side of the ledger, otherwise
+  // tune resistance. This keeps a defense-oriented weapon/drug from being
+  // rebalanced only via its power stat.
+  const offensive = effect.directDelta + effect.fundedDelta + effect.pushedDelta;
+  if (offensive >= 0) {
+    const to = clampModifier(currentPower + step);
+    if (to === currentPower) return null;
+    return { stat: 'power', from: currentPower, to, direction };
+  }
+  const to = clampModifier(currentRes + step);
+  if (to === currentRes) return null;
+  return { stat: 'resistance', from: currentRes, to, direction };
 }
 
 export interface AutobalanceOptions {

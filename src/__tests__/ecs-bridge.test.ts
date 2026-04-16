@@ -117,7 +117,7 @@ describe('endTurnAction', () => {
 });
 
 describe('strikeAction', () => {
-  it('returns null when game state not found', () => {
+  it('strikeAction resolves a direct_strike after both sides have toughs on turf 0', () => {
     const world = createGameWorld(undefined, SEED);
     const entity = world.queryFirst(PlayerA);
     const pA = entity!.get(PlayerA)!;
