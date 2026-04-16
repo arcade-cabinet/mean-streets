@@ -1,6 +1,6 @@
 import type { Entity, World } from 'koota';
 import { stepAction } from '../sim/turf/environment';
-import type { TurfAction, TurfGameState } from '../sim/turf/types';
+import type { Rarity, TurfAction, TurfGameState } from '../sim/turf/types';
 import { ActionBudget, GameState, PlayerA, PlayerB, ScreenTrait } from './traits';
 import type { ScreenName } from './traits';
 
@@ -156,6 +156,82 @@ export function endTurnAction(world: World, side: 'A' | 'B') {
   const result = stepAction(gs, action);
   syncAll(e, gs);
   return result;
+}
+
+// ── v0.3 action helpers: modifier swap, custody, black market ─────
+
+/** Shared dispatch path for the v0.3 helpers below. */
+function dispatch(world: World, action: TurfAction) {
+  const e = getEntity(world);
+  const gs = e?.get(GameState);
+  if (!e || !gs) return null;
+  const result = stepAction(gs, action);
+  syncAll(e, gs);
+  return result;
+}
+
+/**
+ * Move a modifier between toughs on the same turf. The sim requires
+ * both the source tough (`fromToughId`) and the specific modifier
+ * (`cardId`) to disambiguate when a tough carries multiple modifiers
+ * of the same kind.
+ */
+export function modifierSwapAction(
+  world: World,
+  side: 'A' | 'B',
+  turfIdx: number,
+  fromToughId: string,
+  targetToughId: string,
+  cardId: string,
+) {
+  return dispatch(world, {
+    kind: 'modifier_swap',
+    side,
+    turfIdx,
+    toughId: fromToughId,
+    targetToughId,
+    cardId,
+  });
+}
+
+/** Route an owned tough to the black market (strips modifiers to the pool). */
+export function sendToMarketAction(world: World, side: 'A' | 'B', toughId: string) {
+  return dispatch(world, { kind: 'send_to_market', side, toughId });
+}
+
+/** Place an owned tough into voluntary cop holding (safe, no turn cap). */
+export function sendToHoldingAction(world: World, side: 'A' | 'B', toughId: string) {
+  return dispatch(world, { kind: 'send_to_holding', side, toughId });
+}
+
+/** Trade offered modifiers from the black market for one of `targetRarity`. Free. */
+export function blackMarketTradeAction(
+  world: World,
+  side: 'A' | 'B',
+  offeredModIds: string[],
+  targetRarity: Rarity,
+) {
+  return dispatch(world, {
+    kind: 'black_market_trade',
+    side,
+    offeredMods: offeredModIds,
+    targetRarity,
+  });
+}
+
+/** Heal a tough at the black market by spending offered modifiers. Free. */
+export function blackMarketHealAction(
+  world: World,
+  side: 'A' | 'B',
+  toughId: string,
+  offeredModIds: string[],
+) {
+  return dispatch(world, {
+    kind: 'black_market_heal',
+    side,
+    healTarget: toughId,
+    offeredMods: offeredModIds,
+  });
 }
 
 export function setScreen(world: World, screen: ScreenName): void {

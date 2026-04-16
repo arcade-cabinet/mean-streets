@@ -7,6 +7,11 @@ export {
   TurfOwner,
   SickFlag,
   AffiliationSymbol,
+  Heat,
+  BlackMarket,
+  Holding,
+  Lockup,
+  MythicPool,
 } from './traits';
 export type { ScreenName } from './traits';
 
@@ -20,12 +25,19 @@ export {
   discardPendingAction,
   passAction,
   endTurnAction,
+  modifierSwapAction,
+  sendToMarketAction,
+  sendToHoldingAction,
+  blackMarketTradeAction,
+  blackMarketHealAction,
   setScreen,
 } from './actions';
 
 export {
   useGamePhase,
   usePlayerTurfs,
+  useTurfActive,
+  useTurfReserves,
   useDeckPending,
   useTurnEnded,
   useQueuedStrikes,
@@ -33,5 +45,10 @@ export {
   useScreen,
   useActionBudget,
   useTurfStackComposite,
+  useHeat,
+  useBlackMarket,
+  useHolding,
+  useLockup,
+  useMythicPool,
 } from './hooks';
 export type { TurfStackComposite } from './hooks';
