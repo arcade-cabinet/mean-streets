@@ -2,12 +2,12 @@ import { join } from 'node:path';
 import { createRng } from '../cards/rng';
 import { generateTurfCardPools, type TurfCardPools } from './catalog';
 import { analyzeBalanceResults, loadBalanceHistory, type BalanceAnalysis } from './balance';
-import { createMatch, isGameOver, type MatchState } from './game';
+import { createMatch, isGameOver, runTurn, type MatchState } from './game';
 import { decideAction, TURF_SIM_CONFIG, trainPolicyArtifact } from './ai';
 import { buildAutoDeck, type AutoDeckPolicy } from './deck-builder';
-import { stepAction, drawPhase, actionsForTurn } from './environment';
+import { stepAction } from './environment';
 import { createPolicySample, enumerateLegalActions } from './env-query';
-import type { GameConfig, TurfGameResult, TurfPolicyArtifact } from './types';
+import type { GameConfig, TurfAction, TurfGameResult, TurfGameState, TurfPolicyArtifact } from './types';
 import { DEFAULT_GAME_CONFIG } from './types';
 
 type BenchmarkProfileName = keyof typeof TURF_SIM_CONFIG.benchmarkProfiles;
@@ -53,9 +53,9 @@ function collectDeckIds(match: MatchState, side: 'A' | 'B'): string[] {
   const p = match.game.players[side];
   const ids: string[] = [];
   for (const c of p.deck) ids.push(c.id);
-  for (const c of p.hand) ids.push(c.id);
+  if (p.pending) ids.push(p.pending.id);
   for (const c of p.discard) ids.push(c.id);
-  for (const t of p.turfs) for (const c of t.stack) ids.push(c.id);
+  for (const t of p.turfs) for (const sc of t.stack) ids.push(sc.card.id);
   return ids;
 }
 
@@ -81,6 +81,72 @@ function extractResult(match: MatchState, seed: number): TurfGameResult {
   };
 }
 
+/**
+ * Build the action sequence for a single side of a single turn. Loops
+ * `decideAction` → `stepAction` until the planner issues `end_turn` or the
+ * budget / game ends. Actions are captured so runTurn can record them even
+ * though this helper also executes them (parallel-turn flow keeps both
+ * sides' mutations interleaved inside stepAction).
+ */
+function runSideTurn(
+  state: TurfGameState,
+  side: 'A' | 'B',
+  opts: {
+    rng: ReturnType<typeof createRng>;
+    explorationRate: number;
+    capturePolicySamples?: boolean;
+    policyArtifact?: TurfPolicyArtifact;
+  },
+): void {
+  const player = state.players[side];
+  let iterations = 0;
+  const maxIterations = 64; // hard cap against infinite loops in broken policies
+  while (!player.turnEnded && !state.winner && iterations < maxIterations) {
+    iterations++;
+
+    // Exploration path — random non-terminal action.
+    if (opts.explorationRate > 0 && opts.rng.next() < opts.explorationRate) {
+      const legal = enumerateLegalActions(state, side);
+      const nonTerminal = legal.filter(
+        (a) => a.kind !== 'pass' && a.kind !== 'end_turn',
+      );
+      if (nonTerminal.length > 0) {
+        const pick = nonTerminal[opts.rng.int(0, nonTerminal.length - 1)];
+        stepAction(state, { ...pick, side });
+        if (opts.capturePolicySamples) {
+          state.policySamples.push(
+            createPolicySample(state, side, pick, 'explore', 0),
+          );
+        }
+        continue;
+      }
+    }
+
+    const decision = decideAction(state, side, opts.policyArtifact);
+    state.plannerTrace.push(decision.trace);
+    stepAction(state, { ...decision.action, side });
+
+    if (opts.capturePolicySamples) {
+      state.policySamples.push(
+        createPolicySample(
+          state,
+          side,
+          decision.action,
+          decision.trace.chosenGoal,
+          0,
+        ),
+      );
+    }
+
+    if (decision.action.kind === 'end_turn') break;
+  }
+
+  // Safety: if we blew the iteration cap without ending, synthesize end_turn.
+  if (!player.turnEnded && !state.winner) {
+    stepAction(state, { kind: 'end_turn', side });
+  }
+}
+
 export function playSimulatedGame(
   seed: number,
   opts: PlayGameOptions,
@@ -93,52 +159,38 @@ export function playSimulatedGame(
   const exploreRate = opts.explorationRate ?? 0;
 
   while (!isGameOver(match)) {
-    const side = match.game.turnSide;
     match.turnCount++;
-    match.game.turnNumber++;
-    match.game.metrics.turns++;
-    drawPhase(match.game, side);
-    match.game.players[side].actionsRemaining = actionsForTurn(
-      match.game.config, match.game.turnNumber, side,
-    );
 
-    while (match.game.players[side].actionsRemaining > 0 && !match.game.winner) {
-      if (exploreRate > 0 && rng.next() < exploreRate) {
-        const legal = enumerateLegalActions(match.game, side);
-        const nonPass = legal.filter(a => a.kind !== 'pass' && a.kind !== 'end_turn');
-        if (nonPass.length > 0) {
-          const pick = nonPass[rng.int(0, nonPass.length - 1)];
-          stepAction(match.game, { ...pick, side });
-          if (opts.capturePolicySamples) {
-            match.game.policySamples.push(
-              createPolicySample(match.game, side, pick, 'explore', 0),
-            );
-          }
-          continue;
-        }
-      }
+    // Both sides take their turn in parallel (no alternating side); the
+    // resolve phase fires automatically inside `end_turn` when both
+    // `turnEnded` flags are true.
+    runSideTurn(match.game, 'A', {
+      rng,
+      explorationRate: exploreRate,
+      capturePolicySamples: opts.capturePolicySamples,
+      policyArtifact: opts.policyArtifact,
+    });
+    if (match.game.winner) break;
+    runSideTurn(match.game, 'B', {
+      rng,
+      explorationRate: exploreRate,
+      capturePolicySamples: opts.capturePolicySamples,
+      policyArtifact: opts.policyArtifact,
+    });
 
-      const decision = decideAction(match.game, side, opts.policyArtifact);
-      match.game.plannerTrace.push(decision.trace);
-      stepAction(match.game, { ...decision.action, side });
-
-      if (opts.capturePolicySamples) {
-        match.game.policySamples.push(
-          createPolicySample(
-            match.game, side, decision.action,
-            decision.trace.chosenGoal, 0,
-          ),
-        );
-      }
-
-      if (decision.action.kind === 'end_turn') break;
-    }
-
-    match.game.turnSide = side === 'A' ? 'B' : 'A';
     isGameOver(match);
   }
 
   return extractResult(match, seed);
+}
+
+/** Preserved export — callers may pass manually-constructed action lists. */
+export function runScriptedTurn(
+  match: MatchState,
+  actionsA: TurfAction[],
+  actionsB: TurfAction[],
+): MatchState {
+  return runTurn(match, actionsA, actionsB);
 }
 
 function average(

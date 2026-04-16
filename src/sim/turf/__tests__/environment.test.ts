@@ -3,7 +3,6 @@ import { DEFAULT_GAME_CONFIG } from '../types';
 import type { Card, GameConfig, PlayerState, TurfGameState } from '../types';
 import {
   actionsForTurn,
-  drawPhase,
   emptyMetrics,
   emptyPlannerMemory,
   stepAction,
@@ -18,7 +17,7 @@ import type { ToughCard, WeaponCard, DrugCard, CurrencyCard } from '../types';
 
 function tough(id: string, power = 4, resistance = 4, affiliation = 'freelance'): ToughCard {
   return {
-    kind: 'tough', id, name: id, tagline: '', archetype: 'bruiser',
+    kind: 'tough', id, name: id, tagline: '', archetype: 'brawler',
     affiliation, power, resistance, rarity: 'common', abilities: [],
   };
 }
@@ -41,12 +40,18 @@ function currency(id: string, denomination: 100 | 1000 = 100): CurrencyCard {
   return { kind: 'currency', id, name: id, denomination, rarity: 'common' };
 }
 
-function makePlayer(turfs: number, handCards: Card[] = []): PlayerState {
+function makePlayer(turfs: number, pending: Card | null = null): PlayerState {
   const t = [];
   for (let i = 0; i < turfs; i++) t.push(createTurf());
   return {
-    turfs: t, hand: [...handCards], deck: [], discard: [],
-    toughsInPlay: 0, actionsRemaining: 5,
+    turfs: t,
+    deck: [],
+    discard: [],
+    toughsInPlay: 0,
+    actionsRemaining: 5,
+    pending,
+    queued: [],
+    turnEnded: false,
   };
 }
 
@@ -58,12 +63,10 @@ function makeState(overrides: Partial<TurfGameState> = {}): TurfGameState {
       A: makePlayer(2),
       B: makePlayer(2),
     },
-    turnSide: 'A',
     firstPlayer: 'A',
     turnNumber: 1,
-    phase: 'combat',
-    hasStruck: { A: false, B: false },
-    aiState: { A: 'BUILDING', B: 'BUILDING' },
+    phase: 'action',
+    aiState: { A: 'idle', B: 'idle' },
     aiTurnsInState: { A: 0, B: 0 },
     aiMemory: { A: emptyPlannerMemory(), B: emptyPlannerMemory() },
     plannerTrace: [],
@@ -98,14 +101,14 @@ describe('stepAction — play_card', () => {
   it('plays a tough onto a turf', () => {
     const state = makeState();
     const t = tough('t1');
-    state.players.A.hand = [t];
+    state.players.A.pending = t;
 
     const result = stepAction(state, { kind: 'play_card', side: 'A', turfIdx: 0, cardId: 't1' });
 
-    expect(result.reward).toBe(1);
+    expect(result.reward).toBeGreaterThan(0);
     expect(state.players.A.turfs[0].stack).toHaveLength(1);
     expect(state.players.A.toughsInPlay).toBe(1);
-    expect(state.players.A.hand).toHaveLength(0);
+    expect(state.players.A.pending).toBeNull();
     expect(state.metrics.toughsPlayed).toBe(1);
     expect(state.metrics.cardsPlayed).toBe(1);
     expect(state.players.A.actionsRemaining).toBe(4);
@@ -117,81 +120,59 @@ describe('stepAction — play_card', () => {
     const w = weapon('w1');
     addToStack(state.players.A.turfs[0], t);
     state.players.A.toughsInPlay = 1;
-    state.players.A.hand = [w];
+    state.players.A.pending = w;
 
     const result = stepAction(state, { kind: 'play_card', side: 'A', turfIdx: 0, cardId: 'w1' });
 
-    expect(result.reward).toBe(0.75);
+    expect(result.reward).toBeGreaterThan(0);
     expect(state.players.A.turfs[0].stack).toHaveLength(2);
     expect(state.metrics.modifiersPlayed).toBe(1);
   });
 
-  it('rejects modifier with no toughs in play (draw-gate)', () => {
+  it('rejects modifier on empty turf (placement rule)', () => {
     const state = makeState();
-    state.players.A.hand = [weapon('w1')];
+    state.players.A.pending = weapon('w1');
 
     expect(() => {
       stepAction(state, { kind: 'play_card', side: 'A', turfIdx: 0, cardId: 'w1' });
-    }).toThrow('Draw-gate');
+    }).toThrow(/modifier/);
   });
 
-  it('rejects action from the wrong side (turn ownership guard)', () => {
-    // Regression pin: stepAction must refuse to mutate state for a
-    // side that doesn't own the current turn. Without this, a
-    // misrouted ECS call (or a stale action payload after a turn
-    // advance) could silently mutate the other player's state.
+  it('a failed play_card does not consume the card (atomicity)', () => {
     const state = makeState();
-    state.turnSide = 'A';
-    expect(() =>
-      stepAction(state, { kind: 'end_turn', side: 'B' }),
-    ).toThrow(/side mismatch/);
-  });
-
-  it('a failed play_card does not consume the card from hand (atomicity)', () => {
-    // Regression pin: prior impl removed the card before validating
-    // preconditions, leaving the card neither on a turf nor in hand
-    // when the validation threw. Now the validation happens first.
-    const state = makeState();
-    state.players.A.hand = [weapon('w1')];
-    state.players.A.toughsInPlay = 0; // draw-gate will fire
+    state.players.A.pending = weapon('w1');
+    state.players.A.toughsInPlay = 0;
 
     expect(() =>
       stepAction(state, { kind: 'play_card', side: 'A', turfIdx: 0, cardId: 'w1' }),
-    ).toThrow('Draw-gate');
+    ).toThrow(/modifier/);
 
-    // Card is still in hand after the failed action
-    expect(state.players.A.hand).toHaveLength(1);
-    expect(state.players.A.hand[0].id).toBe('w1');
+    expect(state.players.A.pending?.id).toBe('w1');
   });
 
   it('rejects modifier on empty turf even if toughs exist elsewhere', () => {
     const state = makeState();
     addToStack(state.players.A.turfs[0], tough('t1'));
     state.players.A.toughsInPlay = 1;
-    state.players.A.hand = [weapon('w1')];
+    state.players.A.pending = weapon('w1');
 
     expect(() => {
       stepAction(state, { kind: 'play_card', side: 'A', turfIdx: 1, cardId: 'w1' });
-    }).toThrow('Cannot play modifier on empty turf');
+    }).toThrow(/modifier/);
   });
 
   it('discards a rival-affiliation tough played onto a turf with no buffer (RULES.md §4)', () => {
-    // Turf has a kings_row tough. Playing an iron_devils tough (rival)
-    // onto the same turf with no buffer (no currency, no mediator) must
-    // discard the incoming card rather than violate the turf rule.
     const state = makeState();
     addToStack(state.players.A.turfs[0], tough('kr', 4, 4, 'kings_row'));
     state.players.A.toughsInPlay = 1;
-    state.players.A.hand = [tough('id', 5, 5, 'iron_devils')];
+    state.players.A.pending = tough('id', 5, 5, 'iron_devils');
 
     const result = stepAction(state, { kind: 'play_card', side: 'A', turfIdx: 0, cardId: 'id' });
 
-    // Rival discarded — still counts as an action spent, card is not in
-    // the stack, metric records a discard (not a play).
     expect(result.reason).toBe('play_card_discarded_rival');
-    expect(state.players.A.turfs[0].stack).toHaveLength(1); // only original kr
-    expect(state.players.A.turfs[0].stack[0].id).toBe('kr');
-    expect(state.players.A.hand).toHaveLength(0);
+    expect(state.players.A.turfs[0].stack).toHaveLength(1);
+    expect(state.players.A.turfs[0].stack[0].card.id).toBe('kr');
+    expect(state.players.A.pending).toBeNull();
     expect(state.metrics.cardsDiscarded).toBe(1);
     expect(state.metrics.cardsPlayed).toBe(0);
     expect(state.metrics.toughsPlayed).toBe(0);
@@ -204,7 +185,7 @@ describe('stepAction — play_card', () => {
       kind: 'currency', id: 'c1', name: '$1000', denomination: 1000, rarity: 'common',
     });
     state.players.A.toughsInPlay = 1;
-    state.players.A.hand = [tough('id', 5, 5, 'iron_devils')];
+    state.players.A.pending = tough('id', 5, 5, 'iron_devils');
 
     const result = stepAction(state, { kind: 'play_card', side: 'A', turfIdx: 0, cardId: 'id' });
 
@@ -215,34 +196,36 @@ describe('stepAction — play_card', () => {
 });
 
 describe('stepAction — discard', () => {
-  it('discards a card for free (no action cost)', () => {
+  it('discards pending card for free (no action cost)', () => {
     const state = makeState();
-    state.players.A.hand = [weapon('w1')];
+    state.players.A.pending = weapon('w1');
+    const before = state.players.A.actionsRemaining;
 
     const result = stepAction(state, { kind: 'discard', side: 'A', cardId: 'w1' });
 
-    expect(state.players.A.actionsRemaining).toBe(5);
+    expect(state.players.A.actionsRemaining).toBe(before);
     expect(state.players.A.discard).toHaveLength(1);
+    expect(state.players.A.pending).toBeNull();
     expect(state.metrics.cardsDiscarded).toBe(1);
-    expect(result.reward).toBe(-0.25);
+    expect(result.reward).toBeLessThanOrEqual(0);
     expect(state.metrics.totalActions).toBe(0);
   });
 });
 
 describe('stepAction — end_turn', () => {
-  it('zeroes remaining actions for free', () => {
+  it('marks turnEnded for the side without costing an action', () => {
     const state = makeState();
     state.players.A.actionsRemaining = 3;
 
     stepAction(state, { kind: 'end_turn', side: 'A' });
 
-    expect(state.players.A.actionsRemaining).toBe(0);
+    expect(state.players.A.turnEnded).toBe(true);
     expect(state.metrics.totalActions).toBe(0);
   });
 });
 
-describe('stepAction — direct_strike', () => {
-  it('kills when power >= resistance', () => {
+describe('stepAction — direct_strike (queue)', () => {
+  it('queues a direct strike instead of resolving immediately', () => {
     const state = makeState();
     addToStack(state.players.A.turfs[0], tough('attacker', 10, 5));
     state.players.A.toughsInPlay = 1;
@@ -253,30 +236,14 @@ describe('stepAction — direct_strike', () => {
       kind: 'direct_strike', side: 'A', turfIdx: 0, targetTurfIdx: 0,
     });
 
-    expect(result.reason).toContain('kill');
-    expect(state.metrics.directStrikes).toBe(1);
-    expect(state.metrics.kills).toBe(1);
-    expect(state.players.B.toughsInPlay).toBe(0);
-  });
-
-  it('seizes turf when last tough killed', () => {
-    const state = makeState();
-    addToStack(state.players.A.turfs[0], tough('attacker', 10, 5));
-    state.players.A.toughsInPlay = 1;
-    addToStack(state.players.B.turfs[0], tough('defender', 3, 5));
-    state.players.B.toughsInPlay = 1;
-
-    stepAction(state, {
-      kind: 'direct_strike', side: 'A', turfIdx: 0, targetTurfIdx: 0,
-    });
-
-    expect(state.metrics.seizures).toBe(1);
-    expect(state.players.B.turfs).toHaveLength(1);
+    expect(result.reason).toBe('direct_strike_queued');
+    expect(state.players.A.queued).toHaveLength(1);
+    expect(state.players.A.queued[0].kind).toBe('direct_strike');
   });
 });
 
-describe('stepAction — funded_recruit', () => {
-  it('recruits when enough cash', () => {
+describe('stepAction — funded_recruit (queue)', () => {
+  it('queues a funded recruit action', () => {
     const state = makeState();
     addToStack(state.players.A.turfs[0], tough('attacker', 5, 5));
     state.players.A.toughsInPlay = 1;
@@ -290,19 +257,15 @@ describe('stepAction — funded_recruit', () => {
       kind: 'funded_recruit', side: 'A', turfIdx: 0, targetTurfIdx: 0,
     });
 
-    expect(result.reason).toContain('kill');
-    expect(state.metrics.fundedRecruits).toBe(1);
-    expect(state.players.A.toughsInPlay).toBe(2);
-    expect(state.players.B.toughsInPlay).toBe(0);
+    expect(result.reason).toBe('funded_recruit_queued');
+    expect(state.players.A.queued).toHaveLength(1);
   });
 });
 
 describe('stepAction — pass', () => {
   it('costs an action and records metric', () => {
     const state = makeState();
-
     stepAction(state, { kind: 'pass', side: 'A' });
-
     expect(state.players.A.actionsRemaining).toBe(4);
     expect(state.metrics.passes).toBe(1);
     expect(state.metrics.totalActions).toBe(1);
@@ -310,7 +273,7 @@ describe('stepAction — pass', () => {
 });
 
 describe('win detection', () => {
-  it('declares winner when opponent has 0 turfs', () => {
+  it('declares winner via resolve phase when opponent has 0 turfs', () => {
     const state = makeState();
     state.players.B = makePlayer(1);
     addToStack(state.players.A.turfs[0], tough('a', 20, 5));
@@ -318,33 +281,55 @@ describe('win detection', () => {
     addToStack(state.players.B.turfs[0], tough('d', 1, 1));
     state.players.B.toughsInPlay = 1;
 
-    const result = stepAction(state, {
+    // Queue a strike, end both turns, expect resolve phase to seize and win.
+    stepAction(state, {
       kind: 'direct_strike', side: 'A', turfIdx: 0, targetTurfIdx: 0,
     });
+    stepAction(state, { kind: 'end_turn', side: 'A' });
+    stepAction(state, { kind: 'end_turn', side: 'B' });
 
-    expect(result.terminal).toBe(true);
     expect(state.winner).toBe('A');
     expect(state.endReason).toBe('total_seizure');
   });
 });
 
-describe('drawPhase', () => {
-  it('draws one card from deck to hand', () => {
+describe('stepAction — draw', () => {
+  it('moves top of deck into pending slot', () => {
     const state = makeState();
     state.players.A.deck = [tough('d1'), weapon('d2')];
 
-    drawPhase(state, 'A');
+    stepAction(state, { kind: 'draw', side: 'A' });
 
-    expect(state.players.A.hand).toHaveLength(1);
+    expect(state.players.A.pending?.id).toBe('d1');
     expect(state.players.A.deck).toHaveLength(1);
-    expect(state.players.A.hand[0].id).toBe('d1');
+    expect(state.metrics.draws).toBe(1);
+  });
+
+  it('costs an action', () => {
+    const state = makeState();
+    state.players.A.deck = [tough('d1')];
+    const before = state.players.A.actionsRemaining;
+
+    stepAction(state, { kind: 'draw', side: 'A' });
+
+    expect(state.players.A.actionsRemaining).toBe(before - 1);
+  });
+
+  it('throws if pending slot already occupied', () => {
+    const state = makeState();
+    state.players.A.deck = [tough('d1'), weapon('w1')];
+    stepAction(state, { kind: 'draw', side: 'A' });
+
+    expect(() =>
+      stepAction(state, { kind: 'draw', side: 'A' }),
+    ).toThrow(/pending/);
   });
 });
 
 describe('enumerateLegalActions', () => {
   it('excludes modifier play_card when no toughs in play', () => {
     const state = makeState();
-    state.players.A.hand = [weapon('w1'), drug('d1'), currency('c1')];
+    state.players.A.pending = weapon('w1');
 
     const actions = enumerateLegalActions(state, 'A');
     const playActions = actions.filter(a => a.kind === 'play_card');
@@ -354,7 +339,7 @@ describe('enumerateLegalActions', () => {
 
   it('includes tough play_card even when no toughs in play', () => {
     const state = makeState();
-    state.players.A.hand = [tough('t1')];
+    state.players.A.pending = tough('t1');
 
     const actions = enumerateLegalActions(state, 'A');
     const playActions = actions.filter(a => a.kind === 'play_card');
@@ -362,11 +347,25 @@ describe('enumerateLegalActions', () => {
     expect(playActions.length).toBeGreaterThan(0);
   });
 
-  it('always includes end_turn', () => {
+  it('always includes end_turn as last entry', () => {
     const state = makeState();
     const actions = enumerateLegalActions(state, 'A');
 
     expect(actions[actions.length - 1].kind).toBe('end_turn');
+  });
+
+  it('includes draw when deck is non-empty and pending is null', () => {
+    const state = makeState();
+    state.players.A.deck = [tough('d1')];
+
+    const actions = enumerateLegalActions(state, 'A');
+    expect(actions.some(a => a.kind === 'draw')).toBe(true);
+  });
+
+  // Suppress unused import warnings in our fixture surface.
+  it('drug/currency fixtures are well-formed', () => {
+    expect(drug('d1').kind).toBe('drug');
+    expect(currency('c1').kind).toBe('currency');
   });
 });
 

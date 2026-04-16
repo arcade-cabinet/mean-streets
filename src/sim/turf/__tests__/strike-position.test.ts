@@ -154,7 +154,7 @@ describe('killToughAtIdx', () => {
     const { mods } = killToughAtIdx(turf, 2);
     expect(mods).toHaveLength(1);
     expect(mods[0].id).toBe('w-for-t2');
-    expect(turf.stack.map(c => c.id)).toEqual(['t1', 'w-for-t1']);
+    expect(turf.stack.map(c => c.card.id)).toEqual(['t1', 'w-for-t1']);
   });
 
   it('handles killing bottom tough with mods above until next tough', () => {
@@ -164,7 +164,7 @@ describe('killToughAtIdx', () => {
     expect(mods).toHaveLength(1);
     expect(mods[0].id).toBe('w-between');
     expect(turf.stack).toHaveLength(1);
-    expect(turf.stack[0].id).toBe('t2');
+    expect(turf.stack[0].card.id).toBe('t2');
   });
 
   it('kills tough with no mods', () => {

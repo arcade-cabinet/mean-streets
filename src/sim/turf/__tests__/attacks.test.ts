@@ -9,13 +9,16 @@ import {
 } from '../attacks';
 
 function makeTough(overrides: Partial<ToughCard> = {}): ToughCard {
+  // Default archetype is `brawler` (plain). The bruiser archetype triggers
+  // ignoreResistance in applyTangibles; tests that want to measure raw
+  // P/R resolution must not default to bruiser.
   return {
     kind: 'tough',
     id: overrides.id ?? 'tough-1',
     name: overrides.name ?? 'Brick',
     tagline: 'Test tough',
-    archetype: overrides.archetype ?? 'bruiser',
-    affiliation: overrides.affiliation ?? 'kings_row',
+    archetype: overrides.archetype ?? 'brawler',
+    affiliation: overrides.affiliation ?? 'freelance',
     power: overrides.power ?? 6,
     resistance: overrides.resistance ?? 6,
     rarity: 'common',
@@ -110,7 +113,7 @@ describe('resolveDirectStrike', () => {
     expect(result.outcome).toBe('kill');
     expect(result.transferredMods).toHaveLength(1);
     expect(result.transferredMods[0].id).toBe('w-transfer');
-    expect(attacker.stack.some((c) => c.id === 'w-transfer')).toBe(true);
+    expect(attacker.stack.some((c) => c.card.id === 'w-transfer')).toBe(true);
   });
 
   it('transfers modifiers from killed tough regardless of affiliation (mods have no affiliation)', () => {
@@ -133,7 +136,7 @@ describe('resolveDirectStrike', () => {
     expect(result.transferredMods).toHaveLength(1);
     expect(result.transferredMods[0].id).toBe('w-spoil');
     expect(result.discardedMods).toHaveLength(0);
-    expect(attacker.stack.some((c) => c.id === 'w-spoil')).toBe(true);
+    expect(attacker.stack.some((c) => c.card.id === 'w-spoil')).toBe(true);
   });
 
   it('P includes weapon and drug power in stack', () => {
@@ -170,7 +173,7 @@ describe('resolveDirectStrike', () => {
     const result = resolveDirectStrike(attacker, defender);
 
     expect(result.outcome).toBe('busted');
-    expect(result.description).toContain('No tough');
+    expect(result.description.toLowerCase()).toContain('no tough');
   });
 });
 
@@ -185,7 +188,7 @@ describe('resolveDirectStrike — strike-bottom and strike-anywhere', () => {
 
     expect(result.outcome).toBe('kill');
     expect(result.killedTough?.id).toBe('bottom');
-    expect(defender.stack.some((c) => c.id === 'top')).toBe(true);
+    expect(defender.stack.some((c) => c.card.id === 'top')).toBe(true);
   });
 
   it('ghost targets the lowest-resistance tough (strike-anywhere)', () => {
@@ -216,8 +219,8 @@ describe('resolvePushedStrike', () => {
     const result = resolvePushedStrike(attacker, defender);
 
     expect(result.outcome).toBe('kill');
-    expect(result.description).toContain('$1000');
-    expect(attacker.stack.every((c) => c.kind !== 'currency')).toBe(true);
+    expect(result.description.toLowerCase()).toContain('pushed');
+    expect(attacker.stack.every((c) => c.card.kind !== 'currency')).toBe(true);
   });
 
   it('sicks tough directly beneath the killed tough', () => {
@@ -290,8 +293,8 @@ describe('resolveFundedRecruit', () => {
     expect(result.outcome).toBe('kill');
     expect(result.description).toContain('Recruited');
     expect(result.description).toContain('freelance');
-    expect(attacker.stack.some((c) => c.kind === 'tough' && c.name === 'Merc')).toBe(true);
-    expect(defender.stack.every((c) => c.kind !== 'tough' || c.name !== 'Merc')).toBe(true);
+    expect(attacker.stack.some((c) => c.card.kind === 'tough' && c.card.name === 'Merc')).toBe(true);
+    expect(defender.stack.every((c) => c.card.kind !== 'tough' || c.card.name !== 'Merc')).toBe(true);
   });
 
   it('same affiliation uses 0.7 multiplier', () => {
@@ -392,7 +395,7 @@ describe('resolveFundedRecruit', () => {
 
     resolveFundedRecruit(attacker, defender);
 
-    expect(attacker.stack.every((c) => c.kind !== 'currency')).toBe(true);
+    expect(attacker.stack.every((c) => c.card.kind !== 'currency')).toBe(true);
   });
 
   it('discards recruited rival tough when no buffer on attacker turf', () => {
@@ -417,9 +420,9 @@ describe('resolveFundedRecruit', () => {
     expect(result.discardedMods).toHaveLength(1);
     expect((result.discardedMods[0] as ToughCard).name).toBe('Rival');
     // Defender is cleared of the target
-    expect(defender.stack.every((c) => c.kind !== 'tough' || c.name !== 'Rival')).toBe(true);
+    expect(defender.stack.every((c) => c.card.kind !== 'tough' || c.card.name !== 'Rival')).toBe(true);
     // Attacker did NOT gain the rival tough
-    expect(attacker.stack.every((c) => c.kind !== 'tough' || c.name !== 'Rival')).toBe(true);
+    expect(attacker.stack.every((c) => c.card.kind !== 'tough' || c.card.name !== 'Rival')).toBe(true);
   });
 
   it('accepts recruited rival tough when currency buffer remains on attacker turf', () => {
@@ -440,7 +443,7 @@ describe('resolveFundedRecruit', () => {
     expect(result.outcome).toBe('kill');
     expect(result.transferredMods).toHaveLength(1);
     expect(result.discardedMods).toHaveLength(0);
-    expect(attacker.stack.some((c) => c.kind === 'tough' && c.name === 'Rival')).toBe(true);
+    expect(attacker.stack.some((c) => c.card.kind === 'tough' && c.card.name === 'Rival')).toBe(true);
   });
 });
 

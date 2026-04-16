@@ -6,6 +6,9 @@ import type { TurfGameResult, TurfMetrics } from '../types';
 function emptyMetrics(): TurfMetrics {
   return {
     turns: 10,
+    draws: 0,
+    retreats: 0,
+    closedRanksEnds: 0,
     directStrikes: 2,
     pushedStrikes: 1,
     fundedRecruits: 1,

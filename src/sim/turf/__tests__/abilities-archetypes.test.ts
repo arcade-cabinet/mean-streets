@@ -44,7 +44,7 @@ describe('archetype abilities — strike targeting', () => {
 
     expect(result.outcome).toBe('kill');
     expect(result.killedTough?.id).toBe('bottom');
-    expect(defender.stack.some(c => c.id === 'top')).toBe(true);
+    expect(defender.stack.some(c => c.card.id === 'top')).toBe(true);
   });
 
   it('ghost targets the lowest-resistance tough (strike-anywhere)', () => {
@@ -124,7 +124,9 @@ describe('archetype abilities — combat outcomes', () => {
   });
 
   it('direct strike sicks when power < resistance but >= R/2', () => {
-    const attacker = turfWith(makeTough({ power: 5 }));
+    // Ghost archetype: does NOT carry the bruiser ignore-resistance bonus,
+    // so the raw P=5 vs R=10 → sick (>= R/2).
+    const attacker = turfWith(makeTough({ archetype: 'ghost', power: 5 }));
     const defender = turfWith(makeTough({ resistance: 10 }));
 
     const result = resolveDirectStrike(attacker, defender);

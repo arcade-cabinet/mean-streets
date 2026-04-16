@@ -41,7 +41,16 @@ function currency(id: string, denomination: 100 | 1000 = 100): CurrencyCard {
 }
 
 function makePlayer(turfs: Turf[]): PlayerState {
-  return { turfs, hand: [], deck: [], discard: [], toughsInPlay: 0, actionsRemaining: 3 };
+  return {
+    turfs,
+    deck: [],
+    discard: [],
+    toughsInPlay: 0,
+    actionsRemaining: 3,
+    pending: null,
+    queued: [],
+    turnEnded: false,
+  };
 }
 
 describe('createTurf', () => {
@@ -71,8 +80,8 @@ describe('addToStack / removeFromStack', () => {
     addToStack(turf, t);
     addToStack(turf, w);
     expect(turf.stack).toHaveLength(2);
-    expect(turf.stack[0].id).toBe('t1');
-    expect(turf.stack[1].id).toBe('w1');
+    expect(turf.stack[0].card.id).toBe('t1');
+    expect(turf.stack[1].card.id).toBe('w1');
   });
 
   it('removes a card by index and returns it', () => {
@@ -261,8 +270,8 @@ describe('seizeTurf', () => {
 
     seizeTurf(defender, 0, attacker, 0);
 
-    expect(atkTurf.stack.some(c => c.id === 'w1')).toBe(true);
-    expect(atkTurf.stack.some(c => c.id === 'dr1')).toBe(true);
+    expect(atkTurf.stack.some(c => c.card.id === 'w1')).toBe(true);
+    expect(atkTurf.stack.some(c => c.card.id === 'dr1')).toBe(true);
   });
 
   it('does nothing if defender turf does not exist', () => {

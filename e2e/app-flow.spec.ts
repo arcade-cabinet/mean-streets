@@ -23,7 +23,9 @@ test('menu → difficulty → game flow works on the live app', async ({ page },
 
   await expect(page.getByTestId('game-screen')).toBeVisible({ timeout: 10_000 });
   await expect(page.getByTestId('action-budget')).toBeVisible();
-  await expect(page.getByTestId('hand-row')).toBeVisible();
+  // v0.2 is handless — instead of hand-row, verify the pending-card slot
+  // and draw action are present.
+  await expect(page.getByTestId('action-draw')).toBeVisible();
   await expect(page.getByTestId('turf-view')).toBeVisible();
   await expect(page.getByTestId('action-end_turn')).toBeVisible();
 });

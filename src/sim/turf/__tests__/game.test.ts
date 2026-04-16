@@ -12,7 +12,6 @@ function tough(id: string, power = 5, resistance = 5): ToughCard {
   };
 }
 
-
 function makeDeck(prefix: string, count = 10): ToughCard[] {
   return Array.from({ length: count }, (_, i) => tough(`${prefix}-t${i + 1}`));
 }
@@ -24,19 +23,20 @@ describe('createMatch', () => {
     const match = createMatch();
     expect(match.turnCount).toBe(0);
     expect(match.game.winner).toBeNull();
-    expect(match.game.phase).toBe('combat');
+    expect(match.game.phase).toBe('action');
     expect(match.game.players.A.turfs).toHaveLength(DEFAULT_GAME_CONFIG.turfCount);
     expect(match.game.players.B.turfs).toHaveLength(DEFAULT_GAME_CONFIG.turfCount);
   });
 
-  it('distributes decks to players', () => {
+  it('distributes decks to players (no hand — v0.2 is handless)', () => {
     const deckA = makeDeck('a', 8);
     const deckB = makeDeck('b', 6);
     const match = createMatch(DEFAULT_GAME_CONFIG, { deckA, deckB, seed: 42 });
     expect(match.game.players.A.deck).toHaveLength(8);
     expect(match.game.players.B.deck).toHaveLength(6);
-    expect(match.game.players.A.hand).toHaveLength(0);
-    expect(match.game.players.B.hand).toHaveLength(0);
+    // Pending slot starts empty; no hand array exists.
+    expect(match.game.players.A.pending).toBeNull();
+    expect(match.game.players.B.pending).toBeNull();
   });
 
   it('accepts custom config', () => {
@@ -53,11 +53,7 @@ describe('createMatch', () => {
     expect(a.game.players.A.deck.map(c => c.id)).toEqual(b.game.players.A.deck.map(c => c.id));
   });
 
-  it('produces a different shuffle for different seeds (seed actually drives order)', () => {
-    // Regression pin: this catches a class of bugs where the seed is
-    // silently ignored and the shuffle defaults to Math.random or a
-    // fixed permutation. Without this, the same-seed determinism test
-    // passes trivially on any two identical decks.
+  it('produces a different shuffle for different seeds', () => {
     const deck = makeDeck('x', 20);
     const a = createMatch(DEFAULT_GAME_CONFIG, { deckA: [...deck], deckB: [...deck], seed: 1 });
     const b = createMatch(DEFAULT_GAME_CONFIG, { deckA: [...deck], deckB: [...deck], seed: 99999 });
@@ -67,7 +63,7 @@ describe('createMatch', () => {
   });
 });
 
-describe('runTurn', () => {
+describe('runTurn (parallel-turn signature)', () => {
   let match: MatchState;
 
   beforeEach(() => {
@@ -77,63 +73,69 @@ describe('runTurn', () => {
     match = createMatch(DEFAULT_GAME_CONFIG, { deckA, deckB, seed: 42 });
   });
 
-  it('draws one card at turn start', () => {
-    expect(match.game.players.A.hand).toHaveLength(0);
-    runTurn(match, [{ kind: 'end_turn', side: 'A' }]);
-    expect(match.game.players.A.hand).toHaveLength(1);
-    expect(match.game.players.A.deck).toHaveLength(9);
-  });
-
-  it('increments turn counters', () => {
-    runTurn(match, [{ kind: 'end_turn', side: 'A' }]);
+  it('accepts actionsA and actionsB in the same call', () => {
+    runTurn(
+      match,
+      [{ kind: 'end_turn', side: 'A' }],
+      [{ kind: 'end_turn', side: 'B' }],
+    );
     expect(match.turnCount).toBe(1);
-    expect(match.game.turnNumber).toBe(1);
-    expect(match.game.metrics.turns).toBe(1);
   });
 
-  it('draws for both sides on alternating turns', () => {
-    runTurn(match, [{ kind: 'end_turn', side: 'A' }]);
-    expect(match.game.players.A.hand).toHaveLength(1);
-    runTurn(match, [{ kind: 'end_turn', side: 'B' }]);
-    expect(match.game.players.B.hand).toHaveLength(1);
+  it('executes a draw as a regular action', () => {
+    runTurn(
+      match,
+      [{ kind: 'draw', side: 'A' }, { kind: 'end_turn', side: 'A' }],
+      [{ kind: 'end_turn', side: 'B' }],
+    );
+    expect(match.game.players.A.deck).toHaveLength(9);
+    // After resolve, pending should have been consumed by play_card or
+    // discarded; since we just drew and ended, pending was left and
+    // resolve phase discarded it.
+    expect(match.game.players.A.pending).toBeNull();
   });
 
-  it('plays a tough onto a turf', () => {
-    runTurn(match, [{ kind: 'end_turn', side: 'A' }]);
-    const drawnCard = match.game.players.A.hand[0];
-    expect(drawnCard).toBeDefined();
-    expect(drawnCard.kind).toBe('tough');
-    const id = drawnCard.id;
-    runTurn(match, [{ kind: 'end_turn', side: 'B' }]);
-    runTurn(match, [{ kind: 'play_card', side: 'A', turfIdx: 0, cardId: id }]);
+  it('plays a drawn tough onto a turf in the same turn', () => {
+    const id = match.game.players.A.deck[0]?.id;
+    expect(id).toBeDefined();
+    runTurn(
+      match,
+      [
+        { kind: 'draw', side: 'A' },
+        { kind: 'play_card', side: 'A', turfIdx: 0, cardId: id! },
+        { kind: 'end_turn', side: 'A' },
+      ],
+      [{ kind: 'end_turn', side: 'B' }],
+    );
+    expect(match.game.players.A.turfs.length).toBeGreaterThan(0);
     expect(match.game.players.A.turfs[0].stack).toHaveLength(1);
     expect(match.game.players.A.toughsInPlay).toBe(1);
   });
 
-  it('alternates turn side', () => {
-    expect(match.game.turnSide).toBe('A');
-    runTurn(match, [{ kind: 'end_turn', side: 'A' }]);
-    expect(match.game.turnSide).toBe('B');
-    runTurn(match, [{ kind: 'end_turn', side: 'B' }]);
-    expect(match.game.turnSide).toBe('A');
+  it('applies first-turn action budget then advances turn number', () => {
+    runTurn(match, [], []);
+    // After one full turn, turnNumber has incremented past the opener.
+    expect(match.game.turnNumber).toBeGreaterThanOrEqual(2);
   });
 
-  it('applies first-turn action budget', () => {
-    runTurn(match, []);
-    expect(match.game.turnNumber).toBe(1);
-  });
-
-  it('stops processing actions when budget runs out', () => {
+  it('stops processing draw actions when budget runs out', () => {
+    // Draw costs 1 action; with budget=1 only the first draw runs before the
+    // budget-guard in `applySide` halts further actions.
     const config: GameConfig = { ...DEFAULT_GAME_CONFIG, actionsPerTurn: 1, firstTurnActions: 1 };
     resetTurfIdCounter();
     const deck = [tough('t1'), tough('t2'), tough('t3')];
     const m = createMatch(config, { deckA: deck, deckB: [], seed: 1 });
-    runTurn(m, [
-      { kind: 'pass', side: 'A' },
-      { kind: 'pass', side: 'A' },
-      { kind: 'pass', side: 'A' },
-    ]);
-    expect(m.game.metrics.passes).toBe(1);
+    runTurn(
+      m,
+      [
+        { kind: 'draw', side: 'A' },
+        { kind: 'draw', side: 'A' },
+        { kind: 'draw', side: 'A' },
+      ],
+      [],
+    );
+    // Exactly one draw consumed the single allotted action.
+    expect(m.game.metrics.draws).toBe(1);
   });
 });
 

@@ -8,7 +8,7 @@ import { createRng } from '../../cards/rng';
 
 function tough(id: string, power = 4, resistance = 4): ToughCard {
   return {
-    kind: 'tough', id, name: id, tagline: '', archetype: 'bruiser',
+    kind: 'tough', id, name: id, tagline: '', archetype: 'brawler',
     affiliation: 'freelance', power, resistance, rarity: 'common', abilities: [],
   };
 }
@@ -31,7 +31,11 @@ function currency(id: string): CurrencyCard {
   return { kind: 'currency', id, name: '$100', denomination: 100, rarity: 'common' };
 }
 
-function makeState(handCards: Card[], turfCards: Card[][] = [[]]): TurfGameState {
+/**
+ * Build a minimal game state. v0.2 is handless — the single-slot `pending`
+ * field replaces the hand. Tests assert via `pending` plus `play_card`.
+ */
+function makeState(pending: Card | null, turfCards: Card[][] = [[]]): TurfGameState {
   resetTurfIdCounter();
   const turfs = turfCards.map(cards => {
     const t = createTurf();
@@ -39,16 +43,15 @@ function makeState(handCards: Card[], turfCards: Card[][] = [[]]): TurfGameState
     return t;
   });
   const toughsInPlay = turfs.reduce(
-    (sum, t) => sum + t.stack.filter(c => c.kind === 'tough').length, 0,
+    (sum, t) => sum + t.stack.filter(sc => sc.card.kind === 'tough').length, 0,
   );
   return {
     config: { ...DEFAULT_GAME_CONFIG },
     players: {
-      A: { turfs, hand: [...handCards], deck: [], discard: [], toughsInPlay, actionsRemaining: 5 },
-      B: { turfs: [createTurf()], hand: [], deck: [], discard: [], toughsInPlay: 0, actionsRemaining: 5 },
+      A: { turfs, deck: [], discard: [], toughsInPlay, actionsRemaining: 5, pending, queued: [], turnEnded: false },
+      B: { turfs: [createTurf()], deck: [], discard: [], toughsInPlay: 0, actionsRemaining: 5, pending: null, queued: [], turnEnded: false },
     },
-    turnSide: 'A', firstPlayer: 'A', turnNumber: 1, phase: 'combat',
-    hasStruck: { A: false, B: false },
+    firstPlayer: 'A', turnNumber: 1, phase: 'action',
     aiState: { A: 'idle', B: 'idle' },
     aiTurnsInState: { A: 0, B: 0 },
     aiMemory: { A: emptyPlannerMemory(), B: emptyPlannerMemory() },
@@ -67,85 +70,85 @@ describe('isModifierCard', () => {
 
 describe('playerHasToughInPlay', () => {
   it('false when all turfs empty', () => {
-    const state = makeState([]);
+    const state = makeState(null);
     expect(playerHasToughInPlay(state.players.A)).toBe(false);
   });
 
   it('true when any turf has a tough', () => {
-    const state = makeState([], [[tough('t1')]]);
+    const state = makeState(null, [[tough('t1')]]);
     expect(playerHasToughInPlay(state.players.A)).toBe(true);
   });
 });
 
-describe('draw-gate enforcement in stepAction', () => {
+describe('placement-rule enforcement in stepAction', () => {
   it('allows playing a tough with no toughs in play', () => {
-    const state = makeState([tough('t1')]);
+    const state = makeState(tough('t1'));
     expect(() => {
       stepAction(state, { kind: 'play_card', side: 'A', turfIdx: 0, cardId: 't1' });
     }).not.toThrow();
     expect(state.players.A.turfs[0].stack).toHaveLength(1);
   });
 
-  it('rejects weapon when no toughs in play', () => {
-    const state = makeState([weapon('w1')]);
+  it('rejects weapon when target turf is empty (placement rule)', () => {
+    const state = makeState(weapon('w1'));
     expect(() => {
       stepAction(state, { kind: 'play_card', side: 'A', turfIdx: 0, cardId: 'w1' });
-    }).toThrow('Draw-gate');
+    }).toThrow(/modifier/);
   });
 
-  it('rejects drug when no toughs in play', () => {
-    const state = makeState([drug('d1')]);
+  it('rejects drug when target turf is empty', () => {
+    const state = makeState(drug('d1'));
     expect(() => {
       stepAction(state, { kind: 'play_card', side: 'A', turfIdx: 0, cardId: 'd1' });
-    }).toThrow('Draw-gate');
+    }).toThrow(/modifier/);
   });
 
-  it('rejects currency when no toughs in play', () => {
-    const state = makeState([currency('c1')]);
+  it('rejects currency when target turf is empty', () => {
+    const state = makeState(currency('c1'));
     expect(() => {
       stepAction(state, { kind: 'play_card', side: 'A', turfIdx: 0, cardId: 'c1' });
-    }).toThrow('Draw-gate');
+    }).toThrow(/modifier/);
   });
 
-  it('allows weapon when tough already on turf', () => {
-    const state = makeState([weapon('w1')], [[tough('t1')]]);
+  it('allows weapon onto a turf that has a tough', () => {
+    const state = makeState(weapon('w1'), [[tough('t1')]]);
     expect(() => {
       stepAction(state, { kind: 'play_card', side: 'A', turfIdx: 0, cardId: 'w1' });
     }).not.toThrow();
   });
 
   it('rejects modifier on empty turf even when toughs exist elsewhere', () => {
-    const state = makeState([weapon('w1')], [[tough('t1')], []]);
+    const state = makeState(weapon('w1'), [[tough('t1')], []]);
     expect(() => {
       stepAction(state, { kind: 'play_card', side: 'A', turfIdx: 1, cardId: 'w1' });
-    }).toThrow('Cannot play modifier on empty turf');
+    }).toThrow(/modifier/);
   });
 });
 
-describe('draw-gate enforcement in enumerateLegalActions', () => {
-  it('excludes modifier play_card when no toughs in play', () => {
-    const state = makeState([weapon('w1'), drug('d1'), currency('c1')]);
+describe('placement rules in enumerateLegalActions', () => {
+  it('excludes modifier play_card when no turf has a tough', () => {
+    const state = makeState(weapon('w1'));
     const actions = enumerateLegalActions(state, 'A');
     const playActions = actions.filter(a => a.kind === 'play_card');
     expect(playActions).toHaveLength(0);
   });
 
-  it('includes tough play_card when no toughs in play', () => {
-    const state = makeState([tough('t1')]);
+  it('includes tough play_card even when no toughs in play', () => {
+    const state = makeState(tough('t1'));
     const actions = enumerateLegalActions(state, 'A');
     const playActions = actions.filter(a => a.kind === 'play_card');
     expect(playActions.length).toBeGreaterThan(0);
   });
 
   it('includes modifier play_card once tough is on a turf', () => {
-    const state = makeState([weapon('w1')], [[tough('t1')]]);
+    const state = makeState(weapon('w1'), [[tough('t1')]]);
     const actions = enumerateLegalActions(state, 'A');
     const playWeapon = actions.filter(a => a.kind === 'play_card' && a.cardId === 'w1');
     expect(playWeapon.length).toBeGreaterThan(0);
   });
 
   it('modifier play_card only targets turfs that have toughs', () => {
-    const state = makeState([weapon('w1')], [[tough('t1')], []]);
+    const state = makeState(weapon('w1'), [[tough('t1')], []]);
     const actions = enumerateLegalActions(state, 'A');
     const playWeapon = actions.filter(a => a.kind === 'play_card' && a.cardId === 'w1');
     expect(playWeapon.every(a => a.turfIdx === 0)).toBe(true);

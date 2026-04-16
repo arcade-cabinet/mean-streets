@@ -97,6 +97,7 @@ describe('App flow', () => {
 
     expect(await waitForSelector('[data-testid="game-screen"]', 10000)).not.toBeNull();
     expect(document.querySelector('[data-testid="action-budget"]')).not.toBeNull();
-    expect(document.querySelector('[data-testid="hand-row"]')).not.toBeNull();
+    // v0.2: handless — assert the draw-action button instead of hand-row.
+    expect(document.querySelector('[data-testid="action-draw"]')).not.toBeNull();
   });
 });
