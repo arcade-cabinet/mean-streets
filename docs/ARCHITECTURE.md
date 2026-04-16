@@ -1,6 +1,6 @@
 ---
 title: Architecture
-updated: 2026-04-15
+updated: 2026-04-16
 status: current
 domain: technical
 ---
@@ -50,24 +50,25 @@ config/
 
 src/
   sim/turf/                       # Active game engine (runs without React)
-    types.ts                      # Card/Turf/PlayerState/GameConfig/Action/Metrics types
-    board.ts                      # Stack ops, power/resistance aggregation, affiliation conflict, seizure
+    types.ts                      # Card/StackedCard/Turf/PlayerState/QueuedAction/GameConfig/Action/Metrics
+    board.ts                      # Stack ops (StackedCard[]), power/resistance, affiliation conflict, seizure
     stack-ops.ts                  # Reusable stack navigation: topToughIdx, killToughAtIdx, transferMods
-    attacks.ts                    # 3 strike types: direct, pushed, funded recruit
-    environment.ts                # stepAction (all 7 action kinds), drawPhase, actionsForTurn
+    attacks.ts                    # resolveStrikeNow: direct, pushed, funded recruit (called from resolve.ts)
+    abilities.ts                  # applyTangibles + runIntangiblesPhase (counter/bribe/selfAttack/flip)
+    abilities-effects.ts          # ABILITY_INDEX: authored-flag → tangible delta + intangible handler
+    resolve.ts                    # resolvePhase: dominance → intangibles → tangible combat → seizure
+    environment.ts                # stepAction (draw, play_card, retreat, queue strikes, end_turn)
     env-query.ts                  # createObservation, enumerateLegalActions, policy keys
-    game.ts                       # Match lifecycle: createMatch, runTurn, isGameOver
+    game.ts                       # Match lifecycle: createMatch, runTurn (both sides), isGameOver
     generators.ts                 # generateCurrency, generateWeapons, generateDrugs
-    deck-builder.ts               # buildAutoDeck → flat Card[]
+    deck-builder.ts               # buildAutoDeck → flat Card[] (with preference-weighted shuffle)
     benchmark.ts                  # playSimulatedGame: seeded AI-vs-AI loop
     balance.ts                    # Per-card performance, lock lifecycle, v2 history
     sweep.ts                      # Forced-inclusion permutation sweeps
     ai/                           # AI decision pipeline
-      planner.ts                  # Yuka GOAP: 5 composite goals, scoreAll
-      scoring.ts                  # Score all v0.2 action kinds
+      planner.ts                  # Yuka GOAP: composite goals over new action set
+      scoring.ts                  # Score draw, play, retreat, queued strikes, end_turn
       policy.ts                   # selectAction: difficulty-gated top-K + noise
-      ai-fuzzy.ts                 # Fuzzy module: aggression, patience, desperation
-      ai-think.ts                 # Integration: wires planner to decideAction
   sim/analysis/                   # Dev-only analysis tooling
     cli.ts                        # `analysis:*` npm scripts entry point
     benchmarks.ts                 # checkConvergence (48-52% winrate band)
@@ -85,10 +86,10 @@ src/
     types.ts                      # PackKind, PackInstance, PackReward
 
   ecs/                            # Koota ECS bridge
-    traits.ts                     # GameState, PlayerA/B, ActionBudget, CardInStack, TurfOwner, SickFlag
+    traits.ts                     # GameState, PlayerA/B, ActionBudget, TurnEnded, DeckPending, QueuedStrike
     world.ts                      # createGameWorld(config, seed, deck)
-    actions.ts                    # playCardAction, strikeAction, discardAction, passAction, endTurnAction
-    hooks.ts                      # useGamePhase, useHand, usePlayerTurfs, useTurfStackComposite, useActionBudget
+    actions.ts                    # drawAction, playCardAction, retreatAction, queueStrikeAction, endTurnAction
+    hooks.ts                      # useDeckPending, useTurnEnded, useQueuedStrikes, usePlayerTurfs, useActionBudget
 
   platform/                       # Capacitor shell, device, persistence
     AppShell.tsx                  # Device/layout provider + safe-area shell
@@ -97,13 +98,11 @@ src/
       collection.ts               # loadCollection, addCardsToCollection, grantStarterCollection
 
   ui/                             # React presentation layer
-    screens/                      # MainMenu, Difficulty, Game, Collection, PackOpening, GameOver
+    screens/                      # MainMenu, Difficulty, Game, Collection, CardGarage, PackOpening, GameOver
     cards/                        # Card (unified v0.2), CardFrame, ModCard
     board/                        # TurfView, TurfRow, TurfCompositeCard, StackFanModal, StreetDivider
-    hand/                         # PlayerHand, CardFan
     affiliations/                 # AffiliationSymbol (SVG glow), getAffiliationRelation
-    hud/                          # GameHUD (turn counter, action budget)
-    combat/                       # AttackSelector, ActionMenu
+    hud/                          # GameHUD (turn counter, action budget, queued-strikes row)
     dnd/                          # DraggableCard, DragContext, DropTarget, OrientationOverlay
     filters/                      # GrittyFilters (SVG noir glow defs)
     hooks/                        # useCollection
@@ -155,12 +154,22 @@ files and commits each tuning iteration.
 ### Game Simulation
 
 ```
-Compiled card pools
-  → buildAutoDeck(toughs, weapons, drugs, currency, rng) → flat Card[50]
+Compiled card pools + CardPreferences
+  → buildAutoDeck(toughs, weapons, drugs, currency, rng, prefs)
+    → filters disabled cards; biases shuffle by priority (1–10)
+    → flat Card[N]
   → createMatch(config, { deckA, deckB }) → MatchState
-  → Per turn: drawPhase → actionsForTurn → stepAction loop
-  → stepAction handles: play_card, direct_strike, pushed_strike,
-    funded_recruit, discard, end_turn, pass
+  → Each turn, both players independently:
+    → stepAction per action: draw (→ pending), play_card (pending → turf),
+      retreat, queue strike (direct/pushed/funded), discard, end_turn
+  → When both players turnEnded:
+    → resolvePhase(state):
+      1. Sort queued actions by dominance (power + tangibles + loyalty)
+      2. For each: runIntangiblesPhase → counter/bribe/selfAttack/flip
+      3. Surviving actions → resolveStrikeNow → kill/sick/bust
+      4. Seize turfs with zero living toughs
+      5. Enforce placement cleanup (top modifier discarded, closedRanks flag)
+      6. Reset action budgets, clear queues, phase back to 'action'
   → isGameOver(match) → 'A' | 'B' | null (0-turf seizure or timeout)
   → Metrics collection → JSON report
 ```
@@ -170,11 +179,13 @@ Compiled card pools
 ```
 TurfGameState + TurfObservation
   → Fuzzy inputs: crewStrength, threatLevel, resourceLevel, danger
-  → Yuka FuzzyModule defuzzification
-  → aggression, patience, desperation (0-1)
+  → Yuka FuzzyModule defuzzification → aggression/patience/desperation
   → GOAP goals: build_stack, direct_pressure, funded_pressure,
-    pushed_pressure, anti_stall
-  → scoreAll(legalActions) → ScoredAction[]
+    pushed_pressure, anti_stall, draw_tempo, retreat_shield
+  → scoreAll(legalActions) over new action set → ScoredAction[]
+    → draw scored by deck-info value vs action budget
+    → retreat scored by top-shield delta
+    → queued strikes scored with intangible-awareness
   → selectAction(scored, difficulty, rng)
     → per-difficulty top-K filter + noise injection
   → Chosen action → stepAction(gs, action)
@@ -184,17 +195,25 @@ TurfGameState + TurfObservation
 
 ```
 createGameWorld(config, seed, deck)
-  → Koota world with GameState, PlayerA, PlayerB traits
+  → Koota world with GameState, PlayerA, PlayerB, TurnEnded,
+    DeckPending, QueuedStrike traits
 GameScreen:
   → usePlayerTurfs('A') → Turf[]
-  → useHand('A') → Card[]
+  → useDeckPending('A') → Card | null (drawn-but-unplaced)
+  → useQueuedStrikes('A') → QueuedAction[]
+  → useTurnEnded(['A','B']) → boolean pair (drives waiting overlay)
   → renders TurfView (TurfCompositeCard × N turfs)
-  → renders PlayerHand (Card × hand.length)
-User action (e.g., Direct Strike):
-  → strikeAction(world, 'direct_strike', srcIdx, tgtIdx)
-  → calls stepAction(gs, action)  ← sim engine mutation
-  → e.changed(GameState, PlayerA, PlayerB)
+  → renders pending-placement chip + queued-strike chips
+User action (e.g., Draw):
+  → drawAction(world)
+  → stepAction(gs, { kind: 'draw', side: 'A' })
+  → pending slot populated
   → Koota subscriptions fire → React re-renders
+
+On both sides ending turn:
+  → resolvePhase triggered by stepAction
+  → resolution overlay animates each queued action in dominance order
+  → final state renders after animation
 ```
 
 ### Analysis Pipeline
