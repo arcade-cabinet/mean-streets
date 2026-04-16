@@ -35,4 +35,12 @@ describe('parseCommand (Bug K regression)', () => {
     expect(parseCommand(['--profile', 'release'])).not.toBe('release');
     expect(parseCommand(['--cards', 'card-001,drug-01'])).not.toBe('card-001,drug-01');
   });
+
+  it('treats --flag=value as a flag, not a command', () => {
+    // Another common invocation style. The leading `--` means this is
+    // still a flag, not a positional verb; parseCommand must default.
+    expect(parseCommand(['--profile=release'])).toBe('benchmark');
+    expect(parseCommand(['--cards=card-001,drug-01'])).toBe('benchmark');
+    expect(parseCommand(['--dry-run=true'])).toBe('benchmark');
+  });
 });

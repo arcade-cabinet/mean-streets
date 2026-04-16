@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { afterEach, describe, it, expect, vi } from 'vitest';
 import { createGameWorld } from '../ecs/world';
 import { endTurnAction } from '../ecs/actions';
 import { GameState, PlayerA, PlayerB, ActionBudget } from '../ecs/traits';
@@ -14,6 +14,14 @@ const SEED = 1337;
 // the v0.2 stack-redesign contract: ECS actions delegate to stepAction
 // and never touch board/attack primitives directly.
 describe('endTurnAction delegates to stepAction + advanceTurn', () => {
+  // Restore all vi.spyOn mocks between tests. Without this, a failure
+  // inside the test body would skip the inline .mockRestore() calls and
+  // leak spies into the next test (breaking stepAction/advanceTurn
+  // observability site-wide).
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('calls stepAction with an end_turn action for the outgoing side', () => {
     const stepSpy = vi.spyOn(environment, 'stepAction');
     const advanceSpy = vi.spyOn(environment, 'advanceTurn');
@@ -38,9 +46,6 @@ describe('endTurnAction delegates to stepAction + advanceTurn', () => {
 
     // advanceTurn performed the transition (side swap + turn++).
     expect(advanceSpy).toHaveBeenCalledTimes(1);
-
-    stepSpy.mockRestore();
-    advanceSpy.mockRestore();
   });
 
   it('advances turnNumber and turnSide consistently (no double-advance)', () => {

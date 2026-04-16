@@ -185,13 +185,13 @@ export function latestStat(history: readonly number[]): number {
   return history[history.length - 1];
 }
 
-export function latestRarity(
-  history: readonly string[],
-): 'common' | 'rare' | 'legendary' {
+export type Rarity = z.infer<typeof RaritySchema>;
+
+export function latestRarity(history: readonly string[]): Rarity {
   if (history.length === 0) {
     throw new Error('latestRarity: history array is empty');
   }
-  return history[history.length - 1] as 'common' | 'rare' | 'legendary';
+  return history[history.length - 1] as Rarity;
 }
 
 // ── Inferred types ─────────────────────────────────────────────
