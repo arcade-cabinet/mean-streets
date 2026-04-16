@@ -119,8 +119,13 @@ describe('compiled card catalog', () => {
     const toughs = readJson(join(COMPILED_DIR, 'toughs.json')) as unknown[];
     const weapons = readJson(join(COMPILED_DIR, 'weapons.json')) as unknown[];
     const drugs = readJson(join(COMPILED_DIR, 'drugs.json')) as unknown[];
-    const all = [...toughs, ...weapons, ...drugs];
+    const currency = readJson(join(COMPILED_DIR, 'currency.json')) as unknown[];
+    const all = [...toughs, ...weapons, ...drugs, ...currency];
     expect(all.length).toBeGreaterThan(0);
+    // Sanity: the aggregate should include at least one of each kind so a
+    // future regression that drops a compiled artifact (e.g. currency
+    // missing) surfaces here rather than as a quiet zero-count branch.
+    expect(currency.length).toBeGreaterThan(0);
     for (const entry of all) {
       CompiledCardSchema.parse(entry);
     }

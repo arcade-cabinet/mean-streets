@@ -107,8 +107,17 @@ describe('affiliation conflict — multi-rival scenarios', () => {
     expect(turfAffiliationConflict(turf, tough('id', 'iron_devils'))).toBe(true);
   });
 
-  it('two factions at war with each other but incoming is neutral to both', () => {
-    const turf = turfWith(tough('kr', 'kings_row'));
+  it('two rival factions coexist via buffer; incoming neutral does not conflict', () => {
+    // kings_row and iron_devils are rivals but the turf already has a
+    // currency buffer (and/or mediating tough) letting them coexist.
+    // An incoming neutral tough should not trigger a new conflict on
+    // either of them.
+    const turf = turfWith(
+      tough('kr', 'kings_row'),
+      tough('id', 'iron_devils'),
+      { kind: 'currency', id: 'c', name: '$1000', denomination: 1000, rarity: 'common' },
+    );
+    // Dead rabbits is rival with neither → should be allowed
     expect(turfAffiliationConflict(turf, tough('dr', 'dead_rabbits'))).toBe(false);
   });
 });

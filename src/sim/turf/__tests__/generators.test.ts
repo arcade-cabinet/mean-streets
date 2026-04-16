@@ -35,12 +35,18 @@ describe('generateWeapons', () => {
     expect(new Set(names).size).toBe(50);
   });
 
-  it('weapons have abilities from their category', () => {
+  it('every weapon in a category carries that category\'s abilities', () => {
+    // Regression pin: sample-only checks pass if just one card in the
+    // category has the expected ability. Verify ALL cards in each
+    // category carry the signature abilities.
     const rng = createRng(42);
     const weapons = generateWeapons(rng);
-    const bladed = weapons.find(w => w.category === 'bladed')!;
-    expect(bladed.abilities).toContain('LACERATE');
-    expect(bladed.abilities).toContain('PARRY');
+    const bladed = weapons.filter(w => w.category === 'bladed');
+    expect(bladed.length).toBeGreaterThan(0);
+    for (const w of bladed) {
+      expect(w.abilities, `${w.id}`).toContain('LACERATE');
+      expect(w.abilities, `${w.id}`).toContain('PARRY');
+    }
   });
 
   it('power values are within expected range', () => {
@@ -85,12 +91,15 @@ describe('generateDrugs', () => {
     expect(new Set(ids).size).toBe(50);
   });
 
-  it('drugs have abilities from their category', () => {
+  it('every drug in a category carries that category\'s abilities', () => {
     const rng = createRng(42);
     const drugs = generateDrugs(rng);
-    const stim = drugs.find(d => d.category === 'stimulant')!;
-    expect(stim.abilities).toContain('RUSH');
-    expect(stim.abilities).toContain('REFLEXES');
+    const stims = drugs.filter(d => d.category === 'stimulant');
+    expect(stims.length).toBeGreaterThan(0);
+    for (const d of stims) {
+      expect(d.abilities, `${d.id}`).toContain('RUSH');
+      expect(d.abilities, `${d.id}`).toContain('REFLEXES');
+    }
   });
 
   it('power values are within expected range', () => {

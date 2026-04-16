@@ -52,6 +52,19 @@ describe('createMatch', () => {
     const b = createMatch(DEFAULT_GAME_CONFIG, { deckA: [...deck], deckB: [...deck], seed: 99 });
     expect(a.game.players.A.deck.map(c => c.id)).toEqual(b.game.players.A.deck.map(c => c.id));
   });
+
+  it('produces a different shuffle for different seeds (seed actually drives order)', () => {
+    // Regression pin: this catches a class of bugs where the seed is
+    // silently ignored and the shuffle defaults to Math.random or a
+    // fixed permutation. Without this, the same-seed determinism test
+    // passes trivially on any two identical decks.
+    const deck = makeDeck('x', 20);
+    const a = createMatch(DEFAULT_GAME_CONFIG, { deckA: [...deck], deckB: [...deck], seed: 1 });
+    const b = createMatch(DEFAULT_GAME_CONFIG, { deckA: [...deck], deckB: [...deck], seed: 99999 });
+    const orderA = a.game.players.A.deck.map(c => c.id);
+    const orderB = b.game.players.A.deck.map(c => c.id);
+    expect(orderA).not.toEqual(orderB);
+  });
 });
 
 describe('runTurn', () => {
