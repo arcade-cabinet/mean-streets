@@ -1,16 +1,22 @@
+// v0.2 handless scoring — draw / play_card(pending) / retreat / queued
+// strike / end_turn. No `hand` anywhere. Queued strikes estimate outcome
+// via applyTangibles + positionPower/Resistance.
+import { applyTangibles } from '../abilities';
 import {
+  hasToughOnTurf,
   positionPower,
   positionResistance,
+  turfAffiliationConflict,
   turfCurrency,
   turfToughs,
-  turfAffiliationConflict,
-  hasToughOnTurf,
 } from '../board';
-import { topToughIdx } from '../stack-ops';
 import { policyActionKey } from '../env-query';
+import { topToughIdx } from '../stack-ops';
 import type {
   Card,
   PlannerMemory,
+  PlayerState,
+  Turf,
   TurfAction,
   TurfGameState,
   TurfObservation,
@@ -24,9 +30,205 @@ export interface ActionScore {
   policyUsed: boolean;
 }
 
-function findCard(hand: Card[], cardId: string | undefined): Card | undefined {
-  if (!cardId) return undefined;
-  return hand.find((c) => c.id === cardId);
+const NEG_INF = Number.NEGATIVE_INFINITY;
+
+function pendingCard(
+  p: PlayerState,
+  cardId: string | undefined,
+): Card | undefined {
+  const c = p.pending;
+  if (!c) return undefined;
+  if (cardId && c.id !== cardId) return undefined;
+  return c;
+}
+
+// Attacker-vs-defender dominance using tangible bonuses (cashBonus is
+// the Pushed currency modifier).
+function strikeDominance(atk: Turf, def: Turf, cashBonus = 0): number {
+  const bonus = applyTangibles(atk, def);
+  const P = Math.max(0, positionPower(atk) + cashBonus + bonus.atkPowerDelta);
+  const R = bonus.ignoreResistance
+    ? 0
+    : Math.max(0, positionResistance(def) + bonus.defResistDelta);
+  return P - R;
+}
+
+function resolveAttackTurfs(
+  state: TurfGameState,
+  action: TurfAction,
+): { atk: Turf; def: Turf; atkP: PlayerState; defP: PlayerState } | null {
+  if (action.turfIdx === undefined || action.targetTurfIdx === undefined)
+    return null;
+  const atkP = state.players[action.side];
+  const defP = state.players[action.side === 'A' ? 'B' : 'A'];
+  const atk = atkP.turfs[action.turfIdx];
+  const def = defP.turfs[action.targetTurfIdx];
+  if (!atk || !def) return null;
+  if (atk.closedRanks) return null;
+  if (!hasToughOnTurf(atk) || !hasToughOnTurf(def)) return null;
+  return { atk, def, atkP, defP };
+}
+
+function scorePlayCard(
+  state: TurfGameState,
+  observation: TurfObservation,
+  action: TurfAction,
+): number {
+  const sc = TURF_SIM_CONFIG.aiScoring;
+  if (action.turfIdx === undefined) return NEG_INF;
+  const player = state.players[action.side];
+  const card = pendingCard(player, action.cardId);
+  if (!card) return NEG_INF;
+  const turf = player.turfs[action.turfIdx];
+  if (!turf) return NEG_INF;
+
+  if (card.kind === 'tough') {
+    if (turfAffiliationConflict(turf, card)) return NEG_INF;
+    let s = card.power + card.resistance * sc.placeCrewCrewResistanceWeight;
+    s +=
+      (observation.opponentToughsInPlay - observation.ownToughsInPlay) *
+      sc.placeCrewDesperationWeight;
+    if (turfToughs(turf).length === 0) s += sc.emptyTurfBonus;
+    if (turfToughs(turf).some((t) => t.affiliation === card.affiliation))
+      s += sc.affiliationSynergyBonus;
+    return s;
+  }
+
+  if (card.kind === 'weapon' || card.kind === 'drug') {
+    if (!hasToughOnTurf(turf)) return NEG_INF;
+    let s =
+      card.power * sc.modPowerWeight + card.resistance * sc.modResistanceWeight;
+    if (positionPower(turf) > 0) s += sc.modOnPoweredTurfBonus;
+    return s;
+  }
+
+  // currency
+  if (!hasToughOnTurf(turf)) return NEG_INF;
+  const cash =
+    turfCurrency(turf).reduce((a, c) => a + c.denomination, 0) +
+    card.denomination;
+  let s = card.denomination / sc.currencyDenominationScale;
+  s += cash >= sc.fundedThreshold ? sc.fundedReadyBonus : sc.currencyBaseScore;
+  return s;
+}
+
+function scoreRetreat(state: TurfGameState, action: TurfAction): number {
+  if (action.turfIdx === undefined || action.stackIdx === undefined)
+    return NEG_INF;
+  const turf = state.players[action.side].turfs[action.turfIdx];
+  if (!turf || turf.stack.length < 2) return NEG_INF;
+  const topIdx = turf.stack.length - 1;
+  if (action.stackIdx === topIdx) return NEG_INF;
+  const old = turf.stack[topIdx]?.card;
+  const next = turf.stack[action.stackIdx]?.card;
+  if (!old || !next || next.kind !== 'tough') return NEG_INF;
+  const oldPow = old.kind === 'currency' ? 0 : old.power;
+  const oldRes = old.kind === 'currency' ? 0 : old.resistance;
+  // Swap shields weak top with a beefier behind-tough. Small floor keeps
+  // a zero-delta lateral swap off the action-bar top.
+  return next.resistance - oldRes + (next.power - oldPow) - 0.5;
+}
+
+function scoreDirect(state: TurfGameState, action: TurfAction): number {
+  const sc = TURF_SIM_CONFIG.aiScoring;
+  const aw = TURF_AI_CONFIG.tacticalWeights.attack;
+  const combat = TURF_SIM_CONFIG.combat;
+  const t = resolveAttackTurfs(state, action);
+  if (!t) return NEG_INF;
+  const margin = strikeDominance(t.atk, t.def);
+  let s = margin * aw.killMargin;
+  if (margin >= 0) s += aw.seizeBonus;
+  else if (
+    positionPower(t.atk) >=
+    Math.floor(positionResistance(t.def) / combat.sickThresholdDivisor)
+  )
+    s += sc.sickBonus;
+  else s += sc.missPenalty;
+
+  const defTop = topToughIdx(t.def);
+  if (defTop >= 0) {
+    const tc = t.def.stack[defTop].card;
+    if (tc.kind === 'tough' && tc.resistance <= sc.lowResistanceThreshold)
+      s += aw.lowResistanceBonus * sc.lowResistanceMultiplier;
+  }
+  if (t.defP.turfs.length <= 1) s += sc.lastTurfBonus;
+  return s;
+}
+
+function scorePushed(state: TurfGameState, action: TurfAction): number {
+  const sc = TURF_SIM_CONFIG.aiScoring;
+  const aw = TURF_AI_CONFIG.tacticalWeights.attack;
+  const combat = TURF_SIM_CONFIG.combat;
+  const t = resolveAttackTurfs(state, action);
+  if (!t) return NEG_INF;
+  const currency = turfCurrency(t.atk);
+  if (currency.length === 0) return -5;
+
+  const cashBonus = currency[0].denomination / combat.pushedDenominationScale;
+  const margin = strikeDominance(t.atk, t.def, cashBonus);
+  let s = margin * aw.killMargin + aw.flipBonus + aw.splashBonus;
+  if (margin >= 0) s += sc.pushedKillBonus;
+  if (t.defP.turfs.length <= 1) s += sc.lastTurfBonus;
+  return s;
+}
+
+function scoreRecruit(state: TurfGameState, action: TurfAction): number {
+  const sc = TURF_SIM_CONFIG.aiScoring;
+  const aw = TURF_AI_CONFIG.tacticalWeights.attack;
+  const combat = TURF_SIM_CONFIG.combat;
+  const t = resolveAttackTurfs(state, action);
+  if (!t) return NEG_INF;
+  const totalCash = turfCurrency(t.atk).reduce((x, c) => x + c.denomination, 0);
+  if (totalCash < combat.fundedRecruitMinCash) return -5;
+  const tgtIdx = topToughIdx(t.def);
+  if (tgtIdx < 0) return -5;
+  const target = t.def.stack[tgtIdx].card;
+  if (target.kind !== 'tough') return -5;
+
+  const affMult = combat.affiliationMult as Record<string, number>;
+  const atkAffs = turfToughs(t.atk).map((tt) => tt.affiliation);
+  let mult = affMult.other;
+  if (target.affiliation === 'freelance') mult = affMult.freelance;
+  else if (atkAffs.includes(target.affiliation)) mult = affMult.same;
+  else if (turfAffiliationConflict(t.atk, target)) mult = affMult.rival;
+
+  const threshold = target.resistance * mult;
+  let s: number;
+  if (totalCash >= threshold) {
+    s = aw.flipBonus + sc.fundedSuccessBonus + target.power;
+    if (mult <= affMult.same) s += sc.fundedCheapAffinityBonus;
+  } else {
+    s = sc.fundedFailPenalty;
+  }
+  if (t.defP.turfs.length <= 1) s += sc.lastTurfBonus;
+  return s;
+}
+
+function scoreDraw(state: TurfGameState, action: TurfAction): number {
+  const p = state.players[action.side];
+  if (p.pending !== null || p.deck.length === 0) return NEG_INF;
+  // Weight deck depth + remaining budget; extra nudge when the board is
+  // empty so the AI actually starts a match by drawing.
+  const deckTerm = p.deck.length * 0.3;
+  const budgetTerm = Math.max(0, p.actionsRemaining - 1) * 0.4;
+  const emptyBoardFloor = p.toughsInPlay === 0 ? 1.5 : 0;
+  return deckTerm + budgetTerm + emptyBoardFloor;
+}
+
+function scoreDiscard(
+  state: TurfGameState,
+  observation: TurfObservation,
+  action: TurfAction,
+): number {
+  const sc = TURF_SIM_CONFIG.aiScoring;
+  const card = pendingCard(state.players[action.side], action.cardId);
+  if (!card) return NEG_INF;
+  let s = sc.discardBase;
+  if (card.kind === 'currency' && card.denomination === 100)
+    s += sc.discardCheapCurrencyBonus;
+  if (observation.ownToughsInPlay === 0 && card.kind !== 'tough')
+    s += sc.discardNoToughsBonus;
+  return s;
 }
 
 export function scoreAction(
@@ -36,183 +238,42 @@ export function scoreAction(
   action: TurfAction,
   policyArtifact?: TurfPolicyArtifact,
 ): ActionScore {
-  const attackWeights = TURF_AI_CONFIG.tacticalWeights.attack;
   const sc = TURF_SIM_CONFIG.aiScoring;
-  const combat = TURF_SIM_CONFIG.combat;
-  const player = state.players[action.side];
-  const opponent = state.players[action.side === 'A' ? 'B' : 'A'];
+  const k = action.kind;
   let score = 0;
-
-  switch (action.kind) {
-    case 'play_card': {
-      const card = findCard(player.hand, action.cardId);
-      if (!card || action.turfIdx === undefined) {
-        return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
-      }
-      const turf = player.turfs[action.turfIdx];
-      if (!turf) return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
-
-      if (card.kind === 'tough') {
-        const toughCount = turfToughs(turf).length;
-        score = card.power + card.resistance * sc.placeCrewCrewResistanceWeight;
-        score += (observation.opponentToughsInPlay - observation.ownToughsInPlay) * sc.placeCrewDesperationWeight;
-        if (toughCount === 0) score += sc.emptyTurfBonus;
-        if (turfAffiliationConflict(turf, card)) {
-          return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
-        }
-        const sameAff = turfToughs(turf).filter((t) => t.affiliation === card.affiliation).length;
-        if (sameAff > 0) score += sc.affiliationSynergyBonus;
-      } else if (card.kind === 'weapon' || card.kind === 'drug') {
-        if (!hasToughOnTurf(turf)) {
-          return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
-        }
-        score = card.power * sc.modPowerWeight + card.resistance * sc.modResistanceWeight;
-        const turfPow = positionPower(turf);
-        if (turfPow > 0) score += sc.modOnPoweredTurfBonus;
-      } else if (card.kind === 'currency') {
-        if (!hasToughOnTurf(turf)) {
-          return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
-        }
-        score = card.denomination / sc.currencyDenominationScale;
-        const existingCash = turfCurrency(turf);
-        const totalCash = existingCash.reduce((s, c) => s + c.denomination, 0) + card.denomination;
-        if (totalCash >= sc.fundedThreshold) score += sc.fundedReadyBonus;
-        else score += sc.currencyBaseScore;
-      }
-      break;
-    }
-
-    case 'direct_strike': {
-      if (action.turfIdx === undefined || action.targetTurfIdx === undefined) {
-        return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
-      }
-      const atkTurf = player.turfs[action.turfIdx];
-      const defTurf = opponent.turfs[action.targetTurfIdx];
-      if (!atkTurf || !defTurf) return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
-      if (!hasToughOnTurf(atkTurf) || !hasToughOnTurf(defTurf)) {
-        return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
-      }
-      const P = positionPower(atkTurf);
-      const R = positionResistance(defTurf);
-      const margin = P - R;
-      score = margin * attackWeights.killMargin;
-      if (margin >= 0) score += attackWeights.seizeBonus;
-      else if (P >= Math.floor(R / combat.sickThresholdDivisor)) score += sc.sickBonus;
-      else score += sc.missPenalty;
-
-      const defToughs = turfToughs(defTurf);
-      if (defToughs.length > 0) {
-        const targetIdx = topToughIdx(defTurf);
-        if (targetIdx >= 0) {
-          const target = defTurf.stack[targetIdx];
-          if (target.kind === 'tough' && target.resistance <= sc.lowResistanceThreshold) {
-            score += attackWeights.lowResistanceBonus * sc.lowResistanceMultiplier;
-          }
-        }
-      }
-      if (opponent.turfs.length <= 1) score += sc.lastTurfBonus;
-      break;
-    }
-
-    case 'pushed_strike': {
-      if (action.turfIdx === undefined || action.targetTurfIdx === undefined) {
-        return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
-      }
-      const atkTurf = player.turfs[action.turfIdx];
-      const defTurf = opponent.turfs[action.targetTurfIdx];
-      if (!atkTurf || !defTurf) return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
-      const currency = turfCurrency(atkTurf);
-      if (currency.length === 0) return { score: -5, policyUsed: false };
-
-      const cashBonus = currency[0].denomination / combat.pushedDenominationScale;
-      const P = positionPower(atkTurf) + cashBonus;
-      const R = positionResistance(defTurf);
-      const margin = P - R;
-      score = margin * attackWeights.killMargin + attackWeights.flipBonus + attackWeights.splashBonus;
-      if (margin >= 0) score += sc.pushedKillBonus;
-      if (opponent.turfs.length <= 1) score += sc.lastTurfBonus;
-      break;
-    }
-
-    case 'funded_recruit': {
-      if (action.turfIdx === undefined || action.targetTurfIdx === undefined) {
-        return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
-      }
-      const atkTurf = player.turfs[action.turfIdx];
-      const defTurf = opponent.turfs[action.targetTurfIdx];
-      if (!atkTurf || !defTurf) return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
-      const currency = turfCurrency(atkTurf);
-      const totalCash = currency.reduce((s, c) => s + c.denomination, 0);
-      if (totalCash < combat.fundedRecruitMinCash) return { score: -5, policyUsed: false };
-
-      const tgtIdx = topToughIdx(defTurf);
-      if (tgtIdx < 0) return { score: -5, policyUsed: false };
-      const target = defTurf.stack[tgtIdx];
-      if (target.kind !== 'tough') return { score: -5, policyUsed: false };
-
-      const affMult = combat.affiliationMult as Record<string, number>;
-      const atkAffs = turfToughs(atkTurf).map((t) => t.affiliation);
-      let mult = affMult.other;
-      if (target.affiliation === 'freelance') mult = affMult.freelance;
-      else if (atkAffs.includes(target.affiliation)) mult = affMult.same;
-      else if (turfAffiliationConflict(atkTurf, target)) mult = affMult.rival;
-
-      const threshold = target.resistance * mult;
-      if (totalCash >= threshold) {
-        score = attackWeights.flipBonus + sc.fundedSuccessBonus + target.power;
-        if (mult <= affMult.same) score += sc.fundedCheapAffinityBonus;
-      } else {
-        score = sc.fundedFailPenalty;
-      }
-      if (opponent.turfs.length <= 1) score += sc.lastTurfBonus;
-      break;
-    }
-
-    case 'discard': {
-      const card = findCard(player.hand, action.cardId);
-      if (!card) return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
-      score = sc.discardBase;
-      if (card.kind === 'currency' && card.denomination === 100) score += sc.discardCheapCurrencyBonus;
-      if (observation.ownToughsInPlay === 0 && card.kind !== 'tough') score += sc.discardNoToughsBonus;
-      break;
-    }
-
-    case 'end_turn':
-      score = sc.endTurnBase;
-      if (observation.actionsRemaining <= 0) score += sc.endTurnNoActionsBonus;
-      break;
-
-    case 'pass':
-      score = sc.passBasePenalty - memory.consecutivePasses;
-      break;
+  if (k === 'draw') score = scoreDraw(state, action);
+  else if (k === 'play_card') score = scorePlayCard(state, observation, action);
+  else if (k === 'retreat') score = scoreRetreat(state, action);
+  else if (k === 'direct_strike') score = scoreDirect(state, action);
+  else if (k === 'pushed_strike') score = scorePushed(state, action);
+  else if (k === 'funded_recruit') score = scoreRecruit(state, action);
+  else if (k === 'discard') score = scoreDiscard(state, observation, action);
+  else if (k === 'end_turn') {
+    score = sc.endTurnBase;
+    if (observation.actionsRemaining <= 0) score += sc.endTurnNoActionsBonus;
+  } else if (k === 'pass') {
+    score = sc.passBasePenalty - memory.consecutivePasses;
   }
+  if (score === NEG_INF) return { score, policyUsed: false };
 
-  const actionKey = policyActionKey(action);
-  const learnedValue = getPolicyValue(policyArtifact, observation.stateKey, actionKey);
-  const policyPreferred = isPolicyPreferredAction(policyArtifact, observation.stateKey, actionKey);
-  const policyWeights = TURF_AI_CONFIG.policyWeights;
-  score += learnedValue * policyWeights.valueMultiplier;
-  if (policyPreferred) score += policyWeights.preferredBonus;
-
-  return {
-    score,
-    policyUsed: policyPreferred || learnedValue !== 0,
-  };
+  const key = policyActionKey(action);
+  const learned = getPolicyValue(policyArtifact, observation.stateKey, key);
+  const preferred = isPolicyPreferredAction(
+    policyArtifact,
+    observation.stateKey,
+    key,
+  );
+  const pw = TURF_AI_CONFIG.policyWeights;
+  score += learned * pw.valueMultiplier;
+  if (preferred) score += pw.preferredBonus;
+  return { score, policyUsed: preferred || learned !== 0 };
 }
 
 export function describeActionForTrace(action: TurfAction): string {
-  switch (action.kind) {
-    case 'play_card':
-      return `play_card@${action.turfIdx}:${action.cardId}`;
-    case 'direct_strike':
-    case 'pushed_strike':
-    case 'funded_recruit':
-      return `${action.kind}@${action.turfIdx}->${action.targetTurfIdx}`;
-    case 'discard':
-      return `discard:${action.cardId}`;
-    case 'end_turn':
-      return 'end_turn';
-    case 'pass':
-      return 'pass';
-  }
+  const k = action.kind;
+  if (k === 'draw' || k === 'end_turn' || k === 'pass') return k;
+  if (k === 'play_card') return `play_card@${action.turfIdx}:${action.cardId}`;
+  if (k === 'retreat') return `retreat@${action.turfIdx}:${action.stackIdx}`;
+  if (k === 'discard') return `discard:${action.cardId}`;
+  return `${k}@${action.turfIdx}->${action.targetTurfIdx}`;
 }

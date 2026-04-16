@@ -1,5 +1,10 @@
 import type { Rng } from '../../cards/rng';
-import type { DifficultyTier, TurfAction, TurfPolicyArtifact, TurfPolicyEntry } from '../types';
+import type {
+  DifficultyTier,
+  TurfAction,
+  TurfPolicyArtifact,
+  TurfPolicyEntry,
+} from '../types';
 import { TURF_AI_CONFIG, TURF_SIM_CONFIG } from './config';
 
 export interface ScoredAction {
@@ -28,7 +33,9 @@ function findActionEntry(
   artifact: TurfPolicyArtifact | undefined,
   stateKey: string,
   actionKey: string,
-): { entry: TurfPolicyEntry; value: { value: number; visits: number } } | undefined {
+):
+  | { entry: TurfPolicyEntry; value: { value: number; visits: number } }
+  | undefined {
   if (!artifact) return undefined;
   const policyWeights = TURF_AI_CONFIG.policyWeights;
   for (const candidate of policyStateKeys(stateKey)) {
@@ -54,7 +61,9 @@ function findPreferredEntry(
   return undefined;
 }
 
-export function createEmptyPolicyArtifact(configVersion: string): TurfPolicyArtifact {
+export function createEmptyPolicyArtifact(
+  configVersion: string,
+): TurfPolicyArtifact {
   return {
     version: 1,
     generatedAt: new Date(0).toISOString(),
@@ -71,7 +80,10 @@ export function getPolicyValue(
   const policyWeights = TURF_AI_CONFIG.policyWeights;
   const match = findActionEntry(artifact, stateKey, actionKey);
   if (!match) return 0;
-  const confidence = Math.min(1, match.value.visits / policyWeights.confidenceSaturation);
+  const confidence = Math.min(
+    1,
+    match.value.visits / policyWeights.confidenceSaturation,
+  );
   return match.value.value * confidence;
 }
 
@@ -168,7 +180,8 @@ export function selectAction(
 
   const noised = candidates.map((c) => ({
     ...c,
-    score: c.score + (rng.next() - 0.5) * 2 * profile.noise * Math.abs(c.score || 1),
+    score:
+      c.score + (rng.next() - 0.5) * 2 * profile.noise * Math.abs(c.score || 1),
   }));
   noised.sort((a, b) => b.score - a.score);
   return noised[0];

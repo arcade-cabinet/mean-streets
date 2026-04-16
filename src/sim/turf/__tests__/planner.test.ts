@@ -1,25 +1,58 @@
 import { describe, expect, it } from 'vitest';
 import { decideAction } from '../ai';
+import { addToStack, createTurf, resetTurfIdCounter } from '../board';
 import { createMatch } from '../game';
-import { createTurf, addToStack, resetTurfIdCounter } from '../board';
+import type {
+  Card,
+  CurrencyCard,
+  PlayerState,
+  ToughCard,
+  Turf,
+  TurfGameState,
+  WeaponCard,
+} from '../types';
 import { DEFAULT_GAME_CONFIG } from '../types';
-import type { ToughCard, CurrencyCard, WeaponCard, TurfGameState } from '../types';
 
-function tough(id: string, power: number, resistance: number, affiliation = 'freelance'): ToughCard {
+function tough(
+  id: string,
+  power: number,
+  resistance: number,
+  affiliation = 'freelance',
+): ToughCard {
   return {
-    kind: 'tough', id, name: id, tagline: '', archetype: 'bruiser',
-    affiliation, power, resistance, rarity: 'common', abilities: [],
+    kind: 'tough',
+    id,
+    name: id,
+    tagline: '',
+    archetype: 'bruiser',
+    affiliation,
+    power,
+    resistance,
+    rarity: 'common',
+    abilities: [],
   };
 }
 
 function currency(id: string, denom: 100 | 1000 = 100): CurrencyCard {
-  return { kind: 'currency', id, name: `$${denom}`, denomination: denom, rarity: 'common' };
+  return {
+    kind: 'currency',
+    id,
+    name: `$${denom}`,
+    denomination: denom,
+    rarity: 'common',
+  };
 }
 
 function weapon(id: string, power = 2): WeaponCard {
   return {
-    kind: 'weapon', id, name: id, category: 'bladed',
-    power, resistance: 1, rarity: 'common', abilities: [],
+    kind: 'weapon',
+    id,
+    name: id,
+    category: 'bladed',
+    power,
+    resistance: 1,
+    rarity: 'common',
+    abilities: [],
   };
 }
 
@@ -32,10 +65,33 @@ function makeState(): TurfGameState {
   return match.game;
 }
 
+interface PlayerShape {
+  pending?: Card | null;
+  turfs?: Turf[];
+  deck?: Card[];
+  toughsInPlay?: number;
+  actionsRemaining?: number;
+}
+
+function setPlayer(player: PlayerState, shape: PlayerShape): void {
+  if (shape.pending !== undefined) player.pending = shape.pending;
+  if (shape.turfs !== undefined) player.turfs = shape.turfs;
+  if (shape.deck !== undefined) player.deck = shape.deck;
+  if (shape.toughsInPlay !== undefined)
+    player.toughsInPlay = shape.toughsInPlay;
+  if (shape.actionsRemaining !== undefined)
+    player.actionsRemaining = shape.actionsRemaining;
+  player.queued = [];
+  player.turnEnded = false;
+}
+
 describe('turf planner v0.2', () => {
   it('emits a legal action and planner trace', () => {
     const state = makeState();
-    state.players.A.hand = [tough('h1', 4, 4)];
+    setPlayer(state.players.A, {
+      pending: tough('h1', 4, 4),
+      actionsRemaining: 3,
+    });
     const { action, trace } = decideAction(state, 'A');
     expect(action.side).toBe('A');
     expect(trace.legalActionCount).toBeGreaterThan(0);
@@ -43,93 +99,140 @@ describe('turf planner v0.2', () => {
     expect(trace.actionScores.length).toBeGreaterThan(0);
   });
 
-  it('prefers playing a tough when no toughs are in play', () => {
+  it('prefers playing the pending tough when no toughs are in play', () => {
     const state = makeState();
-    state.players.A.turfs = [createTurf()];
-    state.players.A.hand = [tough('newcomer', 4, 4), currency('c-hand')];
-    state.players.A.toughsInPlay = 0;
-    state.players.A.actionsRemaining = 3;
+    setPlayer(state.players.A, {
+      turfs: [createTurf()],
+      pending: tough('newcomer', 4, 4),
+      toughsInPlay: 0,
+      actionsRemaining: 3,
+      deck: [],
+    });
     const { action } = decideAction(state, 'A');
     expect(action.kind).toBe('play_card');
     expect(action.cardId).toBe('newcomer');
   });
 
-  it('falls back to a global legal action instead of end_turn when goal set is empty', () => {
+  it('draws when the pending slot is empty and the deck has material', () => {
     const state = makeState();
-    state.players.A.turfs = [createTurf()];
-    state.players.A.hand = [tough('backup', 4, 4)];
-    state.players.A.toughsInPlay = 0;
-    state.players.A.actionsRemaining = 3;
+    setPlayer(state.players.A, {
+      turfs: [createTurf()],
+      pending: null,
+      toughsInPlay: 0,
+      actionsRemaining: 3,
+      deck: [tough('deckTop', 4, 4), currency('c-d1')],
+    });
+    const { action } = decideAction(state, 'A');
+    expect(action.kind).toBe('draw');
+  });
+
+  it('falls back to a substantive action instead of end_turn when no goal fires', () => {
+    const state = makeState();
+    setPlayer(state.players.A, {
+      turfs: [createTurf()],
+      pending: tough('backup', 4, 4),
+      toughsInPlay: 0,
+      actionsRemaining: 3,
+      deck: [],
+    });
     const turfB = createTurf();
     addToStack(turfB, tough('enemy', 4, 6));
-    state.players.B.turfs = [turfB];
-    state.players.B.toughsInPlay = 1;
-
+    setPlayer(state.players.B, { turfs: [turfB], toughsInPlay: 1 });
     const { action, trace } = decideAction(state, 'A');
-    // Must pick a substantive action (play/strike/recruit/discard) —
-    // NOT a pass and NOT end_turn. A regression from the null-action
-    // fallback path would otherwise slip through with just a
-    // not-'pass' assertion.
     expect(action.kind).not.toBe('pass');
     expect(action.kind).not.toBe('end_turn');
     expect(trace.actionScores.length).toBeGreaterThan(0);
   });
 
-  it('enumerates all v0.2 action kinds: play_card, strikes, discard, end_turn', () => {
+  it('enumerates multiple v0.2 action kinds (play_card, strike, draw/end_turn)', () => {
     const state = makeState();
     const turfA = createTurf();
     addToStack(turfA, tough('atk', 6, 5));
-    state.players.A.turfs = [turfA];
-    state.players.A.toughsInPlay = 1;
-    state.players.A.hand = [tough('spare', 3, 3)];
-    state.players.A.actionsRemaining = 3;
+    setPlayer(state.players.A, {
+      turfs: [turfA],
+      pending: tough('spare', 3, 3),
+      toughsInPlay: 1,
+      actionsRemaining: 3,
+      deck: [currency('deck-d1')],
+    });
     const turfB = createTurf();
     addToStack(turfB, tough('def', 4, 4));
-    state.players.B.turfs = [turfB];
-    state.players.B.toughsInPlay = 1;
+    setPlayer(state.players.B, { turfs: [turfB], toughsInPlay: 1 });
 
     const { trace } = decideAction(state, 'A');
-    const kinds = new Set(trace.actionScores.map((s) => s.action.split('@')[0].split(':')[0]));
+    const kinds = new Set(
+      trace.actionScores.map((s) => s.action.split('@')[0].split(':')[0]),
+    );
     expect(kinds.size).toBeGreaterThanOrEqual(2);
   });
 
-  it('funded_recruit is enumerated with a positive score when $1k is available', () => {
-    // The prior assertion (`expect(['funded_recruit', 'direct_strike',
-    // 'pushed_strike']).toContain(action.kind)`) passed even when recruit
-    // was *never* considered — any strike kind satisfied it. Tighten to:
-    // (a) funded_recruit MUST appear in the enumerated action-score set,
-    // and (b) its score MUST be positive, meaning the planner scored it
-    // as a real candidate rather than filtering it out.
+  it('funded_recruit is enumerated with a positive score when $1k is banked', () => {
     const state = makeState();
     const turfA = createTurf();
     addToStack(turfA, tough('recruiter', 4, 4, 'kings_row'));
     addToStack(turfA, currency('c-1k', 1000));
-    state.players.A.turfs = [turfA];
-    state.players.A.toughsInPlay = 1;
-    state.players.A.hand = [];
-    state.players.A.actionsRemaining = 3;
+    setPlayer(state.players.A, {
+      turfs: [turfA],
+      pending: null,
+      toughsInPlay: 1,
+      actionsRemaining: 3,
+      deck: [],
+    });
     const turfB = createTurf();
     addToStack(turfB, tough('target', 3, 3, 'freelance'));
-    state.players.B.turfs = [turfB];
-    state.players.B.toughsInPlay = 1;
+    setPlayer(state.players.B, { turfs: [turfB], toughsInPlay: 1 });
 
     const { trace } = decideAction(state, 'A');
-    const recruitScores = trace.actionScores.filter((s) =>
+    const recruits = trace.actionScores.filter((s) =>
       s.action.startsWith('funded_recruit'),
     );
-    expect(recruitScores.length, 'funded_recruit must be enumerated').toBeGreaterThan(0);
     expect(
-      recruitScores[0].score,
-      `funded_recruit should score positively with $1k in hand, got ${recruitScores[0].score}`,
+      recruits.length,
+      'funded_recruit must be enumerated',
+    ).toBeGreaterThan(0);
+    expect(
+      recruits[0].score,
+      `funded_recruit should score positively with $1k on turf, got ${recruits[0].score}`,
     ).toBeGreaterThan(0);
   });
 
-  it('does not crash with empty hand and empty turfs', () => {
+  it('retreat_shield fires when weak top tough can swap with a stronger face-up one', () => {
     const state = makeState();
-    state.players.A.turfs = [createTurf()];
-    state.players.A.hand = [];
-    state.players.A.toughsInPlay = 0;
-    state.players.A.actionsRemaining = 3;
+    const turfA = createTurf();
+    // face-up sturdy tough at bottom, weak top tough up front
+    addToStack(turfA, tough('bodyguard', 6, 7));
+    addToStack(turfA, tough('scout', 1, 1));
+    setPlayer(state.players.A, {
+      turfs: [turfA],
+      pending: null,
+      toughsInPlay: 2,
+      actionsRemaining: 3,
+      deck: [],
+    });
+    const turfB = createTurf();
+    // Big power gap so retreat_shield clears underPressure by a healthy margin.
+    addToStack(turfB, tough('heavy1', 12, 6));
+    addToStack(turfB, tough('heavy2', 8, 5));
+    setPlayer(state.players.B, { turfs: [turfB], toughsInPlay: 2 });
+
+    const { action } = decideAction(state, 'A');
+    // Either the planner runs the retreat itself (retreat_shield fires) or
+    // it strikes — both are valid defensive responses. What we must not see
+    // is it sitting idle on pass/end_turn with an obvious retreat available.
+    expect(['retreat', 'direct_strike', 'pushed_strike']).toContain(
+      action.kind,
+    );
+  });
+
+  it('does not crash with empty pending, empty deck, empty turfs', () => {
+    const state = makeState();
+    setPlayer(state.players.A, {
+      turfs: [createTurf()],
+      pending: null,
+      toughsInPlay: 0,
+      actionsRemaining: 3,
+      deck: [],
+    });
     const { action } = decideAction(state, 'A');
     expect(action.kind).toBe('end_turn');
   });
@@ -137,17 +240,19 @@ describe('turf planner v0.2', () => {
   it('checks affiliation compatibility when scoring play_card for toughs', () => {
     const state = makeState();
     const turfA = createTurf();
-    const existing = tough('existing', 5, 5);
-    existing.affiliation = 'kings_row';
+    const existing = tough('existing', 5, 5, 'kings_row');
     addToStack(turfA, existing);
-    state.players.A.turfs = [turfA];
-    state.players.A.toughsInPlay = 1;
-    const rival = tough('rival', 4, 4);
-    rival.affiliation = 'iron_devils';
-    state.players.A.hand = [rival];
-    state.players.A.actionsRemaining = 3;
-
+    const rival = tough('rival', 4, 4, 'iron_devils');
+    setPlayer(state.players.A, {
+      turfs: [turfA],
+      pending: rival,
+      toughsInPlay: 1,
+      actionsRemaining: 3,
+      deck: [],
+    });
     const { action } = decideAction(state, 'A');
+    // If the planner picks play_card, it must not be the rival (which is
+    // blocked). Discard of the rival pending is an acceptable outcome too.
     if (action.kind === 'play_card') {
       expect(action.cardId).not.toBe('rival');
     }

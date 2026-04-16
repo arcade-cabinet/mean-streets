@@ -1,11 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { selectAction, type ScoredAction } from '../ai/policy';
 import { createRng } from '../../cards/rng';
+import { type ScoredAction, selectAction } from '../ai/policy';
 import type { DifficultyTier, TurfAction } from '../types';
 
 function act(id: string, score: number): ScoredAction {
   return {
-    action: { kind: 'play_card', side: 'A', turfIdx: 0, cardId: id } as TurfAction,
+    action: {
+      kind: 'play_card',
+      side: 'A',
+      turfIdx: 0,
+      cardId: id,
+    } as TurfAction,
     score,
     policyUsed: false,
   };
@@ -23,8 +28,13 @@ describe('selectAction', () => {
 
   it('easy: samples from top 5 with 30% noise, can pick non-top action', () => {
     const scored = [
-      act('a', 10), act('b', 9.5), act('c', 9), act('d', 8.5), act('e', 8),
-      act('f', 2), act('g', 1),
+      act('a', 10),
+      act('b', 9.5),
+      act('c', 9),
+      act('d', 8.5),
+      act('e', 8),
+      act('f', 2),
+      act('g', 1),
     ];
     const picks = new Set<string>();
     for (let seed = 1; seed <= 200; seed++) {
@@ -37,7 +47,13 @@ describe('selectAction', () => {
   });
 
   it('medium: samples from top 3 with 15% noise', () => {
-    const scored = [act('a', 10), act('b', 9), act('c', 8), act('d', 2), act('e', 1)];
+    const scored = [
+      act('a', 10),
+      act('b', 9),
+      act('c', 8),
+      act('d', 2),
+      act('e', 1),
+    ];
     const picks = new Set<string>();
     for (let seed = 1; seed <= 200; seed++) {
       const r = selectAction(scored, 'medium', createRng(seed));
@@ -76,7 +92,13 @@ describe('selectAction', () => {
   });
 
   it('deterministic with same seed', () => {
-    const scored = [act('a', 10), act('b', 9.5), act('c', 9), act('d', 8.5), act('e', 8)];
+    const scored = [
+      act('a', 10),
+      act('b', 9.5),
+      act('c', 9),
+      act('d', 8.5),
+      act('e', 8),
+    ];
     const r1 = selectAction(scored, 'easy', createRng(42));
     const r2 = selectAction(scored, 'easy', createRng(42));
     expect(r1.action.cardId).toBe(r2.action.cardId);
@@ -87,7 +109,10 @@ describe('actionsForTurn difficulty modifiers', () => {
   it('hard: AI gets +1 action', async () => {
     const { actionsForTurn } = await import('../environment');
     const { DEFAULT_GAME_CONFIG } = await import('../types');
-    const config = { ...DEFAULT_GAME_CONFIG, difficulty: 'hard' as DifficultyTier };
+    const config = {
+      ...DEFAULT_GAME_CONFIG,
+      difficulty: 'hard' as DifficultyTier,
+    };
     const base = config.actionsPerTurn;
     expect(actionsForTurn(config, 2, 'B')).toBe(base + 1);
     expect(actionsForTurn(config, 2, 'A')).toBe(base);
@@ -96,7 +121,10 @@ describe('actionsForTurn difficulty modifiers', () => {
   it('nightmare: player gets -1 action', async () => {
     const { actionsForTurn } = await import('../environment');
     const { DEFAULT_GAME_CONFIG } = await import('../types');
-    const config = { ...DEFAULT_GAME_CONFIG, difficulty: 'nightmare' as DifficultyTier };
+    const config = {
+      ...DEFAULT_GAME_CONFIG,
+      difficulty: 'nightmare' as DifficultyTier,
+    };
     const base = config.actionsPerTurn;
     expect(actionsForTurn(config, 2, 'A')).toBe(base - 1);
     expect(actionsForTurn(config, 2, 'B')).toBe(base);
@@ -117,7 +145,11 @@ describe('actionsForTurn difficulty modifiers', () => {
   it('medium/easy: no action modifications', async () => {
     const { actionsForTurn } = await import('../environment');
     const { DEFAULT_GAME_CONFIG } = await import('../types');
-    expect(actionsForTurn(DEFAULT_GAME_CONFIG, 2, 'A')).toBe(DEFAULT_GAME_CONFIG.actionsPerTurn);
-    expect(actionsForTurn(DEFAULT_GAME_CONFIG, 2, 'B')).toBe(DEFAULT_GAME_CONFIG.actionsPerTurn);
+    expect(actionsForTurn(DEFAULT_GAME_CONFIG, 2, 'A')).toBe(
+      DEFAULT_GAME_CONFIG.actionsPerTurn,
+    );
+    expect(actionsForTurn(DEFAULT_GAME_CONFIG, 2, 'B')).toBe(
+      DEFAULT_GAME_CONFIG.actionsPerTurn,
+    );
   });
 });
