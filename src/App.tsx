@@ -8,6 +8,7 @@ import { randomSeed } from './sim/cards/rng';
 import { processGameEnd } from './platform/achievements/achievements';
 import { openRewardPacks } from './platform/persistence/collection';
 import { loadCompiledToughs } from './sim/cards/catalog';
+import { loadCompiledWeapons, loadCompiledDrugs } from './sim/turf/generators';
 import { matchRewardPacks } from './sim/packs/generator';
 import { emptyMetrics } from './sim/turf/environment';
 import type { Card, GameConfig, TurfMetrics } from './sim/turf/types';
@@ -150,7 +151,7 @@ export default function App() {
           turnCount: m.turns,
           ownPositionsLost: 0,
         },
-        loadCompiledToughs(),
+        [...loadCompiledToughs(), ...loadCompiledWeapons(), ...loadCompiledDrugs()],
         profile,
       );
       await saveProfile(result.updatedProfile);

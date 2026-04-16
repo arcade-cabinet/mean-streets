@@ -51,6 +51,21 @@ export function generateDrugs(_rng?: Rng): DrugCard[] {
   return parsedDrugs.map(toDrugCard);
 }
 
+/**
+ * Fresh-copy variants that return compiled records (including
+ * `unlocked` / `unlockCondition`) for the achievement system. These
+ * mirror `loadCompiledToughs` in catalog.ts — callers get their own
+ * array and their own `abilities` arrays so downstream mutation can't
+ * corrupt the cached module-level parse.
+ */
+export function loadCompiledWeapons(): CompiledWeapon[] {
+  return parsedWeapons.map((w) => ({ ...w, abilities: [...w.abilities] }));
+}
+
+export function loadCompiledDrugs(): CompiledDrug[] {
+  return parsedDrugs.map((d) => ({ ...d, abilities: [...d.abilities] }));
+}
+
 export function generateCurrency(): CurrencyCard[] {
   const packCfg = TURF_SIM_CONFIG.packs.currency;
   const cards: CurrencyCard[] = [];

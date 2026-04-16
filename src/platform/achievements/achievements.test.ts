@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { CompiledTough } from '../../sim/cards/schemas';
+import type { CompiledTough, CompiledWeapon, CompiledDrug } from '../../sim/cards/schemas';
 import type { TurfMetrics } from '../../sim/turf/types';
 import { emptyMetrics } from '../../sim/turf/environment';
 import type { PlayerProfile } from '../persistence/storage';
@@ -14,6 +14,38 @@ function makeCard(id: string, unlockCondition?: string): CompiledTough {
     affiliation: 'kings_row',
     power: 5,
     resistance: 5,
+    rarity: 'common',
+    abilities: [],
+    unlocked: false,
+    ...(unlockCondition ? { unlockCondition } : {}),
+    locked: false,
+  };
+}
+
+function makeWeapon(id: string, unlockCondition?: string): CompiledWeapon {
+  return {
+    kind: 'weapon',
+    id,
+    name: id,
+    category: 'bladed',
+    power: 3,
+    resistance: 1,
+    rarity: 'common',
+    abilities: [],
+    unlocked: false,
+    ...(unlockCondition ? { unlockCondition } : {}),
+    locked: false,
+  };
+}
+
+function makeDrug(id: string, unlockCondition?: string): CompiledDrug {
+  return {
+    kind: 'drug',
+    id,
+    name: id,
+    category: 'stimulant',
+    power: 2,
+    resistance: 1,
     rarity: 'common',
     abilities: [],
     unlocked: false,
@@ -238,5 +270,35 @@ describe('processGameEnd', () => {
       profile,
     );
     expect(cleanWin.newlyUnlocked).toEqual(['card-patient']);
+  });
+
+  it('unlocks weapons with an unlockCondition (not just toughs)', () => {
+    // Regression pin for CodeRabbit finding: processGameEnd's catalog
+    // param was typed CompiledTough[], so weapon/drug unlock conditions
+    // were silently skipped. Now the parameter accepts any unlockable
+    // card type and weapon conditions fire too.
+    const weapon = makeWeapon('weap-veteran', 'Win 3 games');
+    const profile = makeProfile({ wins: 2 });
+
+    const result = processGameEnd(
+      makeEvent({ winner: 'A' }),
+      [weapon],
+      profile,
+    );
+
+    expect(result.newlyUnlocked).toEqual(['weap-veteran']);
+  });
+
+  it('unlocks drugs with an unlockCondition', () => {
+    const drug = makeDrug('drug-clean', 'Win without discarding any cards');
+    const profile = makeProfile();
+
+    const result = processGameEnd(
+      makeEvent({ winner: 'A', metrics: { ...emptyMetrics(), cardsDiscarded: 0 } }),
+      [drug],
+      profile,
+    );
+
+    expect(result.newlyUnlocked).toEqual(['drug-clean']);
   });
 });

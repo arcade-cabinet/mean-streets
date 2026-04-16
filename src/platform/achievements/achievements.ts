@@ -19,7 +19,16 @@
  * writer hand-wires them in the next pass (Epic J3).
  */
 
-import type { CompiledTough } from '../../sim/cards/schemas';
+import type {
+  CompiledTough,
+  CompiledWeapon,
+  CompiledDrug,
+} from '../../sim/cards/schemas';
+
+// Any card that can carry an unlockCondition should feed the achievement
+// system. Currency cards are always unlocked (no condition) so they're
+// excluded from the union.
+type UnlockableCard = CompiledTough | CompiledWeapon | CompiledDrug;
 import type { TurfMetrics } from '../../sim/turf/types';
 import type { PlayerProfile } from '../persistence/storage';
 
@@ -155,7 +164,7 @@ function parseCondition(condition: string): ConditionMatcher | null {
  */
 export function processGameEnd(
   event: GameEndEvent,
-  catalog: CompiledTough[],
+  catalog: UnlockableCard[],
   profile: PlayerProfile,
 ): UnlockResult {
   const playerWon = event.winner === event.playerSide;
