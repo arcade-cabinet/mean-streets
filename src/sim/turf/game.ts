@@ -15,6 +15,7 @@ import type {
   TurfAction,
   TurfGameState,
   TurfMetrics,
+  WarStats,
 } from './types';
 import { DEFAULT_GAME_CONFIG } from './types';
 
@@ -29,7 +30,9 @@ export interface MatchState {
 // ── Player initialization ─────────────────────────────────
 
 function createPlayer(config: GameConfig, deck: Card[], rng: Rng): PlayerState {
-  const turfs = Array.from({ length: config.turfCount }, () => createTurf());
+  const turfs = Array.from({ length: config.turfCount }, (_, i) =>
+    createTurf({ isActive: i === 0, reserveIndex: i }),
+  );
   const shuffled = rng.shuffle([...deck]);
   return {
     turfs,
@@ -41,6 +44,29 @@ function createPlayer(config: GameConfig, deck: Card[], rng: Rng): PlayerState {
     queued: [],
     turnEnded: false,
   };
+}
+
+function loadMythicIds(): string[] {
+  // v0.3: mythic pool lives in a future compiled artifact. We seed with a
+  // conventional set of 10 ids matching RULES §11 — Dex will author the
+  // card JSONs in Epic F. Keeping the ids stable now lets mythic flows
+  // be wired without blocking on those files.
+  return [
+    'silhouette',
+    'accountant',
+    'architect',
+    'informer',
+    'ghost-mythic',
+    'warlord',
+    'fixer',
+    'magistrate',
+    'phantom',
+    'reaper',
+  ];
+}
+
+function emptyWarStats(): WarStats {
+  return { seizures: [] };
 }
 
 function createGameState(
@@ -70,6 +96,13 @@ function createGameState(
     winner: null,
     endReason: null,
     metrics: emptyMetrics(),
+    heat: 0,
+    blackMarket: [],
+    holding: { A: [], B: [] },
+    lockup: { A: [], B: [] },
+    mythicPool: loadMythicIds(),
+    mythicAssignments: {},
+    warStats: emptyWarStats(),
   };
 }
 
@@ -88,7 +121,6 @@ export function createMatch(
   const deckA = options.deckA ?? [];
   const deckB = options.deckB ?? [];
   const game = createGameState(config, seed, deckA, deckB);
-  // Seed both players' per-turn action budgets off turn 1 = firstTurnActions.
   game.players.A.actionsRemaining = actionsForTurn(config, 1, 'A');
   game.players.B.actionsRemaining = actionsForTurn(config, 1, 'B');
   return {
@@ -98,16 +130,6 @@ export function createMatch(
   };
 }
 
-/**
- * Apply a full turn for both players. Each side's sequence is played in
- * order until that side's `turnEnded` flag flips. Resolve phase is
- * automatically triggered inside `stepAction` when both sides' `turnEnded`
- * is true (the last `end_turn` fires it).
- *
- * Either side may end first; the other's remaining queue is then applied
- * against post-resolve state (which is unusual but safe — tests should
- * avoid it). Normal flow: both lists terminate in `end_turn`.
- */
 export function runTurn(
   match: MatchState,
   actionsA: TurfAction[],
@@ -119,15 +141,12 @@ export function runTurn(
   applySide(game, actionsA, 'A');
   applySide(game, actionsB, 'B');
 
-  // If neither `end_turn` was issued, manually trigger the resolve phase
-  // by synthesising end_turn for any side whose turnEnded stayed false.
   if (!game.winner) {
     if (!game.players.A.turnEnded)
       stepAction(game, { kind: 'end_turn', side: 'A' });
     if (!game.players.B.turnEnded)
       stepAction(game, { kind: 'end_turn', side: 'B' });
   }
-
   return match;
 }
 
@@ -156,12 +175,20 @@ export function isGameOver(match: MatchState): 'A' | 'B' | null {
   const { game } = match;
   if (game.winner) return game.winner;
 
-  if (game.players.A.turfs.length === 0) {
+  const aEmpty = game.players.A.turfs.length === 0;
+  const bEmpty = game.players.B.turfs.length === 0;
+
+  if (aEmpty && bEmpty) {
+    game.winner = null;
+    game.endReason = 'draw';
+    return null;
+  }
+  if (aEmpty) {
     game.winner = 'B';
     game.endReason = 'total_seizure';
     return 'B';
   }
-  if (game.players.B.turfs.length === 0) {
+  if (bEmpty) {
     game.winner = 'A';
     game.endReason = 'total_seizure';
     return 'A';
@@ -174,7 +201,6 @@ export function isGameOver(match: MatchState): 'A' | 'B' | null {
     game.endReason = 'timeout';
     return game.winner;
   }
-
   return null;
 }
 

@@ -46,7 +46,7 @@ export function handlePlayCard(
   }
 
   consumeRivalBufferIfNeeded(turf, card);
-  addToStack(turf, card, true);
+  addToStack(turf, card, { faceUp: true });
   player.pending = null;
   state.metrics.cardsPlayed++;
 
@@ -89,6 +89,48 @@ export function handleRetreat(
   turf.stack[target] = oldTop;
   turf.stack[topIdx] = newTop;
   state.metrics.retreats++;
+}
+
+export function handleModifierSwap(
+  player: PlayerState,
+  action: TurfAction,
+  state: TurfGameState,
+): void {
+  if (action.turfIdx === undefined || !action.toughId || !action.targetToughId)
+    throw new Error('modifier_swap: missing turfIdx/toughId/targetToughId');
+  if (!action.cardId) throw new Error('modifier_swap: missing cardId');
+  const turf = player.turfs[action.turfIdx];
+  if (!turf) throw new Error('modifier_swap: invalid turfIdx');
+
+  const modIdx = turf.stack.findIndex(
+    (sc) =>
+      sc.card.kind !== 'tough' &&
+      sc.owner === action.toughId &&
+      sc.card.id === action.cardId,
+  );
+  if (modIdx < 0) throw new Error('modifier_swap: modifier not found');
+  const sourceMod = turf.stack[modIdx];
+
+  const activeToughIdx = turf.stack.length - 1;
+  const activeTough = turf.stack[activeToughIdx];
+  const touchesActive =
+    activeTough?.card.kind === 'tough' &&
+    (activeTough.card.id === action.toughId ||
+      activeTough.card.id === action.targetToughId);
+
+  const conflict = turf.stack.find(
+    (sc) =>
+      sc.card.kind === sourceMod.card.kind &&
+      sc.owner === action.targetToughId,
+  );
+  if (conflict) {
+    conflict.owner = action.toughId;
+    sourceMod.owner = action.targetToughId;
+  } else {
+    sourceMod.owner = action.targetToughId;
+  }
+  if (touchesActive) sourceMod.faceUp = true;
+  state.metrics.modifierSwaps++;
 }
 
 export function handleEndTurn(player: PlayerState, state: TurfGameState): void {

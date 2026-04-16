@@ -18,6 +18,10 @@ function toToughCard(card: CompiledTough): ToughCard {
     power: card.power,
     resistance: card.resistance,
     rarity: card.rarity,
+    // v0.3: HP starts equal to resistance; tough instances are dealt
+    // damage via resolve.ts, not mutated here.
+    maxHp: card.resistance,
+    hp: card.resistance,
     // Defensive copy: each callsite gets its own abilities array so a
     // downstream mutation (e.g. ECS system appending a buff tag) cannot
     // bleed into the shared catalog snapshot.
