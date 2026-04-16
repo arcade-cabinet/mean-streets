@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { createGameWorld } from '../ecs/world';
 import { GameState, PlayerA, PlayerB } from '../ecs/traits';
 import { DEFAULT_GAME_CONFIG } from '../sim/turf/types';
-import type { Card, GameConfig } from '../sim/turf/types';
+import type { GameConfig } from '../sim/turf/types';
 
 /**
  * Regression test for Bug J — ActiveRunState must persist enough info to
@@ -19,7 +19,6 @@ interface ActiveRunStateShape {
   phase: 'combat';
   config: GameConfig;
   seed: number;
-  deck?: Card[];
 }
 
 function handsAndDecks(world: ReturnType<typeof createGameWorld>) {
