@@ -44,3 +44,42 @@ export const PACK_CATEGORY: Record<PackKind, CardCategory | null> = {
   single: null,
   triple: null,
 };
+
+// ── v0.3 War-outcome rewards (RULES §13) ─────────────────────────
+
+/**
+ * Per-turf seizure rating. Turns-to-seize determines the tier; the
+ * winner of each turf gets the bonus independently, so a single war
+ * can yield multiple per-turf rewards.
+ */
+export type VictoryRating = 'absolute' | 'overwhelming' | 'decisive' | 'standard';
+
+/**
+ * End-of-war rating for the winner only. "won" is the base case; the
+ * higher ratings stack additional quality based on how cleanly the
+ * war closed.
+ */
+export type WarOutcome = 'perfect' | 'flawless' | 'dominant' | 'won';
+
+export interface TurfSeizureReward {
+  /** Null for `standard` rating (seizure took longer than 3 turns). */
+  pack: PackInstance | null;
+  rating: VictoryRating;
+  turnsToSeize: number;
+}
+
+export interface WarOutcomeReward {
+  /** Null on loss OR when the reward is a mythic draw / currency fallback. */
+  pack: PackInstance | null;
+  /** Null on loss. */
+  outcome: WarOutcome | null;
+  /** Mythic cardId pulled from the unassigned pool on Perfect War. */
+  mythicDraw: string | null;
+  /** Flat $500 fallback when a Perfect War fires with an empty mythic pool. */
+  escalatingCurrency: number | null;
+}
+
+export interface RewardBundle {
+  turfRewards: TurfSeizureReward[];
+  warOutcomeReward: WarOutcomeReward;
+}
