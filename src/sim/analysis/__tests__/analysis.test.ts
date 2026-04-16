@@ -75,12 +75,18 @@ describe('analysis layer', () => {
           .filter(Boolean),
       ),
     ];
-    const weaponCategories = weaponIds.map(
-      id => pools.weapons.find(c => c.id === id)?.category,
-    );
-    const drugCategories = drugIds.map(
-      id => pools.drugs.find(c => c.id === id)?.category,
-    );
+    const weaponCategories = weaponIds
+      .map(id => pools.weapons.find(c => c.id === id)?.category)
+      .filter((c): c is string => c !== undefined);
+    const drugCategories = drugIds
+      .map(id => pools.drugs.find(c => c.id === id)?.category)
+      .filter((c): c is string => c !== undefined);
+
+    // Guard: every selected id must resolve to a category — otherwise the
+    // pool is drifting and the uniqueness check below would silently count
+    // `undefined` as a distinct category.
+    expect(weaponCategories).toHaveLength(weaponIds.length);
+    expect(drugCategories).toHaveLength(drugIds.length);
 
     expect(new Set(weaponCategories).size).toBe(5);
     expect(new Set(drugCategories).size).toBe(5);
@@ -98,6 +104,17 @@ describe('analysis layer', () => {
     const outsideBand = checkConvergence([0.45, 0.47, 0.46]);
     expect(outsideBand.converged).toBe(false);
     expect(outsideBand.consecutiveInBand).toBe(0);
+  });
+
+  it('checkConvergence returns finalWinRate=null for an empty series', () => {
+    // Regression pin: the prior implementation returned 0 for empty,
+    // which was indistinguishable from a real 0% winrate and misled
+    // autobalance gating callers. Empty → null.
+    const empty = checkConvergence([]);
+    expect(empty.converged).toBe(false);
+    expect(empty.iterations).toBe(0);
+    expect(empty.finalWinRate).toBeNull();
+    expect(empty.consecutiveInBand).toBe(0);
   });
 
   it('locking saturates at maxHistoryLength', () => {

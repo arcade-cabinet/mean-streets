@@ -34,6 +34,8 @@ test.describe('difficulty grid', () => {
       await activate(page.getByTestId(`diff-tile-${tier}`), testInfo);
       const checked = await page.getByTestId(`diff-tile-${tier}`).getAttribute('aria-checked');
       expect(checked, `${tier} should be selected`).toBe('true');
+      // After selecting any tier, start must be enabled (not just visible)
+      await expect(startBtn, `start should be enabled after selecting ${tier}`).toBeEnabled();
     }
   });
 

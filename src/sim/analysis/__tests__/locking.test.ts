@@ -138,8 +138,46 @@ describe('lock recommendations', () => {
     };
 
     const rarities = new Map([['overpowered-common', 'common']]);
-    const result = deriveLockRecommendations(report, undefined, rarities);
+    // A common is meant to sit near the catalog median; a raw stat of 8
+    // is well above the common band and should flag.
+    const stats = new Map([['overpowered-common', 8]]);
+    const result = deriveLockRecommendations(report, undefined, rarities, stats);
     const rec = result.recommendations.find(r => r.cardId === 'overpowered-common');
     expect(rec?.reasons.some(r => r.includes('rarity band'))).toBe(true);
+  });
+
+  it('skips rarity-band check when stats map is not provided', () => {
+    // Regression pin: prior implementation fabricated a stat from winrate,
+    // causing spurious "exceeds rarity band" flags. With no stats map,
+    // the check must be skipped rather than guessed.
+    const report: EffectAnalysisReport = {
+      generatedAt: '2026-04-15T00:00:00.000Z',
+      analysisProfile: 'quick',
+      baselineProfile: 'smoke',
+      cardEffects: [
+        {
+          cardId: 'no-stat-common',
+          sampleCount: 128,
+          baselineWinRate: 0.5,
+          forcedWinRate: 0.52,
+          winRateDelta: 0.02,
+          winRatePValue: 0.4,
+          winRateEffectSize: 0.1,
+          winRateConfidence: [0.48, 0.56],
+          medianTurnDelta: 0,
+          turnPValue: 1,
+          turnConfidence: [7, 7],
+          fundedDelta: 0,
+          pushedDelta: 0,
+          directDelta: 0,
+          volatility: 0.02,
+          significant: false,
+        },
+      ],
+    };
+    const rarities = new Map([['no-stat-common', 'common']]);
+    const result = deriveLockRecommendations(report, undefined, rarities);
+    const rec = result.recommendations.find(r => r.cardId === 'no-stat-common');
+    expect(rec?.reasons.some(r => r.includes('rarity band'))).toBe(false);
   });
 });

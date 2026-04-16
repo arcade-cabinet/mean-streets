@@ -45,6 +45,15 @@ export function deriveLockRecommendations(
   effectReport: EffectAnalysisReport,
   historyLengths?: Map<string, number>,
   rarities?: Map<string, string>,
+  /**
+   * Optional map of card ID → current primary stat (power for toughs and
+   * most modifiers, resistance for resistance-oriented cards). When
+   * supplied alongside `rarities`, the lock analyzer can flag cards whose
+   * authored stats drift outside their declared rarity band. Without this
+   * map, the rarity-band check is skipped rather than fabricated from
+   * winrate (the prior heuristic produced nonsense values).
+   */
+  stats?: Map<string, number>,
 ): LockAnalysisReport {
   const thresholds = TURF_SIM_CONFIG.statisticalThresholds;
   const minimumSweepSamples =
@@ -101,8 +110,8 @@ export function deriveLockRecommendations(
     }
 
     const rarity = rarities?.get(effect.cardId);
-    const currentStat = Math.round(effect.baselineWinRate * 10 + 3);
-    if (statExceedsRarityBand(rarity, currentStat)) {
+    const currentStat = stats?.get(effect.cardId);
+    if (currentStat !== undefined && statExceedsRarityBand(rarity, currentStat)) {
       if (state === 'provisionally_stable') state = 'unstable';
       reasons.push(
         `stat ${currentStat} exceeds rarity band for ${rarity} (max ${RARITY_STAT_BANDS[rarity!]?.max})`,

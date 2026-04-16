@@ -15,7 +15,13 @@ export interface ConvergenceResult {
   converged: boolean;
   iterations: number;
   winRateSeries: number[];
-  finalWinRate: number;
+  /**
+   * The last observed winrate, or `null` when the series is empty.
+   * Prior implementations returned `0` for empty, which was
+   * indistinguishable from a real 0% winrate and misled logging /
+   * autobalance gating callers.
+   */
+  finalWinRate: number | null;
   consecutiveInBand: number;
 }
 
@@ -71,7 +77,7 @@ export function checkConvergence(
     converged: consecutive >= required,
     iterations: winRateSeries.length,
     winRateSeries,
-    finalWinRate: winRateSeries[winRateSeries.length - 1] ?? 0,
+    finalWinRate: winRateSeries.length > 0 ? winRateSeries[winRateSeries.length - 1] : null,
     consecutiveInBand: consecutive,
   };
 }
