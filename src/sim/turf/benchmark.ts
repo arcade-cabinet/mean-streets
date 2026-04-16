@@ -10,6 +10,14 @@ import { createPolicySample, enumerateLegalActions } from './env-query';
 import type { GameConfig, TurfAction, TurfGameResult, TurfGameState, TurfPolicyArtifact } from './types';
 import { DEFAULT_GAME_CONFIG } from './types';
 
+function backfillRewards(result: TurfGameResult): void {
+  if (!result.policySamples) return;
+  if (result.endReason === 'timeout' || !result.winner) return;
+  for (const sample of result.policySamples) {
+    sample.reward = sample.side === result.winner ? 1 : -1;
+  }
+}
+
 type BenchmarkProfileName = keyof typeof TURF_SIM_CONFIG.benchmarkProfiles;
 
 export interface BenchmarkSummary {
@@ -223,11 +231,13 @@ export function runSeededBenchmark(
 
   for (let i = 0; i < warmupGames; i++) {
     const seed = runRng.int(1, 2147483646);
-    warmupEpisodes.push(playSimulatedGame(seed, {
+    const result = playSimulatedGame(seed, {
       pools,
       capturePolicySamples: true,
       explorationRate: epsilon,
-    }));
+    });
+    backfillRewards(result);
+    warmupEpisodes.push(result);
     epsilon = Math.max(
       TURF_SIM_CONFIG.training.epsilonMin,
       epsilon * TURF_SIM_CONFIG.training.epsilonDecay,

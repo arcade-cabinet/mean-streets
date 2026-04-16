@@ -2,10 +2,10 @@ import { applyTangibles } from './abilities';
 import { TURF_SIM_CONFIG } from './ai/config';
 import {
   addToStack,
-  positionPower,
-  positionResistance,
   removeFromStack,
   setTopFaceUp,
+  toughCombatPower,
+  toughCombatResistance,
   turfAffiliationConflict,
   turfCurrency,
   turfToughs,
@@ -116,9 +116,6 @@ function runStrike(
   atk: Turf, def: Turf, label: string, cashBonus: number,
 ): StrikeResult {
   const bonus = applyTangibles(atk, def);
-  const P = Math.max(0, positionPower(atk) + cashBonus + bonus.atkPowerDelta);
-  const R = bonus.ignoreResistance ? 0
-    : Math.max(0, positionResistance(def) + bonus.defResistDelta);
   const notes: string[] = [];
   if (bonus.atkPowerDelta) notes.push(`+${bonus.atkPowerDelta} atk`);
   if (bonus.defResistDelta) notes.push(`+${bonus.defResistDelta} def`);
@@ -131,6 +128,14 @@ function runStrike(
     return busted(`${label}: target slot empty`, notes);
   const target = targetEntry.card;
   const name = toughName(def, targetIdx);
+
+  const atkTopIdx = topToughIdx(atk);
+  const P = Math.max(0,
+    (atkTopIdx >= 0 ? toughCombatPower(atk, atkTopIdx) : 0) +
+    cashBonus + bonus.atkPowerDelta,
+  );
+  const R = bonus.ignoreResistance ? 0
+    : Math.max(0, toughCombatResistance(def, targetIdx) + bonus.defResistDelta);
 
   const { outcome, damage } = computeDamage(P, R);
   if (outcome === 'busted')

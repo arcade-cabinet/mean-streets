@@ -216,6 +216,35 @@ export function modifiersByOwner(turf: Turf, toughId: string): ModifierCard[] {
   return out;
 }
 
+/**
+ * Individual tough's combat power: HP-clamped base + owned modifiers.
+ * Per RULES §7 — damage calc uses individual stats, not turf sums.
+ */
+export function toughCombatPower(turf: Turf, toughIdx: number): number {
+  const entry = turf.stack[toughIdx];
+  if (!entry || entry.card.kind !== 'tough') return 0;
+  const tough = entry.card;
+  if (tough.hp <= 0) return 0;
+  let total = clampByHp(tough.power, tough);
+  for (const mod of modifiersByOwner(turf, tough.id)) {
+    if (mod.kind !== 'currency') total += mod.power;
+  }
+  return total;
+}
+
+/** Individual tough's combat resistance: HP-clamped base + owned modifiers. */
+export function toughCombatResistance(turf: Turf, toughIdx: number): number {
+  const entry = turf.stack[toughIdx];
+  if (!entry || entry.card.kind !== 'tough') return 0;
+  const tough = entry.card;
+  if (tough.hp <= 0) return 0;
+  let total = clampByHp(tough.resistance, tough);
+  for (const mod of modifiersByOwner(turf, tough.id)) {
+    if (mod.kind !== 'currency') total += mod.resistance;
+  }
+  return total;
+}
+
 export function turfCurrency(turf: Turf): CurrencyCard[] {
   const out: CurrencyCard[] = [];
   for (const e of turf.stack) if (e.card.kind === 'currency') out.push(e.card);
