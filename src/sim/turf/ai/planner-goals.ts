@@ -61,7 +61,10 @@ export type GoalName =
   | 'pushed_pressure'
   | 'draw_tempo'
   | 'retreat_shield'
-  | 'anti_stall';
+  | 'anti_stall'
+  | 'heat_management'
+  | 'mythic_hunt'
+  | 'stack_rebuild';
 
 export interface PlannerOwner {
   brain: CompositeGoalLike;

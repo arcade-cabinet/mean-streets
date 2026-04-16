@@ -1,7 +1,11 @@
-// v0.2 handless scoring — draw / play_card(pending) / retreat / queued
-// strike / end_turn. No `hand` anywhere. Queued strikes estimate outcome
-// via applyTangibles + positionPower/Resistance.
-import { applyTangibles } from '../abilities';
+// v0.3 scoring — draw / play_card(pending) / retreat / queued strike /
+// modifier_swap / send_to_market / send_to_holding / black_market_*
+// / end_turn. No `hand` anywhere. Queued strikes estimate outcome via
+// applyTangibles + positionPower/Resistance. Heat is a shared cost
+// multiplier on strikes (higher heat → higher raid probability, which
+// punishes the attacker after combat resolves). v0.3 single-lane
+// scorers live in scoring-v03.ts.
+import { applyTangibles, hasTranscend } from '../abilities';
 import {
   hasToughOnTurf,
   positionPower,
@@ -24,6 +28,13 @@ import type {
 } from '../types';
 import { TURF_AI_CONFIG, TURF_SIM_CONFIG } from './config';
 import { getPolicyValue, isPolicyPreferredAction } from './policy';
+import {
+  scoreBlackMarketHeal,
+  scoreBlackMarketTrade,
+  scoreModifierSwap,
+  scoreSendToHolding,
+  scoreSendToMarket,
+} from './scoring-v03';
 
 export interface ActionScore {
   score: number;
@@ -125,8 +136,19 @@ function scoreRetreat(state: TurfGameState, action: TurfAction): number {
   const oldPow = old.kind === 'currency' ? 0 : old.power;
   const oldRes = old.kind === 'currency' ? 0 : old.resistance;
   // Swap shields weak top with a beefier behind-tough. Small floor keeps
-  // a zero-delta lateral swap off the action-bar top.
-  return next.resistance - oldRes + (next.power - oldPow) - 0.5;
+  // a zero-delta lateral swap off the action-bar top. A Fixer Mythic
+  // (hasTranscend) already ignores affiliation penalties, so retreat has
+  // no strategic upside for it — dampen the score.
+  let score = next.resistance - oldRes + (next.power - oldPow) - 0.5;
+  const oldTough = old.kind === 'tough' ? old : null;
+  if (oldTough && hasTranscend(oldTough)) score -= 1.5;
+  return score;
+}
+
+function heatStrikePenalty(state: TurfGameState): number {
+  // Strikes push the raider toward a post-resolve raid check; weight the
+  // cost by shared heat. 0 heat → 0 penalty; 1.0 heat → -3 to any strike.
+  return state.heat * 3;
 }
 
 function scoreDirect(state: TurfGameState, action: TurfAction): number {
@@ -152,6 +174,7 @@ function scoreDirect(state: TurfGameState, action: TurfAction): number {
       s += aw.lowResistanceBonus * sc.lowResistanceMultiplier;
   }
   if (t.defP.turfs.length <= 1) s += sc.lastTurfBonus;
+  s -= heatStrikePenalty(state);
   return s;
 }
 
@@ -169,6 +192,7 @@ function scorePushed(state: TurfGameState, action: TurfAction): number {
   let s = margin * aw.killMargin + aw.flipBonus + aw.splashBonus;
   if (margin >= 0) s += sc.pushedKillBonus;
   if (t.defP.turfs.length <= 1) s += sc.lastTurfBonus;
+  s -= heatStrikePenalty(state);
   return s;
 }
 
@@ -201,6 +225,7 @@ function scoreRecruit(state: TurfGameState, action: TurfAction): number {
     s = sc.fundedFailPenalty;
   }
   if (t.defP.turfs.length <= 1) s += sc.lastTurfBonus;
+  s -= heatStrikePenalty(state);
   return s;
 }
 
@@ -248,6 +273,13 @@ export function scoreAction(
   else if (k === 'pushed_strike') score = scorePushed(state, action);
   else if (k === 'funded_recruit') score = scoreRecruit(state, action);
   else if (k === 'discard') score = scoreDiscard(state, observation, action);
+  else if (k === 'modifier_swap') score = scoreModifierSwap(state, action);
+  else if (k === 'send_to_market') score = scoreSendToMarket(state, action);
+  else if (k === 'send_to_holding') score = scoreSendToHolding(state, action);
+  else if (k === 'black_market_trade')
+    score = scoreBlackMarketTrade(state, action);
+  else if (k === 'black_market_heal')
+    score = scoreBlackMarketHeal(state, action);
   else if (k === 'end_turn') {
     score = sc.endTurnBase;
     if (observation.actionsRemaining <= 0) score += sc.endTurnNoActionsBonus;
@@ -275,5 +307,13 @@ export function describeActionForTrace(action: TurfAction): string {
   if (k === 'play_card') return `play_card@${action.turfIdx}:${action.cardId}`;
   if (k === 'retreat') return `retreat@${action.turfIdx}:${action.stackIdx}`;
   if (k === 'discard') return `discard:${action.cardId}`;
+  if (k === 'modifier_swap')
+    return `modifier_swap@${action.turfIdx}:${action.toughId}->${action.targetToughId}:${action.cardId}`;
+  if (k === 'send_to_market') return `send_to_market:${action.toughId}`;
+  if (k === 'send_to_holding') return `send_to_holding:${action.toughId}`;
+  if (k === 'black_market_trade')
+    return `black_market_trade:${action.targetRarity}`;
+  if (k === 'black_market_heal')
+    return `black_market_heal:${action.healTarget}`;
   return `${k}@${action.turfIdx}->${action.targetTurfIdx}`;
 }
