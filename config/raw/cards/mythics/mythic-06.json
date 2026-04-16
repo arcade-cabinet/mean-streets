@@ -1,0 +1,19 @@
+{
+  "id": "mythic-06",
+  "kind": "tough",
+  "name": "The Warlord",
+  "tagline": "Three bodies before breakfast.",
+  "archetype": "bruiser",
+  "affiliation": "freelance",
+  "power": [9],
+  "resistance": [7],
+  "rarity": ["mythic"],
+  "abilities": ["CHAIN_THREE"],
+  "mythic_signature": {
+    "description": "A single strike hits the opponent's top three toughs in one resolution. Each hit uses the defender's individual R for damage calc.",
+    "balance_note": "CHAIN_THREE is the raw-power payoff, so we bring P down to 9 (from a draft 10) to avoid double-loading. Each hit still has to clear individual R — a stack of high-R toughs will absorb the chain without kills. Use Warlord when you know the opponent is lightly defended."
+  },
+  "unlocked": false,
+  "locked": true,
+  "draft": true
+}

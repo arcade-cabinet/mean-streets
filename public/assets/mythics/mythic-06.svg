@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- The Warlord: Three crossed axes (CHAIN_THREE) -->
+  <!-- Central axe -->
+  <path d="M32 12 L32 50" stroke="#D4A017" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M26 20 Q32 14 38 20 Q36 26 32 26 Q28 26 26 20 Z"
+        stroke="#D4A017" stroke-width="1.5" stroke-linejoin="round"
+        fill="#D4A017" fill-opacity="0.2"/>
+  <!-- Left axe -->
+  <path d="M14 20 L22 46" stroke="#D4A017" stroke-width="2" stroke-linecap="round"/>
+  <path d="M10 26 Q12 20 18 22 Q18 28 14 28 Z"
+        stroke="#D4A017" stroke-width="1.2" stroke-linejoin="round"
+        fill="#D4A017" fill-opacity="0.15"/>
+  <!-- Right axe -->
+  <path d="M50 20 L42 46" stroke="#D4A017" stroke-width="2" stroke-linecap="round"/>
+  <path d="M54 26 Q52 20 46 22 Q46 28 50 28 Z"
+        stroke="#D4A017" stroke-width="1.2" stroke-linejoin="round"
+        fill="#D4A017" fill-opacity="0.15"/>
+  <!-- Base binding -->
+  <path d="M20 48 L44 48" stroke="#D4A017" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+</svg>

@@ -1,0 +1,19 @@
+{
+  "id": "mythic-04",
+  "kind": "tough",
+  "name": "The Informer",
+  "tagline": "I know what they're carrying. I always do.",
+  "archetype": "snitch",
+  "affiliation": "freelance",
+  "power": [5],
+  "resistance": [8],
+  "rarity": ["mythic"],
+  "abilities": ["INSIGHT"],
+  "mythic_signature": {
+    "description": "Passive: while in play, you can see the opponent's per-card heat contribution breakdown — normally hidden. You know who's holding what, even face-down.",
+    "balance_note": "Low offense, respectable defense (R 8). The power is intelligence. Transforms the opponent's information asymmetry into your advantage — but only while alive, so survivability matters."
+  },
+  "unlocked": false,
+  "locked": true,
+  "draft": true
+}

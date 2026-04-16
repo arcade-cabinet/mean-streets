@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- The Informer: Listening ear with a radiating-signal halo -->
+  <!-- Signal rings (radiating outward) -->
+  <path d="M32 32 m-20 0 a20 20 0 0 1 40 0"
+        stroke="#D4A017" stroke-width="1" fill="none" opacity="0.35"/>
+  <path d="M32 32 m-14 0 a14 14 0 0 1 28 0"
+        stroke="#D4A017" stroke-width="1" fill="none" opacity="0.55"/>
+  <path d="M32 32 m-8 0 a8 8 0 0 1 16 0"
+        stroke="#D4A017" stroke-width="1.5" fill="none" opacity="0.75"/>
+  <!-- Ear at center -->
+  <path d="M30 32 Q32 20 40 24 Q44 28 40 36 Q36 42 32 40 Q28 38 30 32 Z"
+        stroke="#D4A017" stroke-width="2" stroke-linejoin="round"
+        fill="#1A1A1A" fill-opacity="0.3"/>
+  <circle cx="36" cy="30" r="1.5" fill="#D4A017"/>
+</svg>
