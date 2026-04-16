@@ -6,6 +6,79 @@ import { loadProfile, saveProfile } from './storage';
 import { loadToughCards } from '../../sim/cards/catalog';
 import { generateWeapons, generateDrugs, generateCurrency } from '../../sim/turf/generators';
 
+// ── Card Preferences ────────────────────────────────────────────────────────
+//
+// CardPreference controls per-card enable/disable and priority bias (1–10).
+// Stored as a flat Record<cardId, CardPreference> on the player profile via
+// a separate preferences namespace so that preference reads/writes do NOT
+// interfere with unlockedCardIds serialization.
+//
+// Migration: cards that have no entry yet receive defaults (enabled=true,
+// priority=5) when preferences are first loaded, and again when new card ids
+// appear in the collection that aren't yet tracked.
+
+export interface CardPreference {
+  cardId: string;
+  enabled: boolean;
+  priority: number; // 1–10; default 5
+}
+
+const DEFAULT_PRIORITY = 5;
+
+function defaultPref(cardId: string): CardPreference {
+  return { cardId, enabled: true, priority: DEFAULT_PRIORITY };
+}
+
+// Preferences are stored in the profile under a dedicated key so the existing
+// `unlockedCardIds` shape is never mutated by preference writes.
+const PREFS_PROFILE_KEY = 'cardPreferences';
+
+// Access the raw preferences map from the profile (internally typed extension).
+type ProfileWithPrefs = ReturnType<typeof loadProfile> extends Promise<infer P>
+  ? P & { [PREFS_PROFILE_KEY]?: Record<string, CardPreference> }
+  : never;
+
+async function loadRawPrefs(): Promise<Record<string, CardPreference>> {
+  const profile = (await loadProfile()) as ProfileWithPrefs;
+  return (profile[PREFS_PROFILE_KEY] as Record<string, CardPreference>) ?? {};
+}
+
+async function saveRawPrefs(prefs: Record<string, CardPreference>): Promise<void> {
+  const profile = (await loadProfile()) as ProfileWithPrefs;
+  (profile as Record<string, unknown>)[PREFS_PROFILE_KEY] = prefs;
+  await saveProfile(profile);
+}
+
+/**
+ * Load preferences for all given card ids, filling in defaults for any
+ * card that has no stored preference yet (migration path).
+ */
+export async function loadPreferences(cardIds: string[]): Promise<CardPreference[]> {
+  const raw = await loadRawPrefs();
+  return cardIds.map((id) => raw[id] ?? defaultPref(id));
+}
+
+/**
+ * Persist updated preferences. Uses withProfileLock to avoid races with
+ * other collection writes.
+ */
+export async function savePreferences(prefs: CardPreference[]): Promise<void> {
+  return withProfileLock(async () => {
+    const raw = await loadRawPrefs();
+    for (const p of prefs) {
+      raw[p.cardId] = { ...p, priority: Math.max(1, Math.min(10, p.priority)) };
+    }
+    await saveRawPrefs(raw);
+  });
+}
+
+/**
+ * Update a single card's preference (toggle enabled or change priority).
+ */
+export async function updatePreference(pref: CardPreference): Promise<void> {
+  return savePreferences([pref]);
+}
+
 // Lazily build the catalog pool and cache its id→card map. The pool is
 // deterministic (toughs from compiled JSON, weapons/drugs/currency from
 // seeded generators with no arg) so one build is enough for the process

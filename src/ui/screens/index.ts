@@ -1,3 +1,4 @@
+export { CardGarageScreen } from './CardGarageScreen';
 export { CollectionScreen } from './CollectionScreen';
 export { DeckGarageScreen } from './DeckGarageScreen';
 export { DifficultyScreen } from './DifficultyScreen';
