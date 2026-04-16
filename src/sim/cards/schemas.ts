@@ -187,11 +187,12 @@ export function latestStat(history: readonly number[]): number {
 
 export type Rarity = z.infer<typeof RaritySchema>;
 
-export function latestRarity(history: readonly string[]): Rarity {
-  if (history.length === 0) {
+export function latestRarity(history: readonly Rarity[]): Rarity {
+  const rarity = history[history.length - 1];
+  if (rarity === undefined) {
     throw new Error('latestRarity: history array is empty');
   }
-  return history[history.length - 1] as Rarity;
+  return rarity;
 }
 
 // ── Inferred types ─────────────────────────────────────────────

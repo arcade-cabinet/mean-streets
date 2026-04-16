@@ -14,15 +14,16 @@ const VALID_PACK_KINDS: ReadonlySet<string> = new Set([
 
 function isPackRewardArray(value: unknown): value is PackReward[] {
   if (!Array.isArray(value)) return false;
-  return value.every(
-    (r) =>
-      r != null &&
-      typeof r === 'object' &&
-      typeof (r as { kind?: unknown }).kind === 'string' &&
-      VALID_PACK_KINDS.has((r as { kind: string }).kind) &&
-      typeof (r as { count?: unknown }).count === 'number' &&
-      (r as { count: number }).count >= 0,
-  );
+  return value.every((r) => {
+    if (r == null || typeof r !== 'object') return false;
+    const kind = (r as { kind?: unknown }).kind;
+    if (typeof kind !== 'string' || !VALID_PACK_KINDS.has(kind)) return false;
+    const count = (r as { count?: unknown }).count;
+    // Count must be a finite non-negative INTEGER. Fractional counts
+    // (e.g. a typo'd `0.5`) would otherwise pass the earlier `typeof ===
+    // 'number'` check and misbehave inside the reward loop.
+    return Number.isInteger(count) && (count as number) >= 0;
+  });
 }
 
 function coercePackRewards(value: unknown, source: string): PackReward[] {
