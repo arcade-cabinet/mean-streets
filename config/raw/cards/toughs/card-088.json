@@ -1,7 +1,8 @@
 {
   "id": "card-088",
-  "type": "crew",
-  "displayName": "Sato \"Grim\" Russo",
+  "kind": "tough",
+  "name": "Sato \"Grim\" Russo",
+  "tagline": "Grudges have a long memory.",
   "archetype": "enforcer",
   "affiliation": "jade_dragon",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     9
   ],
-  "abilityText": "+3 damage against cards from a rival affiliation",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "+3 damage against cards from a rival affiliation"
+  ],
   "unlocked": false,
   "unlockCondition": "Win with a deck containing 3+ affiliations",
   "locked": false,
-  "draft": true,
-  "tagline": "Grudges have a long memory."
+  "draft": true
 }

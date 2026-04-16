@@ -1,7 +1,8 @@
 {
   "id": "card-018",
-  "type": "crew",
-  "displayName": "Richie \"Two-Tone\" Walsh",
+  "kind": "tough",
+  "name": "Richie \"Two-Tone\" Walsh",
+  "tagline": "Keeps the crew on its feet.",
   "archetype": "medic",
   "affiliation": "neon_snakes",
   "power": [
@@ -10,10 +11,13 @@
   "resistance": [
     5
   ],
-  "abilityText": "When sacrificed to heal: heals double the normal amount",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "When sacrificed to heal: heals double the normal amount"
+  ],
   "unlocked": true,
-  "unlockCondition": null,
   "locked": false,
-  "draft": true,
-  "tagline": "Keeps the crew on its feet."
+  "draft": true
 }

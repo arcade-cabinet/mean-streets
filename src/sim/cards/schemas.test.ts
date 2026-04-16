@@ -1,21 +1,18 @@
-/**
- * Validates every raw tuning-history file against its authored Zod schema.
- * Also smoke-tests the compiled catalogs against the runtime flat schema.
- */
-
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  AuthoredCrewSchema,
+  AuthoredToughSchema,
   AuthoredWeaponSchema,
   AuthoredDrugSchema,
-  CardSpecialSchema,
-  CompiledCrewSchema,
+  CompiledToughSchema,
   CompiledWeaponSchema,
   CompiledDrugSchema,
+  CompiledCardSchema,
+  RaritySchema,
   latestStat,
+  latestRarity,
 } from './schemas';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -29,20 +26,40 @@ function readJson(p: string): unknown {
 
 function listJson(dir: string): string[] {
   if (!existsSync(dir)) return [];
-  return readdirSync(dir).filter((f: string) => f.endsWith('.json')).sort();
+  return readdirSync(dir)
+    .filter((f: string) => f.endsWith('.json'))
+    // Skip transient test fixtures written by the autobalance test suite
+    // (card-zz*, weap-zz*, drug-zz*). Without this, parallel workers can
+    // race: schemas.test.ts enumerates the dir, then autobalance.test.ts's
+    // afterEach rmSync removes the fixture before schemas.test.ts reads
+    // it — producing a flaky ENOENT.
+    .filter((f: string) => !/^(card-zz|weap-zz|drug-zz)/.test(f))
+    .sort();
 }
 
+describe('RaritySchema', () => {
+  it('accepts valid rarities', () => {
+    expect(RaritySchema.parse('common')).toBe('common');
+    expect(RaritySchema.parse('rare')).toBe('rare');
+    expect(RaritySchema.parse('legendary')).toBe('legendary');
+  });
+
+  it('rejects invalid values', () => {
+    expect(RaritySchema.safeParse('epic').success).toBe(false);
+  });
+});
+
 describe('authored card schemas', () => {
-  it('every tough file parses as AuthoredCrewSchema', () => {
+  it('every tough file parses as AuthoredToughSchema', () => {
     const dir = join(RAW_DIR, 'toughs');
     const files = listJson(dir);
     expect(files.length).toBeGreaterThan(0);
     for (const file of files) {
       const data = readJson(join(dir, file));
-      const res = AuthoredCrewSchema.safeParse(data);
+      const res = AuthoredToughSchema.safeParse(data);
       if (!res.success) {
         throw new Error(
-          `toughs/${file} failed Zod parse:\n${JSON.stringify(res.error.issues, null, 2)}`,
+          `toughs/${file} failed:\n${JSON.stringify(res.error.issues, null, 2)}`,
         );
       }
     }
@@ -57,7 +74,7 @@ describe('authored card schemas', () => {
       const res = AuthoredWeaponSchema.safeParse(data);
       if (!res.success) {
         throw new Error(
-          `weapons/${file} failed Zod parse:\n${JSON.stringify(res.error.issues, null, 2)}`,
+          `weapons/${file} failed:\n${JSON.stringify(res.error.issues, null, 2)}`,
         );
       }
     }
@@ -72,34 +89,23 @@ describe('authored card schemas', () => {
       const res = AuthoredDrugSchema.safeParse(data);
       if (!res.success) {
         throw new Error(
-          `drugs/${file} failed Zod parse:\n${JSON.stringify(res.error.issues, null, 2)}`,
+          `drugs/${file} failed:\n${JSON.stringify(res.error.issues, null, 2)}`,
         );
       }
-    }
-  });
-
-  it('special.json parses as CardSpecialSchema', () => {
-    const data = readJson(join(RAW_DIR, 'special.json'));
-    const res = CardSpecialSchema.safeParse(data);
-    if (!res.success) {
-      throw new Error(
-        `special.json failed Zod parse:\n${JSON.stringify(res.error.issues, null, 2)}`,
-      );
     }
   });
 });
 
 describe('compiled card catalog', () => {
-  it('compiled toughs.json parses as CompiledCrewSchema[]', () => {
+  it('compiled toughs.json entries parse as CompiledToughSchema', () => {
     const data = readJson(join(COMPILED_DIR, 'toughs.json')) as unknown[];
-    expect(Array.isArray(data)).toBe(true);
     expect(data.length).toBeGreaterThan(0);
     for (const entry of data) {
-      CompiledCrewSchema.parse(entry);
+      CompiledToughSchema.parse(entry);
     }
   });
 
-  it('compiled weapons.json parses as CompiledWeaponSchema[]', () => {
+  it('compiled weapons.json entries parse as CompiledWeaponSchema', () => {
     const data = readJson(join(COMPILED_DIR, 'weapons.json')) as unknown[];
     expect(data.length).toBeGreaterThan(0);
     for (const entry of data) {
@@ -107,11 +113,27 @@ describe('compiled card catalog', () => {
     }
   });
 
-  it('compiled drugs.json parses as CompiledDrugSchema[]', () => {
+  it('compiled drugs.json entries parse as CompiledDrugSchema', () => {
     const data = readJson(join(COMPILED_DIR, 'drugs.json')) as unknown[];
     expect(data.length).toBeGreaterThan(0);
     for (const entry of data) {
       CompiledDrugSchema.parse(entry);
+    }
+  });
+
+  it('all compiled cards parse with unified CompiledCardSchema', () => {
+    const toughs = readJson(join(COMPILED_DIR, 'toughs.json')) as unknown[];
+    const weapons = readJson(join(COMPILED_DIR, 'weapons.json')) as unknown[];
+    const drugs = readJson(join(COMPILED_DIR, 'drugs.json')) as unknown[];
+    const currency = readJson(join(COMPILED_DIR, 'currency.json')) as unknown[];
+    const all = [...toughs, ...weapons, ...drugs, ...currency];
+    expect(all.length).toBeGreaterThan(0);
+    // Sanity: the aggregate should include at least one of each kind so a
+    // future regression that drops a compiled artifact (e.g. currency
+    // missing) surfaces here rather than as a quiet zero-count branch.
+    expect(currency.length).toBeGreaterThan(0);
+    for (const entry of all) {
+      CompiledCardSchema.parse(entry);
     }
   });
 });
@@ -124,5 +146,16 @@ describe('latestStat helper', () => {
 
   it('throws on empty array', () => {
     expect(() => latestStat([])).toThrow();
+  });
+});
+
+describe('latestRarity helper', () => {
+  it('returns the last rarity from a history', () => {
+    expect(latestRarity(['common', 'rare'])).toBe('rare');
+    expect(latestRarity(['legendary'])).toBe('legendary');
+  });
+
+  it('throws on empty array', () => {
+    expect(() => latestRarity([])).toThrow();
   });
 });

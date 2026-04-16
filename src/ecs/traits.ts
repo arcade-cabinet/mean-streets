@@ -1,39 +1,40 @@
-/**
- * Koota ECS trait definitions for Mean Streets game state.
- * All complex state uses AoS (Array of Structs) via factory functions.
- */
-
 import { trait } from 'koota';
-import type { TurfGameState, PlayerState } from '../sim/turf/types';
+import type { PlayerState, TurfGameState } from '../sim/turf/types';
 
-export type ScreenName = 'menu' | 'deckbuilder' | 'buildup' | 'combat' | 'gameover';
-
-/**
- * Holds the complete TurfGameState (phase, turnNumber, config, rng, etc.).
- * Stored as AoS so the full object is accessible and mutable.
- */
-export const GameState = trait(() => ({} as TurfGameState));
+export type ScreenName = 'menu' | 'deckbuilder' | 'combat' | 'gameover';
 
 /**
- * Holds PlayerState for the A-side player.
+ * v0.2 handless model. ECS traits are a thin read-layer over sim state —
+ * the authoritative game state lives in `TurfGameState.players[side]`. We
+ * re-assign the `PlayerA` / `PlayerB` traits whenever we want Koota
+ * subscribers to re-render (via `entity.changed(...)`). Do not duplicate
+ * sim fields into extra traits; derive them in hooks instead.
  */
-export const PlayerA = trait(() => ({} as PlayerState));
+export const GameState = trait(() => ({}) as TurfGameState);
 
-/**
- * Holds PlayerState for the B-side player.
- */
-export const PlayerB = trait(() => ({} as PlayerState));
+export const PlayerA = trait(() => ({}) as PlayerState);
 
-/**
- * Tracks how many combat actions remain this round.
- */
+export const PlayerB = trait(() => ({}) as PlayerState);
+
 export const ActionBudget = trait({
   remaining: 0,
   total: 0,
+  turnNumber: 0,
 });
 
-/**
- * Tracks the current UI screen.
- * Uses AoS so we can store the union string type.
- */
 export const ScreenTrait = trait(() => ({ current: 'menu' as ScreenName }));
+
+export const TurfOwner = trait(() => ({
+  side: 'A' as 'A' | 'B',
+  turfIdx: 0,
+}));
+
+export const SickFlag = trait(() => ({
+  turfIdx: 0,
+  stackIdx: -1,
+}));
+
+export const AffiliationSymbol = trait(() => ({
+  affiliation: '',
+  turfIdx: 0,
+}));

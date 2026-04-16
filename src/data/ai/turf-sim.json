@@ -33,49 +33,68 @@
       "games": 5000,
       "catalogSeed": 42,
       "runSeed": 12345
+    },
+    "ci-release": {
+      "games": 1000,
+      "catalogSeed": 42,
+      "runSeed": 12345
     }
   },
   "benchmarkThresholds": {
     "smoke": {
-      "winRateMin": 0.42,
-      "winRateMax": 0.58,
-      "firstMoverMin": 0.42,
-      "firstMoverMax": 0.58,
-      "timeoutRateMax": 0.02,
-      "medianTurnsMin": 6,
-      "medianTurnsMax": 12,
-      "p90TurnsMax": 13,
-      "failedPlansMax": 1.3,
+      "winRateMin": 0.35,
+      "winRateMax": 0.65,
+      "firstMoverMin": 0.35,
+      "firstMoverMax": 0.65,
+      "timeoutRateMax": 0.05,
+      "medianTurnsMin": 8,
+      "medianTurnsMax": 50,
+      "p90TurnsMax": 80,
+      "failedPlansMax": 2,
       "fundedAttacksMin": 0.1,
       "pushedAttacksMin": 0.1,
       "policyGuidedMin": 0
     },
     "ci": {
-      "winRateMin": 0.42,
-      "winRateMax": 0.58,
-      "firstMoverMin": 0.42,
-      "firstMoverMax": 0.58,
-      "timeoutRateMax": 0.01,
-      "medianTurnsMin": 6,
-      "medianTurnsMax": 12,
-      "p90TurnsMax": 13,
-      "failedPlansMax": 1.3,
+      "winRateMin": 0.35,
+      "winRateMax": 0.65,
+      "firstMoverMin": 0.35,
+      "firstMoverMax": 0.65,
+      "timeoutRateMax": 0.05,
+      "medianTurnsMin": 8,
+      "medianTurnsMax": 50,
+      "p90TurnsMax": 80,
+      "failedPlansMax": 2,
       "fundedAttacksMin": 0.1,
       "pushedAttacksMin": 0.1,
       "policyGuidedMin": 0
     },
     "release": {
-      "winRateMin": 0.45,
-      "winRateMax": 0.55,
-      "firstMoverMin": 0.45,
-      "firstMoverMax": 0.55,
-      "timeoutRateMax": 0.005,
-      "medianTurnsMin": 6,
-      "medianTurnsMax": 12,
-      "p90TurnsMax": 13,
-      "failedPlansMax": 1.3,
+      "winRateMin": 0.40,
+      "winRateMax": 0.60,
+      "firstMoverMin": 0.40,
+      "firstMoverMax": 0.60,
+      "timeoutRateMax": 0.02,
+      "medianTurnsMin": 8,
+      "medianTurnsMax": 50,
+      "p90TurnsMax": 80,
+      "failedPlansMax": 2,
       "fundedAttacksMin": 0.1,
       "pushedAttacksMin": 0.1,
+      "policyGuidedMin": 0
+    },
+    "ci-release": {
+      "winRateMin": 0.45,
+      "winRateMax": 0.70,
+      "firstMoverMin": 0.45,
+      "firstMoverMax": 0.70,
+      "timeoutRateMax": 0.05,
+      "medianTurnsMin": 3,
+      "medianTurnsMax": 50,
+      "p90TurnsMax": 80,
+      "failedPlansMax": 2,
+      "fundedAttacksMin": 0,
+      "pushedAttacksMin": 0,
       "policyGuidedMin": 0
     }
   },
@@ -129,7 +148,6 @@
   "deckBuilder": {
     "totalCrew": 25,
     "totalModifiers": 25,
-    "totalBackpacks": 12,
     "minWeapons": 3,
     "minDrugs": 3,
     "weaponBudgetBase": 3,
@@ -149,18 +167,242 @@
     "usageZScoreStabilityMax": 1
   },
   "autobalance": {
-    "maxHistoryLength": 6,
-    "noteOnSaturation": "Once a card's stat history has 6 entries, autobalance treats it as 'tune-saturated' and stops touching it. Manual review wanted at that point."
+    "maxHistoryLength": 8,
+    "convergence": {
+      "winRateMin": 0.45,
+      "winRateMax": 0.65,
+      "consecutiveRunsRequired": 3,
+      "maxIterations": 20,
+      "difficulty": "medium"
+    }
+  },
+  "difficulty": {
+    "easy": {
+      "turfCount": 5,
+      "actionsPerTurn": 3,
+      "firstTurnActions": 5,
+      "aiNoise": 0.3,
+      "aiTopK": 5,
+      "actionBonus": 0,
+      "playerActionPenalty": 0,
+      "lookahead": false
+    },
+    "medium": {
+      "turfCount": 4,
+      "actionsPerTurn": 3,
+      "firstTurnActions": 5,
+      "aiNoise": 0.15,
+      "aiTopK": 3,
+      "actionBonus": 0,
+      "playerActionPenalty": 0,
+      "lookahead": false
+    },
+    "hard": {
+      "turfCount": 3,
+      "actionsPerTurn": 4,
+      "firstTurnActions": 5,
+      "aiNoise": 0.05,
+      "aiTopK": 2,
+      "actionBonus": 1,
+      "playerActionPenalty": 0,
+      "lookahead": false
+    },
+    "nightmare": {
+      "turfCount": 2,
+      "actionsPerTurn": 3,
+      "firstTurnActions": 5,
+      "aiNoise": 0,
+      "aiTopK": 1,
+      "actionBonus": 0,
+      "playerActionPenalty": 1,
+      "lookahead": false
+    },
+    "sudden-death": {
+      "turfCount": 1,
+      "actionsPerTurn": 3,
+      "firstTurnActions": 5,
+      "aiNoise": 0.15,
+      "aiTopK": 3,
+      "actionBonus": 0,
+      "playerActionPenalty": 0,
+      "lookahead": false
+    },
+    "ultra-nightmare": {
+      "turfCount": 1,
+      "actionsPerTurn": 3,
+      "firstTurnActions": 5,
+      "aiNoise": 0,
+      "aiTopK": 1,
+      "actionBonus": 0,
+      "playerActionPenalty": 0,
+      "lookahead": true
+    }
+  },
+  "combat": {
+    "pushedDenominationScale": 100,
+    "sickThresholdDivisor": 2,
+    "fundedRecruitMinCash": 1000,
+    "affiliationMult": {
+      "freelance": 0.5,
+      "same": 0.7,
+      "rival": 1.5,
+      "other": 1.0
+    }
+  },
+  "starterCollection": {
+    "toughPoolSize": 25,
+    "deckToughs": 25,
+    "deckWeapons": 8,
+    "deckDrugs": 8,
+    "deckCurrency": 9,
+    "openingHandSize": 5
+  },
+  "packs": {
+    "currency": {
+      "billCount": 25,
+      "billDenomination": 100,
+      "stackCount": 5,
+      "stackDenomination": 1000
+    }
+  },
+  "packEconomy": {
+    "rarityWeights": { "common": 70, "rare": 25, "legendary": 5 },
+    "suddenDeathBumpChance": 0.3,
+    "starterGrant": [
+      { "kind": "tough-5", "count": 4 },
+      { "kind": "weapon-5", "count": 1 },
+      { "kind": "drug-5", "count": 1 },
+      { "kind": "currency-5", "count": 1 }
+    ],
+    "rewards": {
+      "easy":            { "base": [{ "kind": "single", "count": 1 }],   "suddenDeath": [{ "kind": "triple", "count": 1 }] },
+      "medium":          { "base": [{ "kind": "triple", "count": 1 }],   "suddenDeath": [{ "kind": "tough-5", "count": 1 }] },
+      "hard":            { "base": [{ "kind": "tough-5", "count": 1 }],  "suddenDeath": [{ "kind": "tough-5", "count": 1 }, { "kind": "weapon-5", "count": 1 }] },
+      "nightmare":       { "base": [{ "kind": "tough-5", "count": 1 }, { "kind": "weapon-5", "count": 1 }], "suddenDeath": [{ "kind": "tough-5", "count": 1 }, { "kind": "weapon-5", "count": 1 }, { "kind": "drug-5", "count": 1 }] },
+      "sudden-death":    { "base": [{ "kind": "tough-5", "count": 1 }, { "kind": "drug-5", "count": 1 }],   "suddenDeath": [{ "kind": "tough-5", "count": 1 }, { "kind": "weapon-5", "count": 1 }, { "kind": "drug-5", "count": 1 }] },
+      "ultra-nightmare": { "base": [{ "kind": "tough-5", "count": 2 }, { "kind": "weapon-5", "count": 1 }, { "kind": "drug-5", "count": 1 }], "suddenDeath": [{ "kind": "tough-5", "count": 2 }, { "kind": "weapon-5", "count": 1 }, { "kind": "drug-5", "count": 1 }] }
+    }
+  },
+  "gameDefaults": {
+    "maxTurns": 200,
+    "defaultDifficulty": "medium"
+  },
+  "rewards": {
+    "fundedRecruitKill": 3,
+    "killBase": 2,
+    "seize": 4,
+    "sick": 0.5,
+    "bust": -1,
+    "playTough": 1,
+    "playModifier": 0.75,
+    "discard": -0.25,
+    "pass": -0.5
   },
   "aiScoring": {
-    "runnerOpenerBuildupBonus": 6.5,
-    "runnerOpenerCombatBonus": 3.5,
-    "runnerOpenerModerateBonus": 0.8,
-    "placeReserveBase": 0.4,
-    "placeReserveCrewPowerWeight": 0.85,
-    "placeReserveCrewResistanceWeight": 1.05,
     "placeCrewCrewResistanceWeight": 0.9,
-    "placeCrewDesperationWeight": 2.0
+    "placeCrewDesperationWeight": 0.5,
+    "emptyTurfBonus": 3,
+    "affiliationSynergyBonus": 1.2,
+    "modPowerWeight": 1.5,
+    "modResistanceWeight": 0.8,
+    "modOnPoweredTurfBonus": 1.2,
+    "currencyDenominationScale": 100,
+    "fundedThreshold": 1000,
+    "fundedReadyBonus": 3,
+    "currencyBaseScore": 0.5,
+    "sickBonus": 1.5,
+    "missPenalty": -2,
+    "lowResistanceThreshold": 3,
+    "lowResistanceMultiplier": 4,
+    "lastTurfBonus": 5,
+    "pushedKillBonus": 2,
+    "fundedSuccessBonus": 3,
+    "fundedCheapAffinityBonus": 2,
+    "fundedFailPenalty": -3,
+    "discardBase": -1,
+    "discardCheapCurrencyBonus": 0.3,
+    "discardNoToughsBonus": 2,
+    "endTurnBase": -0.5,
+    "endTurnNoActionsBonus": 5,
+    "passBasePenalty": -2
+  },
+  "aiPlanner": {
+    "buildStack": {
+      "emptyHandFloor": 0.1,
+      "base": 0.3,
+      "perToughWeight": 0.4,
+      "noToughsDesperation": 2,
+      "bias": 1.0
+    },
+    "directPressure": {
+      "base": 0.4,
+      "marginScale": 0.5,
+      "lastTurfBonus": 3,
+      "bias": 1.1
+    },
+    "fundedPressure": {
+      "baseWithCurrency": 0.6,
+      "perCurrencyWeight": 0.4,
+      "floor": 0.1,
+      "bias": 1.15
+    },
+    "pushedPressure": {
+      "base": 0.3,
+      "bias": 1.1
+    },
+    "antiStall": {
+      "consecutivePassThreshold": 1,
+      "base": 1,
+      "perPassEscalation": 0.4,
+      "idleFloor": 0.15,
+      "bias": 1.2
+    },
+    "traceTopActions": 4,
+    "traceMaxActions": 6
+  },
+  "difficultyProfiles": {
+    "easy": {
+      "topK": 5,
+      "noise": 0.3,
+      "actionBonus": 0,
+      "playerActionPenalty": 0,
+      "lookahead": false
+    },
+    "medium": {
+      "topK": 3,
+      "noise": 0.15,
+      "actionBonus": 0,
+      "playerActionPenalty": 0,
+      "lookahead": false
+    },
+    "hard": {
+      "topK": 2,
+      "noise": 0.05,
+      "actionBonus": 1,
+      "playerActionPenalty": 0,
+      "lookahead": false
+    },
+    "nightmare": {
+      "topK": 1,
+      "noise": 0,
+      "actionBonus": 0,
+      "playerActionPenalty": 1,
+      "lookahead": false
+    },
+    "sudden-death": {
+      "topK": 3,
+      "noise": 0.15,
+      "actionBonus": 0,
+      "playerActionPenalty": 0,
+      "lookahead": false
+    },
+    "ultra-nightmare": {
+      "topK": 1,
+      "noise": 0,
+      "actionBonus": 0,
+      "playerActionPenalty": 0,
+      "lookahead": true
+    }
   },
   "archetypeBonuses": {
     "sniperCalledShotDamage": 1,

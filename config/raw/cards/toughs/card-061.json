@@ -1,7 +1,8 @@
 {
   "id": "card-061",
-  "type": "crew",
-  "displayName": "Jackie \"Bruiser\" Kwon",
+  "kind": "tough",
+  "name": "Jackie \"Bruiser\" Kwon",
+  "tagline": "Never learned to pull a punch.",
   "archetype": "bruiser",
   "affiliation": "dead_rabbits",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     6
   ],
-  "abilityText": "Deals +2 damage when attacking a target with lower ATK than this card",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "Deals +2 damage when attacking a target with lower power than this card"
+  ],
   "unlocked": false,
   "unlockCondition": "Win 6 games",
   "locked": false,
-  "draft": true,
-  "tagline": "Never learned to pull a punch."
+  "draft": true
 }

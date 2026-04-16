@@ -58,21 +58,6 @@ console.log(`  Pushed Attacks:    ${summary.pushedAttacks.toFixed(2)}`);
 console.log('  Passes:            0');
 console.log(`  Passes/Turn:       ${(summary.passRatePerTurn * 100).toFixed(2)}%`);
 
-console.log('\n── RUNNER ECONOMY ──');
-console.log(`  Reserve Crew:      ${summary.reserveCrewPlacements.toFixed(2)}`);
-console.log(`  Backpacks Equipped:${summary.backpacksEquipped.toFixed(2)}`);
-console.log(`  Runner Deploys:    ${summary.runnerDeployments.toFixed(2)}`);
-console.log(`  Payload Deploys:   ${summary.payloadDeployments.toFixed(2)}`);
-console.log(`  Opportunity Turns: ${summary.runnerOpportunityTurns.toFixed(2)}`);
-console.log(`  Opportunities Used:${summary.runnerOpportunityTaken.toFixed(2)}`);
-console.log(`  Opportunities Miss:${summary.runnerOpportunityMissed.toFixed(2)}`);
-console.log(`  Reserve Stage:     ${summary.runnerReserveOpportunityTaken.toFixed(2)}/${summary.runnerReserveOpportunityTurns.toFixed(2)} used`);
-console.log(`  Equip Stage:       ${summary.runnerEquipOpportunityTaken.toFixed(2)}/${summary.runnerEquipOpportunityTurns.toFixed(2)} used`);
-console.log(`  Deploy Stage:      ${summary.runnerDeployOpportunityTaken.toFixed(2)}/${summary.runnerDeployOpportunityTurns.toFixed(2)} used`);
-console.log(`  Payload Stage:     ${summary.runnerPayloadOpportunityTaken.toFixed(2)}/${summary.runnerPayloadOpportunityTurns.toFixed(2)} used`);
-console.log(`  Overall Use Rate:  ${(summary.runnerOpportunityUseRate * 100).toFixed(1)}%`);
-console.log(`  Reserve Start Rate:${(summary.runnerReserveStartUseRate * 100).toFixed(1)}%`);
-
 console.log('\n── ✓ ALL METRICS PASSING ──');
 
 const reportPath = writeAnalysisJson('benchmarks', `benchmark-release-${Date.now()}.json`, summary);

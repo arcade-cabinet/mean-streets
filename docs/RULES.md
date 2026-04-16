@@ -1,324 +1,790 @@
 ---
-title: Mean Streets — Rules Reference
-updated: 2026-04-14
+title: Mean Streets — Rules Reference (v0.3)
+updated: 2026-04-17
 status: current
 domain: product
 ---
 
-# Mean Streets — Rules Reference
+# Mean Streets — Rules Reference (v0.3)
 
-This is the authoritative, implementation-level rules document. Design intent
-lives in [DESIGN.md](./DESIGN.md). When rules disagree with this file, this
-file wins.
+Authoritative, implementation-level rules. Design intent lives in
+[DESIGN.md](./DESIGN.md). When rules disagree with this file, this
+file wins. This supersedes every prior version. v0.2 RULES.md is
+archived at [archive/RULES-v0.2.md](./archive/RULES-v0.2.md).
+
+The mental model: **War with cumulative effect, but played on a
+single lane.** Each player defends one active turf at a time.
+Building up your stack is building up your position. When your
+active turf falls, the next one promotes up — and you rebuild. Lose
+all your turfs and you lose the war.
 
 ## 1. Objective
 
-Seize all five of your opponent's active street positions. A position is
-seized when the tough occupying it is killed or flipped (recruited).
+Hold your turfs. Each player has N turfs arranged as a progression
+queue. Only one turf per player is **active** — the front line.
+Reserves sit behind, empty, waiting.
 
-## 2. Anatomy Of A Card
+When your active turf falls (no living toughs after resolution),
+the next reserve promotes up and becomes your new active turf,
+empty stack. Lose all your turfs and you lose the war.
 
-Every full-sized card has the **same visual frame** with six display slots:
+**Turf count by difficulty** (§14). Default Medium = 4 turfs.
+
+## 2. Card Anatomy
+
+Every card shares the same full-sized MTG-style frame:
 
 ```
-  ┌─ top-left ─── top-center ── top-right ─┐
-  │  (backpack-    (power /      (backpack- │
-  │    gated)      archetype)     gated)    │
-  │                                         │
-  ├─ middle-left ─ affiliation ─ middle-rt ─┤
-  │  (pocket)       (badge)      (pocket)   │
-  │                                         │
-  ├─ bottom-left ─ bot-center ── bottom-rt ─┤
-  │  (backpack-    (resistance    (backpack- │
-  │    gated)       / role)       gated)    │
-  │                                         │
-  │                 "Name"                  │
-  └─────────────────────────────────────────┘
+┌──────────────────────────────┐
+│ [Difficulty]         [Power] │
+│ [Affiliation]                │
+│                              │
+│          Name                │
+│          Tagline             │
+│                              │
+│ [Rarity]   [Type]   [Resist] │
+└──────────────────────────────┘
 ```
 
-- **Pocket slots** (middle-left, middle-right): always usable. A tough can
-  carry up to **two quarter-cards** in its pockets at any time.
-- **Backpack-gated slots** (the four corners): only become active when the
-  tough is carrying a **backpack**. A runner (tough + backpack) can carry up
-  to **2 + 4 = 6** quarter-cards total.
-- **Center column** displays the tough's stats (power top-center, resistance
-  bottom-center) and affiliation badge.
-
-Backpack cards use the same frame but only the **four corner slots** are
-live — they have no power/resistance of their own.
+- **Top-left**: difficulty icon (where the card was unlocked; §13).
+- **Top-right**: Power (attack) for tough/weapon/drug; denomination for currency.
+- **Affiliation hero image**: on mobile, anchored top-left below difficulty icon. On desktop, centered portrait.
+- **Border color**: reflects rolled rarity (grey/blue/gold/red for common/uncommon/rare/legendary; custom for mythic).
 
 ### Card Types
 
-| Type         | Full-sized? | Tunable stat             | Behaviour                             |
-|--------------|-------------|--------------------------|---------------------------------------|
-| Tough (crew) | Yes         | power, resistance        | Occupies active/reserve positions     |
-| Backpack     | Yes         | (carrier for payload)    | Stages to reserve, transfers to tough |
-| Weapon       | No (quarter)| bonus                    | Slot payload (pocket or backpack)     |
-| Drug (product)| No (quarter)| potency                  | Slot payload (pocket or backpack)     |
-| Cash         | No (quarter)| denomination ($100/$1000)| Slot payload (pocket or backpack)     |
+| Type     | Stats                                      | Role                              |
+|----------|--------------------------------------------|-----------------------------------|
+| Tough    | power, resistance, HP, archetype, affiliation | Defends a turf; carries modifiers |
+| Weapon   | power or resistance, category              | Offensive or defensive modifier   |
+| Drug     | power or resistance, category              | Same as weapon, different role    |
+| Currency | denomination ($100 / $1000)                | Bribes, buffers, heat pressure    |
 
-Quarter-cards never exist independently in a hand or a draw pile. They live
-inside pockets or backpacks only.
+### Rarity: Base + Rolled
 
-## 3. Deck Composition
+Two dimensions on every card:
 
-A deck is **50 cards total**, decided during deckbuilding:
+- **Base rarity** — authored into the card's identity. Some cards
+  start at common, some at rare, legendary-base cards have signature
+  abilities no other card has.
+- **Rolled rarity** — the specific instance's rarity at pack open.
+  Every card can roll up from its base but never below.
 
-| Component      | Count                                 |
-|----------------|---------------------------------------|
-| Toughs         | 25                                    |
-| Backpacks      | N (starting quota, simulation-tuned)  |
-| Quarter-cards  | up to 25 — weapons + drugs + cash, all pre-packed into backpacks |
+Tiers: **Common / Uncommon / Rare / Legendary / Mythic**.
 
-### Starting Backpack Quota
+- Common-base: can roll common through legendary. Never mythic.
+- Uncommon-base: can roll uncommon through legendary.
+- Rare-base: rolls rare through legendary.
+- Legendary-base: always legendary.
+- **Mythic-base: always mythic. Fixed pool of 10 authored cards with
+  signature game-warping abilities.** (§13)
 
-Every player starts with `N` backpack slots by default. `N` is set by
-simulation tuning (target: each backpack carries ~3–4 quarter-cards on
-average). Players can unlock **additional backpack slots** permanently
-through achievements, just like unlocking additional cash denominations.
+Rolled rarity applies a stat + ability scaling multiplier:
 
-**Current N: 12** (configurable via `TURF_SIM_CONFIG.deckBuilder.totalBackpacks`).
-Sweep results (`pnpm run analysis:backpack-quota --profile ci`) show
-that N in the 3..10 range produces identical game-length and equip
-metrics — the engine consumes only ~2 backpacks per game in current
-balance, so the quota above ~3 is effectively a deckbuilding quality-
-of-life knob rather than a balance lever. Revisit when AI runner usage
-climbs past 1 backpack/game on average.
+| Rolled     | Stat multiplier | Ability effect scaling |
+|------------|-----------------|------------------------|
+| Common     | ×1.0            | ×1.0                   |
+| Uncommon   | ×1.15           | ×1.15                  |
+| Rare       | ×1.3            | ×1.3                   |
+| Legendary  | ×1.5            | ×1.5                   |
+| Mythic     | ×1.7            | ×1.7 + signature       |
 
-### Pre-Packing Rule
+So a common-rolled LACERATE gives +1 attack; legendary-rolled gives
++1.5 → rounded +2. Exact rounding rules in §12.
 
-**All quarter-cards start the game inside backpacks.** During deckbuilding
-the player:
+Legendary-base cards carry signature abilities: **chain-striker
+(legendary = 2 hits), strike-retreated, long-shot, launder,
+low-profile**, etc. These never appear on common-base cards
+regardless of rolled rarity.
 
-1. Picks 25 toughs.
-2. Decides how many of their N backpack slots to use (unused slots stay
-   empty).
-3. Stuffs weapons/drugs/cash into each backpack, 1–4 quarter-cards per
-   backpack, up to a total of 25 quarter-cards across all backpacks.
+Mythic-base cards each carry unique signature abilities. (§13)
 
-No quarter-card enters the game outside a backpack. Mid-game
-redistribution (through seizure, pocket transfers, payload dispersal) is
-the only way quarter-cards change location.
+## 3. Collection — Profile + DRAWS
 
-## 4. Setup
+Each profile has a persistent collection: every unlocked card at
+its rolled rarity + unlock-difficulty tag. Cards persist across
+wars.
 
-- Both players' 25 toughs shuffle into their crew draw pile.
-- Both players' packed backpacks shuffle into their backpack draw pile.
-- Each player draws an opening hand of **3 toughs** and **up to 2 backpacks**
-  into reserve (the exact draw numbers come from `TurfGameConfig`).
-- Reserve backpacks begin **staged in reserve positions**. They can be
-  transferred onto reserve toughs before first blood as part of the buildup
-  phase (see §6).
+### First-run starter grant
 
-## 5. Phases
+On profile creation, both player and AI receive matched starter
+collections:
 
-The game has two phases:
+- **4 × Tough Pack (5 cards)** — 20 toughs
+- **1 × Weapon Pack (5 cards)**
+- **1 × Drug Pack (5 cards)**
+- **1 × Currency Pack (5 cards)**
 
-### Buildup (up to 10 rounds)
+Total starter: 35 cards each side.
 
-- Both players act simultaneously each round.
-- Legal actions each round:
-  - **Place tough**: move a tough from hand into an empty active/reserve
-    position.
-  - **Stage backpack**: place a backpack from hand into an empty reserve
-    position, or equip it onto an existing reserve tough.
-  - **Transfer backpack**: move a staged backpack between reserve cards
-    (see §7 — backpacks can only move among reserved cards in buildup).
-- Buildup ends when either player **strikes** (first blood) or after ten
-  rounds have elapsed.
+### Pack awards
 
-### Combat
+Both sides earn packs from war outcomes (§13). AI's collection
+grows in parallel with player's — invisibly tracked in SQLite.
+AI earns the same bundles that the player earns, representing
+the AI "learning" across sessions.
 
-- Five actions per player per round, simultaneous.
-- First blood draws permanent lane assignments — once combat starts,
-  backpacks cannot be freely transferred between reserve cards. They move
-  only with their carrier (runner) or through seizure.
-- Actions available during combat:
-  - **Direct attack**
-  - **Funded attack** (cash-backed bribe / flip)
-  - **Pushed attack** (drug + cash — splash)
-  - **Equip runner**: swap a reserve tough carrying a backpack into an
-    active position (free-swap rule, see §7).
-  - **Retreat / reposition**: swap an active tough back to reserve (costs
-    the turn).
-  - **Dispense payload**: runner gives a backpack item to an active
-    friendly, or uses it in an action (attack, stack).
-  - **Reclaim**: retake a seized position with a tough + cash.
-  - **Pass**: skip remaining actions for the round.
+### Pack drop rates
 
-## 6. Backpacks — Mechanical Container
+Pack draws roll by **base-rarity per slot** (which card shows up):
 
-A backpack is a **mechanical full-sized card**. It has:
+| Base rarity | Per-slot pull rate |
+|-------------|--------------------|
+| Common      | 55%                |
+| Uncommon    | 28%                |
+| Rare        | 14%                |
+| Legendary   | 3%                 |
+| Mythic      | 0% (not in packs)  |
 
-- Four payload slots (top-left, top-right, bottom-left, bottom-right).
-- No name, no icon beyond a generic backpack glyph, no archetype, no
-  affiliation. Every backpack is interchangeable.
-- No inherent power or resistance. When equipped onto a tough, its four
-  payload slots project onto that tough's four **corner** slots; the tough
-  also gains a **runner symbol** overlay to indicate carrier status.
+Each card then rolls its **instance rarity** (per §2) based on its
+base rarity's roll distribution. Distributions are sim-tuned.
 
-### Backpack Identity In Data
+### Unlock difficulty tag
 
-Backpacks are **not authored cards**. They do not live under
-`config/raw/cards/` with stat arrays. They are a rule type defined in
-`config/raw/cards/special.json` along with currency. Player-packed
-instances are created during deckbuilding by the engine with IDs like
-`backpack-player-A-1 ... backpack-player-A-N` and the specific payload
-chosen by the player.
+Every card instance is tagged with the difficulty it was unlocked
+at. Cards unlocked at higher difficulties earn a **bonus reward
+multiplier** that diminishes at lower difficulties — incentivizing
+you to play at higher tiers without punishing you for dropping down.
 
-## 7. Runner Mechanics
+### Collection Management (not deckbuilding)
 
-A **runner** is a tough that is currently carrying a backpack. Runner is
-an overlay role — the tough keeps its archetype, affiliation, stats, and
-name; it gains the runner capabilities on top.
+Before each new war, both player and AI go through **card
+curation**:
 
-### Equipping A Backpack
+- **Enable/disable** individual cards (disabled = excluded from this
+  war's draw pile).
+- **Priority slider (1-10)** per card instance — biases shuffle.
+- **Auto-prioritize** toggle — surfaces the AI's recommended
+  priorities for the player to accept or reject.
+- **Merge**: 2 duplicate cards at the same rolled rarity →
+  1 instance rolled one tier up.
+  - Pyramid cost: 2 commons → 1 uncommon, 2 uncommons → 1 rare,
+    2 rares → 1 legendary.
+  - Legendary is the merge ceiling (mythics cannot be created
+    via merge).
+  - Merged result takes the **higher unlock difficulty** of the
+    two sources.
+- **Auto-merge** toggle — AI recommends merges, player accepts/rejects.
 
-- Backpacks can only be equipped to **reserve** cards, never active.
-- Equip action:
-  - If staged as an empty reserve position, a backpack equips onto a
-    reserve tough by adjacent transfer.
-  - A player-held backpack in hand can be placed onto a reserve tough as a
-    single action.
+## 4. Turfs — Single-Lane Progression
 
-### Free Swap
+Each player has N turfs. Only one turf per player is **active** —
+the current engagement. Reserves queue behind.
 
-- Equipping a backpack onto a reserve tough grants **one free swap** —
-  the runner may move into any empty active slot with **no turn
-  penalty**, the one time.
-- This is the runner's "entry" into the front line.
-- After the free swap, any subsequent active ↔ reserve move costs a full
-  turn (normal retreat penalty).
+- Each turf is a **stack** (ordered ordered sequence of StackedCards).
+- A StackedCard is `{ card, faceUp }`. Face state determines what
+  the opponent sees.
+- The top of the stack is the current **active tough**.
 
-### Runner Payload Use
+### Active / Reserve / Match end
 
-While the runner is in active play:
+- You and your opponent each have one active turf.
+- Strikes, plays, retreats, closed ranks — all operate on your
+  active turf only.
+- **When your active turf falls** (no living tough after resolution),
+  the next reserve promotes up and becomes your new empty active turf.
+- **New-turf setup budget**: on the first turn of a newly-promoted
+  active turf, you get the 5/4/3 bonus action budget (same curve as
+  match opening).
+- **Match ends when**:
+  - You have no turfs left (active seized + reserves exhausted) →
+    you lose.
+  - Both players reach zero turfs on the same resolution → draw.
+  - No timeout — games end on seizure.
 
-- The runner may **dispense** backpack items to:
-  - itself (stack an item into one of its own pocket or corner slots),
-  - another friendly active tough,
-  - an opposing tough (as the payload of a direct/funded/pushed attack).
-- Each dispense consumes one action.
-- Backpack items can be left in the pack for future actions.
+### Placement rules on active turf
 
-### Pocket Vs Backpack Capacity
+1. **First card of stack must be a tough.** Modifiers cannot be
+   played onto an empty turf.
+2. **Modifier cannot be the top card at end of turn.** A modifier
+   tucked under a tough during play is legal temporarily (same
+   turn) but must be under a tough by end-of-turn or lost to the
+   Black Market.
+3. **One weapon and one drug per TOUGH.** A tough can hold at most
+   one weapon and one drug simultaneously. Currency is unlimited
+   per tough.
+4. **Play on full slot: rejected.** If you try to play a weapon on
+   a tough that already has one, the play fails. You must swap
+   first (§8.3).
 
-A full-up runner can carry:
+### Affiliations & loyalty
 
-- 2 items in **pockets** (middle-left, middle-right).
-- 4 items in **backpack corners** (top-left, top-right, bottom-left,
-  bottom-right).
+Each tough has an affiliation. Stacks with 3+ toughs of the same
+dominant affiliation get a **loyal stack bonus** (+2 attack,
++2 defense to the turf). Freelancer toughs are neutral to all
+affiliations and don't break loyalty.
 
-Total: **6 quarter-cards** of staged bonuses on a single tough. This is
-the ceiling the mid/late game economy pushes toward and defends against.
+**Rival affiliation placement:**
+- When a rival-affiliated tough is played on a turf, an affiliation
+  conflict arises. Resolution order:
+  1. If a **mediating tough** (neutral) is in the stack → placement
+     free.
+  2. Otherwise, consume the **cheapest denomination currency** from
+     the turf-wide pool as a buffer. Currency is spent (vanishes).
+  3. If no buffer available → placement rejected, card discarded.
 
-### Empty Backpacks
+## 5. Actions Per Turn
 
-- An empty backpack is still useful — it reserves the four corner slots
-  on the runner for later payload pickup (e.g., from seized cards or
-  pocket transfers between friendlies).
-- A runner may retreat to reserve, but retreating costs the turn (no
-  free-swap benefit on the way back).
+Action budget:
 
-### Seizure
+| Turn                             | Actions |
+|----------------------------------|---------|
+| First turn of a new active turf  | 5       |
+| Normal (Easy–Medium)             | 3       |
+| Normal (Hard)                    | 4       |
+| Normal (Nightmare+)              | 3       |
 
-- If a runner is seized (killed or flipped) while carrying a backpack,
-  the **backpack and all its remaining contents** transfer to the
-  opponent.
-- The opponent may then use the backpack immediately if able (e.g.,
-  dispense its payload to one of their active or reserve cards) or stash
-  it on one of their own reserve toughs.
-- Carrying heavy backpacks into combat therefore trades lethality for
-  logistics risk.
+Drawing is an action.
 
-## 8. Precision Rule
+### Action list
 
-A tough with attack value `A` may target a defender with attack value `D`
-only when `A <= D * precisionMult` (currently `3.0`). The **Bruiser**
-archetype ignores precision.
+| Action                  | Cost | Effect                                          | Resolves        |
+|-------------------------|------|-------------------------------------------------|-----------------|
+| Draw                    | 1    | Draw top card from your deck into pending slot  | Immediate       |
+| Play card               | 1    | Place pending card onto a tough or empty turf   | Immediate       |
+| Modifier swap           | 1    | Move a modifier between toughs on your turf     | Immediate       |
+| Retreat                 | 1    | Flip current top face-up; swap in another tough | Immediate       |
+| Send to Black Market    | 1    | Send a tough (+ modifiers) to market; trade     | Immediate       |
+| Send to Holding         | 1    | Send a tough to Holding; risk cops              | Immediate       |
+| Queue: Direct Strike    | 1    | Queue a direct strike at opponent's active turf | End-of-turn     |
+| Queue: Pushed Strike    | 1    | Spend 1 currency; splash strike                 | End-of-turn     |
+| Queue: Funded Recruit   | 1    | Spend currency to flip opponent's tough         | End-of-turn     |
+| Discard pending         | 0    | Discard the currently-drawn pending card (free) | —               |
+| End turn                | 0    | Declare done; forfeits remaining actions (free) | —               |
 
-## 9. Attack Types
+### Turn flow
 
-### Direct Attack
+1. Both players take their full action budget in parallel. No
+   alternating side-by-side.
+2. Visibility during actions:
+   - **You see every movement** the opponent makes — draws, plays,
+     swaps, retreats. Card FACES stay hidden per §9.
+3. After both players end their turn, resolution phase fires.
+4. **Resolution order**: raid resolution **before** combat
+   resolution.
 
-Attacker's effective power (crew power + top weapon bonus + top drug
-potency, once unlocked) vs defender's effective defense (crew resistance
-+ bottom weapon + bottom drug). If `atk >= def` → kill. Otherwise →
-wound (reduce defender resistance).
+## 6. Drawing & Playing
 
-### Funded Attack
+### Drawing
 
-Attacker stakes **offensive cash** (center-left slot). Flip threshold =
-`defender resistance + defensive cash`, modified by:
+- Draw uses 1 action. Pulls the top of your deck into your
+  **pending slot** (single card, visible to both you and opponent —
+  but only you see its face).
+- You cannot draw if pending is non-null.
+- When pending is a tough: next `play_card` plays it.
+- When pending is a modifier: next `play_card` tucks it onto a
+  living tough of your choice on your active turf (first one
+  legal).
 
-- Freelance defender → threshold × 0.5 (easy to recruit).
-- Same affiliation → threshold × 0.7.
+### Unplayable pending at turn end
 
-If `offensiveCash >= threshold` → flip (defender joins attacker's side).
-Otherwise → busted (cash spent, no flip).
+- **If pending is a modifier and no legal placement exists by turn
+  end → modifier sent to Black Market.**
+- If pending is a tough with an unresolvable rival conflict → tough
+  discarded.
 
-### Pushed Attack
+## 7. Damage & HP
 
-Crew + offensive drug + offensive cash. Push power =
-`drug potency + floor(cash / 10)`.
+Every tough in play has HP. HP starts equal to rolled Resistance.
 
-- `push >= defender defense` → kill/flip + splash damage to adjacent
-  positions (up to `potency - 1` neighbours weakened).
-- `push >= floor(defense / 2)` → partial weaken (sick state).
-- Otherwise → busted.
+### Damage calc on a strike
 
-## 10. Win Condition
+Given attacker effective Power P and defender Resistance R:
 
-The match ends when one player has seized **5 of the opponent's
-5 active street positions**, or on timeout after `maxRounds` (default
-100). On timeout, the player with more seized positions wins; ties
-break to the player who struck first.
+| Ratio           | Tier          | Damage                 |
+|-----------------|---------------|------------------------|
+| P < R           | Glance        | 0 (busted)             |
+| R ≤ P < 1.5R    | Wound         | P - R + 1 (min 1)      |
+| 1.5R ≤ P < 2R   | Serious wound | P - R + 2              |
+| P ≥ 2R          | Crushing      | P - R + 3              |
+| P ≥ 3R          | Instant kill  | HP → 0 regardless      |
 
-## 11. Balance Philosophy
+When HP ≤ 0 → tough dies.
 
-- Deterministic engine. The only randomness in a match is the draw order
-  (seeded).
-- 50/50 winrate between equal players with equal decks, measured across
-  release-profile seeds.
-- All card types must be meaningfully used — no decorative cards.
-- Games last 12–20 rounds (~60 total actions).
-- `<5%` stall rate, `<2` passes per game.
-- Every card in the catalog must pass the autobalance gate before a
-  release (coverage threshold in `release-gate.test.ts`).
+### Wounded P/R clamping
 
-## 12. Unlock Model
+A wounded tough's effective stats scale with HP ratio:
 
-- **Baseline set**: a curated subset of toughs, weapons, drugs,
-  backpacks, and cash denominations is unlocked by default for all
-  players.
-- **Achievement unlocks**: additional cards and backpack slots unlock
-  permanently through gameplay achievements. Unlocks are additive —
-  once earned, always available.
-- **Expansions ≠ re-tunes**: once a card is shipped and locked, its
-  stats never change. Future expansions add new cards instead of
-  re-tuning existing ones (Brawl Stars model).
+- `effective_P = base_P × (current_HP / max_HP)`
+- `effective_R = base_R × (current_HP / max_HP)`
 
-## 13. Glossary
+Rounded down for display. Tangible modifiers (LACERATE, BRACE, etc.)
+apply their full bonuses on top of the clamped stats.
 
-- **Tough**: a full-sized crew card. Has power, resistance, archetype, and
-  affiliation.
-- **Backpack**: a mechanical full-sized container card with four payload
-  slots. Equipped only in reserve, transfers onto a tough to create a
-  **runner**.
-- **Runner**: a tough currently carrying a backpack. Gains free-swap,
-  payload dispensing, and increased quarter-card capacity (2 pockets + 4
-  backpack corners).
-- **Pocket slot**: middle-left / middle-right display slot on any
-  full-sized card. Holds one quarter-card each. Always active.
-- **Backpack-gated slot**: top-left, top-right, bottom-left, bottom-right
-  corners on a tough. Only activated when the tough is carrying a
-  backpack.
-- **Quarter-card**: weapon, drug, or cash. Never exists independently.
-  Lives inside a pocket slot or a backpack.
-- **Seize**: kill or flip an opponent's tough, clearing their active
-  position and taking their carried stash.
-- **First blood**: the first attack of the combat phase. Ends buildup
-  and locks backpacks to their current carriers.
+### Healing chain
 
-Implementation status for each rule listed here tracks in
-[PRODUCTION.md](./PRODUCTION.md).
+Three layers, cheapest to most expensive:
+
+1. **PATCHUP** (common drug) — heals +1 HP to owner tough at end of
+   each turn.
+2. **FIELD_MEDIC** (rare tough ability) — heals +1 HP to any wounded
+   tough on the same turf at end of each turn.
+3. **RESUSCITATE** (rare drug) — restores full HP to owner tough
+   once, then consumed.
+4. **The Medic** (legendary tough, one per collection) — full heal
+   action. Once per war.
+5. **Black Market heal** (§8.2) — flexible outlet when abilities
+   aren't available.
+
+## 8. Repositioning Actions
+
+### 8.1 Retreat
+
+Spend 1 action. Select your active top tough. Stack-sequence effect:
+
+- The current top flips **face-up permanently**.
+- You choose any face-up card in your stack fan to promote up to the
+  new top (they swap positions).
+- Their modifiers travel with them.
+- Face state of all shifted cards is preserved.
+- No cap on retreats.
+
+### 8.2 Black Market
+
+Spend 1 action. Send any of your living toughs (+ their attached
+modifiers) to the Black Market.
+
+**Options at Black Market:**
+
+1. **Trade** (rarity-gated):
+   - 2 common mods → 1 uncommon mod from the pool
+   - 2 uncommon mods → 1 rare mod
+   - 2 rare mods → 1 legendary mod
+   - Bribing up a tier: add $1000 currency to promote trade by one tier
+   - Trades consume the source mods.
+2. **Heal**:
+   - Spend 1 common tough (as a bribe sacrifice) → heal +2 HP to any
+     one of your wounded toughs.
+   - Spend 2 commons → full heal of any one common tough.
+   - Spend 2 uncommons → full heal of any one uncommon tough.
+   - ...and so on, scaling with tough rarity.
+   - Mythic toughs cannot be healed at market (they're on their own).
+
+**Cumulative trades**: a single action can send multiple toughs.
+Each additional tough costs 1 more action. Once all toughs intended
+are sent, tap to fan out all their combined modifiers and choose
+which to offer.
+
+**Return rule**: if you send a tough to the market and don't
+complete a trade that turn, they return **free at end-of-turn**
+before resolution phase. Action was spent, but the tough is back.
+
+### 8.3 Modifier swap
+
+Spend 1 action. Move one modifier from one of your toughs to another
+on your same active turf.
+
+- Swap between two non-active toughs: modifier stays face-down
+  (unless previously revealed).
+- Swap to or from the active top: modifier becomes face-up.
+- **Slot conflict resolution**: if the target tough already has a
+  matching slot-type modifier (weapon or drug), the two modifiers
+  **swap**. Both retain their attachment to the new owner.
+
+### 8.4 Send to Holding
+
+Spend 1 action. Send any of your living toughs (+ modifiers) to
+Holding.
+
+Each turn toughs are in Holding, a **holding check** fires:
+
+- **Heat-weighted check probability**: `p = min(1, heat × 0.5)`.
+- If triggered, outcome per-tough weighted by rarity and heat:
+  - **Bribe**: cops take some modifiers (their pick — highest rarity
+    mods first), tough returns next end-of-turn.
+  - **Lockup**: tough + all modifiers seized for duration.
+  - **Raid escalation**: full raid triggers (§10.2) before next
+    combat phase.
+
+**Bribe persuasion formula**: base success + rarity multiplier +
+bribe amount (if offered).
+
+- `success = 0.5 + (rarity_rank × 0.1) + min(0.3, bribe/$1000 × 0.1)`
+
+A legendary tough offering $500 has higher success chance than a
+common tough offering $2000.
+
+**Lockup duration**:
+- Easy / Medium: 1 turn
+- Hard: 2 turns
+- Nightmare: 3 turns
+
+**Return rule**: if nothing happens (no holding check fires), tough
+returns free at end-of-turn before resolution.
+
+### 8.5 Close Ranks (end-of-turn status, not an action)
+
+At end of turn, if your active turf's **top is a tough**:
+- You may choose to **Close Ranks** — flip the top face-down to the
+  opponent (you still see it).
+- Defensive bonus inverse to difficulty:
+
+| Difficulty      | Closed Ranks defense bonus |
+|-----------------|----------------------------|
+| Easy            | +50% resistance            |
+| Medium          | +35%                       |
+| Hard            | +20%                       |
+| Nightmare       | +10%                       |
+| Ultra-Nightmare | +5%                        |
+
+- **Closed Ranks is unavailable if you have any other face-up tough
+  in your stack.** The "close ranks" button is disabled in that case.
+
+## 9. Information Asymmetry
+
+- **Your own fan**: always fully face-up to you.
+- **Opponent's fan**: defaults to face-down. Cards become face-up
+  only via:
+  - **Retreat** exposes one card permanently.
+  - **Resolution** flips the top face-up (mandatory on every
+    resolution, even Closed Ranks).
+  - **Abilities** that force a reveal (e.g., Long-shot).
+
+**Tucked modifiers under the top are face-down until resolution
+forces a reveal.** Resolution phase always reveals the top tough's
+modifiers to the opponent so intangibles can play out. Modifiers
+under deeper toughs stay face-down forever unless their tough is
+revealed.
+
+**Movement is always visible.** You see the opponent draw, play,
+retreat, swap, send to holding/market. You see CARDS MOVING. You
+just don't see their FACE unless they're face-up.
+
+## 10. End-of-Turn Resolution
+
+Once both players have ended their turn, the resolution phase fires
+in strict order.
+
+### 10.1 Heat accumulation
+
+Before raid or combat checks, recalculate total heat:
+
+- Per-card rarity contribution (common / uncommon / rare / legendary
+  / mythic): 0.005 / 0.010 / 0.020 / 0.050 / 0.100
+- Per-turf currency concentration: `max(0, (total_currency - 500) / 10000)`
+- **LAUNDER** (legendary currency ability): -0.1 heat per turn.
+- **LOW_PROFILE** (rare drug ability): halves its owner tough's
+  heat contribution.
+- Mythic ability **CLEAN_SLATE**: one-shot, resets heat to 0.0 when
+  played.
+
+Total heat = A's contribution + B's contribution, clamped [0, 1].
+
+### 10.2 Raid check
+
+Raid probability per turn:
+
+```
+p = heat² × difficulty_coefficient
+```
+
+Coefficients:
+- Easy: 0.5
+- Medium: 0.7
+- Hard: 1.0
+- Nightmare: 1.3
+- Ultra-Nightmare: 1.5
+
+Roll d1000. If roll < p × 1000 → raid fires.
+
+**Raid effects**:
+- **Black Market wiped**: all pooled modifiers destroyed.
+- Any face-up top tough on either side's active turf → **Lockup**
+  with all attached modifiers seized (unless bail paid; see below).
+- Raids do NOT touch Closed Ranks turfs (face-down top = plausible
+  deniability).
+
+**Bail**: at the moment of lockup, defender may pay **$500** from
+turf currency to prevent lockup. Cops always pocket $500+; any
+additional currency is kept by cops (corrupt). Tough returns to
+stack immediately.
+
+**If raid locks up the only tough on your active turf → turf is
+seized** (counted as normal turf loss).
+
+### 10.3 Combat resolution — two-pass
+
+**Pass 1: Gross Dominance**
+
+For each queued attack, compute attacker dominance:
+
+```
+dominance = attacker.cumulative_P + affiliation_loyal_bonus - defender.cumulative_R
+```
+
+Cumulative stats are sum of all toughs + tangible modifiers in the
+stack. **Used for Pass 1 ordering only, not damage calc.**
+
+Sort queued attacks by dominance, highest first. Ties break toward
+defender (highest defender R wins tie).
+
+**Pass 2: Priority-Ordered Modifier Chain**
+
+For each queued strike in dominance order:
+
+1. **Affiliations** — apply loyal bonuses, rival penalties, buffer
+   check. Freelancers (including mythics) are neutral — don't affect
+   loyalty calculations.
+2. **Currency pressure** — defender may **bribe** to cancel the strike.
+   Bribes are probabilistic:
+   - $500 → 70% success
+   - $1000 → 85%
+   - $2000 → 95%
+   - $5000 → 99%
+   Roll. If bribe succeeds → strike canceled, currency spent (vanishes).
+3. **Drugs** — tangible drug effects applied (RUSH, FORTIFY, etc.);
+   intangibles trigger (PAINKILLERS, CONFUSE, loyalty flip).
+4. **Weapons** — tangible weapon effects applied (LACERATE, BRACE,
+   etc.); counter-intangibles trigger (PARRY, EVASION, DETERRENT).
+
+Each priority tier can cancel or redirect the strike. First
+cancellation wins — subsequent tiers skipped for that strike.
+
+If the strike survives all priority checks, **tangible combat**
+resolves per §7 damage calc.
+
+### 10.4 Seize reconciliation
+
+After all strikes resolve, clean up:
+
+- Any tough at 0 HP → dead. Modifiers → Black Market. Tough's
+  position in stack is cleared.
+- Next tough in stack promotes to top. Promoted tough's face state
+  is preserved.
+- If the promoted tough has a modifier slot filled AND the dead
+  tough's modifiers would exceed capacity → excess mods go to Black
+  Market. (This shouldn't normally trigger because dead tough's
+  mods go directly to market, not to the promoted tough.)
+- **Active turf has zero toughs** → turf seized, opponent promotes
+  a reserve turf.
+
+### 10.5 End-of-turn cleanup
+
+- Heal ticks: PATCHUP (owner), FIELD_MEDIC (turf), RESUSCITATE (if
+  triggered). Applied in priority order.
+- Pending slot: unplayable modifiers → Black Market.
+- Queue cleared on both sides.
+- `turnEnded` reset on both sides.
+- Turn counter increments.
+- Action budgets reset per §5.
+
+## 11. Mythic Cards
+
+Mythics are a **fixed pool of 10 hand-authored cards** with
+game-warping abilities.
+
+### Properties
+
+- Always roll mythic rarity (no downgrade, no upgrade path).
+- Never appear in packs. Acquired **only through specific in-game
+  actions** (§13.4).
+- Have stats roughly equivalent to strongest equivalent legendary,
+  multiplied by ×1.7.
+- Always freelancer affiliation. Loyal to themselves + owner. Don't
+  interact with affiliation graph.
+- **Flip on kill**: when a mythic is killed in combat, the
+  killing-side tough's owner **unlocks the mythic into their
+  collection**. The mythic transfers over at end of combat
+  resolution.
+
+### Mythic example abilities
+
+Each of the 10 mythics has a unique signature ability. The pool
+(hand-authored):
+
+1. **The Shadow** — STRIKE_TWO: single strike hits top + one card
+   below in the opponent's stack.
+2. **The Accountant** — CLEAN_SLATE: one-shot, resets heat to 0.0.
+3. **The Architect** — BUILD_TURF: carve out an extra reserve turf
+   when played (even at Ultra-Nightmare).
+4. **The Informer** — INSIGHT: see opponent's heat contribution per
+   card (normally hidden).
+5. **The Ghost** — STRIKE_RETREATED: targets a face-up-via-retreat
+   tough specifically.
+6. **The Warlord** — CHAIN_THREE: single strike hits top, next, and
+   next-next (3 kills in one resolution).
+7. **The Fixer** — TRANSCEND: immune to affiliation penalties.
+8. **The Magistrate** — IMMUNITY: cannot be sent to Holding (cops
+   can't touch).
+9. **The Phantom** — NO_REVEAL: never revealed by resolution.
+10. **The Reaper** — ABSOLUTE: always deals minimum wound damage
+    even on glance.
+
+### Mythic constraints
+
+- At most **one mythic per player's collection** at any time.
+- Cannot be merged (merge ceiling = legendary).
+- Cannot be healed at Black Market.
+- Unlock-difficulty tag: set to the difficulty on which it was
+  defeated/earned.
+
+## 12. Rounding
+
+Stats that result from ability scaling are rounded **nearest
+integer** (ties round up). So `+1.5` from rolled legendary →
+`+2`. Base stats always integer-authored.
+
+## 13. Economy & Progression
+
+### 13.1 Rewards — per turf seized
+
+When a player (or AI) seizes an opponent turf, a reward is computed
+based on how quickly:
+
+| Turns to seize | Rating              | Reward                               |
+|----------------|---------------------|--------------------------------------|
+| 1              | Absolute Victory    | 5-card pack (random type)            |
+| 2              | Overwhelming Victory| 3-card pack                           |
+| ≤ 3            | Decisive Victory    | 1-card pack                           |
+| > 3            | Standard Victory    | (no pack)                             |
+
+Both sides earn independently — the winner of each turf gets the
+bonus. So a war with many turfs can produce many per-turf packs.
+
+### 13.2 Rewards — war outcome
+
+End-of-war bonus for the war winner only:
+
+| Outcome            | Reward                                    |
+|--------------------|-------------------------------------------|
+| Perfect War        | 1 mythic draw (or $500 if pool exhausted) |
+| Flawless War       | 5-card pack                               |
+| Dominant War       | 3-card pack                               |
+| Won War            | 1-card pack                               |
+
+Where:
+- **Perfect War**: every seizure rated Absolute, no losses.
+- **Flawless War**: every seizure rated Decisive or better, no losses.
+- **Dominant War**: no losses, some standard victories.
+- **Won War**: won despite losing turfs.
+
+Losses (war or per-turf) earn nothing. AI earns by the same rules.
+
+### 13.3 High-difficulty bonus
+
+Wars played at higher difficulty earn a reward-quality **multiplier**:
+
+- Easy: ×1.0
+- Medium: ×1.2
+- Hard: ×1.4
+- Nightmare: ×1.6
+- Ultra-Nightmare: ×2.0
+
+Multiplier affects roll probability of higher-rarity rolls in pack
+openings. Applies to player AND AI.
+
+### 13.4 Mythic acquisition
+
+- **Combat**: defeat an opponent's tough carrying a mythic → unlock
+  the mythic into your collection.
+- **Perfect War**: earn 1 mythic draw from the unassigned pool of 10.
+- **Ten-mythics-claimed fallback**: once all 10 mythics are
+  assigned, Perfect Wars award escalating currency instead ($500 →
+  $1000 → $1500 → etc.).
+
+## 14. Difficulty
+
+| Tier              | Turfs | Actions/turn | Perma-lockup |
+|-------------------|-------|--------------|--------------|
+| Easy              | 5     | 3            | No           |
+| Medium            | 4     | 3            | No           |
+| Hard              | 3     | 4            | No           |
+| Nightmare         | 2     | 3            | No           |
+| Ultra-Nightmare   | 1     | 3            | Yes          |
+
+**Perma-lockup** (Ultra-Nightmare only): toughs sent to Lockup
+never return. Raid seizure of active top = permanent loss.
+
+The new-game screen presents a difficulty carousel. Difficulty
+choice affects:
+- Starting turf count
+- Per-turn action budget
+- AI skill (top-K sampling, noise, lookahead)
+- Raid probability coefficient
+- Reward multiplier (§13.3)
+
+## 15. AI Difficulty
+
+AI decision quality modulates by difficulty:
+
+| Tier             | AI strategy                                        |
+|------------------|----------------------------------------------------|
+| Easy             | Top-5 sampling, 30% noise                          |
+| Medium           | Top-3 sampling, 15% noise                          |
+| Hard             | Top-2 sampling, 5% noise, +1 action                |
+| Nightmare        | Best action, 0% noise, −1 player action            |
+| Ultra-Nightmare  | Best + 2-ply lookahead, sudden-death auto-on        |
+
+AI also runs collection curation (merge + enable/disable + priority)
+before each war using the same planner that scores moves. AI's
+collection grows in parallel with player's from rewards.
+
+## 16. Visibility Summary
+
+**What you see from your opponent:**
+- Every **movement** (draw, play, retreat, swap, send to
+  market/holding, strike queue).
+- Cards animated moving from pile to slot, between toughs, between
+  turfs.
+- The **face** of their active top tough (face-up or face-down).
+- Tough names/images on face-up cards.
+- Stack size indicator (N cards total).
+
+**What you don't see:**
+- Face-down cards' identities (anywhere in the stack).
+- Their hand (there is no hand).
+- Their pending slot face.
+- Intangible abilities attached to face-down modifiers (even if
+  you'd like to guess).
+
+Your opponent sees the same one-way information about you.
+
+## 17. Paper-Playtested & Open Tuning Points
+
+Specific numbers (damage tiers, heat coefficients, bribe success %,
+raid probability multiplier) are initial estimates. All should be
+simulation-tuned:
+
+```bash
+pnpm run analysis:benchmark        # winrate per difficulty
+pnpm run analysis:autobalance      # iterative stat tuning
+pnpm run analysis:lock:persist     # persist lock state
+```
+
+Target: 48-52% AI-vs-AI winrate at Medium with full starter catalog.
+Re-baseline expected after each major rule change.
+
+## 18. Glossary
+
+- **Active turf**: your current turf in play. Attacks, plays, and
+  retreats all operate here.
+- **Reserve turf**: a turf behind your active. Promotes up when the
+  active falls.
+- **Stack**: ordered sequence of StackedCards on a turf.
+- **StackedCard**: `{ card, faceUp }` wrapper.
+- **Pending slot**: single card drawn but not yet played.
+- **Dominance**: attacker P + tangibles - defender R; used for
+  strike ordering in Pass 1.
+- **Tangible**: modifier effect contributing to raw P/R (flat
+  numbers).
+- **Intangible**: modifier effect altering resolution (counter,
+  subtract, bribe, loyalty flip, self-attack).
+- **Closed Ranks**: end-of-turn posture with face-down top (not
+  possible with face-up deeper toughs).
+- **Black Market**: shared pool of displaced modifiers; supports
+  trades + heals.
+- **Holding**: temporary lockup from cops; bribe or escape.
+- **Lockup**: permanent (or N-turn) custody after failed bribe.
+- **Raid**: probabilistic police intervention, clears market, locks
+  up active tops.
+- **Mythic**: game-warping card, fixed pool of 10, acquired only
+  via combat or Perfect War.
+- **Base rarity**: card's authored minimum rarity.
+- **Rolled rarity**: instance-specific rarity at pack-open.
+- **Unlock-difficulty tag**: the difficulty at which a specific
+  instance was unlocked.
+- **Perfect / Flawless / Dominant / Won War**: war outcome ratings.
+
+See `docs/plans/v0.3-paper-playtest-2.md` for the playtest that
+produced these rules. See `docs/archive/RULES-v0.2.md` for the
+previous version.

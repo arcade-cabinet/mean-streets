@@ -1,9 +1,9 @@
 {
   "id": "weap-22",
-  "type": "weapon",
+  "kind": "weapon",
   "name": "Molotov Cocktail",
   "category": "explosive",
-  "bonus": [
+  "power": [
     2,
     3,
     4,
@@ -11,12 +11,17 @@
     6,
     7
   ],
-  "offenseAbility": "BLAST",
-  "offenseAbilityText": "Splash bonus damage to adjacent positions.",
-  "defenseAbility": "DETERRENT",
-  "defenseAbilityText": "Attackers must exceed defense by bonus extra to kill.",
+  "resistance": [
+    1
+  ],
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "BLAST",
+    "DETERRENT"
+  ],
   "unlocked": true,
-  "unlockCondition": null,
   "locked": false,
   "draft": true
 }

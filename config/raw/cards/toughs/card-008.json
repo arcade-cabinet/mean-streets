@@ -1,7 +1,8 @@
 {
   "id": "card-008",
-  "type": "crew",
-  "displayName": "Rocco \"Ghost\" Murphy",
+  "kind": "tough",
+  "name": "Rocco \"Ghost\" Murphy",
+  "tagline": "Never stood in the same spot twice.",
   "archetype": "ghost",
   "affiliation": "los_diablos",
   "power": [
@@ -15,10 +16,13 @@
     6,
     7
   ],
-  "abilityText": "After attacking: cannot be targeted for the opponent's next turn",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "After attacking: cannot be targeted for the opponent's next turn"
+  ],
   "unlocked": true,
-  "unlockCondition": null,
   "locked": false,
-  "draft": true,
-  "tagline": "Never stood in the same spot twice."
+  "draft": true
 }

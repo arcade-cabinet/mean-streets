@@ -1,10 +1,12 @@
 import * as Tone from 'tone';
 
-type Mood = 'buildup' | 'combat';
-
+// Only one mood is shipped today ('combat'); keeping the constant as an
+// object lets us introduce additional moods later without changing
+// callers. Until then, the helpers below take no mood argument — the
+// previous `Mood = 'combat'` union parameter was a misleading API
+// (accepted a value but always ignored it).
 const MOODS = {
-  buildup: { droneFreq: 'C1', droneVol: -28, noiseVol: -42, lfoFreq: 0.05 },
-  combat:  { droneFreq: 'C2', droneVol: -20, noiseVol: -34, lfoFreq: 0.15 },
+  combat: { droneFreq: 'C2', droneVol: -20, noiseVol: -34, lfoFreq: 0.15 },
 } as const;
 
 let droneFilter: Tone.Filter;
@@ -17,8 +19,6 @@ let masterGain: Tone.Gain;
 let playing = false;
 let muted = false;
 let preMuteVolume = 80;
-let currentMood: Mood = 'buildup';
-
 export function initAmbience(): void {
   Tone.start();
 
@@ -29,7 +29,7 @@ export function initAmbience(): void {
   drone = new Tone.Synth({
     oscillator: { type: 'sawtooth' },
     envelope: { attack: 2, decay: 0, sustain: 1, release: 4 },
-    volume: MOODS.buildup.droneVol,
+    volume: MOODS.combat.droneVol,
   }).connect(droneFilter);
 
   // Noise texture
@@ -37,19 +37,18 @@ export function initAmbience(): void {
   noise = new Tone.NoiseSynth({
     noise: { type: 'brown' },
     envelope: { attack: 1, decay: 0, sustain: 1, release: 2 },
-    volume: MOODS.buildup.noiseVol,
+    volume: MOODS.combat.noiseVol,
   }).connect(noiseFilter);
 
   // Subtle filter LFO for movement
-  lfo = new Tone.LFO({ frequency: MOODS.buildup.lfoFreq, min: 150, max: 280 });
+  lfo = new Tone.LFO({ frequency: MOODS.combat.lfoFreq, min: 150, max: 280 });
   lfo.connect(droneFilter.frequency);
   lfo.start();
 }
 
-export function startAmbience(mood: Mood = 'buildup'): void {
+export function startAmbience(): void {
   if (playing) return;
-  currentMood = mood;
-  const m = MOODS[mood];
+  const m = MOODS.combat;
   drone.volume.value = m.droneVol;
   noise.volume.value = m.noiseVol;
   lfo.frequency.value = m.lfoFreq;
@@ -65,15 +64,19 @@ export function stopAmbience(): void {
   playing = false;
 }
 
-export function setMood(mood: Mood): void {
-  if (mood === currentMood) return;
-  currentMood = mood;
-  const m = MOODS[mood];
+export function setMood(): void {
+  // With only one mood wired, `setMood()` is idempotent: ramp the
+  // volume / filter envelopes to the target but DON'T retrigger the
+  // drone note while it's already playing — re-triggering the same
+  // pitch causes audible restarts/artifacts. The rampTo calls are
+  // cheap no-ops when the targets already match.
+  const m = MOODS.combat;
   const ramp = '+2';
   drone.volume.rampTo(m.droneVol, 2, ramp);
   noise.volume.rampTo(m.noiseVol, 2, ramp);
   lfo.frequency.rampTo(m.lfoFreq, 2, ramp);
-  if (playing) drone.triggerAttack(m.droneFreq, ramp);
+  // Intentionally no `triggerAttack` here. `startAmbience` owns the
+  // note-on event; setMood is a re-shape of the ongoing ambience.
 }
 
 export function setVolume(level: number): void {

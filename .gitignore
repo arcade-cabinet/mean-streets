@@ -55,3 +55,7 @@ ios/DerivedData/
 ios/build/
 ios/App/Pods/
 ios/App/App.xcworkspace/xcuserdata/
+# radioactive-ralph / ralph-tui orchestration scratch
+.radioactive-ralph/
+.ralph-tui/
+/tasks/

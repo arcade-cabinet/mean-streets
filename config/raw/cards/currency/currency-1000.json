@@ -1,0 +1,11 @@
+{
+  "id": "currency-1000",
+  "kind": "currency",
+  "name": "Grand",
+  "denomination": 1000,
+  "rarity": [
+    "rare"
+  ],
+  "unlocked": true,
+  "locked": false
+}

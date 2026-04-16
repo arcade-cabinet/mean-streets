@@ -1,7 +1,8 @@
 {
   "id": "card-048",
-  "type": "crew",
-  "displayName": "Lucia \"Fence\" Tanaka",
+  "kind": "tough",
+  "name": "Lucia \"Fence\" Tanaka",
+  "tagline": "Turns a punch into a payday.",
   "archetype": "fence",
   "affiliation": "kings_row",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     6
   ],
-  "abilityText": "On sacrifice: draw 2 cards instead of healing",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On sacrifice: draw 2 cards instead of healing"
+  ],
   "unlocked": false,
   "unlockCondition": "Win with a deck containing 3+ affiliations",
   "locked": false,
-  "draft": true,
-  "tagline": "Turns a punch into a payday."
+  "draft": true
 }

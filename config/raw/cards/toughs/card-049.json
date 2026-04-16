@@ -1,7 +1,8 @@
 {
   "id": "card-049",
-  "type": "crew",
-  "displayName": "Paulie \"Copper\" Mendoza",
+  "kind": "tough",
+  "name": "Paulie \"Copper\" Mendoza",
+  "tagline": "Your rules do not apply here.",
   "archetype": "bruiser",
   "affiliation": "dead_rabbits",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     5
   ],
-  "abilityText": "Deals +2 damage when attacking a target with lower ATK than this card",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "Deals +2 damage when attacking a target with lower power than this card"
+  ],
   "unlocked": false,
   "unlockCondition": "Deal 43 total damage in a single game",
   "locked": false,
-  "draft": true,
-  "tagline": "Your rules do not apply here."
+  "draft": true
 }

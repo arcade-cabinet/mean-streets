@@ -1,13 +1,22 @@
-import { evaluateFuzzy } from '../ai-fuzzy';
+// v0.2 handless scoring — draw / play_card(pending) / retreat / queued
+// strike / end_turn. No `hand` anywhere. Queued strikes estimate outcome
+// via applyTangibles + positionPower/Resistance.
+import { applyTangibles } from '../abilities';
 import {
-  defensiveCash,
-  offensiveCash,
-  positionDefense,
+  hasToughOnTurf,
   positionPower,
+  positionResistance,
+  turfAffiliationConflict,
+  turfCurrency,
+  turfToughs,
 } from '../board';
-import { policyActionKey } from '../environment';
+import { policyActionKey } from '../env-query';
+import { topToughIdx } from '../stack-ops';
 import type {
+  Card,
   PlannerMemory,
+  PlayerState,
+  Turf,
   TurfAction,
   TurfGameState,
   TurfObservation,
@@ -21,14 +30,205 @@ export interface ActionScore {
   policyUsed: boolean;
 }
 
-function blockedLanePenalty(memory: PlannerMemory, lane: number | undefined): number {
-  if (lane === undefined) return 0;
-  return (memory.blockedLanes[lane] ?? 0) * 1.15;
+const NEG_INF = Number.NEGATIVE_INFINITY;
+
+function pendingCard(
+  p: PlayerState,
+  cardId: string | undefined,
+): Card | undefined {
+  const c = p.pending;
+  if (!c) return undefined;
+  if (cardId && c.id !== cardId) return undefined;
+  return c;
 }
 
-function pressuredLaneBonus(memory: PlannerMemory, lane: number | undefined): number {
-  if (lane === undefined) return 0;
-  return Math.min(2, memory.pressuredLanes[lane] ?? 0) * 0.35;
+// Attacker-vs-defender dominance using tangible bonuses (cashBonus is
+// the Pushed currency modifier).
+function strikeDominance(atk: Turf, def: Turf, cashBonus = 0): number {
+  const bonus = applyTangibles(atk, def);
+  const P = Math.max(0, positionPower(atk) + cashBonus + bonus.atkPowerDelta);
+  const R = bonus.ignoreResistance
+    ? 0
+    : Math.max(0, positionResistance(def) + bonus.defResistDelta);
+  return P - R;
+}
+
+function resolveAttackTurfs(
+  state: TurfGameState,
+  action: TurfAction,
+): { atk: Turf; def: Turf; atkP: PlayerState; defP: PlayerState } | null {
+  if (action.turfIdx === undefined || action.targetTurfIdx === undefined)
+    return null;
+  const atkP = state.players[action.side];
+  const defP = state.players[action.side === 'A' ? 'B' : 'A'];
+  const atk = atkP.turfs[action.turfIdx];
+  const def = defP.turfs[action.targetTurfIdx];
+  if (!atk || !def) return null;
+  if (atk.closedRanks) return null;
+  if (!hasToughOnTurf(atk) || !hasToughOnTurf(def)) return null;
+  return { atk, def, atkP, defP };
+}
+
+function scorePlayCard(
+  state: TurfGameState,
+  observation: TurfObservation,
+  action: TurfAction,
+): number {
+  const sc = TURF_SIM_CONFIG.aiScoring;
+  if (action.turfIdx === undefined) return NEG_INF;
+  const player = state.players[action.side];
+  const card = pendingCard(player, action.cardId);
+  if (!card) return NEG_INF;
+  const turf = player.turfs[action.turfIdx];
+  if (!turf) return NEG_INF;
+
+  if (card.kind === 'tough') {
+    if (turfAffiliationConflict(turf, card)) return NEG_INF;
+    let s = card.power + card.resistance * sc.placeCrewCrewResistanceWeight;
+    s +=
+      (observation.opponentToughsInPlay - observation.ownToughsInPlay) *
+      sc.placeCrewDesperationWeight;
+    if (turfToughs(turf).length === 0) s += sc.emptyTurfBonus;
+    if (turfToughs(turf).some((t) => t.affiliation === card.affiliation))
+      s += sc.affiliationSynergyBonus;
+    return s;
+  }
+
+  if (card.kind === 'weapon' || card.kind === 'drug') {
+    if (!hasToughOnTurf(turf)) return NEG_INF;
+    let s =
+      card.power * sc.modPowerWeight + card.resistance * sc.modResistanceWeight;
+    if (positionPower(turf) > 0) s += sc.modOnPoweredTurfBonus;
+    return s;
+  }
+
+  // currency
+  if (!hasToughOnTurf(turf)) return NEG_INF;
+  const cash =
+    turfCurrency(turf).reduce((a, c) => a + c.denomination, 0) +
+    card.denomination;
+  let s = card.denomination / sc.currencyDenominationScale;
+  s += cash >= sc.fundedThreshold ? sc.fundedReadyBonus : sc.currencyBaseScore;
+  return s;
+}
+
+function scoreRetreat(state: TurfGameState, action: TurfAction): number {
+  if (action.turfIdx === undefined || action.stackIdx === undefined)
+    return NEG_INF;
+  const turf = state.players[action.side].turfs[action.turfIdx];
+  if (!turf || turf.stack.length < 2) return NEG_INF;
+  const topIdx = turf.stack.length - 1;
+  if (action.stackIdx === topIdx) return NEG_INF;
+  const old = turf.stack[topIdx]?.card;
+  const next = turf.stack[action.stackIdx]?.card;
+  if (!old || !next || next.kind !== 'tough') return NEG_INF;
+  const oldPow = old.kind === 'currency' ? 0 : old.power;
+  const oldRes = old.kind === 'currency' ? 0 : old.resistance;
+  // Swap shields weak top with a beefier behind-tough. Small floor keeps
+  // a zero-delta lateral swap off the action-bar top.
+  return next.resistance - oldRes + (next.power - oldPow) - 0.5;
+}
+
+function scoreDirect(state: TurfGameState, action: TurfAction): number {
+  const sc = TURF_SIM_CONFIG.aiScoring;
+  const aw = TURF_AI_CONFIG.tacticalWeights.attack;
+  const combat = TURF_SIM_CONFIG.combat;
+  const t = resolveAttackTurfs(state, action);
+  if (!t) return NEG_INF;
+  const margin = strikeDominance(t.atk, t.def);
+  let s = margin * aw.killMargin;
+  if (margin >= 0) s += aw.seizeBonus;
+  else if (
+    positionPower(t.atk) >=
+    Math.floor(positionResistance(t.def) / combat.sickThresholdDivisor)
+  )
+    s += sc.sickBonus;
+  else s += sc.missPenalty;
+
+  const defTop = topToughIdx(t.def);
+  if (defTop >= 0) {
+    const tc = t.def.stack[defTop].card;
+    if (tc.kind === 'tough' && tc.resistance <= sc.lowResistanceThreshold)
+      s += aw.lowResistanceBonus * sc.lowResistanceMultiplier;
+  }
+  if (t.defP.turfs.length <= 1) s += sc.lastTurfBonus;
+  return s;
+}
+
+function scorePushed(state: TurfGameState, action: TurfAction): number {
+  const sc = TURF_SIM_CONFIG.aiScoring;
+  const aw = TURF_AI_CONFIG.tacticalWeights.attack;
+  const combat = TURF_SIM_CONFIG.combat;
+  const t = resolveAttackTurfs(state, action);
+  if (!t) return NEG_INF;
+  const currency = turfCurrency(t.atk);
+  if (currency.length === 0) return -5;
+
+  const cashBonus = currency[0].denomination / combat.pushedDenominationScale;
+  const margin = strikeDominance(t.atk, t.def, cashBonus);
+  let s = margin * aw.killMargin + aw.flipBonus + aw.splashBonus;
+  if (margin >= 0) s += sc.pushedKillBonus;
+  if (t.defP.turfs.length <= 1) s += sc.lastTurfBonus;
+  return s;
+}
+
+function scoreRecruit(state: TurfGameState, action: TurfAction): number {
+  const sc = TURF_SIM_CONFIG.aiScoring;
+  const aw = TURF_AI_CONFIG.tacticalWeights.attack;
+  const combat = TURF_SIM_CONFIG.combat;
+  const t = resolveAttackTurfs(state, action);
+  if (!t) return NEG_INF;
+  const totalCash = turfCurrency(t.atk).reduce((x, c) => x + c.denomination, 0);
+  if (totalCash < combat.fundedRecruitMinCash) return -5;
+  const tgtIdx = topToughIdx(t.def);
+  if (tgtIdx < 0) return -5;
+  const target = t.def.stack[tgtIdx].card;
+  if (target.kind !== 'tough') return -5;
+
+  const affMult = combat.affiliationMult as Record<string, number>;
+  const atkAffs = turfToughs(t.atk).map((tt) => tt.affiliation);
+  let mult = affMult.other;
+  if (target.affiliation === 'freelance') mult = affMult.freelance;
+  else if (atkAffs.includes(target.affiliation)) mult = affMult.same;
+  else if (turfAffiliationConflict(t.atk, target)) mult = affMult.rival;
+
+  const threshold = target.resistance * mult;
+  let s: number;
+  if (totalCash >= threshold) {
+    s = aw.flipBonus + sc.fundedSuccessBonus + target.power;
+    if (mult <= affMult.same) s += sc.fundedCheapAffinityBonus;
+  } else {
+    s = sc.fundedFailPenalty;
+  }
+  if (t.defP.turfs.length <= 1) s += sc.lastTurfBonus;
+  return s;
+}
+
+function scoreDraw(state: TurfGameState, action: TurfAction): number {
+  const p = state.players[action.side];
+  if (p.pending !== null || p.deck.length === 0) return NEG_INF;
+  // Weight deck depth + remaining budget; extra nudge when the board is
+  // empty so the AI actually starts a match by drawing.
+  const deckTerm = p.deck.length * 0.3;
+  const budgetTerm = Math.max(0, p.actionsRemaining - 1) * 0.4;
+  const emptyBoardFloor = p.toughsInPlay === 0 ? 1.5 : 0;
+  return deckTerm + budgetTerm + emptyBoardFloor;
+}
+
+function scoreDiscard(
+  state: TurfGameState,
+  observation: TurfObservation,
+  action: TurfAction,
+): number {
+  const sc = TURF_SIM_CONFIG.aiScoring;
+  const card = pendingCard(state.players[action.side], action.cardId);
+  if (!card) return NEG_INF;
+  let s = sc.discardBase;
+  if (card.kind === 'currency' && card.denomination === 100)
+    s += sc.discardCheapCurrencyBonus;
+  if (observation.ownToughsInPlay === 0 && card.kind !== 'tough')
+    s += sc.discardNoToughsBonus;
+  return s;
 }
 
 export function scoreAction(
@@ -38,290 +238,42 @@ export function scoreAction(
   action: TurfAction,
   policyArtifact?: TurfPolicyArtifact,
 ): ActionScore {
-  const attackWeights = TURF_AI_CONFIG.tacticalWeights.attack;
-  const placementWeights = TURF_AI_CONFIG.tacticalWeights.placement;
-  const player = state.players[action.side];
-  const opponent = state.players[action.side === 'A' ? 'B' : 'A'];
-  const fuzzy = evaluateFuzzy(state, action.side);
+  const sc = TURF_SIM_CONFIG.aiScoring;
+  const k = action.kind;
   let score = 0;
-
-  switch (action.kind) {
-    case 'place_crew': {
-      const crew = player.hand.crew.find(card => card.id === action.crewCardId);
-      if (!crew) return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
-      const lanePressure = observation.opponentCrewCount - observation.ownCrewCount;
-      const scoringCfg = TURF_SIM_CONFIG.aiScoring;
-      score = crew.power + (crew.resistance * scoringCfg.placeCrewCrewResistanceWeight) + lanePressure + (fuzzy.desperation * scoringCfg.placeCrewDesperationWeight);
-      break;
-    }
-
-    case 'place_reserve_crew': {
-      const crew = player.hand.crew.find(card => card.id === action.crewCardId);
-      if (!crew) return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
-      const scoringCfg = TURF_SIM_CONFIG.aiScoring;
-      score = (crew.power * scoringCfg.placeReserveCrewPowerWeight)
-        + (crew.resistance * scoringCfg.placeReserveCrewResistanceWeight)
-        + scoringCfg.placeReserveBase
-        + fuzzy.desperation;
-
-      // RUNNER OPENING (RULES.md §7): when we hold a backpack in hand and
-      // have no reserve crew yet, stage a runner by placing a reserve
-      // crew first. This is the first stage of the four-stage contract.
-      const hasBackpackInHand = player.hand.backpacks.length > 0;
-      const hasReserveCrewAlready = player.board.reserve.some((pos) => pos.crew !== null);
-      const hasAnyRunnerEquipped = player.board.reserve.some((pos) => pos.crew !== null && pos.backpack !== null);
-      const hasEmptyActiveToFill = player.board.active.some((pos) => pos.crew === null && !pos.seized);
-
-      if (hasBackpackInHand && !hasAnyRunnerEquipped && !hasReserveCrewAlready) {
-        const buildupPhase = state.phase === 'buildup';
-        score += buildupPhase ? scoringCfg.runnerOpenerBuildupBonus : scoringCfg.runnerOpenerCombatBonus;
-      } else if (hasBackpackInHand && !hasAnyRunnerEquipped && hasEmptyActiveToFill) {
-        score += scoringCfg.runnerOpenerModerateBonus;
-      }
-      break;
-    }
-
-    case 'equip_backpack': {
-      if (action.reserveIdx === undefined || !action.backpackCardId) {
-        return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
-      }
-      const reserve = player.board.reserve[action.reserveIdx];
-      const backpack = player.hand.backpacks.find(card => card.id === action.backpackCardId);
-      if (!reserve?.crew || !backpack) return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
-      const cashPayload = backpack.payload.filter(card => card.type === 'cash').length;
-      const offensePayload = backpack.payload.filter(card => card.type === 'weapon' || card.type === 'product').length;
-      score = 1.4 + backpack.payload.length * 0.35 + offensePayload * 0.5 + cashPayload * 0.25;
-      break;
-    }
-
-    case 'deploy_runner': {
-      if (action.reserveIdx === undefined || action.positionIdx === undefined) {
-        return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
-      }
-      const reserve = player.board.reserve[action.reserveIdx];
-      const active = player.board.active[action.positionIdx];
-      if (!reserve?.crew || !reserve.runner || !reserve.backpack || !active) {
-        return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
-      }
-      score = 1.1 + reserve.payloadRemaining * 0.35;
-      if (!active.crew) score += 0.8;
-      if (active.crew && active.turnsActive === 0) score += 0.5;
-      break;
-    }
-
-    case 'deploy_payload': {
-      if (action.positionIdx === undefined || !action.modifierCardId || !action.slot) {
-        return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
-      }
-      const lane = player.board.active[action.positionIdx];
-      if (!lane?.runner || !lane.backpack || !lane.crew) {
-        return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
-      }
-      const payload = lane.backpack.payload.find(card => card.id === action.modifierCardId);
-      if (!payload) return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
-      score = action.slot === 'offense' ? 1.35 : 0.95;
-      if (payload.type === 'weapon') score += action.slot === 'offense' ? 1.7 : 0.8;
-      if (payload.type === 'product') score += action.slot === 'offense' ? 1.55 : 0.7;
-      if (payload.type === 'cash') score += action.slot === 'offense' ? 1.3 : 0.5;
-      if (action.slot === 'offense' && lane.backpack.payload.length > 1) score += 0.25;
-      break;
-    }
-
-    case 'arm_weapon':
-    case 'stack_product':
-    case 'stack_cash': {
-      if (action.positionIdx === undefined || !action.modifierCardId) {
-        return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
-      }
-      const position = player.board.active[action.positionIdx];
-      if (!position.crew) return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
-      const card = player.hand.modifiers.find(candidate => candidate.id === action.modifierCardId);
-      if (!card) return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
-      const laneRole = action.positionIdx === undefined ? undefined : memory.laneRoles[action.positionIdx];
-      score = action.slot === 'offense'
-        ? placementWeights.offenseReady * Math.max(1, positionPower(position))
-        : placementWeights.defenseReady * Math.max(1, positionDefense(position));
-      score += action.slot === 'offense' ? 1.1 : 0.05;
-      if (action.kind === 'stack_cash') {
-        const denomination = card.type === 'cash' ? card.denomination : 0;
-        score += action.slot === 'offense'
-          ? placementWeights.cashOffenseMultiplier * denomination
-          : placementWeights.cashDefenseMultiplier * denomination;
-        if (action.slot === 'offense') {
-          if (position.weaponTop) score += 1.9;
-          if (position.drugTop) score += 1.9;
-          if (!position.cashLeft) score += 1.1;
-          score += 1.1;
-          if (observation.ownReadyFunded > 0) score -= 0.9;
-          if (observation.ownReadyPushed > 0) score -= 1.4;
-          if (observation.ownReadyFunded > 0 && !position.cashLeft) score -= 0.75;
-          if (laneRole === 'funded') score -= 0.9;
-          if (laneRole === 'pushed') score -= 1.6;
-        } else {
-          if (position.weaponBottom) score += 0.2;
-          if (position.drugBottom) score += 0.2;
-        }
-      } else if (action.kind === 'arm_weapon' && card.type === 'weapon') {
-        score += card.bonus * (action.slot === 'offense' ? 1.9 : 1.0);
-        if (action.slot === 'offense' && position.cashLeft) score += 1.5;
-        if (action.slot === 'offense' && position.drugTop) score += 0.9;
-        if (action.slot === 'offense' && position.cashLeft && !position.drugTop) score += 1.1;
-        if (action.slot === 'offense' && position.cashLeft && observation.ownReadyPushed > 0) score += 0.9;
-        if (action.slot === 'offense' && laneRole === 'funded') score += 1.1;
-        if (action.slot === 'offense' && laneRole === 'pushed') score -= 0.7;
-      } else if (action.kind === 'stack_product' && card.type === 'product') {
-        score += card.potency * (action.slot === 'offense' ? 1.95 : 0.95);
-        if (action.slot === 'offense' && position.cashLeft) score += 1.8;
-        if (action.slot === 'offense' && position.weaponTop) score += 1.1;
-        if (action.slot === 'offense' && position.cashLeft && observation.ownReadyPushed > 0) score -= 1.35;
-        if (action.slot === 'offense' && position.cashLeft && position.weaponTop && observation.ownReadyPushed > 0) score -= 0.65;
-        if (action.slot === 'offense' && laneRole === 'funded') score -= 1.4;
-        if (action.slot === 'offense' && laneRole === 'pushed') score += 0.35;
-        if (
-          action.slot === 'offense' &&
-          memory.focusLane === action.positionIdx &&
-          memory.focusRole === 'funded' &&
-          position.cashLeft &&
-          position.weaponTop &&
-          observation.ownReadyPushed === 0
-        ) {
-          score += 1.1;
-        }
-      }
-      score += pressuredLaneBonus(memory, action.positionIdx) - blockedLanePenalty(memory, action.positionIdx);
-      break;
-    }
-
-    case 'reclaim': {
-      const position = action.positionIdx === undefined ? null : player.board.active[action.positionIdx];
-      if (!position?.seized) return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
-      score = 4 + fuzzy.desperation * 4 + (memory.consecutivePasses * 0.5);
-      score -= observation.ownReadyDirect * 0.35;
-      score -= observation.ownReadyFunded * 0.65;
-      score -= observation.ownReadyPushed * 0.9;
-      break;
-    }
-
-    case 'direct_attack':
-    case 'funded_attack':
-    case 'pushed_attack': {
-      if (action.attackerIdx === undefined || action.targetIdx === undefined) {
-        return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
-      }
-      const attacker = player.board.active[action.attackerIdx];
-      const defender = opponent.board.active[action.targetIdx];
-      if (!attacker.crew || !defender.crew) return { score: Number.NEGATIVE_INFINITY, policyUsed: false };
-
-      const atkPower = positionPower(attacker);
-      const defPower = positionDefense(defender);
-      const margin = atkPower - defPower;
-      const offenseCashValue = offensiveCash(attacker);
-      const offenseDrugPotency = attacker.drugTop?.potency ?? 0;
-      const focusedLane = memory.focusLane;
-      const focusedRole = memory.focusRole;
-      const fundedPressure = observation.ownReadyFunded > 0 ? 1 : 0;
-      const pushedPressure = observation.ownReadyPushed > 0 ? 1 : 0;
-      score = (margin * attackWeights.killMargin)
-        + pressuredLaneBonus(memory, action.targetIdx)
-        - blockedLanePenalty(memory, action.targetIdx);
-
-      if (action.kind === 'funded_attack') {
-        score += attackWeights.flipBonus
-          + (offenseCashValue - defensiveCash(defender)) * attackWeights.cashEfficiency
-          + 1.5
-          + Math.max(0, 2 - margin) * 0.75
-          + fundedPressure * 0.8
-          + (pushedPressure > 0 ? 0.35 : 0);
-        if (focusedLane === action.attackerIdx && focusedRole === 'funded') score += 1.1;
-        if (
-          focusedLane === action.attackerIdx &&
-          focusedRole === 'funded' &&
-          observation.handProducts > 0 &&
-          margin >= 0 &&
-          pushedPressure === 0
-        ) {
-          // Keep funded pressure live for one profitable exchange before upgrading.
-          score += 1.2;
-        }
-      } else if (action.kind === 'pushed_attack') {
-        score += attackWeights.flipBonus
-          + attackWeights.splashBonus
-          + offenseDrugPotency * 0.8
-          + Math.max(0, 1 - margin) * 0.75
-          + pushedPressure * 1.1
-          + (offenseCashValue >= 100 ? 0.6 : 0);
-        if (focusedLane === action.attackerIdx && focusedRole === 'pushed') score += 0.9;
-      } else {
-        score += margin >= 0 ? attackWeights.seizeBonus : 0;
-        if (offenseCashValue > 0) score -= 1.75;
-        if (offenseDrugPotency > 0) score -= 1.25;
-        if (margin <= 1) score -= 1.5;
-        if (fundedPressure > 0) score -= 1.15;
-        if (pushedPressure > 0) score -= 1.35;
-        if ((fundedPressure > 0 || pushedPressure > 0) && margin <= 2) score -= 0.8;
-        if (focusedLane === action.attackerIdx && focusedRole) score -= 0.6;
-      }
-
-      if (defender.crew.resistance <= 3) score += attackWeights.lowResistanceBonus * 4;
-      if (observation.opponentSeized >= state.config.positionCount - 1) score += 5;
-      break;
-    }
-
-    case 'pass':
-      score = -2 - memory.consecutivePasses - fuzzy.desperation;
-      break;
+  if (k === 'draw') score = scoreDraw(state, action);
+  else if (k === 'play_card') score = scorePlayCard(state, observation, action);
+  else if (k === 'retreat') score = scoreRetreat(state, action);
+  else if (k === 'direct_strike') score = scoreDirect(state, action);
+  else if (k === 'pushed_strike') score = scorePushed(state, action);
+  else if (k === 'funded_recruit') score = scoreRecruit(state, action);
+  else if (k === 'discard') score = scoreDiscard(state, observation, action);
+  else if (k === 'end_turn') {
+    score = sc.endTurnBase;
+    if (observation.actionsRemaining <= 0) score += sc.endTurnNoActionsBonus;
+  } else if (k === 'pass') {
+    score = sc.passBasePenalty - memory.consecutivePasses;
   }
+  if (score === NEG_INF) return { score, policyUsed: false };
 
-  const actionKey = policyActionKey(action);
-  const learnedValue = getPolicyValue(policyArtifact, observation.stateKey, actionKey);
-  const policyPreferred = isPolicyPreferredAction(policyArtifact, observation.stateKey, actionKey);
-  let policyValueMultiplier = TURF_AI_CONFIG.policyWeights.valueMultiplier;
-  let policyPreferredBonus = TURF_AI_CONFIG.policyWeights.preferredBonus;
-  if (
-    memory.focusRole === 'funded' &&
-    observation.ownReadyFunded > 0 &&
-    observation.ownReadyPushed === 0
-  ) {
-    if (action.kind === 'funded_attack' || action.kind === 'stack_product') {
-      policyValueMultiplier *= 1.35;
-      policyPreferredBonus += 0.4;
-    } else if (action.kind === 'direct_attack') {
-      policyValueMultiplier *= 1.15;
-      policyPreferredBonus += 0.2;
-    }
-  }
-  score += learnedValue * policyValueMultiplier;
-  if (policyPreferred) score += policyPreferredBonus;
-
-  return {
-    score,
-    policyUsed: policyPreferred || learnedValue !== 0,
-  };
+  const key = policyActionKey(action);
+  const learned = getPolicyValue(policyArtifact, observation.stateKey, key);
+  const preferred = isPolicyPreferredAction(
+    policyArtifact,
+    observation.stateKey,
+    key,
+  );
+  const pw = TURF_AI_CONFIG.policyWeights;
+  score += learned * pw.valueMultiplier;
+  if (preferred) score += pw.preferredBonus;
+  return { score, policyUsed: preferred || learned !== 0 };
 }
 
 export function describeActionForTrace(action: TurfAction): string {
-  switch (action.kind) {
-    case 'place_crew':
-      return `place_crew@${action.positionIdx}`;
-    case 'place_reserve_crew':
-      return `place_reserve_crew@${action.reserveIdx}`;
-    case 'equip_backpack':
-      return `equip_backpack@${action.reserveIdx}`;
-    case 'deploy_runner':
-      return `deploy_runner@${action.reserveIdx}->${action.positionIdx}`;
-    case 'deploy_payload':
-      return `deploy_payload@${action.positionIdx}:${action.slot}`;
-    case 'arm_weapon':
-    case 'stack_product':
-    case 'stack_cash':
-      return `${action.kind}@${action.positionIdx}:${action.slot}`;
-    case 'direct_attack':
-    case 'funded_attack':
-    case 'pushed_attack':
-      return `${action.kind}@${action.attackerIdx}->${action.targetIdx}`;
-    case 'reclaim':
-      return `reclaim@${action.positionIdx}`;
-    case 'pass':
-      return 'pass';
-  }
+  const k = action.kind;
+  if (k === 'draw' || k === 'end_turn' || k === 'pass') return k;
+  if (k === 'play_card') return `play_card@${action.turfIdx}:${action.cardId}`;
+  if (k === 'retreat') return `retreat@${action.turfIdx}:${action.stackIdx}`;
+  if (k === 'discard') return `discard:${action.cardId}`;
+  return `${k}@${action.turfIdx}->${action.targetTurfIdx}`;
 }

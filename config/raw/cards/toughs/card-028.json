@@ -1,7 +1,8 @@
 {
   "id": "card-028",
-  "type": "crew",
-  "displayName": "Richie \"Crow\" Delgado",
+  "kind": "tough",
+  "name": "Richie \"Crow\" Delgado",
+  "tagline": "Works the edges of the neighborhood.",
   "archetype": "enforcer",
   "affiliation": "freelance",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     4
   ],
-  "abilityText": "+3 damage against cards from a rival affiliation",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "+3 damage against cards from a rival affiliation"
+  ],
   "unlocked": false,
   "unlockCondition": "Win with a deck containing 3+ affiliations",
   "locked": false,
-  "draft": true,
-  "tagline": "Works the edges of the neighborhood."
+  "draft": true
 }

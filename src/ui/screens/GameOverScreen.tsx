@@ -41,9 +41,9 @@ export function GameOverScreen({ winner, metrics, onPlayAgain }: GameOverScreenP
       </div>
 
       <div className="gameover-panel">
-        <StatRow label="Rounds" value={metrics.combatRounds} />
+        <StatRow label="Turns" value={metrics.turns} />
         <StatRow label="Kills" value={metrics.kills} />
-        <StatRow label="Flips" value={metrics.flips} />
+        <StatRow label="Recruits" value={metrics.fundedRecruits} />
         <StatRow label="Seizures" value={metrics.seizures} />
       </div>
 

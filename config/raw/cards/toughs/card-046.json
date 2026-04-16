@@ -1,7 +1,8 @@
 {
   "id": "card-046",
-  "type": "crew",
-  "displayName": "Sato \"Wheelman\" Matsuda",
+  "kind": "tough",
+  "name": "Sato \"Wheelman\" Matsuda",
+  "tagline": "Idles hot and always ready.",
   "archetype": "wheelman",
   "affiliation": "los_diablos",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     5
   ],
-  "abilityText": "On play: swap your vanguard with any card in your active hand (vanguard goes to hand at current HP)",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On play: swap your top tough with any card in your hand"
+  ],
   "unlocked": false,
   "unlockCondition": "Trigger 5 overdraw penalties on opponents",
   "locked": false,
-  "draft": true,
-  "tagline": "Idles hot and always ready."
+  "draft": true
 }

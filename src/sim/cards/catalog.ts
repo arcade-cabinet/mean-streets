@@ -1,39 +1,44 @@
-/**
- * Runtime loader for compiled crew (tough) cards.
- *
- * Reads `config/compiled/toughs.json`, which the build step produced from
- * the tuning-history files under `config/raw/cards/toughs/`. The file is
- * imported as static JSON so Vite bundles it into the web build and
- * Node's import.meta.url resolver handles it for tsx/vitest tests.
- */
-
 import compiledToughs from '../../../config/compiled/toughs.json';
-import { type CharacterCard, CompiledCrewSchema } from './schemas';
+import { type CompiledTough, CompiledToughSchema } from './schemas';
+import type { ToughCard } from '../turf/types';
+import simConfig from '../../data/ai/turf-sim.json';
 
-const parsed = (compiledToughs as unknown[]).map((entry) => CompiledCrewSchema.parse(entry));
+const parsed = (compiledToughs as unknown[]).map((entry) =>
+  CompiledToughSchema.parse(entry),
+);
 
-function toCharacterCard(card: (typeof parsed)[number]): CharacterCard {
+function toToughCard(card: CompiledTough): ToughCard {
   return {
+    kind: 'tough',
     id: card.id,
-    displayName: card.displayName,
+    name: card.name,
+    tagline: card.tagline ?? '',
     archetype: card.archetype,
     affiliation: card.affiliation,
     power: card.power,
     resistance: card.resistance,
-    abilityText: card.abilityText,
-    unlocked: card.unlocked,
-    ...(card.unlockCondition ? { unlockCondition: card.unlockCondition } : {}),
-    locked: card.locked,
+    rarity: card.rarity,
+    // Defensive copy: each callsite gets its own abilities array so a
+    // downstream mutation (e.g. ECS system appending a buff tag) cannot
+    // bleed into the shared catalog snapshot.
+    abilities: [...card.abilities],
   };
 }
 
-export function loadAuthoredCrewCards(): CharacterCard[] {
-  return parsed.map(toCharacterCard);
+export function loadToughCards(): ToughCard[] {
+  return parsed.map(toToughCard);
 }
 
-export function loadStarterCrewCards(starterCount = 25): CharacterCard[] {
-  return loadAuthoredCrewCards().map((card, index) => ({
-    ...card,
-    unlocked: index < starterCount || card.unlocked,
-  }));
+export function loadStarterToughCards(starterCount = simConfig.starterCollection.toughPoolSize): ToughCard[] {
+  return loadToughCards().slice(0, starterCount);
+}
+
+/**
+ * Return a fresh copy of every compiled tough. `parsed` is a module-level
+ * Zod-parsed array; returning it directly would hand callers the shared
+ * mutable reference and any push/splice would corrupt every other
+ * consumer for the life of the process.
+ */
+export function loadCompiledToughs(): CompiledTough[] {
+  return parsed.map((t) => ({ ...t, abilities: [...t.abilities] }));
 }

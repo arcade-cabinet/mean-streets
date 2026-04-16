@@ -1,7 +1,8 @@
 {
   "id": "card-030",
-  "type": "crew",
-  "displayName": "Lin \"Flint\" Rizzo",
+  "kind": "tough",
+  "name": "Lin \"Flint\" Rizzo",
+  "tagline": "Does the work no one thanks you for.",
   "archetype": "medic",
   "affiliation": "southside_saints",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     8
   ],
-  "abilityText": "When sacrificed to heal: heals double the normal amount",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "When sacrificed to heal: heals double the normal amount"
+  ],
   "unlocked": false,
   "unlockCondition": "Win a game on the first night phase",
   "locked": false,
-  "draft": true,
-  "tagline": "Does the work no one thanks you for."
+  "draft": true
 }

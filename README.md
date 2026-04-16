@@ -1,12 +1,12 @@
 ---
 title: Mean Streets
-updated: 2026-04-13
+updated: 2026-04-15
 status: current
 ---
 
 # Mean Streets: Turf War
 
-A gritty tactical turf-war card game built for mobile-first release. You run a street crew, push product, arm your fighters, and seize enemy territory through deterministic position control rather than dice rolls.
+A gritty tactical turf-war card game built for mobile-first release. You run a street crew, arm your fighters, push product, and seize enemy territory through deterministic stack-based combat rather than dice rolls.
 
 ## Production Shape
 
@@ -14,88 +14,79 @@ A gritty tactical turf-war card game built for mobile-first release. You run a s
 - **Web role**: development, simulation, responsive QA, and browser automation
 - **Persistence**: Capacitor SQLite on native and web OPFS
 - **Release gate**: seeded simulation benchmarks plus lock-state analysis for every balance-relevant card
-- **Runner contract**: lock reports now surface reserve-start runner regressions explicitly
 
 ## How It Works
 
-Two players each bring a **crew deck plus a payload economy**: 25 full-size crew cards, staged runner kits, and attached quarter-card payload on the board. Win by seizing all 5 of your opponent's street positions.
+Each player has a single unified deck built from every card they've unlocked. New players start with a 35-card starter (4×5 tough packs + 1 each weapon, drug, and currency pack); subsequent wins and pack openings grow the collection. Win by seizing all of your opponent's turfs.
 
-- **Crew**: named fighters with Power and Resistance, gang affiliation, and archetype identity
-- **Backpacks**: full cards equipped to reserve crew, turning them into runners
-- **Weapons / Drugs / Cash**: attached quarter-card payload dispensed from backpacks onto the board
+- **Toughs**: named fighters with Power and Resistance, gang affiliation, and archetype identity
+- **Weapons**: bladed, blunt, explosive, ranged, or stealth — add power and resistance to turfs
+- **Drugs**: stimulant, sedative, hallucinogen, steroid, or narcotic — add power and resistance to turfs
+- **Currency**: $100 bills and $1000 stacks — fuel pushed strikes and funded recruits
 
 ## The Board
 
-Each player has 5 active street positions and 5 reserve positions. You place crew, stack modifiers, and attack from your active positions.
+Each player has N turfs (varies by difficulty: 5 for Easy, down to 1 for Sudden Death). Turfs are open-ended stacks of cards. You play toughs and modifiers onto turfs, building up their aggregate power and resistance.
 
-## Phase Flow
+## Combat
 
-1. **Buildup** (up to 10 rounds) — Both players build simultaneously. Place crew, stage reserve runners, equip backpacks, and unpack payload. Either can strike early to start combat.
-2. **Combat** (5 actions per round) — Simultaneous rounds. Attack, place crew, stack modifiers, reclaim seized positions.
-3. **Game Over** — Win by seizing all 5 opposing active positions.
+There is no buildup phase. Combat begins on turn 1:
+
+- **Play card**: place a tough or modifier from hand onto a turf
+- **Direct strike**: your turf's power vs. opponent turf's resistance (kill, sick, or bust)
+- **Pushed strike**: spend currency for bonus power + sick effect on kill
+- **Funded recruit**: spend currency to recruit away opponent's top tough
+- **Discard**: free action, remove card from hand
+- **End turn**: free action, switch to opponent's turn
+- **Pass**: costs an action, does nothing
+
+3-5 actions per turn depending on difficulty. Draw one card per turn. When all toughs on a turf are killed or recruited, the turf is seized. Lose all turfs and you lose the match.
 
 ## Development
 
 ```bash
 pnpm install
-pnpm run dev
-pnpm run build
-pnpm run test
-pnpm run test:browser
-pnpm run test:e2e
-pnpm run test:e2e:smoke
-pnpm run test:visual
-pnpm run visual:export
-pnpm run analysis:benchmark
-pnpm run analysis:sweep
-pnpm run analysis:lock:quick
-pnpm run analysis:lock
-pnpm run cap:sync
+pnpm run dev          # Vite dev server
+pnpm run build        # Production build (tsc + vite)
+pnpm run lint         # Biome
+pnpm run test         # Node + DOM unit tests (379 tests)
+pnpm run test:browser # Real Chromium tests (27 tests)
+pnpm run test:e2e     # Playwright across 4 device profiles (111 tests)
+pnpm run analysis:benchmark   # Balance benchmark
+pnpm run analysis:lock:persist # Lock state persistence
+pnpm run cap:sync     # Build + sync to Capacitor
 ```
 
 ## Tech Stack
 
-React 19, TypeScript, Vite 8, Koota ECS, Yuka.js AI, Capacitor 8, Capacitor SQLite, GSAP, Howler, Tone, Vitest, Playwright, Maestro, Zod
+React 19, TypeScript 6, Vite 8, Koota ECS, Yuka.js AI, Capacitor 8, SQLite, Zod 4, GSAP, Howler, Tone, Vitest, Playwright, Maestro, Biome
 
 ## Project Structure
 
 ```
 config/
-  raw/cards/           # Authored per-card JSON (dev source of truth)
+  raw/cards/           # Authored per-card JSON (100 toughs, 50 weapons, 50 drugs, 2 currency)
   compiled/            # Build-time outputs (gitignored)
 src/
-  platform/            # Capacitor shell, layout/device services, SQLite persistence
-  sim/
-    turf/              # Active game engine
-    analysis/          # Dev-only balancing and lock-state tooling
-    cards/             # Card catalog loaders, seeded PRNG, Zod schemas
-  ecs/                 # Koota ECS bridge between sim and React
-  ui/                  # Production React UI
-docs/
-  DESIGN.md            # Vision and identity
-  RULES.md             # Authoritative gameplay mechanics
-  ARCHITECTURE.md      # Technical architecture
-  PRODUCTION.md        # Release checklist and remaining work
-  VISUAL_REVIEW.md     # Visual fixture workflow
+  sim/turf/            # Game engine: types, board, attacks, environment, game, AI
+  sim/cards/           # Zod schemas, compile transforms, catalog loaders, seeded PRNG
+  sim/packs/           # Pack generator, rarity stamping, starter grant, match rewards
+  sim/analysis/        # Dev-only: benchmark, sweep, lock, autobalance
+  ecs/                 # Koota ECS bridge (traits, actions, hooks)
+  ui/                  # React screens and components
+  platform/            # Capacitor shell, device, SQLite persistence, collection
+  data/                # Game tunables (turf-sim.json), affiliation graph
+e2e/                   # Playwright specs (9 spec files, 4 device profiles)
+docs/                  # Design, rules, architecture, production, visual review
 ```
 
-## Source Of Truth
+## Source of Truth
 
 - [docs/DESIGN.md](./docs/DESIGN.md) — vision and identity
 - [docs/RULES.md](./docs/RULES.md) — authoritative gameplay mechanics
 - [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) — technical architecture
 - [docs/PRODUCTION.md](./docs/PRODUCTION.md) — release checklist + implementation status
 - [docs/VISUAL_REVIEW.md](./docs/VISUAL_REVIEW.md) — visual review workflow
-
-## Analysis Output
-
-- `analysis:benchmark` writes seeded benchmark reports with runner opening contract rates.
-- `analysis:sweep` writes curated forced-permutation sweeps.
-- `analysis:focus` drills into selected card ids across the curated sweep set.
-- Long-running `analysis:focus` and `analysis:lock` runs now write `.progress.json` sidecars under `sim/reports/analysis/` so heavy standard/release profiles can be monitored while they execute.
-- `analysis:lock:quick` is the fast triage lane for lock-state and reserve-start runner regressions.
-- Quick-profile `volatility-only` unstable cards are review candidates, not automatic rebalance targets; confirm them with `analysis:focus --profile standard`.
-- `analysis:lock` writes benchmark, effects, lock recommendations, and a compact summary that flags cards which regress reserve-start runner usage, and prints that summary to stdout.
 
 ## License
 

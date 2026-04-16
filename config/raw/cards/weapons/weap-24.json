@@ -1,17 +1,22 @@
 {
   "id": "weap-24",
-  "type": "weapon",
+  "kind": "weapon",
   "name": "Flash Powder",
   "category": "explosive",
-  "bonus": [
+  "power": [
     3
   ],
-  "offenseAbility": "BLAST",
-  "offenseAbilityText": "Splash bonus damage to adjacent positions.",
-  "defenseAbility": "DETERRENT",
-  "defenseAbilityText": "Attackers must exceed defense by bonus extra to kill.",
+  "resistance": [
+    1
+  ],
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "BLAST",
+    "DETERRENT"
+  ],
   "unlocked": true,
-  "unlockCondition": null,
   "locked": false,
   "draft": true
 }

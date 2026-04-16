@@ -40,7 +40,7 @@ describe('setScreen', () => {
   it('can transition between multiple screens', () => {
     const world = createGameWorld(undefined, SEED);
     setScreen(world, 'deckbuilder');
-    setScreen(world, 'buildup');
+    setScreen(world, 'combat');
     setScreen(world, 'gameover');
     const entity = world.queryFirst(ScreenTrait);
     const s = entity!.get(ScreenTrait)!;

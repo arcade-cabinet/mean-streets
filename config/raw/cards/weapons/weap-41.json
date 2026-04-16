@@ -1,9 +1,9 @@
 {
   "id": "weap-41",
-  "type": "weapon",
+  "kind": "weapon",
   "name": "Silenced Pistol",
   "category": "stealth",
-  "bonus": [
+  "power": [
     1,
     2,
     3,
@@ -11,12 +11,17 @@
     5,
     6
   ],
-  "offenseAbility": "AMBUSH",
-  "offenseAbilityText": "No counter-damage when attacking. Attacker takes zero retaliation.",
-  "defenseAbility": "EVASION",
-  "defenseAbilityText": "First bonus attacks against this position miss entirely.",
+  "resistance": [
+    1
+  ],
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "AMBUSH",
+    "EVASION"
+  ],
   "unlocked": true,
-  "unlockCondition": null,
   "locked": false,
   "draft": true
 }

@@ -1,15 +1,21 @@
 {
   "id": "drug-15",
-  "type": "product",
+  "kind": "drug",
   "name": "Quiet Peace",
   "category": "sedative",
-  "potency": [
+  "power": [
     4
   ],
-  "offenseAbility": "SUPPRESS",
-  "offenseAbilityText": "Target crew's power reduced by potency for 2 rounds.",
-  "defenseAbility": "NUMB",
-  "defenseAbilityText": "Crew ignores first potency points of damage per round.",
+  "resistance": [
+    1
+  ],
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "SUPPRESS",
+    "NUMB"
+  ],
   "unlocked": false,
   "unlockCondition": "Win without using steroids",
   "locked": false,

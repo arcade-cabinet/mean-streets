@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Jade Dragon: Silent operators — coiled serpent dragon -->
+  <path d="M44 16 Q50 12, 48 20 Q46 28, 38 30 Q30 32, 26 38 Q22 44, 28 48 Q34 54, 40 48 Q46 42, 42 36"
+        stroke="#006400" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <path d="M44 16 L48 12 M44 16 L50 16" stroke="#006400" stroke-width="1.5" stroke-linecap="round"/>
+  <circle cx="46" cy="18" r="1.5" fill="#006400"/>
+  <path d="M30 42 Q32 40, 34 42 Q36 44, 34 46 Q32 48, 30 46 Q28 44, 30 42 Z"
+        stroke="#006400" stroke-width="1" fill="none" opacity="0.5"/>
+  <path d="M20 34 Q22 32, 24 34" stroke="#006400" stroke-width="1" stroke-linecap="round" opacity="0.4"/>
+</svg>

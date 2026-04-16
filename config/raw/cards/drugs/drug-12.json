@@ -1,9 +1,9 @@
 {
   "id": "drug-12",
-  "type": "product",
+  "kind": "drug",
   "name": "Dreamy Lull",
   "category": "sedative",
-  "potency": [
+  "power": [
     3,
     4,
     5,
@@ -11,12 +11,17 @@
     7,
     8
   ],
-  "offenseAbility": "SUPPRESS",
-  "offenseAbilityText": "Target crew's power reduced by potency for 2 rounds.",
-  "defenseAbility": "NUMB",
-  "defenseAbilityText": "Crew ignores first potency points of damage per round.",
+  "resistance": [
+    1
+  ],
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "SUPPRESS",
+    "NUMB"
+  ],
   "unlocked": true,
-  "unlockCondition": null,
   "locked": false,
   "draft": true
 }

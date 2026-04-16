@@ -44,7 +44,7 @@ export function SettingsPanel({ settings, onClose, onChange }: SettingsPanelProp
       <label className="settings-row">
         <div>
           <span className="settings-label">Audio Enabled</span>
-          <p className="settings-copy">Preserves the noir soundscape toggle for future audio work.</p>
+          <p className="settings-copy">Noir soundscape toggle for future audio work.</p>
         </div>
         <span className="settings-toggle">
           <input
@@ -93,11 +93,7 @@ export function RulesPanel({ compact = false }: RulesPanelProps) {
     <div className={`app-modal-body ${compact ? 'app-modal-body-compact' : ''}`}>
       <section className="modal-section">
         <span className="modal-section-label">Deck</span>
-        <p className="modal-helper">Build 25 crew and a street kit. Loose weapons, drugs, and cash are legacy payload pieces; the production rules are shifting toward backpacks and runners as the real delivery model.</p>
-      </section>
-      <section className="modal-section">
-        <span className="modal-section-label">Buildup</span>
-        <p className="modal-helper">Place crew on the fronts, stage reserve runners, and equip backpacks before the strike. Quarter cards on the board are attached payload, not separately drawn hand objects.</p>
+        <p className="modal-helper">Build 25 crew and 25 modifiers — weapons, drugs, and cash. Place crew on the street and stack modifiers to boost their power and defense.</p>
       </section>
       <section className="modal-section">
         <span className="modal-section-label">Combat</span>

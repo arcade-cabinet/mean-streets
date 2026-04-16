@@ -1,6 +1,6 @@
 ---
 title: Visual Review Workflow
-updated: 2026-04-13
+updated: 2026-04-15
 status: current
 domain: ui
 ---
@@ -9,7 +9,8 @@ domain: ui
 
 ## Purpose
 
-Use this workflow to review the production UI against the visual language in `public/poc.html` using stable, regenerated screenshots rather than ad hoc judgment.
+Use this workflow to review the production UI against the visual direction
+using stable, regenerated screenshots rather than ad hoc judgment.
 
 ## Export Commands
 
@@ -26,71 +27,74 @@ artifacts/visual-review/<project>/<fixture>.png
 
 ## Current Fixture Set
 
-- `menu`
-- `deck-garage`
-- `deckbuilder`
-- `buildup`
-- `combat`
-- `crew-card`
-- `modifier-badges`
+- `menu` — Main menu with 4 navigation buttons
+- `difficulty` — 2x3 difficulty tier grid with sudden death toggle
+- `deck-garage` — Saved deck browser
+- `combat` — GameScreen with turf rows, action bar, hand
+- `card` — All card kinds (tough, weapon, drug, currency) at 3 rarity levels
 
 ## Review Targets
 
-Compare exported captures against `public/poc.html` and the live hero art in `public/assets/hero.png`.
+Compare exported captures against the design direction in `public/poc.html`
+and the live hero art in `public/assets/hero.png`.
 
 Focus review on:
 
-- silhouette and framing of cards, slots, and buttons
-- black / dark-red / cold-metal balance
-- typography emphasis and hierarchy
-- spacing, density, and empty-space usage
-- mobile portrait clarity versus tablet/wide composition
-- consistency between menu, garage, deckbuilder, buildup, and combat
+- Turf composite card readability (power/resistance badges, roster, affiliation icons)
+- Card frame: rarity border tinting, kind surface tints, portrait area
+- Affiliation symbol glow (loyal=gold, rival=red) visibility
+- Action bar button sizing and touch target adequacy at phone breakpoints
+- Stack fan modal: carousel navigation clarity, card rendering at modal scale
+- Black / dark-red / cold-metal balance across all screens
+- Typography emphasis and hierarchy
+- Spacing, density, and empty-space usage
+- Mobile portrait clarity versus tablet/wide composition
+- Consistency across menu, difficulty, game, collection, and pack opening
 
 ## Current Test Surface
 
 - `pnpm run test:visual`
   Runs the multi-project visual fixture capture lane.
-- `pnpm run test:e2e:smoke`
-  Runs the live new-game/save/load smoke flow across configured projects.
+- `pnpm run test:e2e`
+  Runs the full e2e suite across 4 device profiles (desktop-chromium,
+  iphone-14, pixel-7, ipad-pro-landscape).
 
 ## Notes
 
 - Exported screenshots are intentionally ignored by git.
 - Playwright attachments still land in `test-results/` for one-off debugging.
 - If visual changes are made, regenerate the export set before doing subjective review.
+- FixtureApp supports 5 fixtures: menu, difficulty, deck-garage, combat, card.
+- Pack opening, collection, and game over screens are tested via live
+  navigation flows in `e2e/app-flow.spec.ts` and `e2e/pack-opening.spec.ts`.
 
-## Gap Analysis Worksheet (Epic F1)
+## Gap Analysis Worksheet
 
 Each row owns one fixture. Fill in the **Gap** column after comparing the
-exported capture against `public/poc.html`. Keep each note under 80
-characters — longer findings go in their own commit or issue.
+exported capture against the design direction. Keep each note under 80
+characters.
 
-| Fixture          | Device profile          | POC target                            | Gap (fill in) |
-|------------------|-------------------------|---------------------------------------|---------------|
-| menu             | desktop-chromium        | Title wordmark + menu chip size       |               |
-| menu             | iphone-14               | Safe-area top, touch-friendly chips   |               |
-| menu             | ipad-pro-landscape      | Wide-mode hero crop, two-column chips |               |
-| menu             | pixel-7                 | Portrait hero fit, no clipped edges   |               |
-| deck-garage      | desktop-chromium        | Deck card density, hover state        |               |
-| deck-garage      | iphone-14               | Single-column list, 60% screen height |               |
-| deckbuilder      | desktop-chromium        | Collection grid, filter rail, summary |               |
-| deckbuilder      | iphone-14               | Mobile rail collapse                  |               |
-| buildup          | desktop-chromium        | Lane spacing, reserve rail            |               |
-| buildup          | iphone-14               | Compact lane overview                 |               |
-| combat           | desktop-chromium        | Attack affordances, readout           |               |
-| combat           | iphone-14               | Target-picker UX                      |               |
-| crew-card        | desktop-chromium        | Card frame, corner slots, tagline     |               |
-| modifier-badges  | desktop-chromium        | Weapon/drug/cash badge hierarchy      |               |
+| Fixture          | Device profile          | Target                                    | Gap (fill in) |
+|------------------|-------------------------|-------------------------------------------|---------------|
+| menu             | desktop-chromium        | Title wordmark + menu chip size           |               |
+| menu             | iphone-14               | Safe-area top, touch-friendly chips       |               |
+| menu             | ipad-pro-landscape      | Wide-mode hero crop, two-column chips     |               |
+| menu             | pixel-7                 | Portrait hero fit, no clipped edges       |               |
+| difficulty       | desktop-chromium        | 2x3 grid balance, tier icon tinting       |               |
+| difficulty       | iphone-14               | Compact grid, touch target adequacy       |               |
+| deck-garage      | desktop-chromium        | Deck card density, hover state            |               |
+| deck-garage      | iphone-14               | Single-column list, 60% screen height     |               |
+| combat           | desktop-chromium        | Turf composite readability, action bar    |               |
+| combat           | iphone-14               | Action bar overflow, hand card sizing     |               |
+| card             | desktop-chromium        | Card frame, rarity borders, affiliation   |               |
 
 ### How to review
 
-1. Run `pnpm run visual:export:headless` — produces the 4×7 capture matrix under `artifacts/visual-review/`.
+1. Run `pnpm run visual:export:headless` — produces the capture matrix under `artifacts/visual-review/`.
 2. Open each export side-by-side with `public/poc.html` in the same breakpoint.
 3. Write the most important delta in the **Gap** cell (what is different, not what to do about it).
-4. If a cell identifies a gap that needs code, open a sub-task under the epic that owns the surface (Epic F2 for menu/garage, F3 for deckbuilder, F4 for buildup/combat, F5 for card component).
+4. If a cell identifies a gap that needs code, open a sub-task.
 
 ### Change-log
 
-- *(empty — no rows filled yet)*
-
+- 2026-04-15 — Updated fixture set and review targets for v0.2 (stack redesign).

@@ -1,174 +1,484 @@
 import { describe, expect, it } from 'vitest';
-import type { CashCard, CrewCard, Position, ProductCard, WeaponCard } from '../types';
-import { emptyPosition } from '../board';
-import { resolveDirectAttack, resolveFundedAttack } from '../attacks';
-import { DEFAULT_TURF_CONFIG } from '../types';
+import type { ToughCard, WeaponCard, DrugCard, CurrencyCard, Turf } from '../types';
+import { createTurf, addToStack } from '../board';
+import {
+  resolveDirectStrike,
+  resolvePushedStrike,
+  resolveFundedRecruit,
+  strikeToAttackOutcome,
+} from '../attacks';
 
-function makeCrew(overrides: Partial<CrewCard> = {}): CrewCard {
+function makeTough(overrides: Partial<ToughCard> = {}): ToughCard {
+  // Default archetype is `brawler` (plain). The bruiser archetype triggers
+  // ignoreResistance in applyTangibles; tests that want to measure raw
+  // P/R resolution must not default to bruiser.
   return {
-    type: 'crew',
-    id: overrides.id ?? 'crew-1',
-    displayName: overrides.displayName ?? 'Brick',
-    archetype: overrides.archetype ?? 'bruiser',
-    affiliation: overrides.affiliation ?? 'kings-row',
+    kind: 'tough',
+    id: overrides.id ?? 'tough-1',
+    name: overrides.name ?? 'Brick',
+    tagline: 'Test tough',
+    archetype: overrides.archetype ?? 'brawler',
+    affiliation: overrides.affiliation ?? 'freelance',
     power: overrides.power ?? 6,
     resistance: overrides.resistance ?? 6,
-    abilityText: overrides.abilityText ?? 'None',
-    unlocked: true,
-    locked: false,
+    rarity: 'common',
+    abilities: [],
     ...overrides,
   };
 }
 
-function makeWeapon(category: string, bonus: number, slot: 'top' | 'bottom'): WeaponCard {
+function makeWeapon(overrides: Partial<WeaponCard> = {}): WeaponCard {
   return {
-    type: 'weapon',
-    id: `weapon-${category}-${slot}`,
-    name: `${category}-${slot}`,
-    category,
-    bonus,
-    offenseAbility: category.toUpperCase(),
-    offenseAbilityText: category,
-    defenseAbility: category.toUpperCase(),
-    defenseAbilityText: category,
-    unlocked: true,
-    locked: false,
+    kind: 'weapon',
+    id: overrides.id ?? 'weapon-1',
+    name: overrides.name ?? 'Knife',
+    category: overrides.category ?? 'bladed',
+    power: overrides.power ?? 3,
+    resistance: overrides.resistance ?? 1,
+    rarity: 'common',
+    abilities: [],
+    ...overrides,
   };
 }
 
-function makeDrug(category: string, potency: number): ProductCard {
+function makeDrug(overrides: Partial<DrugCard> = {}): DrugCard {
   return {
-    type: 'product',
-    id: `drug-${category}-${potency}`,
-    name: `${category}-${potency}`,
-    category,
-    potency,
-    offenseAbility: category.toUpperCase(),
-    offenseAbilityText: category,
-    defenseAbility: category.toUpperCase(),
-    defenseAbilityText: category,
-    unlocked: true,
-    locked: false,
+    kind: 'drug',
+    id: overrides.id ?? 'drug-1',
+    name: overrides.name ?? 'Stim',
+    category: overrides.category ?? 'stimulant',
+    power: overrides.power ?? 2,
+    resistance: overrides.resistance ?? 1,
+    rarity: 'common',
+    abilities: [],
+    ...overrides,
   };
 }
 
-function makeCash(denomination: 100 | 1000): CashCard {
-  return { type: 'cash', id: `cash-${denomination}`, denomination };
+function makeCurrency(denomination: 100 | 1000): CurrencyCard {
+  return {
+    kind: 'currency',
+    id: `currency-${denomination}-${Math.random()}`,
+    name: `$${denomination}`,
+    denomination,
+    rarity: 'common',
+  };
 }
 
-function position(owner: 'A' | 'B', crew: CrewCard): Position {
-  const pos = emptyPosition(owner);
-  pos.crew = crew;
-  pos.turnsActive = 1;
-  return pos;
+function turfWith(...cards: (ToughCard | WeaponCard | DrugCard | CurrencyCard)[]): Turf {
+  const turf = createTurf();
+  for (const card of cards) addToStack(turf, card);
+  return turf;
 }
 
-describe('attack category abilities', () => {
-  it('enforces modifier deck hallucinogen logic on funded attacks', () => {
-    const attacker = position('A', makeCrew({ displayName: 'Caller' }));
-    const defender = position('B', makeCrew({ displayName: 'Mark', resistance: 7 }));
-    attacker.cashLeft = makeCash(100);
-    attacker.drugTop = makeDrug('hallucinogen', 2);
-    defender.drugBottom = makeDrug('hallucinogen', 3);
+describe('resolveDirectStrike', () => {
+  it('kills top tough when P >= R', () => {
+    const attacker = turfWith(makeTough({ power: 8 }));
+    const defender = turfWith(makeTough({ name: 'Victim', resistance: 6 }));
 
-    const outcome = resolveFundedAttack(attacker, defender, DEFAULT_TURF_CONFIG);
+    const result = resolveDirectStrike(attacker, defender);
 
-    expect(outcome.type).toBe('flip');
-    expect(outcome.description).toContain('CONFUSE 2');
-    expect(outcome.description).toContain('PARANOIA 3');
-    expect(outcome.description).toContain('$100 vs ');
+    expect(result.outcome).toBe('kill');
+    expect(result.killedTough?.name).toBe('Victim');
+    expect(defender.stack).toHaveLength(0);
   });
 
-  it('consumes stealth defense to evade the first direct attack', () => {
-    const attacker = position('A', makeCrew({ displayName: 'Rook', power: 7 }));
-    const defender = position('B', makeCrew({ displayName: 'Ghost', resistance: 3 }));
-    defender.weaponBottom = makeWeapon('stealth', 1, 'bottom');
+  it('sicks top tough when P >= R/2 but P < R', () => {
+    const attacker = turfWith(makeTough({ power: 4 }));
+    const defender = turfWith(makeTough({ name: 'Target', resistance: 8 }));
 
-    const outcome = resolveDirectAttack(attacker, defender);
+    const result = resolveDirectStrike(attacker, defender);
 
-    expect(outcome.type).toBe('miss');
-    expect(outcome.description).toContain('evades');
-    expect(defender.crew?.resistance).toBe(3);
-    expect(defender.weaponBottom).toBeNull();
+    expect(result.outcome).toBe('sick');
+    expect(result.sickedIdx).toBe(0);
+    expect(defender.sickTopIdx).toBe(0);
   });
 
-  it('lets painkillers survive a killing blow once', () => {
-    const attacker = position('A', makeCrew({ displayName: 'Hammer', power: 8 }));
-    attacker.weaponTop = makeWeapon('blunt', 2, 'top');
-    const defender = position('B', makeCrew({ displayName: 'Tank', resistance: 2 }));
-    defender.drugBottom = makeDrug('narcotic', 2);
+  it('busts when P < R/2', () => {
+    const attacker = turfWith(makeTough({ power: 2 }));
+    const defender = turfWith(makeTough({ resistance: 10 }));
 
-    const outcome = resolveDirectAttack(attacker, defender);
+    const result = resolveDirectStrike(attacker, defender);
+
+    expect(result.outcome).toBe('busted');
+  });
+
+  it('transfers killed toughs modifiers to attacker turf', () => {
+    const attacker = turfWith(makeTough({ power: 10 }));
+    const weapon = makeWeapon({ id: 'w-transfer' });
+    const defender = turfWith(makeTough({ resistance: 5 }), weapon);
+
+    const result = resolveDirectStrike(attacker, defender);
+
+    expect(result.outcome).toBe('kill');
+    expect(result.transferredMods).toHaveLength(1);
+    expect(result.transferredMods[0].id).toBe('w-transfer');
+    expect(attacker.stack.some((c) => c.card.id === 'w-transfer')).toBe(true);
+  });
+
+  it('transfers modifiers from killed tough regardless of affiliation (mods have no affiliation)', () => {
+    // Modifiers carry no affiliation, so they always transfer on direct strike.
+    // Affiliation conflicts only gate incoming toughs (see funded-recruit test).
+    const attacker = turfWith(
+      makeTough({ power: 10, affiliation: 'kings_row' }),
+    );
+    const rivalTough = makeTough({
+      id: 'rival-tough',
+      affiliation: 'iron_devils',
+      resistance: 5,
+    });
+    const weapon = makeWeapon({ id: 'w-spoil' });
+    const defender = turfWith(rivalTough, weapon);
+
+    const result = resolveDirectStrike(attacker, defender);
+
+    expect(result.outcome).toBe('kill');
+    expect(result.transferredMods).toHaveLength(1);
+    expect(result.transferredMods[0].id).toBe('w-spoil');
+    expect(result.discardedMods).toHaveLength(0);
+    expect(attacker.stack.some((c) => c.card.id === 'w-spoil')).toBe(true);
+  });
+
+  it('P includes weapon and drug power in stack', () => {
+    const attacker = turfWith(
+      makeTough({ power: 3 }),
+      makeWeapon({ power: 4 }),
+      makeDrug({ power: 3 }),
+    );
+    // Total P = 3 + 4 + 3 = 10
+    const defender = turfWith(makeTough({ resistance: 10 }));
+
+    const result = resolveDirectStrike(attacker, defender);
+
+    expect(result.outcome).toBe('kill');
+  });
+
+  it('R includes weapon and drug resistance in stack', () => {
+    const attacker = turfWith(makeTough({ power: 8 }));
+    const defender = turfWith(
+      makeTough({ resistance: 3 }),
+      makeWeapon({ resistance: 3 }),
+      makeDrug({ resistance: 3 }),
+    );
+    // Total R = 3 + 3 + 3 = 9, P = 8 < R → sick
+    const result = resolveDirectStrike(attacker, defender);
+
+    expect(result.outcome).toBe('sick');
+  });
+
+  it('busts on empty defender stack', () => {
+    const attacker = turfWith(makeTough({ power: 10 }));
+    const defender = createTurf();
+
+    const result = resolveDirectStrike(attacker, defender);
+
+    expect(result.outcome).toBe('busted');
+    expect(result.description.toLowerCase()).toContain('no tough');
+  });
+});
+
+describe('resolveDirectStrike — strike-bottom and strike-anywhere', () => {
+  it('shark targets the bottom tough (strike-bottom)', () => {
+    const attacker = turfWith(makeTough({ archetype: 'shark', power: 20 }));
+    const bottomTough = makeTough({ id: 'bottom', name: 'Bottom', resistance: 3 });
+    const topTough = makeTough({ id: 'top', name: 'Top', resistance: 3 });
+    const defender = turfWith(bottomTough, topTough);
+
+    const result = resolveDirectStrike(attacker, defender);
+
+    expect(result.outcome).toBe('kill');
+    expect(result.killedTough?.id).toBe('bottom');
+    expect(defender.stack.some((c) => c.card.id === 'top')).toBe(true);
+  });
+
+  it('ghost targets the lowest-resistance tough (strike-anywhere)', () => {
+    // Updated: Ghost's strike-anywhere picks lowest resistance, not
+    // bottom of stack. With bottomTough.resistance=7 and
+    // topTough.resistance=3, ghost goes for the 3.
+    const attacker = turfWith(makeTough({ archetype: 'ghost', power: 20 }));
+    const bottomTough = makeTough({ id: 'bottom', name: 'Bottom', resistance: 7 });
+    const topTough = makeTough({ id: 'top', name: 'Top', resistance: 3 });
+    const defender = turfWith(bottomTough, topTough);
+
+    const result = resolveDirectStrike(attacker, defender);
+
+    expect(result.outcome).toBe('kill');
+    expect(result.killedTough?.id).toBe('top');
+  });
+});
+
+describe('resolvePushedStrike', () => {
+  it('spends 1 currency and adds denomination/100 power', () => {
+    const attacker = turfWith(
+      makeTough({ power: 5 }),
+      makeCurrency(1000),
+    );
+    // P = 5 + 10 (from $1000/100) = 15
+    const defender = turfWith(makeTough({ name: 'Target', resistance: 14 }));
+
+    const result = resolvePushedStrike(attacker, defender);
+
+    expect(result.outcome).toBe('kill');
+    expect(result.description.toLowerCase()).toContain('pushed');
+    expect(attacker.stack.every((c) => c.card.kind !== 'currency')).toBe(true);
+  });
+
+  it('sicks tough directly beneath the killed tough', () => {
+    const attacker = turfWith(
+      makeTough({ power: 10 }),
+      makeCurrency(100),
+    );
+    const bottomTough = makeTough({ id: 'beneath', name: 'Beneath' });
+    const topTough = makeTough({ id: 'top', name: 'Top', resistance: 5 });
+    const defender = turfWith(bottomTough, topTough);
+
+    const result = resolvePushedStrike(attacker, defender);
+
+    expect(result.outcome).toBe('kill');
+    expect(result.killedTough?.id).toBe('top');
+    expect(result.sickedIdx).toBe(0);
+    expect(defender.sickTopIdx).toBe(0);
+  });
+
+  it('busts when no currency on attacker turf', () => {
+    const attacker = turfWith(makeTough({ power: 20 }));
+    const defender = turfWith(makeTough({ resistance: 5 }));
+
+    const result = resolvePushedStrike(attacker, defender);
+
+    expect(result.outcome).toBe('busted');
+    expect(result.description).toContain('No currency');
+  });
+
+  it('$100 adds +1 power', () => {
+    const attacker = turfWith(
+      makeTough({ power: 9 }),
+      makeCurrency(100),
+    );
+    // P = 9 + 1 = 10
+    const defender = turfWith(makeTough({ resistance: 10 }));
+
+    const result = resolvePushedStrike(attacker, defender);
+
+    expect(result.outcome).toBe('kill');
+  });
+
+  it('sicks when pushed P >= R/2 but < R', () => {
+    const attacker = turfWith(
+      makeTough({ power: 3 }),
+      makeCurrency(100),
+    );
+    // P = 3 + 1 = 4; R = 8; R/2 = 4; P >= R/2 → sick
+    const defender = turfWith(makeTough({ resistance: 8 }));
+
+    const result = resolvePushedStrike(attacker, defender);
+
+    expect(result.outcome).toBe('sick');
+  });
+});
+
+describe('resolveFundedRecruit', () => {
+  it('freelance target uses 0.5 multiplier', () => {
+    const attacker = turfWith(
+      makeTough({ affiliation: 'kings_row' }),
+      makeCurrency(1000),
+    );
+    // Target resistance = 10, threshold = 10 * 0.5 = 5, spent = 1000 >= 5 → success
+    const defender = turfWith(
+      makeTough({ name: 'Merc', affiliation: 'freelance', resistance: 10 }),
+    );
+
+    const result = resolveFundedRecruit(attacker, defender);
+
+    expect(result.outcome).toBe('kill');
+    expect(result.description).toContain('Recruited');
+    expect(result.description).toContain('freelance');
+    expect(attacker.stack.some((c) => c.card.kind === 'tough' && c.card.name === 'Merc')).toBe(true);
+    expect(defender.stack.every((c) => c.card.kind !== 'tough' || c.card.name !== 'Merc')).toBe(true);
+  });
+
+  it('same affiliation uses 0.7 multiplier', () => {
+    const attacker = turfWith(
+      makeTough({ affiliation: 'kings_row' }),
+      makeCurrency(1000),
+    );
+    // Target resistance = 10, threshold = 10 * 0.7 = 7, spent = 1000 >= 7
+    const defender = turfWith(
+      makeTough({ name: 'Ally', affiliation: 'kings_row', resistance: 10 }),
+    );
+
+    const result = resolveFundedRecruit(attacker, defender);
+
+    expect(result.outcome).toBe('kill');
+    expect(result.description).toContain('same');
+  });
+
+  it('rival affiliation uses 1.5 multiplier', () => {
+    const attacker = turfWith(
+      makeTough({ affiliation: 'kings_row' }),
+      makeCurrency(1000),
+    );
+    // Target resistance = 1000, threshold = 1000 * 1.5 = 1500, spent = 1000 < 1500 → fail
+    const defender = turfWith(
+      makeTough({ name: 'Enemy', affiliation: 'iron_devils', resistance: 1000 }),
+    );
+
+    const result = resolveFundedRecruit(attacker, defender);
+
+    expect(result.outcome).toBe('busted');
+    expect(result.description).toContain('rival');
+  });
+
+  it('other affiliation uses 1.0 multiplier', () => {
+    const attacker = turfWith(
+      makeTough({ affiliation: 'kings_row' }),
+      makeCurrency(1000),
+    );
+    // Target resistance = 8, threshold = 8 * 1.0 = 8, spent = 1000 >= 8
+    const defender = turfWith(
+      makeTough({ name: 'Stranger', affiliation: 'southside_saints', resistance: 8 }),
+    );
+
+    const result = resolveFundedRecruit(attacker, defender);
+
+    expect(result.outcome).toBe('kill');
+    expect(result.description).toContain('other');
+  });
+
+  it('fails when total currency < $1000', () => {
+    const attacker = turfWith(
+      makeTough(),
+      makeCurrency(100),
+      makeCurrency(100),
+    );
+    const defender = turfWith(makeTough({ resistance: 1 }));
+
+    const result = resolveFundedRecruit(attacker, defender);
+
+    expect(result.outcome).toBe('busted');
+    expect(result.description).toContain('Not enough');
+  });
+
+  it('sums multiple currency cards to meet threshold', () => {
+    const attacker = turfWith(
+      makeTough({ affiliation: 'kings_row' }),
+      makeCurrency(100),
+      makeCurrency(100),
+      makeCurrency(100),
+      makeCurrency(100),
+      makeCurrency(100),
+      makeCurrency(100),
+      makeCurrency(100),
+      makeCurrency(100),
+      makeCurrency(100),
+      makeCurrency(100),
+    );
+    // 10 × $100 = $1000
+    const defender = turfWith(
+      makeTough({ name: 'Target', affiliation: 'freelance', resistance: 4 }),
+    );
+    // threshold = 4 * 0.5 = 2, spent = 1000 >= 2
+
+    const result = resolveFundedRecruit(attacker, defender);
+
+    expect(result.outcome).toBe('kill');
+  });
+
+  it('spends currency from attacker turf', () => {
+    const attacker = turfWith(
+      makeTough({ affiliation: 'kings_row' }),
+      makeCurrency(1000),
+    );
+    const defender = turfWith(
+      makeTough({ affiliation: 'freelance', resistance: 1 }),
+    );
+
+    resolveFundedRecruit(attacker, defender);
+
+    expect(attacker.stack.every((c) => c.card.kind !== 'currency')).toBe(true);
+  });
+
+  it('discards recruited rival tough when no buffer on attacker turf', () => {
+    // Attacker has a kings_row tough; recruited target is iron_devils (rival).
+    // No currency buffer remains (all spent on recruit), no neutral buffer.
+    // Rule per RULES.md §4: rival affiliations cannot coexist without buffer.
+    // Expected: kill succeeds (target removed from defender), but the recruited
+    // tough is discarded instead of joining the attacker stack.
+    const attacker = turfWith(
+      makeTough({ affiliation: 'kings_row' }),
+      makeCurrency(1000),
+    );
+    const defender = turfWith(
+      makeTough({ name: 'Rival', affiliation: 'iron_devils', resistance: 500 }),
+    );
+    // threshold = 500 * 1.5 (rival) = 750, spent = 1000 >= 750 → success
+
+    const result = resolveFundedRecruit(attacker, defender);
+
+    expect(result.outcome).toBe('kill');
+    expect(result.transferredMods).toHaveLength(0);
+    expect(result.discardedMods).toHaveLength(1);
+    expect((result.discardedMods[0] as ToughCard).name).toBe('Rival');
+    // Defender is cleared of the target
+    expect(defender.stack.every((c) => c.card.kind !== 'tough' || c.card.name !== 'Rival')).toBe(true);
+    // Attacker did NOT gain the rival tough
+    expect(attacker.stack.every((c) => c.card.kind !== 'tough' || c.card.name !== 'Rival')).toBe(true);
+  });
+
+  it('accepts recruited rival tough when currency buffer remains on attacker turf', () => {
+    // Attacker has kings_row + extra currency beyond the recruit cost, providing
+    // a buffer for the incoming iron_devils tough per the affiliation rule.
+    const attacker = turfWith(
+      makeTough({ affiliation: 'kings_row' }),
+      makeCurrency(1000), // spent on recruit
+      makeCurrency(1000), // remains as buffer
+    );
+    const defender = turfWith(
+      makeTough({ name: 'Rival', affiliation: 'iron_devils', resistance: 500 }),
+    );
+    // threshold = 500 * 1.5 = 750, spent = 1000 >= 750 → success; buffer present
+
+    const result = resolveFundedRecruit(attacker, defender);
+
+    expect(result.outcome).toBe('kill');
+    expect(result.transferredMods).toHaveLength(1);
+    expect(result.discardedMods).toHaveLength(0);
+    expect(attacker.stack.some((c) => c.card.kind === 'tough' && c.card.name === 'Rival')).toBe(true);
+  });
+});
+
+describe('strikeToAttackOutcome', () => {
+  it('converts kill result to AttackOutcome', () => {
+    const result = resolveDirectStrike(
+      turfWith(makeTough({ power: 10 })),
+      turfWith(makeTough({ name: 'Dead', resistance: 5 })),
+    );
+    const outcome = strikeToAttackOutcome(result);
+
+    expect(outcome.type).toBe('kill');
+    expect(outcome.gainedCards).toHaveLength(1);
+    expect(outcome.description).toContain('killed');
+  });
+
+  it('converts sick result to AttackOutcome', () => {
+    const result = resolveDirectStrike(
+      turfWith(makeTough({ power: 4 })),
+      turfWith(makeTough({ resistance: 8 })),
+    );
+    const outcome = strikeToAttackOutcome(result);
 
     expect(outcome.type).toBe('sick');
-    expect(outcome.description).toContain('survives');
-    expect(defender.crew?.resistance).toBe(1);
-    expect(defender.drugBottom).toBeNull();
+    expect(outcome.targetIndices).toHaveLength(1);
   });
 
-  it('applies parry and reflexes chip damage back to the attacker', () => {
-    const attacker = position('A', makeCrew({ displayName: 'Blade', resistance: 7 }));
-    const defender = position('B', makeCrew({ displayName: 'Guard', resistance: 8 }));
-    defender.weaponBottom = makeWeapon('bladed', 2, 'bottom');
-    defender.drugBottom = makeDrug('stimulant', 1);
+  it('converts busted result to AttackOutcome', () => {
+    const result = resolveDirectStrike(
+      turfWith(makeTough({ power: 1 })),
+      turfWith(makeTough({ resistance: 10 })),
+    );
+    const outcome = strikeToAttackOutcome(result);
 
-    const outcome = resolveDirectAttack(attacker, defender);
-
-    expect(outcome.description).toContain('PARRY 2');
-    expect(outcome.description).toContain('REFLEXES 1');
-    expect(attacker.crew?.resistance).toBe(4);
-  });
-
-  it('REACH: ranged weapon offense adds bonus damage', () => {
-    const attacker = position('A', makeCrew({ displayName: 'Sniper', power: 4 }));
-    attacker.weaponTop = makeWeapon('ranged', 3, 'top');
-    const defender = position('B', makeCrew({ displayName: 'Tank', resistance: 10 }));
-
-    const outcome = resolveDirectAttack(attacker, defender);
-
-    expect(outcome.description).toContain('REACH 3');
-  });
-
-  it('OVERWATCH: ranged weapon defense raises the kill threshold', () => {
-    const attackerArmed = position('A', makeCrew({ displayName: 'Charge', power: 6 }));
-    attackerArmed.weaponTop = makeWeapon('blunt', 3, 'top');
-    const bareDefender = position('B', makeCrew({ displayName: 'Exposed', resistance: 8 }));
-    const outcomeBare = resolveDirectAttack(attackerArmed, bareDefender);
-    expect(outcomeBare.type).toBe('kill'); // atk 9 >= def 8
-
-    const attackerAgain = position('A', makeCrew({ displayName: 'Charge', power: 6 }));
-    attackerAgain.weaponTop = makeWeapon('blunt', 3, 'top');
-    const overwatchDefender = position('B', makeCrew({ displayName: 'Nest', resistance: 8 }));
-    overwatchDefender.weaponBottom = makeWeapon('ranged', 3, 'bottom');
-
-    const outcomeOver = resolveDirectAttack(attackerAgain, overwatchDefender);
-    // With OVERWATCH +3 defense threshold, atk 9 < def 11 → no kill
-    expect(outcomeOver.type).not.toBe('kill');
-  });
-
-  it('BULK: steroid offense adds bonus damage', () => {
-    const attacker = position('A', makeCrew({ displayName: 'Bulk', power: 4 }));
-    attacker.drugTop = makeDrug('steroid', 2);
-    const defender = position('B', makeCrew({ displayName: 'Stone', resistance: 10 }));
-
-    const outcome = resolveDirectAttack(attacker, defender);
-
-    expect(outcome.description).toContain('BULK 2');
-  });
-
-  it('FORTIFY: steroid defense reduces incoming damage to zero', () => {
-    const attacker = position('A', makeCrew({ displayName: 'Puncher', power: 4 }));
-    attacker.weaponTop = makeWeapon('blunt', 1, 'top');
-    const defender = position('B', makeCrew({ displayName: 'Wall', resistance: 5 }));
-    defender.drugBottom = makeDrug('steroid', 3);
-
-    const resBefore = defender.crew?.resistance ?? 0;
-    const outcome = resolveDirectAttack(attacker, defender);
-    const resAfter = defender.crew?.resistance ?? 0;
-
-    // atk = 4 + 1 = 5, def floor/2 = 2, raw dmg = 3; FORTIFY 3 reduces to 0 → miss
-    expect(resAfter).toBe(resBefore);
-    expect(outcome.type).toBe('miss');
-    expect(outcome.description).toContain('shrugs off');
+    expect(outcome.type).toBe('busted');
+    expect(outcome.targetIndices).toHaveLength(0);
   });
 });

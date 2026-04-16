@@ -1,6 +1,10 @@
 import type { PolicySample, TurfPolicyArtifact } from '../types';
 import { TURF_SIM_CONFIG } from './config';
-import { createEmptyPolicyArtifact, ensurePolicyEntry, policyStateKeys } from './policy';
+import {
+  createEmptyPolicyArtifact,
+  ensurePolicyEntry,
+  policyStateKeys,
+} from './policy';
 
 export interface PolicyTrainingOptions {
   alpha?: number;
@@ -15,7 +19,9 @@ export function trainPolicyArtifact(
   const artifact = createEmptyPolicyArtifact(configVersion);
 
   for (const episode of episodes) {
-    const combatEpisode = episode.filter(sample => sample.stateKey.startsWith('combat|'));
+    const combatEpisode = episode.filter((sample) =>
+      sample.stateKey.startsWith('combat|'),
+    );
     if (combatEpisode.length === 0) continue;
     let returnValue = 0;
     for (let i = combatEpisode.length - 1; i >= 0; i--) {

@@ -1,15 +1,21 @@
 {
   "id": "weap-30",
-  "type": "weapon",
+  "kind": "weapon",
   "name": "Stick of Dynamite",
   "category": "explosive",
-  "bonus": [
+  "power": [
     4
   ],
-  "offenseAbility": "BLAST",
-  "offenseAbilityText": "Splash bonus damage to adjacent positions.",
-  "defenseAbility": "DETERRENT",
-  "defenseAbilityText": "Attackers must exceed defense by bonus extra to kill.",
+  "resistance": [
+    1
+  ],
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "BLAST",
+    "DETERRENT"
+  ],
   "unlocked": false,
   "unlockCondition": "Win without losing a position",
   "locked": false,

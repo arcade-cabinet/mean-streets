@@ -12,10 +12,10 @@ import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { ZodType } from 'zod';
 import {
-  AuthoredCrewSchema,
+  AuthoredToughSchema,
   AuthoredWeaponSchema,
   AuthoredDrugSchema,
-  CardSpecialSchema,
+  AuthoredCurrencySchema,
 } from '../src/sim/cards/schemas';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -58,25 +58,12 @@ function validateDir(label: string, dir: string, schema: ZodType<unknown>): Offe
   return offenders;
 }
 
-function validateSpecial(): Offender[] {
-  const path = join(RAW_DIR, 'special.json');
-  if (!existsSync(path)) {
-    return [{ file: 'special.json', issues: ['  • file does not exist'] }];
-  }
-  const data = readJson(path);
-  const res = CardSpecialSchema.safeParse(data);
-  if (!res.success) {
-    return [{ file: 'special.json', issues: formatIssues(res.error) }];
-  }
-  return [];
-}
-
 function main(): void {
   const offenders: Offender[] = [
-    ...validateDir('toughs', join(RAW_DIR, 'toughs'), AuthoredCrewSchema),
+    ...validateDir('toughs', join(RAW_DIR, 'toughs'), AuthoredToughSchema),
     ...validateDir('weapons', join(RAW_DIR, 'weapons'), AuthoredWeaponSchema),
     ...validateDir('drugs', join(RAW_DIR, 'drugs'), AuthoredDrugSchema),
-    ...validateSpecial(),
+    ...validateDir('currency', join(RAW_DIR, 'currency'), AuthoredCurrencySchema),
   ];
 
   if (offenders.length === 0) {

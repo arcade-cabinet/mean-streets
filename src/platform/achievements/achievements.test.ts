@@ -1,19 +1,53 @@
 import { describe, expect, it } from 'vitest';
-import type { CharacterCard } from '../../sim/cards/schemas';
+import type { CompiledTough, CompiledWeapon, CompiledDrug } from '../../sim/cards/schemas';
 import type { TurfMetrics } from '../../sim/turf/types';
 import { emptyMetrics } from '../../sim/turf/environment';
 import type { PlayerProfile } from '../persistence/storage';
 import { processGameEnd, type GameEndEvent } from './achievements';
 
-function makeCard(id: string, unlockCondition?: string): CharacterCard {
+function makeCard(id: string, unlockCondition?: string): CompiledTough {
   return {
+    kind: 'tough',
     id,
-    displayName: id,
+    name: id,
     archetype: 'bruiser',
-    affiliation: 'kings-row',
+    affiliation: 'kings_row',
     power: 5,
     resistance: 5,
-    abilityText: '',
+    rarity: 'common',
+    abilities: [],
+    unlocked: false,
+    ...(unlockCondition ? { unlockCondition } : {}),
+    locked: false,
+  };
+}
+
+function makeWeapon(id: string, unlockCondition?: string): CompiledWeapon {
+  return {
+    kind: 'weapon',
+    id,
+    name: id,
+    category: 'bladed',
+    power: 3,
+    resistance: 1,
+    rarity: 'common',
+    abilities: [],
+    unlocked: false,
+    ...(unlockCondition ? { unlockCondition } : {}),
+    locked: false,
+  };
+}
+
+function makeDrug(id: string, unlockCondition?: string): CompiledDrug {
+  return {
+    kind: 'drug',
+    id,
+    name: id,
+    category: 'stimulant',
+    power: 2,
+    resistance: 1,
+    rarity: 'common',
+    abilities: [],
     unlocked: false,
     ...(unlockCondition ? { unlockCondition } : {}),
     locked: false,
@@ -176,5 +210,95 @@ describe('processGameEnd', () => {
     const result = processGameEnd(event, [card], profile);
 
     expect(result.newlyUnlocked).toHaveLength(0);
+  });
+
+  it('"Kill N top toughs total" accumulates across games', () => {
+    const card = makeCard('card-hunter', 'Kill 5 top toughs total');
+    let profile = makeProfile();
+
+    // First game: 2 kills — below threshold
+    let result = processGameEnd(
+      makeEvent({ metrics: { ...emptyMetrics(), kills: 2 } }),
+      [card],
+      profile,
+    );
+    expect(result.newlyUnlocked).toHaveLength(0);
+    profile = result.updatedProfile;
+
+    // Second game: 2 more (4 total) — still below
+    result = processGameEnd(
+      makeEvent({ metrics: { ...emptyMetrics(), kills: 2 } }),
+      [card],
+      profile,
+    );
+    expect(result.newlyUnlocked).toHaveLength(0);
+    profile = result.updatedProfile;
+
+    // Third game: 1 more (5 total) — unlocks
+    result = processGameEnd(
+      makeEvent({ metrics: { ...emptyMetrics(), kills: 1 } }),
+      [card],
+      profile,
+    );
+    expect(result.newlyUnlocked).toEqual(['card-hunter']);
+  });
+
+  it('"Win without discarding any cards" fires on win with zero discards', () => {
+    const card = makeCard('card-patient', 'Win without discarding any cards');
+    const profile = makeProfile();
+
+    // Win but discarded → no unlock
+    const discardWin = processGameEnd(
+      makeEvent({ winner: 'A', metrics: { ...emptyMetrics(), cardsDiscarded: 2 } }),
+      [card],
+      profile,
+    );
+    expect(discardWin.newlyUnlocked).toHaveLength(0);
+
+    // Loss with zero discards → no unlock (must win)
+    const cleanLoss = processGameEnd(
+      makeEvent({ winner: 'B', metrics: { ...emptyMetrics(), cardsDiscarded: 0 } }),
+      [card],
+      profile,
+    );
+    expect(cleanLoss.newlyUnlocked).toHaveLength(0);
+
+    // Win with zero discards → unlocks
+    const cleanWin = processGameEnd(
+      makeEvent({ winner: 'A', metrics: { ...emptyMetrics(), cardsDiscarded: 0 } }),
+      [card],
+      profile,
+    );
+    expect(cleanWin.newlyUnlocked).toEqual(['card-patient']);
+  });
+
+  it('unlocks weapons with an unlockCondition (not just toughs)', () => {
+    // Regression pin for CodeRabbit finding: processGameEnd's catalog
+    // param was typed CompiledTough[], so weapon/drug unlock conditions
+    // were silently skipped. Now the parameter accepts any unlockable
+    // card type and weapon conditions fire too.
+    const weapon = makeWeapon('weap-veteran', 'Win 3 games');
+    const profile = makeProfile({ wins: 2 });
+
+    const result = processGameEnd(
+      makeEvent({ winner: 'A' }),
+      [weapon],
+      profile,
+    );
+
+    expect(result.newlyUnlocked).toEqual(['weap-veteran']);
+  });
+
+  it('unlocks drugs with an unlockCondition', () => {
+    const drug = makeDrug('drug-clean', 'Win without discarding any cards');
+    const profile = makeProfile();
+
+    const result = processGameEnd(
+      makeEvent({ winner: 'A', metrics: { ...emptyMetrics(), cardsDiscarded: 0 } }),
+      [drug],
+      profile,
+    );
+
+    expect(result.newlyUnlocked).toEqual(['drug-clean']);
   });
 });

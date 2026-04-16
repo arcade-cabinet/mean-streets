@@ -1,7 +1,8 @@
 {
   "id": "card-056",
-  "type": "crew",
-  "displayName": "Javier \"Smoke\" Huang",
+  "kind": "tough",
+  "name": "Javier \"Smoke\" Huang",
+  "tagline": "The one you do not see coming.",
   "archetype": "ghost",
   "affiliation": "freelance",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     5
   ],
-  "abilityText": "After attacking: cannot be targeted for the opponent's next turn",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "After attacking: cannot be targeted for the opponent's next turn"
+  ],
   "unlocked": false,
   "unlockCondition": "Trigger 6 overdraw penalties on opponents",
   "locked": false,
-  "draft": true,
-  "tagline": "The one you do not see coming."
+  "draft": true
 }

@@ -1,7 +1,8 @@
 {
   "id": "card-066",
-  "type": "crew",
-  "displayName": "Chan \"Medic\" Liu",
+  "kind": "tough",
+  "name": "Chan \"Medic\" Liu",
+  "tagline": "Does the work no one thanks you for.",
   "archetype": "medic",
   "affiliation": "cobalt_syndicate",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     10
   ],
-  "abilityText": "When sacrificed to heal: heals double the normal amount",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "When sacrificed to heal: heals double the normal amount"
+  ],
   "unlocked": false,
   "unlockCondition": "Trigger 6 overdraw penalties on opponents",
   "locked": false,
-  "draft": true,
-  "tagline": "Does the work no one thanks you for."
+  "draft": true
 }

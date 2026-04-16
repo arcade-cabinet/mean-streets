@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Southside Saints: Community first — shield with halo -->
+  <path d="M32 10 L48 20 L48 38 Q48 50, 32 56 Q16 50, 16 38 L16 20 Z"
+        stroke="#4169E1" stroke-width="2.5" stroke-linejoin="round" fill="none"/>
+  <path d="M24 28 L32 38 L40 24" stroke="#4169E1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <ellipse cx="32" cy="8" rx="10" ry="3" stroke="#4169E1" stroke-width="1" fill="none" opacity="0.5"/>
+</svg>

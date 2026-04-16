@@ -14,18 +14,16 @@ describe('permutation sweep', () => {
     const deckA = buildAutoDeck(pools, rngA, { forceIncludeIds: forcedIds });
     const deckB = buildAutoDeck(pools, rngB, { forceIncludeIds: forcedIds });
 
-    expect(deckA.crew.map(card => card.id)).toEqual(deckB.crew.map(card => card.id));
-    expect(deckA.modifiers.map(card => card.id)).toEqual(deckB.modifiers.map(card => card.id));
-    expect(deckA.backpacks.map(card => card.id)).toEqual(deckB.backpacks.map(card => card.id));
+    expect(deckA.map(c => c.id)).toEqual(deckB.map(c => c.id));
     for (const id of forcedIds) {
-      expect(deckA.crew.some(card => card.id === id) || deckA.modifiers.some(card => card.id === id)).toBe(true);
+      expect(deckA.some(c => c.id === id)).toBe(true);
     }
   });
 
   it('runs deterministic permutation sweeps over targeted crew/weapon/drug anchors', { timeout: 45000 }, () => {
     const pools = generateTurfCardPools(42, { allUnlocked: true });
-    const crewIds = pools.crew.slice(0, 2).map(card => card.id);
-    const weaponIds = pools.weapons.slice(0, 2).map(card => card.id);
+    const crewIds = pools.crew.slice(0, 2).map(c => c.id);
+    const weaponIds = pools.weapons.slice(0, 2).map(c => c.id);
     const drugIds = [pools.drugs[0].id];
 
     const first = runPermutationSweep({
@@ -43,6 +41,6 @@ describe('permutation sweep', () => {
 
     expect(first).toEqual(second);
     expect(first.permutations).toHaveLength(4);
-    expect(first.permutations.every(result => result.forcedIds.length === 3)).toBe(true);
+    expect(first.permutations.every(r => r.forcedIds.length === 3)).toBe(true);
   });
 });

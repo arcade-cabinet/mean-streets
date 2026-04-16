@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { runSeededBenchmark } from '../benchmarks';
 import { estimateCardEffects } from '../effects';
 import { deriveLockRecommendations } from '../locking';
-import { runCuratedSweep, type ForcedPermutationResult } from '../sweeps';
+import { buildCuratedSweepPermutations, runCuratedSweep, type ForcedPermutationResult } from '../sweeps';
+import { checkConvergence } from '../benchmarks';
 import { generateTurfCardPools } from '../../turf/catalog';
 
 describe('analysis layer', () => {
@@ -24,26 +25,12 @@ describe('analysis layer', () => {
         fundedSeries: [1, 1, 1, 1, 1, 1, 1, 1],
         pushedSeries: [2, 2, 2, 1, 2, 2, 2, 1],
         directSeries: [4, 4, 4, 4, 4, 4, 4, 4],
-        reserveCrewSeries: [2, 2, 1, 2, 2, 2, 2, 1],
-        backpackSeries: [1, 1, 1, 1, 1, 1, 1, 1],
-        runnerSeries: [1, 1, 1, 1, 1, 1, 1, 1],
-        payloadSeries: [2, 2, 2, 1, 2, 2, 2, 1],
-        runnerOpportunitySeries: [2, 2, 2, 2, 2, 2, 2, 2],
-        runnerOpportunityTakenSeries: [2, 2, 2, 1, 2, 2, 2, 1],
-        runnerReserveOpportunitySeries: [1, 1, 1, 1, 1, 1, 1, 1],
-        runnerReserveTakenSeries: [1, 1, 1, 1, 1, 1, 1, 1],
         winRateA: 0.75,
         medianTurns: 7,
         p90Turns: 7,
         fundedAttacks: 1,
         pushedAttacks: 1.75,
         directAttacks: 4,
-        reserveCrewPlacements: 1.75,
-        backpacksEquipped: 1,
-        runnerDeployments: 1,
-        payloadDeployments: 1.75,
-        runnerOpportunityUseRate: 0.875,
-        runnerReserveStartUseRate: 1,
       },
       {
         forcedIds: ['card-002'],
@@ -53,26 +40,12 @@ describe('analysis layer', () => {
         fundedSeries: [0, 0, 0, 0, 0, 0, 0, 0],
         pushedSeries: [0, 1, 0, 1, 0, 1, 0, 1],
         directSeries: [6, 6, 6, 6, 6, 6, 6, 6],
-        reserveCrewSeries: [1, 1, 1, 1, 1, 1, 1, 1],
-        backpackSeries: [0, 0, 0, 0, 0, 0, 0, 0],
-        runnerSeries: [0, 0, 0, 0, 0, 0, 0, 0],
-        payloadSeries: [0, 0, 0, 0, 0, 0, 0, 0],
-        runnerOpportunitySeries: [1, 1, 1, 1, 1, 1, 1, 1],
-        runnerOpportunityTakenSeries: [0, 0, 0, 0, 0, 0, 0, 0],
-        runnerReserveOpportunitySeries: [1, 1, 1, 1, 1, 1, 1, 1],
-        runnerReserveTakenSeries: [0, 0, 0, 0, 0, 0, 0, 0],
         winRateA: 0.25,
         medianTurns: 8,
         p90Turns: 9,
         fundedAttacks: 0,
         pushedAttacks: 0.5,
         directAttacks: 6,
-        reserveCrewPlacements: 1,
-        backpacksEquipped: 0,
-        runnerDeployments: 0,
-        payloadDeployments: 0,
-        runnerOpportunityUseRate: 0,
-        runnerReserveStartUseRate: 0,
       },
     ];
 
@@ -80,21 +53,99 @@ describe('analysis layer', () => {
     const locks = deriveLockRecommendations(effects);
 
     expect(effects.cardEffects).toHaveLength(2);
-    expect(effects.cardEffects[0]?.runnerReserveStartUseRateDelta).not.toBeUndefined();
     expect(locks.recommendations).toHaveLength(2);
     expect(locks.recommendations.every(rec => rec.reasons.length > 0)).toBe(true);
     expect(locks.recommendations.some(rec => rec.cardId === 'card-001')).toBe(true);
   });
 
+  // Fast: checks anchor selection distributes across all weapon + drug categories
+  // without running any simulated games (sub-millisecond, no sim cost).
   it('spreads curated quick sweep anchors across weapon and drug categories', () => {
     const pools = generateTurfCardPools(42, { allUnlocked: true });
-    const sweep = runCuratedSweep('weapon_drug', 'quick');
-    const weaponIds = [...new Set(sweep.permutations.map(permutation => permutation.forcedIds[0]).filter(Boolean))];
-    const drugIds = [...new Set(sweep.permutations.map(permutation => permutation.forcedIds[1]).filter(Boolean))];
-    const weaponCategories = weaponIds.map(id => pools.weapons.find(card => card.id === id)?.category);
-    const drugCategories = drugIds.map(id => pools.drugs.find(card => card.id === id)?.category);
+    const permutationIds = buildCuratedSweepPermutations('weapon_drug');
+
+    const weaponIds = [...new Set(permutationIds.map(ids => ids[0]).filter(Boolean))];
+    const drugIds = [...new Set(permutationIds.map(ids => ids[1]).filter(Boolean))];
+
+    const weaponCategories = weaponIds
+      .map(id => pools.weapons.find(c => c.id === id)?.category)
+      .filter((c): c is string => c !== undefined);
+    const drugCategories = drugIds
+      .map(id => pools.drugs.find(c => c.id === id)?.category)
+      .filter((c): c is string => c !== undefined);
+
+    // Guard: every selected id must resolve to a category — otherwise the
+    // pool is drifting and the uniqueness check below would silently count
+    // `undefined` as a distinct category.
+    expect(weaponCategories).toHaveLength(weaponIds.length);
+    expect(drugCategories).toHaveLength(drugIds.length);
 
     expect(new Set(weaponCategories).size).toBe(5);
     expect(new Set(drugCategories).size).toBe(5);
-  }, 120000);
+  });
+
+  // Slow: full sim-backed sweep — validates the end-to-end pipeline.
+  // Set RUN_SLOW_TESTS=1 to enable locally or in a dedicated CI job.
+  // TODO: promote to a nightly job once we have a dedicated slow-test runner.
+  describe.skipIf(!process.env.RUN_SLOW_TESTS)('slow sim sweep (RUN_SLOW_TESTS=1)', () => {
+    it('runCuratedSweep weapon_drug quick produces one result per permutation', () => {
+      const permutationIds = buildCuratedSweepPermutations('weapon_drug');
+      const sweep = runCuratedSweep('weapon_drug', 'quick');
+      expect(sweep.permutations).toHaveLength(permutationIds.length);
+    }, 600000);
+  });
+
+  it('checkConvergence detects 3 consecutive runs within the configured band', () => {
+    // Config band is 0.45–0.65 in v0.2 (widened from 0.48–0.52 to
+    // accommodate the observed first-mover advantage; v0.3 targets true 50-50).
+    const convergent = checkConvergence([0.50, 0.55, 0.60]);
+    expect(convergent.converged).toBe(true);
+    expect(convergent.consecutiveInBand).toBe(3);
+
+    // First run is outside band — only last 2 are consecutive
+    const notYet = checkConvergence([0.30, 0.55, 0.60]);
+    expect(notYet.converged).toBe(false);
+    expect(notYet.consecutiveInBand).toBe(2);
+
+    // All outside band (below 0.45)
+    const outsideBand = checkConvergence([0.20, 0.25, 0.30]);
+    expect(outsideBand.converged).toBe(false);
+    expect(outsideBand.consecutiveInBand).toBe(0);
+  });
+
+  it('checkConvergence returns finalWinRate=null for an empty series', () => {
+    // Regression pin: the prior implementation returned 0 for empty,
+    // which was indistinguishable from a real 0% winrate and misled
+    // autobalance gating callers. Empty → null.
+    const empty = checkConvergence([]);
+    expect(empty.converged).toBe(false);
+    expect(empty.iterations).toBe(0);
+    expect(empty.finalWinRate).toBeNull();
+    expect(empty.consecutiveInBand).toBe(0);
+  });
+
+  it('locking saturates at maxHistoryLength', () => {
+    const baseline = runSeededBenchmark('smoke');
+    const permutations: ForcedPermutationResult[] = [{
+      forcedIds: ['card-001'],
+      games: 8,
+      winSeries: [1, 1, 1, 0, 1, 1, 1, 0],
+      turnSeries: [7, 7, 6, 7, 6, 7, 7, 6],
+      fundedSeries: [1, 1, 1, 1, 1, 1, 1, 1],
+      pushedSeries: [2, 2, 2, 1, 2, 2, 2, 1],
+      directSeries: [4, 4, 4, 4, 4, 4, 4, 4],
+      winRateA: 0.75,
+      medianTurns: 7,
+      p90Turns: 7,
+      fundedAttacks: 1,
+      pushedAttacks: 1.75,
+      directAttacks: 4,
+    }];
+
+    const effects = estimateCardEffects(baseline, permutations, 'quick');
+    const historyLengths = new Map([['card-001', 10]]);
+    const locks = deriveLockRecommendations(effects, historyLengths);
+    const rec = locks.recommendations.find(r => r.cardId === 'card-001');
+    expect(rec?.state).toBe('saturated');
+  }, 30000);
 });

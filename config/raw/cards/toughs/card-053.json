@@ -1,7 +1,8 @@
 {
   "id": "card-053",
-  "type": "crew",
-  "displayName": "Mateo \"Hustler\" Herrera",
+  "kind": "tough",
+  "name": "Mateo \"Hustler\" Herrera",
+  "tagline": "Smiles like a man with a plan.",
   "archetype": "hustler",
   "affiliation": "iron_devils",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     7
   ],
-  "abilityText": "On play: swap 1 card from your hand with 1 from your reserves",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On play: swap 1 card from your hand with 1 from your stack"
+  ],
   "unlocked": false,
-  "unlockCondition": "Kill 11 vanguards total",
+  "unlockCondition": "Kill 11 top toughs total",
   "locked": false,
-  "draft": true,
-  "tagline": "Smiles like a man with a plan."
+  "draft": true
 }

@@ -1,7 +1,8 @@
 {
   "id": "card-084",
-  "type": "crew",
-  "displayName": "Rico \"Fats\" Liu",
+  "kind": "tough",
+  "name": "Rico \"Fats\" Liu",
+  "tagline": "Liquidates the uncomfortable.",
   "archetype": "fence",
   "affiliation": "jade_dragon",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     9
   ],
-  "abilityText": "On sacrifice: draw 2 cards instead of healing",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On sacrifice: draw 2 cards instead of healing"
+  ],
   "unlocked": false,
   "unlockCondition": "Win a game in under 14 turns",
   "locked": false,
-  "draft": true,
-  "tagline": "Liquidates the uncomfortable."
+  "draft": true
 }

@@ -1,7 +1,8 @@
 {
   "id": "card-003",
-  "type": "crew",
-  "displayName": "Zhao \"Lookout\" Sullivan",
+  "kind": "tough",
+  "name": "Zhao \"Lookout\" Sullivan",
+  "tagline": "Knows when to call you back.",
   "archetype": "lookout",
   "affiliation": "reapers",
   "power": [
@@ -16,10 +17,13 @@
     5,
     6
   ],
-  "abilityText": "On play: peek at the top 2 cards of your own deck, reorder them",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On play: peek at the top 2 cards of your own deck, reorder them"
+  ],
   "unlocked": true,
-  "unlockCondition": null,
   "locked": false,
-  "draft": true,
-  "tagline": "Knows when to call you back."
+  "draft": true
 }

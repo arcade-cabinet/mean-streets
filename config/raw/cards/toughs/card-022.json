@@ -1,7 +1,8 @@
 {
   "id": "card-022",
-  "type": "crew",
-  "displayName": "Mickey \"Wheelman\" Ramos",
+  "kind": "tough",
+  "name": "Mickey \"Wheelman\" Ramos",
+  "tagline": "Idles hot and always ready.",
   "archetype": "wheelman",
   "affiliation": "black_market",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     4
   ],
-  "abilityText": "On play: swap your vanguard with any card in your active hand (vanguard goes to hand at current HP)",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On play: swap your top tough with any card in your hand (top tough goes to hand at current HP)"
+  ],
   "unlocked": false,
   "unlockCondition": "Win 1 games with a full Freelance deck",
   "locked": false,
-  "draft": true,
-  "tagline": "Idles hot and always ready."
+  "draft": true
 }

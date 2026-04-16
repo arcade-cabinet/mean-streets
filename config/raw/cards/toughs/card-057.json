@@ -1,7 +1,8 @@
 {
   "id": "card-057",
-  "type": "crew",
-  "displayName": "Isabella \"Rust\" Kwon",
+  "kind": "tough",
+  "name": "Isabella \"Rust\" Kwon",
+  "tagline": "Cleans up what others leave behind.",
   "archetype": "fixer",
   "affiliation": "jade_dragon",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     6
   ],
-  "abilityText": "On play: change one card in your active stack's affiliation to match this card's for the round",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On play: change one card in your stack's affiliation to match this card's for the round"
+  ],
   "unlocked": false,
-  "unlockCondition": "Win without using any reserves",
+  "unlockCondition": "Win without discarding any cards",
   "locked": false,
-  "draft": true,
-  "tagline": "Cleans up what others leave behind."
+  "draft": true
 }

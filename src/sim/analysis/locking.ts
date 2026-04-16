@@ -1,7 +1,7 @@
 import { TURF_SIM_CONFIG } from '../turf/ai';
 import type { EffectAnalysisReport } from './effects';
 
-export type LockState = 'unmeasured' | 'unstable' | 'provisionally_stable' | 'locked';
+export type LockState = 'unmeasured' | 'unstable' | 'provisionally_stable' | 'locked' | 'saturated';
 
 export interface LockRecommendation {
   cardId: string;
@@ -21,49 +21,111 @@ export interface LockSummary {
   unstable: number;
   provisionallyStable: number;
   locked: number;
-  runnerReserveStartRiskCards: string[];
+  saturated: number;
   volatilityOnlyUnstableCards: string[];
+}
+
+const RARITY_STAT_BANDS: Record<string, { max: number }> = {
+  common: { max: 5 },
+  rare: { max: 8 },
+  legendary: { max: 12 },
+};
+
+function statExceedsRarityBand(
+  rarity: string | undefined,
+  stat: number,
+): boolean {
+  if (!rarity) return false;
+  const band = RARITY_STAT_BANDS[rarity];
+  if (!band) return false;
+  return stat > band.max;
 }
 
 export function deriveLockRecommendations(
   effectReport: EffectAnalysisReport,
+  historyLengths?: Map<string, number>,
+  rarities?: Map<string, string>,
+  /**
+   * Optional map of card ID → current primary stat (power for toughs and
+   * most modifiers, resistance for resistance-oriented cards). When
+   * supplied alongside `rarities`, the lock analyzer can flag cards whose
+   * authored stats drift outside their declared rarity band. Without this
+   * map, the rarity-band check is skipped rather than fabricated from
+   * winrate (the prior heuristic produced nonsense values).
+   */
+  stats?: Map<string, number>,
 ): LockAnalysisReport {
   const thresholds = TURF_SIM_CONFIG.statisticalThresholds;
-  const minimumSweepSamples = TURF_SIM_CONFIG.analysisProfiles[effectReport.analysisProfile].minimumSweepSamples;
-  const reserveStartRiskMax = thresholds.effectDeltaMax;
+  const minimumSweepSamples =
+    TURF_SIM_CONFIG.analysisProfiles[effectReport.analysisProfile].minimumSweepSamples;
+  const maxHistory = (
+    TURF_SIM_CONFIG as { autobalance?: { maxHistoryLength?: number } }
+  ).autobalance?.maxHistoryLength ?? 8;
 
   const recommendations = effectReport.cardEffects.map(effect => {
     const reasons: string[] = [];
     let state: LockState = 'provisionally_stable';
 
+    const histLen = historyLengths?.get(effect.cardId) ?? 0;
+    if (histLen >= maxHistory) {
+      state = 'saturated';
+      reasons.push(`history length ${histLen} >= ${maxHistory} (saturated)`);
+      return { cardId: effect.cardId, state, reasons };
+    }
+
     if (effect.sampleCount < minimumSweepSamples) {
       state = 'unmeasured';
       reasons.push(`sampleCount ${effect.sampleCount} below ${minimumSweepSamples}`);
     }
+
     if (Math.abs(effect.winRateDelta) > thresholds.effectDeltaMax) {
       state = 'unstable';
-      reasons.push(`winRateDelta ${effect.winRateDelta.toFixed(4)} exceeds ${thresholds.effectDeltaMax}`);
+      reasons.push(
+        `winRateDelta ${effect.winRateDelta.toFixed(4)} exceeds ${thresholds.effectDeltaMax}`,
+      );
     }
+
     if (Math.abs(effect.medianTurnDelta) > thresholds.turnDeltaMax) {
       state = 'unstable';
-      reasons.push(`turnDelta ${effect.medianTurnDelta.toFixed(4)} exceeds ${thresholds.turnDeltaMax}`);
+      reasons.push(
+        `turnDelta ${effect.medianTurnDelta.toFixed(4)} exceeds ${thresholds.turnDeltaMax}`,
+      );
     }
+
     if (effect.volatility > thresholds.volatilityMax) {
       state = 'unstable';
-      reasons.push(`volatility ${effect.volatility.toFixed(4)} exceeds ${thresholds.volatilityMax}`);
+      reasons.push(
+        `volatility ${effect.volatility.toFixed(4)} exceeds ${thresholds.volatilityMax}`,
+      );
     }
-    if (effect.significant && Math.abs(effect.winRateDelta) > thresholds.interactionRiskMax) {
-      state = 'unstable';
-      reasons.push(`significant interaction risk ${effect.winRateDelta.toFixed(4)} exceeds ${thresholds.interactionRiskMax}`);
-    }
-    if (effect.runnerReserveStartUseRateDelta < -reserveStartRiskMax) {
+
+    if (
+      effect.significant &&
+      Math.abs(effect.winRateDelta) > thresholds.interactionRiskMax
+    ) {
       state = 'unstable';
       reasons.push(
-        `runner reserve-start rate ${effect.runnerReserveStartUseRateDelta.toFixed(4)} below -${reserveStartRiskMax.toFixed(4)}`,
+        `significant interaction risk ${effect.winRateDelta.toFixed(4)} exceeds ${thresholds.interactionRiskMax}`,
       );
-    } else if (effect.runnerReserveStartUseRateDelta < 0) {
-      reasons.push(`runner reserve-start rate regressed by ${effect.runnerReserveStartUseRateDelta.toFixed(4)}`);
     }
+
+    const rarity = rarities?.get(effect.cardId);
+    const currentStat = stats?.get(effect.cardId);
+    // Both rarity AND stat must be known to evaluate the band. Prior
+    // impl used `rarity!` in the reason string, relying on the
+    // implicit truthiness inside statExceedsRarityBand — fragile.
+    if (
+      rarity !== undefined &&
+      currentStat !== undefined &&
+      statExceedsRarityBand(rarity, currentStat)
+    ) {
+      if (state === 'provisionally_stable') state = 'unstable';
+      const band = RARITY_STAT_BANDS[rarity];
+      reasons.push(
+        `stat ${currentStat} exceeds rarity band for ${rarity} (max ${band?.max ?? '?'})`,
+      );
+    }
+
     if (state === 'provisionally_stable' && !effect.significant) {
       state = 'locked';
       reasons.push('effect within thresholds and no significant outlier signal');
@@ -79,19 +141,21 @@ export function deriveLockRecommendations(
   };
 }
 
-export function summarizeLockRecommendations(report: LockAnalysisReport): LockSummary {
+export function summarizeLockRecommendations(
+  report: LockAnalysisReport,
+): LockSummary {
   const summary: LockSummary = {
     totalCards: report.recommendations.length,
     unmeasured: 0,
     unstable: 0,
     provisionallyStable: 0,
     locked: 0,
-    runnerReserveStartRiskCards: [],
+    saturated: 0,
     volatilityOnlyUnstableCards: [],
   };
 
-  for (const recommendation of report.recommendations) {
-    switch (recommendation.state) {
+  for (const rec of report.recommendations) {
+    switch (rec.state) {
       case 'unmeasured':
         summary.unmeasured++;
         break;
@@ -104,16 +168,16 @@ export function summarizeLockRecommendations(report: LockAnalysisReport): LockSu
       case 'locked':
         summary.locked++;
         break;
-    }
-    if (recommendation.reasons.some(reason => reason.includes('runner reserve-start rate'))) {
-      summary.runnerReserveStartRiskCards.push(recommendation.cardId);
+      case 'saturated':
+        summary.saturated++;
+        break;
     }
     if (
-      recommendation.state === 'unstable' &&
-      recommendation.reasons.length > 0 &&
-      recommendation.reasons.every(reason => reason.includes('volatility'))
+      rec.state === 'unstable' &&
+      rec.reasons.length > 0 &&
+      rec.reasons.every(r => r.includes('volatility'))
     ) {
-      summary.volatilityOnlyUnstableCards.push(recommendation.cardId);
+      summary.volatilityOnlyUnstableCards.push(rec.cardId);
     }
   }
 

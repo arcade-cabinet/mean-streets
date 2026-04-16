@@ -1,27 +1,6 @@
 import { expect, test } from '@playwright/test';
-import type { Locator, Page, TestInfo } from '@playwright/test';
-
-/**
- * Accessibility smoke — a tap-only playthrough must successfully
- * complete the deckbuilder autofill + save + start flow, using only
- * tap/click with no drag operations. This exercises the tap-to-arm
- * DragContext path (src/ui/dnd/DragContext.tsx) and the keyboard/tap
- * equivalents for every drag interaction.
- *
- * Also asserts that every top-level interactive element on the
- * main menu and the deckbuilder exposes a visible name so screen
- * readers can announce them.
- */
-
-async function tap(target: Locator, testInfo: TestInfo) {
-  await target.waitFor({ state: 'visible' });
-  await target.scrollIntoViewIfNeeded().catch(() => undefined);
-  if (testInfo.project.use.hasTouch) {
-    await target.tap({ force: true });
-    return;
-  }
-  await target.click({ force: true });
-}
+import type { Page } from '@playwright/test';
+import { activate as tap } from './helpers/activate';
 
 async function assertHasAccessibleName(page: Page, testId: string) {
   const el = page.getByTestId(testId);
@@ -45,54 +24,34 @@ async function assertHasAccessibleName(page: Page, testId: string) {
   expect(name.length, `${testId} must expose an accessible name`).toBeGreaterThan(0);
 }
 
-test('tap-only flow completes a deck build and game start without drag', async ({ page }, testInfo) => {
+test('tap-only flow completes menu → difficulty → game start without drag', async ({ page }, testInfo) => {
   await page.goto('/');
   await expect(page.getByTestId('main-menu-screen')).toBeVisible();
 
-  // Every top-level menu control exposes an accessible name.
   await assertHasAccessibleName(page, 'new-game-button');
   await assertHasAccessibleName(page, 'load-game-button');
+  await assertHasAccessibleName(page, 'collection-button');
+  await assertHasAccessibleName(page, 'open-pack-button');
 
   await tap(page.getByTestId('new-game-button'), testInfo);
   await expect(page.getByRole('heading', { name: 'Rules' })).toBeVisible();
   await tap(page.getByTestId('close-rules-button'), testInfo);
 
-  // Garage or deckbuilder — reach the deckbuilder.
-  const garageVisible = await page
-    .getByTestId('deck-garage-screen')
-    .isVisible({ timeout: 2000 })
-    .catch(() => false);
-  if (garageVisible) {
-    await tap(page.getByTestId('new-deck-button'), testInfo);
-  }
-  await expect(page.getByTestId('deckbuilder-screen')).toBeVisible();
+  await expect(page.getByTestId('difficulty-screen')).toBeVisible();
 
-  // Deckbuilder's auto-build is the tap-only equivalent of hand-packing —
-  // every drag target has a non-drag path because the auto-build covers
-  // the same selection space.
-  await assertHasAccessibleName(page, 'auto-build-button');
-  await assertHasAccessibleName(page, 'save-deck-button');
+  await assertHasAccessibleName(page, 'diff-start');
 
-  await tap(page.getByTestId('auto-build-button'), testInfo);
-  await expect(page.getByTestId('start-game-button')).toBeEnabled();
+  await tap(page.getByTestId('diff-tile-easy'), testInfo);
+  await tap(page.getByTestId('diff-start'), testInfo);
 
-  // Tap-only save path: name the deck via a text input (keyboard-
-  // accessible), then tap Save.
-  const nameInput = page.getByTestId('deck-name-input');
-  await nameInput.focus();
-  await nameInput.fill('Accessibility Run');
-  await tap(page.getByTestId('save-deck-button'), testInfo);
-
-  // Start the game — still tap-only.
-  await tap(page.getByTestId('start-game-button'), testInfo);
-  await expect(page.getByTestId('buildup-screen')).toBeVisible({ timeout: 5000 });
+  await expect(page.getByTestId('game-screen')).toBeVisible({ timeout: 10_000 });
+  await assertHasAccessibleName(page, 'action-end_turn');
 });
 
 test('main menu structure exposes a main landmark', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByTestId('main-menu-screen')).toBeVisible();
 
-  // A main landmark, or an <h1>, anchors the page for screen readers.
   const hasLandmark = await page.evaluate(() => {
     return Boolean(
       document.querySelector('main') ||
@@ -101,4 +60,46 @@ test('main menu structure exposes a main landmark', async ({ page }) => {
     );
   });
   expect(hasLandmark, 'main menu should expose a landmark or h1').toBe(true);
+});
+
+test('difficulty screen exposes a main landmark', async ({ page }) => {
+  await page.goto('/?fixture=difficulty');
+  await expect(page.getByTestId('difficulty-screen')).toBeVisible();
+
+  const hasLandmark = await page.evaluate(() => {
+    return Boolean(
+      document.querySelector('main') ||
+        document.querySelector('[role="main"]') ||
+        document.querySelector('h1'),
+    );
+  });
+  expect(hasLandmark, 'difficulty screen should expose a landmark or h1').toBe(true);
+});
+
+test('pack opening is keyboard navigable', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.use.hasTouch === true, 'keyboard test — desktop only');
+
+  await page.goto('/');
+  await expect(page.getByTestId('main-menu-screen')).toBeVisible();
+  await page.getByTestId('open-pack-button').click();
+  await expect(page.getByTestId('pack-opening-screen')).toBeVisible();
+
+  const openBtn = page.getByTestId('pack-open-btn');
+  await expect(openBtn).toBeVisible();
+  await openBtn.focus();
+  await page.keyboard.press('Enter');
+
+  await expect(page.getByTestId('pack-reveal-stage')).toBeVisible({ timeout: 5_000 });
+
+  // Press Space up to 10 times to advance through every revealed card.
+  // Stop as soon as `pack-done-btn` appears — no hardcoded sleeps;
+  // waiting on the actual state change is both faster and more robust
+  // to reveal-animation timing drift across CI runners.
+  const summaryBtn = page.getByTestId('pack-done-btn');
+  for (let i = 0; i < 10; i++) {
+    if (await summaryBtn.isVisible().catch(() => false)) break;
+    await page.keyboard.press('Space');
+  }
+
+  await expect(summaryBtn).toBeVisible({ timeout: 5_000 });
 });

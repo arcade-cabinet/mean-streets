@@ -1,7 +1,8 @@
 {
   "id": "card-071",
-  "type": "crew",
-  "displayName": "Kim \"Nails\" Hayashi",
+  "kind": "tough",
+  "name": "Kim \"Nails\" Hayashi",
+  "tagline": "Patient as a Friday night.",
   "archetype": "shark",
   "affiliation": "black_market",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     5
   ],
-  "abilityText": "+1 damage for every point of damage already on the enemy vanguard",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "+1 damage for every point of damage already on the enemy top tough"
+  ],
   "unlocked": false,
   "unlockCondition": "Win 5 games",
   "locked": false,
-  "draft": true,
-  "tagline": "Patient as a Friday night."
+  "draft": true
 }

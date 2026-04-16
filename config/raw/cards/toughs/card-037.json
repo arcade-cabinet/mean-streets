@@ -1,7 +1,8 @@
 {
   "id": "card-037",
-  "type": "crew",
-  "displayName": "Lola \"Smoke\" Diaz",
+  "kind": "tough",
+  "name": "Lola \"Smoke\" Diaz",
+  "tagline": "Your rules do not apply here.",
   "archetype": "bruiser",
   "affiliation": "los_diablos",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     1
   ],
-  "abilityText": "Deals +2 damage when attacking a target with lower ATK than this card",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "Deals +2 damage when attacking a target with lower power than this card"
+  ],
   "unlocked": false,
-  "unlockCondition": "Win without using any reserves",
+  "unlockCondition": "Win without discarding any cards",
   "locked": false,
-  "draft": true,
-  "tagline": "Your rules do not apply here."
+  "draft": true
 }

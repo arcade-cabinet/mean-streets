@@ -1,7 +1,8 @@
 {
   "id": "card-029",
-  "type": "crew",
-  "displayName": "Gino \"Hustler\" Nguyen",
+  "kind": "tough",
+  "name": "Gino \"Hustler\" Nguyen",
+  "tagline": "Turns nothing into something, twice.",
   "archetype": "hustler",
   "affiliation": "kings_row",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     4
   ],
-  "abilityText": "On play: swap 1 card from your hand with 1 from your reserves",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On play: swap 1 card from your hand with 1 from your stack"
+  ],
   "unlocked": false,
   "unlockCondition": "Deal 33 total damage in a single game",
   "locked": false,
-  "draft": true,
-  "tagline": "Turns nothing into something, twice."
+  "draft": true
 }

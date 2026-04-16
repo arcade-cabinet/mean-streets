@@ -1,7 +1,8 @@
 {
   "id": "card-085",
-  "type": "crew",
-  "displayName": "Rocco \"Ghost\" Caruso",
+  "kind": "tough",
+  "name": "Rocco \"Ghost\" Caruso",
+  "tagline": "Never learned to pull a punch.",
   "archetype": "bruiser",
   "affiliation": "freelance",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     7
   ],
-  "abilityText": "Deals +2 damage when attacking a target with lower ATK than this card",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "Deals +2 damage when attacking a target with lower power than this card"
+  ],
   "unlocked": false,
   "unlockCondition": "Win a game using only cards from 2 affiliations",
   "locked": false,
-  "draft": true,
-  "tagline": "Never learned to pull a punch."
+  "draft": true
 }

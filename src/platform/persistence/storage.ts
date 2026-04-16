@@ -12,7 +12,6 @@ export interface DeckLoadout {
   name: string;
   crewIds: string[];
   modifierIds: string[];
-  backpackIds?: string[];
   updatedAt: string;
 }
 

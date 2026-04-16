@@ -1,15 +1,21 @@
 {
   "id": "drug-47",
-  "type": "product",
+  "kind": "drug",
   "name": "Void End",
   "category": "narcotic",
-  "potency": [
+  "power": [
     1
   ],
-  "offenseAbility": "BERSERK",
-  "offenseAbilityText": "Crew power boosted by potency but takes 1 self-damage after attacking.",
-  "defenseAbility": "PAINKILLERS",
-  "defenseAbilityText": "Crew survives next potency killing blows at 1 resistance instead of dying.",
+  "resistance": [
+    1
+  ],
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "BERSERK",
+    "PAINKILLERS"
+  ],
   "unlocked": false,
   "unlockCondition": "Win without using steroids",
   "locked": false,

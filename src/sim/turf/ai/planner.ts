@@ -1,303 +1,209 @@
 // @ts-expect-error Yuka does not ship TypeScript declarations
-import { CompositeGoal, Goal, GoalEvaluator, Think } from 'yuka';
-import { createObservation, enumerateLegalActions } from '../environment';
+import { Think } from 'yuka';
+import { hasToughOnTurf, positionPower, positionResistance } from '../board';
+import { createObservation, enumerateLegalActions } from '../env-query';
 import type {
-  PlannerMemory,
   PlannerTrace,
   TurfAction,
   TurfGameState,
-  TurfObservation,
   TurfPolicyArtifact,
 } from '../types';
-import { scoreAction, describeActionForTrace } from './scoring';
+import { TURF_SIM_CONFIG } from './config';
+import {
+  goal,
+  type PlannerOwner,
+  scoreAll,
+  TurfGoalEvaluator,
+} from './planner-goals';
+import { selectAction } from './policy';
 
-type GoalName =
-  | 'recover_flank'
-  | 'finish_seizure'
-  | 'funded_pressure'
-  | 'lane_pressure'
-  | 'economy_setup'
-  | 'hold_defense'
-  | 'anti_stall';
-
-interface PlannerOwner {
-  brain: Think;
-  state: TurfGameState;
-  side: 'A' | 'B';
-  observation: TurfObservation;
-  memory: PlannerMemory;
-  policyArtifact?: TurfPolicyArtifact;
-  legalActions: TurfAction[];
-  selectedGoal: GoalName | null;
-  selectedAction: TurfAction | null;
-  policyUsed: boolean;
-  consideredGoals: Array<{ goal: GoalName; score: number }>;
-  actionScores: Array<{ action: string; score: number }>;
-  replanReason: string;
+// Does the player own at least one turf where a retreat would shield a
+// weak top tough with a sturdier face-up one beneath it?
+function hasRetreatUpside(state: TurfGameState, side: 'A' | 'B'): boolean {
+  for (const turf of state.players[side].turfs) {
+    if (turf.stack.length < 2) continue;
+    const top = turf.stack[turf.stack.length - 1].card;
+    if (top.kind !== 'tough') continue;
+    for (let i = 0; i < turf.stack.length - 1; i++) {
+      if (!turf.stack[i].faceUp) continue;
+      const c = turf.stack[i].card;
+      if (c.kind !== 'tough') continue;
+      if (c.resistance + c.power > top.resistance + top.power) return true;
+    }
+  }
+  return false;
 }
 
-class TurfGoalEvaluator extends GoalEvaluator {
-  constructor(
-    private readonly goalName: GoalName,
-    bias: number,
-    private readonly desirabilityFn: (owner: PlannerOwner) => number,
-    private readonly goalFactory: (owner: PlannerOwner) => CompositeGoal,
-  ) {
-    super(bias);
-  }
-
-  override calculateDesirability(owner: PlannerOwner): number {
-    const score = this.desirabilityFn(owner);
-    owner.consideredGoals.push({ goal: this.goalName, score });
-    return score;
-  }
-
-  override setGoal(owner: PlannerOwner): void {
-    const brain = owner.brain;
-    const current = brain.currentSubgoal() as CompositeGoal | null;
-    const nextGoal = this.goalFactory(owner) as OrderedActionGoal;
-    const currentName = current && 'goalName' in current ? (current as OrderedActionGoal).goalName : null;
-    if (!current || currentName !== nextGoal.goalName) {
-      brain.clearSubgoals();
-      brain.addSubgoal(nextGoal);
-      owner.replanReason = current ? `switch:${owner.selectedGoal ?? 'none'}->${this.goalName}` : `activate:${this.goalName}`;
-    } else {
-      owner.replanReason = `retain:${this.goalName}`;
-    }
-    owner.selectedGoal = this.goalName;
-  }
+function underPressure(state: TurfGameState, side: 'A' | 'B'): boolean {
+  const me = state.players[side];
+  const opp = state.players[side === 'A' ? 'B' : 'A'];
+  let myMax = 0;
+  for (const t of me.turfs)
+    if (hasToughOnTurf(t)) myMax = Math.max(myMax, positionResistance(t));
+  let oppMax = 0;
+  for (const t of opp.turfs)
+    if (hasToughOnTurf(t)) oppMax = Math.max(oppMax, positionPower(t));
+  return oppMax > myMax + 1;
 }
 
-class ChooseActionGoal extends Goal {
-  constructor(
-    owner: PlannerOwner,
-    private readonly goalName: GoalName,
-    private readonly allowedKinds: TurfAction['kind'][],
-  ) {
-    super(owner);
-  }
-
-  override activate(): void {
-    this.status = Goal.STATUS.ACTIVE;
-  }
-
-  override execute(): void {
-    const owner = this.owner as PlannerOwner;
-    const candidates = owner.legalActions.filter(action => this.allowedKinds.includes(action.kind));
-    if (candidates.length === 0) {
-      this.status = Goal.STATUS.FAILED;
-      return;
-    }
-
-    const scored = candidates
-      .map(action => {
-        const result = scoreAction(owner.state, owner.observation, owner.memory, action, owner.policyArtifact);
-        return {
-          action,
-          score: result.score,
-          policyUsed: result.policyUsed,
-        };
-      })
-      .sort((a, b) => b.score - a.score);
-
-    owner.actionScores.push(...scored.slice(0, 4).map(entry => ({
-      action: describeActionForTrace(entry.action),
-      score: Number(entry.score.toFixed(4)),
-    })));
-
-    const best = scored[0];
-    if (!best) {
-      this.status = Goal.STATUS.FAILED;
-      return;
-    }
-
-    owner.selectedGoal = this.goalName;
-    owner.selectedAction = best.action;
-    owner.policyUsed = owner.policyUsed || best.policyUsed;
-    this.status = Goal.STATUS.COMPLETED;
-  }
-}
-
-class OrderedActionGoal extends CompositeGoal {
-  constructor(
-    owner: PlannerOwner,
-    readonly goalName: GoalName,
-    private readonly priorities: Array<TurfAction['kind'] | TurfAction['kind'][]>,
-  ) {
-    super(owner);
-  }
-
-  override activate(): void {
-    this.clearSubgoals();
-    for (const kinds of this.priorities) {
-      this.addSubgoal(new ChooseActionGoal(
-        this.owner as PlannerOwner,
-        this.goalName,
-        Array.isArray(kinds) ? kinds : [kinds],
-      ));
-    }
-    this.status = Goal.STATUS.ACTIVE;
-  }
-
-  override execute(): void {
-    this.activateIfInactive();
-    let status = Goal.STATUS.ACTIVE;
-    while (this.hasSubgoals() && !(this.owner as PlannerOwner).selectedAction) {
-      status = this.executeSubgoals();
-      if (status === Goal.STATUS.ACTIVE) break;
-    }
-    if ((this.owner as PlannerOwner).selectedAction) {
-      this.status = Goal.STATUS.COMPLETED;
-    } else {
-      this.status = status === Goal.STATUS.FAILED ? Goal.STATUS.FAILED : Goal.STATUS.ACTIVE;
-    }
-  }
-
-  override terminate(): void {
-    this.clearSubgoals();
-  }
+function cashOnBoard(state: TurfGameState, side: 'A' | 'B'): number {
+  let total = 0;
+  for (const t of state.players[side].turfs)
+    for (const sc of t.stack)
+      if (sc.card.kind === 'currency') total += sc.card.denomination;
+  return total;
 }
 
 function buildThink(owner: PlannerOwner): Think {
   const brain = new Think(owner);
   owner.brain = brain;
-  const setupNeedsModifiers = owner.observation.ownCrewCount >= 2
-    && (owner.observation.handCash + owner.observation.handProducts + owner.observation.handWeapons > 0);
-  const bias = {
-    recover_flank: 1.15,
-    finish_seizure: 1.25,
-    funded_pressure: 1.24,
-    lane_pressure: 1.1,
-    economy_setup: 1.0,
-    hold_defense: 1.05,
-    anti_stall: 1.2,
-  };
-  const factories: Record<GoalName, () => OrderedActionGoal> = {
-    recover_flank: () => new OrderedActionGoal(owner, 'recover_flank', ['reclaim', 'stack_cash', 'place_crew', 'stack_product', 'direct_attack']),
-    finish_seizure: () => new OrderedActionGoal(owner, 'finish_seizure', [['pushed_attack', 'funded_attack', 'direct_attack']]),
-    funded_pressure: () => new OrderedActionGoal(
-      owner,
-      'funded_pressure',
-      owner.observation.ownReadyPushed === 0 && owner.observation.handProducts > 0
-        ? [['stack_product', 'funded_attack', 'direct_attack'], 'arm_weapon', 'stack_cash', 'reclaim']
-        : [['funded_attack', 'direct_attack'], 'arm_weapon', 'stack_cash', 'reclaim'],
+  const obs = owner.observation;
+  const pl = TURF_SIM_CONFIG.aiPlanner;
+  const player = owner.state.players[owner.side];
+  const pendingKind = player.pending?.kind ?? null;
+  const hasPending = pendingKind !== null;
+  const canDraw = !hasPending && player.deck.length > 0;
+
+  // draw_tempo — refill when the pending slot is open and deck/budget allow.
+  brain.addEvaluator(
+    new TurfGoalEvaluator(
+      'draw_tempo',
+      1.05,
+      () => {
+        if (!canDraw) return 0;
+        const deckFactor = Math.min(1, player.deck.length / 10);
+        const budgetFactor = player.actionsRemaining >= 2 ? 1 : 0.4;
+        const emptyBoard = player.toughsInPlay === 0 ? 0.5 : 0;
+        return 0.6 * deckFactor * budgetFactor + emptyBoard;
+      },
+      () => goal(owner, 'draw_tempo', ['draw', 'end_turn']),
     ),
-    lane_pressure: () => new OrderedActionGoal(owner, 'lane_pressure', [['pushed_attack', 'funded_attack', 'direct_attack'], 'arm_weapon', 'stack_product', 'stack_cash']),
-    economy_setup: () => {
-      // RULES.md §7 runner contract (Epic E2): when we hold a backpack
-      // and have no reserve yet, promote `place_reserve_crew` to the
-      // front of the ordered kinds so the first stage of the runner
-      // contract actually executes. Without this the planner always
-      // picks active placement or a modifier stack first.
-      const player = owner.state.players[owner.side];
-      const reserveCrewCount = player.board.reserve.filter((pos) => pos.crew !== null).length;
-      const needsReserveOpener =
-        owner.observation.handBackpacks > 0
-        && owner.observation.stagedBackpacks === 0
-        && owner.observation.activeRunners === 0
-        && reserveCrewCount === 0;
+  );
 
-      if (needsReserveOpener) {
-        return new OrderedActionGoal(
-          owner,
-          'economy_setup',
-          ['place_reserve_crew', 'deploy_payload', 'equip_backpack', 'deploy_runner', 'stack_cash', 'stack_product', 'arm_weapon', 'place_crew'],
+  // build_stack — drop the pending card somewhere it helps.
+  brain.addEvaluator(
+    new TurfGoalEvaluator(
+      'build_stack',
+      pl.buildStack.bias,
+      () => {
+        if (!hasPending) return 0;
+        const isTough = pendingKind === 'tough';
+        const base =
+          pl.buildStack.base + (isTough ? pl.buildStack.perToughWeight : 0.2);
+        const desperation =
+          obs.ownToughsInPlay === 0 ? pl.buildStack.noToughsDesperation : 0;
+        return base + desperation;
+      },
+      () => goal(owner, 'build_stack', ['play_card', 'discard', 'end_turn']),
+    ),
+  );
+
+  // retreat_shield — swap a weaker top tough with a stronger face-up one.
+  brain.addEvaluator(
+    new TurfGoalEvaluator(
+      'retreat_shield',
+      1.0,
+      () => {
+        if (!hasRetreatUpside(owner.state, owner.side)) return 0;
+        return underPressure(owner.state, owner.side) ? 1.1 : 0.45;
+      },
+      () => goal(owner, 'retreat_shield', ['retreat', 'end_turn']),
+    ),
+  );
+
+  brain.addEvaluator(
+    new TurfGoalEvaluator(
+      'direct_pressure',
+      pl.directPressure.bias,
+      () => {
+        if (obs.ownToughsInPlay === 0 || obs.opponentToughsInPlay === 0)
+          return 0;
+        const margin = obs.ownPower - obs.opponentDefense;
+        return (
+          pl.directPressure.base +
+          Math.max(0, margin) * pl.directPressure.marginScale +
+          (obs.opponentTurfCount <= 1 ? pl.directPressure.lastTurfBonus : 0)
         );
-      }
-      return new OrderedActionGoal(
-        owner,
-        'economy_setup',
-        setupNeedsModifiers
-          ? owner.observation.ownReadyFunded > 0
-            && owner.observation.ownReadyPushed === 0
-            && owner.observation.handProducts > 0
-            ? ['deploy_payload', 'equip_backpack', 'deploy_runner', 'stack_product', 'stack_cash', 'arm_weapon', 'place_crew', 'place_reserve_crew']
-            : ['deploy_payload', 'equip_backpack', 'deploy_runner', 'stack_cash', 'stack_product', 'arm_weapon', 'place_crew', 'place_reserve_crew']
-          : ['deploy_payload', 'place_crew', 'place_reserve_crew', 'equip_backpack', 'deploy_runner', 'stack_cash', 'stack_product', 'arm_weapon'],
-      );
-    },
-    hold_defense: () => new OrderedActionGoal(owner, 'hold_defense', ['stack_product', 'arm_weapon', 'stack_cash', 'reclaim', 'direct_attack']),
-    anti_stall: () => new OrderedActionGoal(owner, 'anti_stall', ['place_crew', 'stack_cash', 'stack_product', 'direct_attack', 'pass']),
-  };
+      },
+      () =>
+        goal(owner, 'direct_pressure', [
+          ['direct_strike', 'pushed_strike', 'funded_recruit'],
+          'play_card',
+          'draw',
+          'end_turn',
+        ]),
+    ),
+  );
 
-  brain.addEvaluator(new TurfGoalEvaluator(
-    'recover_flank',
-    bias.recover_flank,
-    currentOwner => currentOwner.observation.ownSeized > 0 ? 0.8 + currentOwner.observation.ownSeized + currentOwner.memory.consecutivePasses * 0.2 : 0,
-    () => factories.recover_flank(),
-  ));
-  brain.addEvaluator(new TurfGoalEvaluator(
-    'finish_seizure',
-    bias.finish_seizure,
-    currentOwner => currentOwner.observation.opponentSeized >= currentOwner.state.config.positionCount - 1
-      || currentOwner.observation.ownReadyPushed > 0
-      ? 0.9 + currentOwner.observation.ownReadyPushed + currentOwner.observation.ownReadyFunded * 0.5
-      : 0.2,
-    () => factories.finish_seizure(),
-  ));
-  brain.addEvaluator(new TurfGoalEvaluator(
-    'funded_pressure',
-    bias.funded_pressure,
-    currentOwner => currentOwner.observation.ownReadyFunded > 0 && currentOwner.observation.ownReadyPushed === 0
-      ? 1.1
-        + currentOwner.observation.ownReadyFunded * 1.1
-        + currentOwner.observation.handWeapons * 0.2
-        + (currentOwner.memory.focusRole === 'funded' ? 0.45 : 0)
-      : 0.05,
-    () => factories.funded_pressure(),
-  ));
-  brain.addEvaluator(new TurfGoalEvaluator(
-    'lane_pressure',
-    bias.lane_pressure,
-    currentOwner => currentOwner.state.phase === 'buildup'
-      ? 0.15 + currentOwner.observation.ownReadyFunded * 0.8 + currentOwner.observation.ownReadyDirect * 0.3
-      : 0.35
-        + currentOwner.observation.ownReadyDirect * 0.5
-        + currentOwner.observation.handCash * 0.1
-        + (currentOwner.observation.ownReadyPushed > 0 ? currentOwner.observation.ownReadyFunded * 0.5 : 0),
-    () => factories.lane_pressure(),
-  ));
-  brain.addEvaluator(new TurfGoalEvaluator(
-    'economy_setup',
-    bias.economy_setup,
-    currentOwner => currentOwner.state.phase === 'buildup'
-      ? 0.8
-        + currentOwner.observation.handCrew * 0.15
-        + currentOwner.observation.handCash * 0.18
-        + currentOwner.observation.handProducts * 0.22
-        + currentOwner.observation.handWeapons * 0.2
-        + (currentOwner.observation.ownCrewCount >= 2 ? 0.45 : 0)
-        + (currentOwner.state.buildupTurns[currentOwner.side] <= 4 ? 0.35 : 0)
-      : 0.2 + currentOwner.observation.handCrew * 0.1,
-    () => factories.economy_setup(),
-  ));
-  brain.addEvaluator(new TurfGoalEvaluator(
-    'hold_defense',
-    bias.hold_defense,
-    currentOwner => currentOwner.observation.opponentPower > currentOwner.observation.ownDefense
-      ? Math.max(
-        0.1,
-        0.6
-          + (currentOwner.observation.opponentPower - currentOwner.observation.ownDefense) / 5
-          - (
-            currentOwner.memory.focusRole === 'funded'
-            && currentOwner.observation.ownReadyFunded > 0
-            && currentOwner.observation.ownReadyPushed === 0
-              ? 0.45
-              : 0
-          ),
-      )
-      : 0.1,
-    () => factories.hold_defense(),
-  ));
-  brain.addEvaluator(new TurfGoalEvaluator(
-    'anti_stall',
-    bias.anti_stall,
-    currentOwner => currentOwner.memory.consecutivePasses >= 1 || Object.keys(currentOwner.memory.blockedLanes).length >= 2
-      ? 1 + currentOwner.memory.consecutivePasses * 0.4
-      : 0.15,
-    () => factories.anti_stall(),
-  ));
+  brain.addEvaluator(
+    new TurfGoalEvaluator(
+      'funded_pressure',
+      pl.fundedPressure.bias,
+      () => {
+        if (obs.ownToughsInPlay === 0 || obs.opponentToughsInPlay === 0)
+          return 0;
+        // v0.2: cash is on the board, not in hand.
+        const cash = cashOnBoard(owner.state, owner.side);
+        if (cash <= 0) return pl.fundedPressure.floor;
+        const units =
+          cash / TURF_SIM_CONFIG.aiScoring.currencyDenominationScale;
+        return (
+          pl.fundedPressure.baseWithCurrency +
+          units * pl.fundedPressure.perCurrencyWeight
+        );
+      },
+      () =>
+        goal(owner, 'funded_pressure', [
+          ['funded_recruit', 'direct_strike'],
+          'play_card',
+          'draw',
+          'end_turn',
+        ]),
+    ),
+  );
+
+  brain.addEvaluator(
+    new TurfGoalEvaluator(
+      'pushed_pressure',
+      pl.pushedPressure.bias,
+      () => {
+        if (obs.ownToughsInPlay === 0 || obs.opponentToughsInPlay === 0)
+          return 0;
+        return pl.pushedPressure.base;
+      },
+      () =>
+        goal(owner, 'pushed_pressure', [
+          ['pushed_strike', 'direct_strike'],
+          'play_card',
+          'draw',
+          'end_turn',
+        ]),
+    ),
+  );
+
+  brain.addEvaluator(
+    new TurfGoalEvaluator(
+      'anti_stall',
+      pl.antiStall.bias,
+      (o) => {
+        if (o.memory.consecutivePasses >= pl.antiStall.consecutivePassThreshold)
+          return (
+            pl.antiStall.base +
+            o.memory.consecutivePasses * pl.antiStall.perPassEscalation
+          );
+        return pl.antiStall.idleFloor;
+      },
+      () =>
+        goal(owner, 'anti_stall', [
+          'play_card',
+          'direct_strike',
+          'draw',
+          'retreat',
+          'discard',
+          'pass',
+        ]),
+    ),
+  );
 
   return brain;
 }
@@ -331,48 +237,41 @@ export function decideAction(
   brain.execute();
 
   if (!owner.selectedAction) {
-    const fallbackCandidates = legalActions
-      .filter(action => action.kind !== 'pass')
-      .map(action => {
-        const scored = scoreAction(state, observation, memory, action, policyArtifact);
-        return { action, score: scored.score, policyUsed: scored.policyUsed };
-      })
-      .sort((a, b) => b.score - a.score);
-
-    if (fallbackCandidates.length > 0) {
-      const best = fallbackCandidates[0];
+    const candidates = legalActions.filter(
+      (a) => a.kind !== 'pass' && a.kind !== 'end_turn',
+    );
+    const scored = scoreAll(owner, candidates);
+    const viable = scored.filter((s) => s.score > Number.NEGATIVE_INFINITY);
+    if (viable.length > 0) {
+      const best = selectAction(viable, state.config.difficulty, state.rng);
       owner.selectedAction = best.action;
       owner.selectedGoal = owner.selectedGoal ?? 'anti_stall';
       owner.policyUsed = owner.policyUsed || best.policyUsed;
-      if (owner.actionScores.length === 0) {
-        owner.actionScores.push(...fallbackCandidates.slice(0, 4).map(entry => ({
-          action: describeActionForTrace(entry.action),
-          score: Number(entry.score.toFixed(4)),
-        })));
-      }
-      owner.replanReason = owner.replanReason === 'initial'
-        ? 'global-fallback'
-        : `${owner.replanReason}|global-fallback`;
+      owner.replanReason =
+        owner.replanReason === 'initial'
+          ? 'global-fallback'
+          : `${owner.replanReason}|global-fallback`;
     }
   }
 
-  const action = owner.selectedAction ?? { kind: 'pass', side };
-  const switchedGoal = memory.lastGoal !== owner.selectedGoal;
+  const action = owner.selectedAction ?? { kind: 'end_turn' as const, side };
   const trace: PlannerTrace = {
     side,
     phase: state.phase,
     chosenGoal: owner.selectedGoal ?? 'anti_stall',
     previousGoal: memory.lastGoal,
-    switchedGoal,
+    switchedGoal: memory.lastGoal !== owner.selectedGoal,
     stateKey: observation.stateKey,
     legalActionCount: legalActions.length,
     chosenAction: action,
     consideredGoals: owner.consideredGoals.sort((a, b) => b.score - a.score),
-    actionScores: owner.actionScores.slice(0, 6),
+    actionScores: owner.actionScores.slice(
+      0,
+      TURF_SIM_CONFIG.aiPlanner.traceMaxActions,
+    ),
     policyUsed: owner.policyUsed,
     replanReason: owner.replanReason,
   };
-
   memory.lastGoal = trace.chosenGoal;
   return { action, trace };
 }

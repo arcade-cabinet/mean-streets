@@ -1,10 +1,14 @@
 import { join } from 'node:path';
 import { createRng } from '../cards/rng';
-import { generateTurfCardPools } from './catalog';
+import { generateTurfCardPools, type TurfCardPools } from './catalog';
 import { analyzeBalanceResults, loadBalanceHistory, type BalanceAnalysis } from './balance';
-import { playTurfGame } from './game';
-import { TURF_SIM_CONFIG, trainPolicyArtifact } from './ai';
-import { DEFAULT_TURF_CONFIG, type TurfGameResult } from './types';
+import { createMatch, isGameOver, runTurn, type MatchState } from './game';
+import { decideAction, TURF_SIM_CONFIG, trainPolicyArtifact } from './ai';
+import { buildAutoDeck, type AutoDeckPolicy } from './deck-builder';
+import { stepAction } from './environment';
+import { createPolicySample, enumerateLegalActions } from './env-query';
+import type { GameConfig, TurfAction, TurfGameResult, TurfGameState, TurfPolicyArtifact } from './types';
+import { DEFAULT_GAME_CONFIG } from './types';
 
 type BenchmarkProfileName = keyof typeof TURF_SIM_CONFIG.benchmarkProfiles;
 
@@ -26,27 +30,6 @@ export interface BenchmarkSummary {
   pushedAttacks: number;
   directAttacks: number;
   policyGuidedActions: number;
-  reserveCrewPlacements: number;
-  backpacksEquipped: number;
-  runnerDeployments: number;
-  payloadDeployments: number;
-  runnerOpportunityTurns: number;
-  runnerOpportunityTaken: number;
-  runnerOpportunityMissed: number;
-  runnerReserveOpportunityTurns: number;
-  runnerReserveOpportunityTaken: number;
-  runnerReserveOpportunityMissed: number;
-  runnerEquipOpportunityTurns: number;
-  runnerEquipOpportunityTaken: number;
-  runnerEquipOpportunityMissed: number;
-  runnerDeployOpportunityTurns: number;
-  runnerDeployOpportunityTaken: number;
-  runnerDeployOpportunityMissed: number;
-  runnerPayloadOpportunityTurns: number;
-  runnerPayloadOpportunityTaken: number;
-  runnerPayloadOpportunityMissed: number;
-  runnerOpportunityUseRate: number;
-  runnerReserveStartUseRate: number;
   passRatePerTurn: number;
 }
 
@@ -56,8 +39,165 @@ export interface BenchmarkRun {
   balance?: BalanceAnalysis;
 }
 
-function average(results: TurfGameResult[], selector: (result: TurfGameResult) => number): number {
-  return results.reduce((sum, result) => sum + selector(result), 0) / Math.max(1, results.length);
+export interface PlayGameOptions {
+  pools: TurfCardPools;
+  deckPolicyA?: AutoDeckPolicy;
+  deckPolicyB?: AutoDeckPolicy;
+  policyArtifact?: TurfPolicyArtifact;
+  capturePolicySamples?: boolean;
+  explorationRate?: number;
+  config?: GameConfig;
+}
+
+function collectDeckIds(match: MatchState, side: 'A' | 'B'): string[] {
+  const p = match.game.players[side];
+  const ids: string[] = [];
+  for (const c of p.deck) ids.push(c.id);
+  if (p.pending) ids.push(p.pending.id);
+  for (const c of p.discard) ids.push(c.id);
+  for (const t of p.turfs) for (const sc of t.stack) ids.push(sc.card.id);
+  return ids;
+}
+
+function extractResult(match: MatchState, seed: number): TurfGameResult {
+  const g = match.game;
+  return {
+    winner: g.winner ?? 'A',
+    endReason: g.endReason ?? 'timeout',
+    firstPlayer: g.firstPlayer,
+    turnCount: match.turnCount,
+    metrics: g.metrics,
+    seed,
+    plannerTrace: g.plannerTrace,
+    policySamples: g.policySamples.length > 0 ? g.policySamples : undefined,
+    finalState: {
+      turfsA: g.players.A.turfs.length,
+      turfsB: g.players.B.turfs.length,
+    },
+    decks: {
+      A: { cardIds: collectDeckIds(match, 'A') },
+      B: { cardIds: collectDeckIds(match, 'B') },
+    },
+  };
+}
+
+/**
+ * Build the action sequence for a single side of a single turn. Loops
+ * `decideAction` → `stepAction` until the planner issues `end_turn` or the
+ * budget / game ends. Actions are captured so runTurn can record them even
+ * though this helper also executes them (parallel-turn flow keeps both
+ * sides' mutations interleaved inside stepAction).
+ */
+function runSideTurn(
+  state: TurfGameState,
+  side: 'A' | 'B',
+  opts: {
+    rng: ReturnType<typeof createRng>;
+    explorationRate: number;
+    capturePolicySamples?: boolean;
+    policyArtifact?: TurfPolicyArtifact;
+  },
+): void {
+  const player = state.players[side];
+  let iterations = 0;
+  const maxIterations = 64; // hard cap against infinite loops in broken policies
+  while (!player.turnEnded && !state.winner && iterations < maxIterations) {
+    iterations++;
+
+    // Exploration path — random non-terminal action.
+    if (opts.explorationRate > 0 && opts.rng.next() < opts.explorationRate) {
+      const legal = enumerateLegalActions(state, side);
+      const nonTerminal = legal.filter(
+        (a) => a.kind !== 'pass' && a.kind !== 'end_turn',
+      );
+      if (nonTerminal.length > 0) {
+        const pick = nonTerminal[opts.rng.int(0, nonTerminal.length - 1)];
+        stepAction(state, { ...pick, side });
+        if (opts.capturePolicySamples) {
+          state.policySamples.push(
+            createPolicySample(state, side, pick, 'explore', 0),
+          );
+        }
+        continue;
+      }
+    }
+
+    const decision = decideAction(state, side, opts.policyArtifact);
+    state.plannerTrace.push(decision.trace);
+    stepAction(state, { ...decision.action, side });
+
+    if (opts.capturePolicySamples) {
+      state.policySamples.push(
+        createPolicySample(
+          state,
+          side,
+          decision.action,
+          decision.trace.chosenGoal,
+          0,
+        ),
+      );
+    }
+
+    if (decision.action.kind === 'end_turn') break;
+  }
+
+  // Safety: if we blew the iteration cap without ending, synthesize end_turn.
+  if (!player.turnEnded && !state.winner) {
+    stepAction(state, { kind: 'end_turn', side });
+  }
+}
+
+export function playSimulatedGame(
+  seed: number,
+  opts: PlayGameOptions,
+): TurfGameResult {
+  const rng = createRng(seed);
+  const deckA = buildAutoDeck(opts.pools, rng, opts.deckPolicyA);
+  const deckB = buildAutoDeck(opts.pools, rng, opts.deckPolicyB);
+  const config = opts.config ?? DEFAULT_GAME_CONFIG;
+  const match = createMatch(config, { seed, deckA, deckB });
+  const exploreRate = opts.explorationRate ?? 0;
+
+  while (!isGameOver(match)) {
+    match.turnCount++;
+
+    // Both sides take their turn in parallel (no alternating side); the
+    // resolve phase fires automatically inside `end_turn` when both
+    // `turnEnded` flags are true.
+    runSideTurn(match.game, 'A', {
+      rng,
+      explorationRate: exploreRate,
+      capturePolicySamples: opts.capturePolicySamples,
+      policyArtifact: opts.policyArtifact,
+    });
+    if (match.game.winner) break;
+    runSideTurn(match.game, 'B', {
+      rng,
+      explorationRate: exploreRate,
+      capturePolicySamples: opts.capturePolicySamples,
+      policyArtifact: opts.policyArtifact,
+    });
+
+    isGameOver(match);
+  }
+
+  return extractResult(match, seed);
+}
+
+/** Preserved export — callers may pass manually-constructed action lists. */
+export function runScriptedTurn(
+  match: MatchState,
+  actionsA: TurfAction[],
+  actionsB: TurfAction[],
+): MatchState {
+  return runTurn(match, actionsA, actionsB);
+}
+
+function average(
+  results: TurfGameResult[],
+  selector: (result: TurfGameResult) => number,
+): number {
+  return results.reduce((sum, r) => sum + selector(r), 0) / Math.max(1, results.length);
 }
 
 export function runSeededBenchmark(
@@ -83,32 +223,34 @@ export function runSeededBenchmark(
 
   for (let i = 0; i < warmupGames; i++) {
     const seed = runRng.int(1, 2147483646);
-    const result = playTurfGame(DEFAULT_TURF_CONFIG, seed, {
+    warmupEpisodes.push(playSimulatedGame(seed, {
       pools,
       capturePolicySamples: true,
       explorationRate: epsilon,
-    });
-    warmupEpisodes.push(result);
-    epsilon = Math.max(TURF_SIM_CONFIG.training.epsilonMin, epsilon * TURF_SIM_CONFIG.training.epsilonDecay);
+    }));
+    epsilon = Math.max(
+      TURF_SIM_CONFIG.training.epsilonMin,
+      epsilon * TURF_SIM_CONFIG.training.epsilonDecay,
+    );
   }
 
   const policyArtifact = trainPolicyArtifact(
-    warmupEpisodes.map(result => result.policySamples ?? []),
+    warmupEpisodes.map(r => r.policySamples ?? []),
     TURF_SIM_CONFIG.version,
   );
 
   const results: TurfGameResult[] = [];
   for (let i = 0; i < evalGames; i++) {
     const seed = runRng.int(1, 2147483646);
-    results.push(playTurfGame(DEFAULT_TURF_CONFIG, seed, { pools, policyArtifact }));
+    results.push(playSimulatedGame(seed, { pools, policyArtifact }));
   }
 
-  const turns = results.map(result => result.turnCount).sort((a, b) => a - b);
-  const winsA = results.filter(result => result.winner === 'A').length;
-  const firstMoverWins = results.filter(result => result.winner === result.firstPlayer).length;
-  const timeouts = results.filter(result => result.endReason === 'timeout').length;
-  const totalTurns = results.reduce((sum, result) => sum + result.turnCount, 0);
-  const totalPasses = results.reduce((sum, result) => sum + result.metrics.passes, 0);
+  const turns = results.map(r => r.turnCount).sort((a, b) => a - b);
+  const winsA = results.filter(r => r.winner === 'A').length;
+  const firstMoverWins = results.filter(r => r.winner === r.firstPlayer).length;
+  const timeouts = results.filter(r => r.endReason === 'timeout').length;
+  const totalTurns = results.reduce((sum, r) => sum + r.turnCount, 0);
+  const totalPasses = results.reduce((sum, r) => sum + r.metrics.passes, 0);
 
   const summary: BenchmarkSummary = {
     profile,
@@ -119,52 +261,23 @@ export function runSeededBenchmark(
     winRateA: winsA / Math.max(1, results.length),
     firstMoverWinRate: firstMoverWins / Math.max(1, results.length),
     timeoutRate: timeouts / Math.max(1, results.length),
-    avgTurns: average(results, result => result.turnCount),
+    avgTurns: average(results, r => r.turnCount),
     medianTurns: turns[Math.floor(turns.length / 2)] ?? 0,
     p10Turns: turns[Math.floor(turns.length * 0.1)] ?? 0,
     p90Turns: turns[Math.floor(turns.length * 0.9)] ?? 0,
-    failedPlans: average(results, result => result.metrics.failedPlans),
-    fundedAttacks: average(results, result => result.metrics.fundedAttacks),
-    pushedAttacks: average(results, result => result.metrics.pushedAttacks),
-    directAttacks: average(results, result => result.metrics.directAttacks),
-    policyGuidedActions: average(results, result => result.metrics.policyGuidedActions),
-    reserveCrewPlacements: average(results, result => result.metrics.reserveCrewPlaced),
-    backpacksEquipped: average(results, result => result.metrics.backpacksEquipped),
-    runnerDeployments: average(results, result => result.metrics.runnerDeployments),
-    payloadDeployments: average(results, result => result.metrics.payloadDeployments),
-    runnerOpportunityTurns: average(results, result => result.metrics.runnerOpportunityTurns),
-    runnerOpportunityTaken: average(results, result => result.metrics.runnerOpportunityTaken),
-    runnerOpportunityMissed: average(results, result => result.metrics.runnerOpportunityMissed),
-    runnerReserveOpportunityTurns: average(results, result => result.metrics.runnerReserveOpportunityTurns),
-    runnerReserveOpportunityTaken: average(results, result => result.metrics.runnerReserveOpportunityTaken),
-    runnerReserveOpportunityMissed: average(results, result => result.metrics.runnerReserveOpportunityMissed),
-    runnerEquipOpportunityTurns: average(results, result => result.metrics.runnerEquipOpportunityTurns),
-    runnerEquipOpportunityTaken: average(results, result => result.metrics.runnerEquipOpportunityTaken),
-    runnerEquipOpportunityMissed: average(results, result => result.metrics.runnerEquipOpportunityMissed),
-    runnerDeployOpportunityTurns: average(results, result => result.metrics.runnerDeployOpportunityTurns),
-    runnerDeployOpportunityTaken: average(results, result => result.metrics.runnerDeployOpportunityTaken),
-    runnerDeployOpportunityMissed: average(results, result => result.metrics.runnerDeployOpportunityMissed),
-    runnerPayloadOpportunityTurns: average(results, result => result.metrics.runnerPayloadOpportunityTurns),
-    runnerPayloadOpportunityTaken: average(results, result => result.metrics.runnerPayloadOpportunityTaken),
-    runnerPayloadOpportunityMissed: average(results, result => result.metrics.runnerPayloadOpportunityMissed),
-    runnerOpportunityUseRate:
-      average(results, result =>
-        result.metrics.runnerOpportunityTurns > 0
-          ? result.metrics.runnerOpportunityTaken / result.metrics.runnerOpportunityTurns
-          : 0,
-      ),
-    runnerReserveStartUseRate:
-      average(results, result =>
-        result.metrics.runnerReserveOpportunityTurns > 0
-          ? result.metrics.runnerReserveOpportunityTaken / result.metrics.runnerReserveOpportunityTurns
-          : 0,
-      ),
+    failedPlans: average(results, r => r.metrics.failedPlans),
+    fundedAttacks: average(results, r => r.metrics.fundedRecruits),
+    pushedAttacks: average(results, r => r.metrics.pushedStrikes),
+    directAttacks: average(results, r => r.metrics.directStrikes),
+    policyGuidedActions: average(results, r => r.metrics.policyGuidedActions),
     passRatePerTurn: totalPasses / Math.max(1, totalTurns),
   };
 
   let balance: BalanceAnalysis | undefined;
   if (options.includeBalance) {
-    const historyPath = join(process.cwd(), 'sim', 'reports', 'turf', 'balance-history.json');
+    const historyPath = join(
+      process.cwd(), 'sim', 'reports', 'turf', 'balance-history.json',
+    );
     balance = analyzeBalanceResults(results, pools, loadBalanceHistory(historyPath));
   }
 

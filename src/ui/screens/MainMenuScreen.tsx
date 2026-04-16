@@ -1,17 +1,19 @@
 import { useAppShell } from '../../platform';
-import { ArchiveRestore, Crosshair } from 'lucide-react';
+import { ArchiveRestore, Crosshair, Library, Package } from 'lucide-react';
 import { CardFrame } from '../cards';
 
 interface MainMenuScreenProps {
   onNewGame: () => void;
   onLoadGame: () => void;
+  onCollection: () => void;
+  onOpenPack: () => void;
   canLoadGame: boolean;
 }
 
 interface MenuButtonProps {
   label: string;
   detail: string;
-  icon: 'crosshair' | 'load';
+  icon: 'crosshair' | 'load' | 'collection' | 'pack';
   onClick: () => void;
   disabled?: boolean;
   tone?: 'primary' | 'secondary';
@@ -21,7 +23,11 @@ interface MenuButtonProps {
 function MenuButton({ label, detail, icon, onClick, disabled = false, tone = 'secondary', testId }: MenuButtonProps) {
   const Icon = icon === 'crosshair'
     ? Crosshair
-    : ArchiveRestore;
+    : icon === 'collection'
+      ? Library
+      : icon === 'pack'
+        ? Package
+        : ArchiveRestore;
   return (
     <button
       onClick={onClick}
@@ -44,6 +50,8 @@ function MenuButton({ label, detail, icon, onClick, disabled = false, tone = 'se
 export function MainMenuScreen({
   onNewGame,
   onLoadGame,
+  onCollection,
+  onOpenPack,
   canLoadGame,
 }: MainMenuScreenProps) {
   const { layout } = useAppShell();
@@ -82,6 +90,20 @@ export function MainMenuScreen({
               onClick={onLoadGame}
               disabled={!canLoadGame}
               testId="load-game-button"
+            />
+            <MenuButton
+              label="Collection"
+              detail="Browse your unlocked cards by rarity and category."
+              icon="collection"
+              onClick={onCollection}
+              testId="collection-button"
+            />
+            <MenuButton
+              label="Open Pack"
+              detail="Crack open a pack and see what you got."
+              icon="pack"
+              onClick={onOpenPack}
+              testId="open-pack-button"
             />
           </div>
         </div>

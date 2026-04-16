@@ -22,54 +22,45 @@ const drugPath = join(RAW_DRUGS, `${FIXTURE_DRUG}.json`);
 
 const CREW_FIXTURE = {
   id: FIXTURE_CREW,
-  type: 'crew',
-  displayName: 'Test Crew',
+  kind: 'tough',
+  name: 'Test Crew',
+  tagline: 'test',
   archetype: 'bruiser',
   affiliation: 'kings_row',
   power: [6],
   resistance: [3],
-  abilityText: 'Test ability',
-  unlocked: true,
-  unlockCondition: null,
+  rarity: ['common'],
+  abilities: [],
   locked: false,
-  draft: true,
 };
 
 const WEAPON_FIXTURE = {
   id: FIXTURE_WEAP,
-  type: 'weapon',
+  kind: 'weapon',
   name: 'Test Blade',
   category: 'bladed',
-  bonus: [3],
-  offenseAbility: 'LACERATE',
-  offenseAbilityText: 'test',
-  defenseAbility: 'PARRY',
-  defenseAbilityText: 'test',
-  unlocked: true,
-  unlockCondition: null,
+  power: [3],
+  resistance: [1],
+  rarity: ['common'],
+  abilities: ['LACERATE', 'PARRY'],
   locked: false,
-  draft: true,
 };
 
 const DRUG_FIXTURE = {
   id: FIXTURE_DRUG,
-  type: 'product',
+  kind: 'drug',
   name: 'Test Drug',
   category: 'stimulant',
-  potency: [2],
-  offenseAbility: 'RUSH',
-  offenseAbilityText: 'test',
-  defenseAbility: 'REFLEXES',
-  defenseAbilityText: 'test',
-  unlocked: true,
-  unlockCondition: null,
+  power: [2],
+  resistance: [1],
+  rarity: ['common'],
+  abilities: ['RUSH', 'REFLEXES'],
   locked: false,
-  draft: true,
 };
 
 function writeFixture(path: string, data: unknown): void {
   mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, JSON.stringify(data, null, 2) + '\n');
+  writeFileSync(path, `${JSON.stringify(data, null, 2)}\n`);
 }
 
 function removeFixture(path: string): void {
@@ -80,7 +71,10 @@ function unstableRec(cardId: string, reasons: string[] = ['unstable']) {
   return { cardId, state: 'unstable' as const, reasons };
 }
 
-function effectFor(cardId: string, winRateDelta: number): EffectAnalysisReport['cardEffects'][number] {
+function effectFor(
+  cardId: string,
+  winRateDelta: number,
+): EffectAnalysisReport['cardEffects'][number] {
   return {
     cardId,
     sampleCount: 100,
@@ -96,12 +90,6 @@ function effectFor(cardId: string, winRateDelta: number): EffectAnalysisReport['
     fundedDelta: winRateDelta > 0 ? 1 : 0,
     pushedDelta: 0,
     directDelta: winRateDelta > 0 ? 0.5 : 0,
-    reserveCrewDelta: 0,
-    backpacksEquippedDelta: 0,
-    runnerDeploymentsDelta: 0,
-    payloadDeploymentsDelta: 0,
-    runnerOpportunityUseRateDelta: 0,
-    runnerReserveStartUseRateDelta: 0,
     volatility: 0.01,
     significant: true,
   };
@@ -119,7 +107,7 @@ describe('runAutobalanceIteration', () => {
     removeFixture(drugPath);
   });
 
-  it('nerfs crew whose winRate delta is positive', () => {
+  it('nerfs tough whose winRate delta is positive', () => {
     const locks: LockAnalysisReport = {
       generatedAt: 'now',
       analysisProfile: 'quick',
@@ -134,7 +122,10 @@ describe('runAutobalanceIteration', () => {
     const result = runAutobalanceIteration(locks, effects);
     expect(result.edits).toHaveLength(1);
     expect(result.edits[0]!.direction).toBe('nerf');
-    const updated = JSON.parse(readFileSync(crewPath, 'utf8')) as { power: number[]; resistance: number[] };
+    const updated = JSON.parse(readFileSync(crewPath, 'utf8')) as {
+      power: number[];
+      resistance: number[];
+    };
     expect(updated.power).toEqual([6, 5]);
     expect(updated.resistance).toEqual([3]);
   });
@@ -154,8 +145,11 @@ describe('runAutobalanceIteration', () => {
     const result = runAutobalanceIteration(locks, effects);
     expect(result.edits).toHaveLength(1);
     expect(result.edits[0]!.direction).toBe('buff');
-    const updated = JSON.parse(readFileSync(weapPath, 'utf8')) as { bonus: number[] };
-    expect(updated.bonus).toEqual([3, 4]);
+    expect(result.edits[0]!.stat).toBe('power');
+    const updated = JSON.parse(readFileSync(weapPath, 'utf8')) as {
+      power: number[];
+    };
+    expect(updated.power).toEqual([3, 4]);
   });
 
   it('dry-run does not write to disk', () => {
@@ -172,8 +166,10 @@ describe('runAutobalanceIteration', () => {
     };
     const result = runAutobalanceIteration(locks, effects, { dryRun: true });
     expect(result.edits).toHaveLength(1);
-    const unchanged = JSON.parse(readFileSync(drugPath, 'utf8')) as { potency: number[] };
-    expect(unchanged.potency).toEqual([2]);
+    const unchanged = JSON.parse(readFileSync(drugPath, 'utf8')) as {
+      power: number[];
+    };
+    expect(unchanged.power).toEqual([2]);
   });
 
   it('skips locked cards', () => {
@@ -196,7 +192,7 @@ describe('runAutobalanceIteration', () => {
   });
 
   it('reports clamped cards that hit the stat floor', () => {
-    writeFixture(weapPath, { ...WEAPON_FIXTURE, bonus: [1] });
+    writeFixture(weapPath, { ...WEAPON_FIXTURE, power: [1] });
     const locks: LockAnalysisReport = {
       generatedAt: 'now',
       analysisProfile: 'quick',
@@ -206,21 +202,33 @@ describe('runAutobalanceIteration', () => {
       generatedAt: 'now',
       analysisProfile: 'quick',
       baselineProfile: 'smoke',
-      cardEffects: [effectFor(FIXTURE_WEAP, -0.3)], // would buff, but floor-clamped? no, +1→2 works
+      cardEffects: [effectFor(FIXTURE_WEAP, 0.3)],
     };
-    // Try nerfing from floor instead: make winRateDelta positive, bonus=1
-    // The test above is actually a buff from 1→2, which is allowed. Swap
-    // to a nerf-from-floor to test clamp.
-    const effects2: EffectAnalysisReport = {
+    const result = runAutobalanceIteration(locks, effects);
+    expect(result.edits).toHaveLength(0);
+    expect(result.clamped).toHaveLength(1);
+  });
+
+  it('skips tune-saturated cards at maxHistoryLength', () => {
+    writeFixture(crewPath, {
+      ...CREW_FIXTURE,
+      power: [6, 5, 6, 5, 6, 5, 6, 5],
+      resistance: [3],
+    });
+    const locks: LockAnalysisReport = {
+      generatedAt: 'now',
+      analysisProfile: 'quick',
+      recommendations: [unstableRec(FIXTURE_CREW)],
+    };
+    const effects: EffectAnalysisReport = {
       generatedAt: 'now',
       analysisProfile: 'quick',
       baselineProfile: 'smoke',
-      cardEffects: [effectFor(FIXTURE_WEAP, 0.3)],
+      cardEffects: [effectFor(FIXTURE_CREW, 0.15)],
     };
-    // use effects2 so it tries to nerf from 1 (would go to 0, clamped)
-    void effects;
-    const result = runAutobalanceIteration(locks, effects2);
+    const result = runAutobalanceIteration(locks, effects);
     expect(result.edits).toHaveLength(0);
-    expect(result.clamped).toHaveLength(1);
+    expect(result.skipped).toHaveLength(1);
+    expect(result.skipped[0]!.reason).toContain('tune-saturated');
   });
 });

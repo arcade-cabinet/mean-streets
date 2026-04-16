@@ -1,17 +1,22 @@
 {
   "id": "weap-34",
-  "type": "weapon",
+  "kind": "weapon",
   "name": "Dart Gun",
   "category": "ranged",
-  "bonus": [
+  "power": [
     1
   ],
-  "offenseAbility": "REACH",
-  "offenseAbilityText": "Can target any enemy position, not just front-line.",
-  "defenseAbility": "OVERWATCH",
-  "defenseAbilityText": "Deal bonus damage to any crew placed on adjacent positions.",
+  "resistance": [
+    1
+  ],
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "REACH",
+    "OVERWATCH"
+  ],
   "unlocked": true,
-  "unlockCondition": null,
   "locked": false,
   "draft": true
 }

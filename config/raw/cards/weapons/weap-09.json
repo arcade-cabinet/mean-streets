@@ -1,15 +1,21 @@
 {
   "id": "weap-09",
-  "type": "weapon",
+  "kind": "weapon",
   "name": "Straight Razor",
   "category": "bladed",
-  "bonus": [
+  "power": [
     3
   ],
-  "offenseAbility": "LACERATE",
-  "offenseAbilityText": "Target bleeds, losing 1 resistance per round for bonus rounds.",
-  "defenseAbility": "PARRY",
-  "defenseAbilityText": "Attacker takes bonus counter-damage.",
+  "resistance": [
+    1
+  ],
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "LACERATE",
+    "PARRY"
+  ],
   "unlocked": false,
   "unlockCondition": "Win without losing a position",
   "locked": false,

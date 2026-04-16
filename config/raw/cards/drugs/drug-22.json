@@ -1,9 +1,9 @@
 {
   "id": "drug-22",
-  "type": "product",
+  "kind": "drug",
   "name": "Warped Vision",
   "category": "hallucinogen",
-  "potency": [
+  "power": [
     3,
     4,
     5,
@@ -11,12 +11,17 @@
     7,
     8
   ],
-  "offenseAbility": "CONFUSE",
-  "offenseAbilityText": "Funded flip threshold reduced by potency.",
-  "defenseAbility": "PARANOIA",
-  "defenseAbilityText": "Funded flips against this crew cost potency extra cash.",
+  "resistance": [
+    1
+  ],
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "CONFUSE",
+    "PARANOIA"
+  ],
   "unlocked": true,
-  "unlockCondition": null,
   "locked": false,
   "draft": true
 }

@@ -1,7 +1,8 @@
 {
   "id": "card-012",
-  "type": "crew",
-  "displayName": "Santos \"Bolt\" Kelly",
+  "kind": "tough",
+  "name": "Santos \"Bolt\" Kelly",
+  "tagline": "Turns a punch into a payday.",
   "archetype": "fence",
   "affiliation": "dead_rabbits",
   "power": [
@@ -13,10 +14,13 @@
     6,
     7
   ],
-  "abilityText": "On sacrifice: draw 2 cards instead of healing",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On sacrifice: draw 2 cards instead of healing"
+  ],
   "unlocked": true,
-  "unlockCondition": null,
   "locked": false,
-  "draft": true,
-  "tagline": "Turns a punch into a payday."
+  "draft": true
 }

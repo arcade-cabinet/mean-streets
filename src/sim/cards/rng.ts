@@ -40,6 +40,13 @@ export function createRng(seed: number): Rng {
       return min + Math.floor(next() * (max - min + 1));
     },
     pick<T>(arr: T[]): T {
+      // A TypeScript signature returning `T` claims non-null. Empty
+      // input silently yielded `undefined` and corrupted downstream
+      // logic. Throw explicitly so the bug surfaces at the callsite
+      // rather than as a mystery null-deref further in.
+      if (arr.length === 0) {
+        throw new Error('rng.pick: cannot pick from an empty array');
+      }
       return arr[Math.floor(next() * arr.length)];
     },
     shuffle,

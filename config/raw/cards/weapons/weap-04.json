@@ -1,17 +1,22 @@
 {
   "id": "weap-04",
-  "type": "weapon",
+  "kind": "weapon",
   "name": "Machete",
   "category": "bladed",
-  "bonus": [
+  "power": [
     2
   ],
-  "offenseAbility": "LACERATE",
-  "offenseAbilityText": "Target bleeds, losing 1 resistance per round for bonus rounds.",
-  "defenseAbility": "PARRY",
-  "defenseAbilityText": "Attacker takes bonus counter-damage.",
+  "resistance": [
+    1
+  ],
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "LACERATE",
+    "PARRY"
+  ],
   "unlocked": true,
-  "unlockCondition": null,
   "locked": false,
   "draft": true
 }

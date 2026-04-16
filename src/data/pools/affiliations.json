@@ -5,8 +5,10 @@
       "name": "Kings Row",
       "color": "#8B0000",
       "description": "Old money muscle. Run the uptown rackets.",
-      "atPeaceWith": ["jade_dragon"],
-      "atWarWith": ["iron_devils"],
+      "loyal": ["cobalt_syndicate"],
+      "rival": ["iron_devils", "los_diablos"],
+      "neutral": ["jade_dragon", "southside_saints", "dead_rabbits", "neon_snakes", "black_market"],
+      "mediator": [],
       "modifier": { "atkBonus": 1, "defBonus": 0 }
     },
     {
@@ -14,8 +16,10 @@
       "name": "Iron Devils",
       "color": "#2F4F4F",
       "description": "Dockyard thugs. Control the waterfront.",
-      "atPeaceWith": ["southside_saints"],
-      "atWarWith": ["kings_row"],
+      "loyal": ["southside_saints"],
+      "rival": ["kings_row", "neon_snakes"],
+      "neutral": ["jade_dragon", "los_diablos", "dead_rabbits", "black_market", "cobalt_syndicate"],
+      "mediator": [],
       "modifier": { "atkBonus": 0, "defBonus": 1 }
     },
     {
@@ -23,8 +27,10 @@
       "name": "Jade Dragon",
       "color": "#006400",
       "description": "Silent operators. Own Chinatown.",
-      "atPeaceWith": ["kings_row"],
-      "atWarWith": ["los_diablos"],
+      "loyal": ["black_market"],
+      "rival": ["los_diablos", "reapers"],
+      "neutral": ["kings_row", "iron_devils", "southside_saints", "dead_rabbits", "neon_snakes", "cobalt_syndicate"],
+      "mediator": ["kings_row", "iron_devils"],
       "modifier": { "atkBonus": 0, "defBonus": 0, "special": "peek_1" }
     },
     {
@@ -32,8 +38,10 @@
       "name": "Los Diablos",
       "color": "#FF4500",
       "description": "Burn it all down. Ask questions never.",
-      "atPeaceWith": ["iron_devils"],
-      "atWarWith": ["jade_dragon"],
+      "loyal": ["neon_snakes"],
+      "rival": ["jade_dragon", "kings_row"],
+      "neutral": ["iron_devils", "southside_saints", "reapers", "dead_rabbits", "black_market", "cobalt_syndicate"],
+      "mediator": [],
       "modifier": { "atkBonus": 2, "defBonus": -1 }
     },
     {
@@ -41,8 +49,10 @@
       "name": "Southside Saints",
       "color": "#4169E1",
       "description": "Community first. Protect the block.",
-      "atPeaceWith": ["iron_devils"],
-      "atWarWith": ["reapers"],
+      "loyal": ["iron_devils"],
+      "rival": ["reapers", "cobalt_syndicate"],
+      "neutral": ["kings_row", "jade_dragon", "los_diablos", "dead_rabbits", "neon_snakes", "black_market"],
+      "mediator": ["kings_row", "los_diablos"],
       "modifier": { "atkBonus": -1, "defBonus": 2 }
     },
     {
@@ -50,8 +60,10 @@
       "name": "The Reapers",
       "color": "#36013F",
       "description": "Nobody knows who leads them. Nobody asks twice.",
-      "atPeaceWith": [],
-      "atWarWith": ["southside_saints", "dead_rabbits"],
+      "loyal": [],
+      "rival": ["southside_saints", "dead_rabbits", "jade_dragon"],
+      "neutral": ["kings_row", "iron_devils", "los_diablos", "neon_snakes", "black_market", "cobalt_syndicate"],
+      "mediator": [],
       "modifier": { "atkBonus": 1, "defBonus": -1, "special": "fear_1" }
     },
     {
@@ -59,8 +71,10 @@
       "name": "Dead Rabbits",
       "color": "#556B2F",
       "description": "Been here since before the roads were paved.",
-      "atPeaceWith": ["black_market"],
-      "atWarWith": ["reapers"],
+      "loyal": ["black_market"],
+      "rival": ["reapers"],
+      "neutral": ["kings_row", "iron_devils", "jade_dragon", "los_diablos", "southside_saints", "neon_snakes", "cobalt_syndicate"],
+      "mediator": ["iron_devils", "southside_saints"],
       "modifier": { "atkBonus": 0, "defBonus": 1, "special": "draw_1" }
     },
     {
@@ -68,8 +82,10 @@
       "name": "Neon Snakes",
       "color": "#00CED1",
       "description": "Night crawlers. Own every club on the strip.",
-      "atPeaceWith": ["los_diablos"],
-      "atWarWith": ["black_market"],
+      "loyal": ["los_diablos"],
+      "rival": ["black_market", "iron_devils"],
+      "neutral": ["kings_row", "jade_dragon", "southside_saints", "reapers", "dead_rabbits", "cobalt_syndicate"],
+      "mediator": [],
       "modifier": { "atkBonus": 0, "defBonus": 0, "special": "night_atk_2" }
     },
     {
@@ -77,8 +93,10 @@
       "name": "Black Market",
       "color": "#696969",
       "description": "If it exists, they sell it. No questions.",
-      "atPeaceWith": ["dead_rabbits"],
-      "atWarWith": ["neon_snakes"],
+      "loyal": ["dead_rabbits", "jade_dragon"],
+      "rival": ["neon_snakes"],
+      "neutral": ["kings_row", "iron_devils", "los_diablos", "southside_saints", "reapers", "cobalt_syndicate"],
+      "mediator": ["kings_row", "los_diablos", "iron_devils"],
       "modifier": { "atkBonus": 0, "defBonus": 0, "special": "swap_1" }
     },
     {
@@ -86,8 +104,10 @@
       "name": "Cobalt Syndicate",
       "color": "#0047AB",
       "description": "White collar criminals with blue collar muscle.",
-      "atPeaceWith": ["kings_row"],
-      "atWarWith": ["los_diablos"],
+      "loyal": ["kings_row"],
+      "rival": ["southside_saints"],
+      "neutral": ["iron_devils", "jade_dragon", "los_diablos", "reapers", "dead_rabbits", "neon_snakes", "black_market"],
+      "mediator": [],
       "modifier": { "atkBonus": 1, "defBonus": 1 }
     }
   ],
@@ -96,8 +116,10 @@
     "name": "Freelance",
     "color": "#A9A9A9",
     "description": "No crew. No loyalty. Just the job.",
-    "atPeaceWith": [],
-    "atWarWith": [],
+    "loyal": [],
+    "rival": [],
+    "neutral": [],
+    "mediator": [],
     "modifier": { "atkBonus": 0, "defBonus": 0 }
   }
 }

@@ -1,15 +1,21 @@
 {
   "id": "drug-40",
-  "type": "product",
+  "kind": "drug",
   "name": "Heavy Might",
   "category": "steroid",
-  "potency": [
+  "power": [
     5
   ],
-  "offenseAbility": "BULK",
-  "offenseAbilityText": "Crew gets +potency power for attacks.",
-  "defenseAbility": "FORTIFY",
-  "defenseAbilityText": "Crew gets +potency resistance.",
+  "resistance": [
+    1
+  ],
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "BULK",
+    "FORTIFY"
+  ],
   "unlocked": false,
   "unlockCondition": "Use 16 drugs in total across games",
   "locked": false,

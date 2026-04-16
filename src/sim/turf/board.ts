@@ -1,361 +1,257 @@
-/**
- * Board management — 6 quarter-card slots around each crew card.
- */
-
+import affiliationsPool from '../../data/pools/affiliations.json';
 import type {
-  Position, PlayerBoard, CrewCard, ProductCard,
-  CashCard, WeaponCard, ModifierCard, BackpackCard, PayloadCard,
+  Card,
+  CurrencyCard,
+  ModifierCard,
+  PlayerState,
+  StackedCard,
+  ToughCard,
+  Turf,
 } from './types';
 
-function isActionReady(pos: Position): boolean {
-  return !!pos.crew && (pos.turnsActive >= 1 || pos.drugTop?.category === 'stimulant');
+interface AffiliationModifier {
+  atkBonus: number;
+  defBonus: number;
 }
 
-export function emptyPosition(owner: 'A' | 'B'): Position {
-  return {
-    crew: null,
-    drugTop: null, drugBottom: null,
-    weaponTop: null, weaponBottom: null,
-    cashLeft: null, cashRight: null,
-    backpack: null,
-    runner: false,
-    payloadRemaining: 0,
-    owner, seized: false, turnsActive: 0,
-  };
-}
-
-export function createBoard(side: 'A' | 'B', count: number, reserveCount: number): PlayerBoard {
-  return {
-    active: Array.from({ length: count }, () => emptyPosition(side)),
-    reserve: Array.from({ length: reserveCount }, () => emptyPosition(side)),
-  };
-}
-
-export function tickPositions(board: PlayerBoard): void {
-  for (const pos of board.active) {
-    if (pos.crew) pos.turnsActive++;
+const AT_WAR_MAP: Map<string, Set<string>> = (() => {
+  const map = new Map<string, Set<string>>();
+  for (const aff of affiliationsPool.affiliations) {
+    map.set(aff.id, new Set(aff.rival ?? []));
   }
+  return map;
+})();
+
+const MEDIATOR_MAP: Map<string, Set<string>> = (() => {
+  const map = new Map<string, Set<string>>();
+  for (const aff of affiliationsPool.affiliations) {
+    map.set(aff.id, new Set(aff.mediator ?? []));
+  }
+  return map;
+})();
+
+const AFFILIATION_MODIFIERS: Map<string, AffiliationModifier> = (() => {
+  const map = new Map<string, AffiliationModifier>();
+  for (const aff of affiliationsPool.affiliations) {
+    const mod = aff.modifier ?? { atkBonus: 0, defBonus: 0 };
+    map.set(aff.id, {
+      atkBonus: mod.atkBonus ?? 0,
+      defBonus: mod.defBonus ?? 0,
+    });
+  }
+  return map;
+})();
+
+let turfIdCounter = 0;
+
+export function createTurf(): Turf {
+  turfIdCounter++;
+  return { id: `turf-${turfIdCounter}`, stack: [], closedRanks: false };
 }
 
-export function findEmptyActive(board: PlayerBoard): number {
-  return board.active.findIndex(p => p.crew === null && !p.seized);
-}
-
-export function seizedCount(board: PlayerBoard): number {
-  return board.active.filter(p => p.seized).length;
-}
-
-export function placeCrew(board: PlayerBoard, idx: number, crew: CrewCard): boolean {
-  const pos = board.active[idx];
-  if (!pos || pos.crew !== null || pos.seized) return false;
-  pos.crew = crew;
-  pos.turnsActive = 0;
-  return true;
-}
-
-export function placeReserveCrew(board: PlayerBoard, idx: number, crew: CrewCard): boolean {
-  const pos = board.reserve[idx];
-  if (!pos || pos.crew !== null || pos.seized) return false;
-  pos.crew = crew;
-  pos.turnsActive = 0;
-  return true;
-}
-
-export function equipBackpack(position: Position, backpack: BackpackCard, asRunner = false): boolean {
-  if (!position.crew || position.seized || position.backpack) return false;
-  position.backpack = backpack;
-  position.runner = asRunner;
-  position.payloadRemaining = backpack.payload.length;
-  return true;
-}
-
-export function clearBackpack(position: Position): BackpackCard | null {
-  const backpack = position.backpack;
-  position.backpack = null;
-  position.runner = false;
-  position.payloadRemaining = 0;
-  return backpack;
-}
-
-export function markRunner(position: Position, active: boolean): void {
-  position.runner = active && Boolean(position.backpack) && position.payloadRemaining > 0;
+export function resetTurfIdCounter(): void {
+  turfIdCounter = 0;
 }
 
 /**
- * RULES.md §7: equipping a backpack to a reserve tough grants ONE
- * free swap into active (no turn penalty). Returns the active index
- * the runner landed on, or -1 if no swap happened.
+ * Push a card onto the stack as a {@link StackedCard}. `faceUp` defaults to
+ * true — callers that need to transfer cards as face-down (modifier transfer
+ * on kill, opponent-side additions) pass `false`.
  */
-export function freeSwapEquippedRunner(
-  board: PlayerBoard,
-  reserveIdx: number,
-): number {
-  const reserve = board.reserve[reserveIdx];
-  if (!reserve?.crew || !reserve.backpack || !reserve.runner) return -1;
-  const activeIdx = findEmptyActive(board);
-  if (activeIdx < 0) return -1;
-  if (deployRunner(board, reserveIdx, activeIdx)) return activeIdx;
-  return -1;
+export function addToStack(turf: Turf, card: Card, faceUp = true): void {
+  turf.stack.push({ card, faceUp });
+}
+
+export function removeFromStack(turf: Turf, idx: number): Card | null {
+  if (idx < 0 || idx >= turf.stack.length) return null;
+  const [removed] = turf.stack.splice(idx, 1);
+  if (turf.sickTopIdx != null) {
+    if (idx === turf.sickTopIdx) {
+      turf.sickTopIdx = null;
+    } else if (idx < turf.sickTopIdx) {
+      turf.sickTopIdx--;
+    }
+  }
+  return removed?.card ?? null;
+}
+
+/** Flip the current top of the stack permanently face-up (retreat / reveal). */
+export function setTopFaceUp(turf: Turf): void {
+  if (turf.stack.length === 0) return;
+  turf.stack[turf.stack.length - 1].faceUp = true;
+}
+
+/** Flip an arbitrary card in the stack permanently face-up. */
+export function flipCardFaceUp(turf: Turf, stackIdx: number): void {
+  const entry = turf.stack[stackIdx];
+  if (entry) entry.faceUp = true;
+}
+
+function toughs(turf: Turf): ToughCard[] {
+  const out: ToughCard[] = [];
+  for (const e of turf.stack) {
+    if (e.card.kind === 'tough') out.push(e.card);
+  }
+  return out;
 }
 
 /**
- * RULES.md §7: retreat of a runner back to reserve costs the turn
- * (no free-swap on the way back). Returns true if retreat succeeded
- * and `consumed` indicates whether the action consumed the actor's
- * turn budget — the caller should subtract 1 from the actor's
- * remaining actions.
+ * Dominant affiliation for loyal-stacking (atk/def bonus), or null if the
+ * stack spans incompatible affiliations. Mediators from the anchor's
+ * mediator list are tolerated; freelance is ignored. Empty → null.
  */
-export function retreatRunner(
-  board: PlayerBoard,
-  activeIdx: number,
-): { retreated: boolean; reserveIdx: number; consumed: boolean } {
-  const active = board.active[activeIdx];
-  if (!active?.crew || !active.backpack) {
-    return { retreated: false, reserveIdx: -1, consumed: false };
+function dominantAffiliation(turf: Turf): string | null {
+  const affs = toughs(turf)
+    .map((t) => t.affiliation)
+    .filter((a) => a !== 'freelance');
+  if (affs.length === 0) return null;
+  const distinct = Array.from(new Set(affs));
+  if (distinct.length === 1) return distinct[0];
+  for (const anchor of distinct) {
+    const mediators = MEDIATOR_MAP.get(anchor) ?? new Set<string>();
+    if (distinct.every((a) => a === anchor || mediators.has(a))) return anchor;
   }
-  // Find an empty reserve slot or the slot the runner originally came from.
-  const reserveIdx = board.reserve.findIndex((p) => p.crew === null && !p.seized);
-  if (reserveIdx < 0) return { retreated: false, reserveIdx: -1, consumed: false };
-  const reserve = board.reserve[reserveIdx];
-  // Move everything wholesale (reverse of deployRunner).
-  reserve.crew = active.crew;
-  reserve.drugTop = active.drugTop;
-  reserve.drugBottom = active.drugBottom;
-  reserve.weaponTop = active.weaponTop;
-  reserve.weaponBottom = active.weaponBottom;
-  reserve.cashLeft = active.cashLeft;
-  reserve.cashRight = active.cashRight;
-  reserve.backpack = active.backpack;
-  reserve.runner = active.runner;
-  reserve.payloadRemaining = active.payloadRemaining;
-  reserve.turnsActive = 0;
+  return null;
+}
 
-  active.crew = null;
-  active.drugTop = null;
-  active.drugBottom = null;
-  active.weaponTop = null;
-  active.weaponBottom = null;
-  active.cashLeft = null;
-  active.cashRight = null;
-  active.backpack = null;
-  active.runner = false;
-  active.payloadRemaining = 0;
-  active.turnsActive = 0;
+function loyalAtkBonus(turf: Turf): number {
+  const anchor = dominantAffiliation(turf);
+  if (!anchor) return 0;
+  return AFFILIATION_MODIFIERS.get(anchor)?.atkBonus ?? 0;
+}
 
-  return { retreated: true, reserveIdx, consumed: true };
+function loyalDefBonus(turf: Turf): number {
+  const anchor = dominantAffiliation(turf);
+  if (!anchor) return 0;
+  return AFFILIATION_MODIFIERS.get(anchor)?.defBonus ?? 0;
+}
+
+export function positionPower(turf: Turf): number {
+  let total = 0;
+  for (let i = 0; i < turf.stack.length; i++) {
+    const card = turf.stack[i].card;
+    if (card.kind === 'currency') continue;
+    if (card.kind === 'tough' && turf.sickTopIdx === i) continue;
+    total += card.power;
+  }
+  return total + loyalAtkBonus(turf);
+}
+
+export function positionResistance(turf: Turf): number {
+  let total = 0;
+  for (const e of turf.stack) {
+    if (e.card.kind === 'currency') continue;
+    total += e.card.resistance;
+  }
+  return total + loyalDefBonus(turf);
+}
+
+function affiliationsOnTurf(turf: Turf): string[] {
+  return toughs(turf).map((t) => t.affiliation);
+}
+
+function hasRivalOnTurf(turf: Turf, affiliation: string): boolean {
+  const enemies = AT_WAR_MAP.get(affiliation);
+  if (!enemies || enemies.size === 0) return false;
+  return affiliationsOnTurf(turf).some((a) => enemies.has(a));
+}
+
+/** True if the turf carries any currency card that hasn't already been
+ * spent as a rival buffer this match. */
+function hasCurrencyBuffer(turf: Turf): boolean {
+  if (turf.rivalBufferSpent) return false;
+  for (const e of turf.stack) if (e.card.kind === 'currency') return true;
+  return false;
+}
+
+function hasNeutralToughBuffer(turf: Turf, incoming: string): boolean {
+  const enemies = AT_WAR_MAP.get(incoming);
+  if (!enemies) return false;
+  const rivalsOnTurf = affiliationsOnTurf(turf).filter((a) => enemies.has(a));
+  if (rivalsOnTurf.length === 0) return false;
+  return toughs(turf).some((t) => {
+    if (enemies.has(t.affiliation)) return false;
+    for (const rival of rivalsOnTurf) {
+      const rivalEnemies = AT_WAR_MAP.get(rival);
+      if (rivalEnemies?.has(t.affiliation)) return false;
+    }
+    return true;
+  });
+}
+
+export function turfAffiliationConflict(turf: Turf, incoming: Card): boolean {
+  if (incoming.kind !== 'tough') return false;
+  if (!hasRivalOnTurf(turf, incoming.affiliation)) return false;
+  if (hasNeutralToughBuffer(turf, incoming.affiliation)) return false;
+  return !hasCurrencyBuffer(turf);
 }
 
 /**
- * RULES.md §7: seize of a runner transfers backpack + remaining
- * contents to the attacker. Returns the captured backpack so the
- * caller (combat resolver) can attach it to the attacker's lane or
- * stash it on the attacker's player state.
+ * Consume one unit of currency buffer if this rival placement is permitted
+ * SOLELY by the currency buffer (no neutral tough). Call AFTER
+ * `turfAffiliationConflict` returned false and BEFORE `addToStack`.
  */
-export function captureRunnerOnSeize(defender: Position): BackpackCard | null {
-  if (!defender.backpack || !defender.runner) return null;
-  const captured = defender.backpack;
-  defender.backpack = null;
-  defender.runner = false;
-  defender.payloadRemaining = 0;
-  return captured;
-}
-
-export function deployRunner(board: PlayerBoard, reserveIdx: number, activeIdx: number): boolean {
-  const reserve = board.reserve[reserveIdx];
-  const active = board.active[activeIdx];
-  if (!reserve?.crew || !reserve.runner || !reserve.backpack || reserve.seized) return false;
-  if (!active || active.seized) return false;
-
-  const nextReserve = {
-    crew: active.crew,
-    drugTop: active.drugTop,
-    drugBottom: active.drugBottom,
-    weaponTop: active.weaponTop,
-    weaponBottom: active.weaponBottom,
-    cashLeft: active.cashLeft,
-    cashRight: active.cashRight,
-    backpack: active.backpack,
-    runner: active.runner,
-    payloadRemaining: active.payloadRemaining,
-    turnsActive: active.turnsActive,
-  };
-
-  active.crew = reserve.crew;
-  active.drugTop = reserve.drugTop;
-  active.drugBottom = reserve.drugBottom;
-  active.weaponTop = reserve.weaponTop;
-  active.weaponBottom = reserve.weaponBottom;
-  active.cashLeft = reserve.cashLeft;
-  active.cashRight = reserve.cashRight;
-  active.backpack = reserve.backpack;
-  active.runner = reserve.runner;
-  active.payloadRemaining = reserve.payloadRemaining;
-  active.turnsActive = 0;
-
-  reserve.crew = nextReserve.crew ?? null;
-  reserve.drugTop = nextReserve.drugTop ?? null;
-  reserve.drugBottom = nextReserve.drugBottom ?? null;
-  reserve.weaponTop = nextReserve.weaponTop ?? null;
-  reserve.weaponBottom = nextReserve.weaponBottom ?? null;
-  reserve.cashLeft = nextReserve.cashLeft ?? null;
-  reserve.cashRight = nextReserve.cashRight ?? null;
-  reserve.backpack = nextReserve.backpack ?? null;
-  reserve.runner = nextReserve.runner ?? false;
-  reserve.payloadRemaining = nextReserve.payloadRemaining ?? 0;
-  reserve.turnsActive = 0;
-
-  return true;
-}
-
-export function consumePayload(position: Position, cardType?: PayloadCard['type']): boolean {
-  if (!position.backpack || position.payloadRemaining <= 0) return false;
-  if (cardType) {
-    const remaining = position.backpack.payload.filter(card => card.type === cardType).length;
-    if (remaining <= 0) return false;
-  }
-  position.payloadRemaining = Math.max(0, position.payloadRemaining - 1);
-  if (position.payloadRemaining === 0) {
-    position.runner = false;
-  }
-  return true;
-}
-
-export function takePayload(position: Position, payloadId: string): PayloadCard | null {
-  if (!position.backpack || position.payloadRemaining <= 0) return null;
-  const idx = position.backpack.payload.findIndex(card => card.id === payloadId);
-  if (idx < 0) return null;
-  const [card] = position.backpack.payload.splice(idx, 1);
-  position.payloadRemaining = position.backpack.payload.length;
-  if (position.payloadRemaining === 0) {
-    position.runner = false;
-  }
-  return card ?? null;
-}
-
-/**
- * Place a quarter-size modifier card onto a crew position.
- * Routes to the correct slot based on card type and chosen orientation.
- */
-export function placeModifier(
-  board: PlayerBoard, idx: number, card: ModifierCard, slot: 'offense' | 'defense',
+export function consumeRivalBufferIfNeeded(
+  turf: Turf,
+  incoming: Card,
 ): boolean {
-  const pos = board.active[idx];
-  if (!pos || !pos.crew) return false;
+  if (incoming.kind !== 'tough') return false;
+  if (!hasRivalOnTurf(turf, incoming.affiliation)) return false;
+  if (hasNeutralToughBuffer(turf, incoming.affiliation)) return false;
+  if (!hasCurrencyBuffer(turf)) return false;
+  turf.rivalBufferSpent = true;
+  return true;
+}
 
-  switch (card.type) {
-    case 'product':
-      if (slot === 'offense') {
-        if (pos.drugTop) return false;
-        pos.drugTop = card;
-      } else {
-        if (pos.drugBottom) return false;
-        pos.drugBottom = card;
-      }
-      return true;
+export function turfToughs(turf: Turf): ToughCard[] {
+  return toughs(turf);
+}
 
-    case 'weapon':
-      if (slot === 'offense') {
-        if (pos.weaponTop) return false;
-        pos.weaponTop = card;
-      } else {
-        if (pos.weaponBottom) return false;
-        pos.weaponBottom = card;
-      }
-      return true;
-
-    case 'cash':
-      if (slot === 'offense') {
-        if (pos.cashLeft) return false;
-        pos.cashLeft = card;
-      } else {
-        if (pos.cashRight) return false;
-        pos.cashRight = card;
-      }
-      return true;
-
-    default:
-      return false;
+export function turfModifiers(turf: Turf): ModifierCard[] {
+  const out: ModifierCard[] = [];
+  for (const e of turf.stack) {
+    if (e.card.kind !== 'tough') out.push(e.card as ModifierCard);
   }
+  return out;
 }
 
-/** Effective ATTACK power: crew power + top weapon + top drug. */
-export function positionPower(pos: Position): number {
-  if (!pos.crew) return 0;
-  let power = pos.crew.power;
-  if (pos.weaponTop) power += pos.weaponTop.bonus;
-  else power = Math.max(1, power - 2); // bare-fist penalty
-  if (pos.drugTop) power += pos.drugTop.potency;
-  return power;
+export function turfCurrency(turf: Turf): CurrencyCard[] {
+  const out: CurrencyCard[] = [];
+  for (const e of turf.stack) {
+    if (e.card.kind === 'currency') out.push(e.card);
+  }
+  return out;
 }
 
-/** Effective DEFENSE: crew resistance + bottom weapon + bottom drug. */
-export function positionDefense(pos: Position): number {
-  if (!pos.crew) return 0;
-  let def = pos.crew.resistance;
-  if (pos.weaponBottom) def += pos.weaponBottom.bonus;
-  if (pos.drugBottom) def += pos.drugBottom.potency;
-  return def;
+export function hasToughOnTurf(turf: Turf): boolean {
+  for (const e of turf.stack) if (e.card.kind === 'tough') return true;
+  return false;
 }
 
-/** Offensive cash value (center-left). */
-export function offensiveCash(pos: Position): number {
-  return pos.cashLeft?.denomination ?? 0;
+/** Raw access to the underlying {@link StackedCard} at index. */
+export function stackEntryAt(turf: Turf, idx: number): StackedCard | null {
+  return turf.stack[idx] ?? null;
 }
 
-/** Defensive cash value (center-right). */
-export function defensiveCash(pos: Position): number {
-  return pos.cashRight?.denomination ?? 0;
-}
+export function seizeTurf(
+  defender: PlayerState,
+  defenderTurfIdx: number,
+  attacker: PlayerState,
+  destinationTurfIdx?: number,
+): void {
+  const seized = defender.turfs[defenderTurfIdx];
+  if (!seized) return;
 
-export function clearPosition(pos: Position): Array<CrewCard | ProductCard | CashCard | WeaponCard | BackpackCard> {
-  const cards: Array<CrewCard | ProductCard | CashCard | WeaponCard | BackpackCard> = [];
-  if (pos.crew) cards.push(pos.crew);
-  if (pos.drugTop) cards.push(pos.drugTop);
-  if (pos.drugBottom) cards.push(pos.drugBottom);
-  if (pos.weaponTop) cards.push(pos.weaponTop);
-  if (pos.weaponBottom) cards.push(pos.weaponBottom);
-  if (pos.cashLeft) cards.push(pos.cashLeft);
-  if (pos.cashRight) cards.push(pos.cashRight);
-  if (pos.backpack) cards.push(pos.backpack);
-  pos.crew = null;
-  pos.drugTop = pos.drugBottom = null;
-  pos.weaponTop = pos.weaponBottom = null;
-  pos.cashLeft = pos.cashRight = null;
-  pos.backpack = null;
-  pos.runner = false;
-  pos.payloadRemaining = 0;
-  return cards;
-}
+  const mods = turfModifiers(seized);
+  defender.turfs.splice(defenderTurfIdx, 1);
 
-export function seizePosition(pos: Position) {
-  clearPosition(pos);
-  pos.seized = true;
-}
+  if (attacker.turfs.length === 0) return;
 
-/** Crew + offensive cash + offensive drug = push ready. */
-export function findPushReady(board: PlayerBoard): number[] {
-  return board.active
-    .map((p, i) => (isActionReady(p) && p.drugTop && p.cashLeft) ? i : -1)
-    .filter(i => i >= 0);
-}
+  const destIdx = destinationTurfIdx ?? 0;
+  const dest = attacker.turfs[destIdx];
+  if (!dest) return;
 
-/** Crew + offensive cash (no drug) = funded attack ready. */
-export function findFundedReady(board: PlayerBoard): number[] {
-  return board.active
-    .map((p, i) => (isActionReady(p) && p.cashLeft && !p.drugTop) ? i : -1)
-    .filter(i => i >= 0);
-}
-
-/** Crew ready for direct attack. */
-export function findDirectReady(board: PlayerBoard): number[] {
-  return board.active
-    .map((p, i) => (isActionReady(p)) ? i : -1)
-    .filter(i => i >= 0);
-}
-
-/** Has any empty modifier slot. */
-export function hasEmptySlot(pos: Position): boolean {
-  if (!pos.crew || pos.seized) return false;
-  return !pos.drugTop || !pos.drugBottom || !pos.weaponTop ||
-    !pos.weaponBottom || !pos.cashLeft || !pos.cashRight;
+  for (const mod of mods) {
+    addToStack(dest, mod, false);
+  }
 }

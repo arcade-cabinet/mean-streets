@@ -1,7 +1,8 @@
 {
   "id": "card-038",
-  "type": "crew",
-  "displayName": "Tak \"Snitch\" Ferraro",
+  "kind": "tough",
+  "name": "Tak \"Snitch\" Ferraro",
+  "tagline": "Sells the truth by the ounce.",
   "archetype": "snitch",
   "affiliation": "reapers",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     3
   ],
-  "abilityText": "On play: opponent must reveal 1 random card from their hand for the rest of the round",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On play: opponent must reveal the rightmost card in their hand for the rest of the round"
+  ],
   "unlocked": false,
   "unlockCondition": "Win with a deck containing 3+ affiliations",
   "locked": false,
-  "draft": true,
-  "tagline": "Sells the truth by the ounce."
+  "draft": true
 }

@@ -1,7 +1,8 @@
 {
   "id": "card-078",
-  "type": "crew",
-  "displayName": "Lin \"Medic\" Ferraro",
+  "kind": "tough",
+  "name": "Lin \"Medic\" Ferraro",
+  "tagline": "Does the work no one thanks you for.",
   "archetype": "medic",
   "affiliation": "kings_row",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     9
   ],
-  "abilityText": "When sacrificed to heal: heals double the normal amount",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "When sacrificed to heal: heals double the normal amount"
+  ],
   "unlocked": false,
   "unlockCondition": "Win with a deck containing 3+ affiliations",
   "locked": false,
-  "draft": true,
-  "tagline": "Does the work no one thanks you for."
+  "draft": true
 }

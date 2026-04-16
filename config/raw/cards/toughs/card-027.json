@@ -1,7 +1,8 @@
 {
   "id": "card-027",
-  "type": "crew",
-  "displayName": "Richie \"Lookout\" Brennan",
+  "kind": "tough",
+  "name": "Richie \"Lookout\" Brennan",
+  "tagline": "Knows when to call you back.",
   "archetype": "lookout",
   "affiliation": "southside_saints",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     7
   ],
-  "abilityText": "On play: peek at the top 2 cards of your own deck, reorder them",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On play: peek at the top 2 cards of your own deck, reorder them"
+  ],
   "unlocked": false,
-  "unlockCondition": "Win without using any reserves",
+  "unlockCondition": "Win without discarding any cards",
   "locked": false,
-  "draft": true,
-  "tagline": "Knows when to call you back."
+  "draft": true
 }

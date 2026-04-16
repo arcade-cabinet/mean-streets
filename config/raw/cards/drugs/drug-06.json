@@ -1,15 +1,21 @@
 {
   "id": "drug-06",
-  "type": "product",
+  "kind": "drug",
   "name": "Turbo Spike",
   "category": "stimulant",
-  "potency": [
+  "power": [
     2
   ],
-  "offenseAbility": "RUSH",
-  "offenseAbilityText": "Crew acts immediately after placement, no setup turn cooldown.",
-  "defenseAbility": "REFLEXES",
-  "defenseAbilityText": "Crew counter-attacks for potency damage when hit.",
+  "resistance": [
+    1
+  ],
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "RUSH",
+    "REFLEXES"
+  ],
   "unlocked": false,
   "unlockCondition": "Flip 8 enemies total",
   "locked": false,

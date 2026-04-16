@@ -1,7 +1,8 @@
 {
   "id": "card-014",
-  "type": "crew",
-  "displayName": "Chin \"Snitch\" Kwon",
+  "kind": "tough",
+  "name": "Chin \"Snitch\" Kwon",
+  "tagline": "Sells the truth by the ounce.",
   "archetype": "snitch",
   "affiliation": "cobalt_syndicate",
   "power": [
@@ -10,10 +11,13 @@
   "resistance": [
     4
   ],
-  "abilityText": "On play: opponent must reveal 1 random card from their hand for the rest of the round",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "On play: opponent must reveal their highest-power card in hand for the rest of the round"
+  ],
   "unlocked": true,
-  "unlockCondition": null,
   "locked": false,
-  "draft": true,
-  "tagline": "Sells the truth by the ounce."
+  "draft": true
 }

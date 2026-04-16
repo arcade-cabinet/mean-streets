@@ -1,7 +1,8 @@
 {
   "id": "card-001",
-  "type": "crew",
-  "displayName": "Ana \"Thorn\" Reyes",
+  "kind": "tough",
+  "name": "Ana \"Thorn\" Reyes",
+  "tagline": "Your rules do not apply here.",
   "archetype": "bruiser",
   "affiliation": "kings_row",
   "power": [
@@ -13,10 +14,13 @@
   "resistance": [
     2
   ],
-  "abilityText": "Deals +2 damage when attacking a target with lower ATK than this card",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "Deals +2 damage when attacking a target with lower power than this card"
+  ],
   "unlocked": true,
-  "unlockCondition": null,
   "locked": false,
-  "draft": true,
-  "tagline": "Your rules do not apply here."
+  "draft": true
 }

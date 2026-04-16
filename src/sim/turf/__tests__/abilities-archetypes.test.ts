@@ -1,180 +1,136 @@
 import { describe, expect, it } from 'vitest';
-import type { CrewCard, Position, WeaponCard } from '../types';
-import { emptyPosition } from '../board';
-import { resolveDirectAttack, type AttackContext } from '../attacks';
+import type { ToughCard, WeaponCard, Turf } from '../types';
+import { createTurf, addToStack } from '../board';
+import { resolveDirectStrike } from '../attacks';
+import { resolveTargetToughIdx } from '../stack-ops';
 
-function makeCrew(overrides: Partial<CrewCard> = {}): CrewCard {
+function makeTough(overrides: Partial<ToughCard> = {}): ToughCard {
   return {
-    type: 'crew',
-    id: overrides.id ?? 'crew-1',
-    displayName: overrides.displayName ?? 'Crew',
+    kind: 'tough',
+    id: overrides.id ?? 'tough-1',
+    name: overrides.name ?? 'Tough',
+    tagline: 'Test tough',
     archetype: overrides.archetype ?? 'bruiser',
-    affiliation: overrides.affiliation ?? 'kings-row',
+    affiliation: overrides.affiliation ?? 'freelance',
     power: overrides.power ?? 6,
     resistance: overrides.resistance ?? 6,
-    abilityText: overrides.abilityText ?? 'None',
-    unlocked: true,
-    locked: false,
+    rarity: 'common',
+    abilities: [],
     ...overrides,
   };
 }
 
-function makeWeapon(category: string, bonus: number): WeaponCard {
+function makeWeapon(id: string, power = 3): WeaponCard {
   return {
-    type: 'weapon',
-    id: `weapon-${category}`,
-    name: category,
-    category,
-    bonus,
-    offenseAbility: category.toUpperCase(),
-    offenseAbilityText: category,
-    defenseAbility: category.toUpperCase(),
-    defenseAbilityText: category,
-    unlocked: true,
-    locked: false,
+    kind: 'weapon', id, name: id, category: 'bladed',
+    power, resistance: 1, rarity: 'common', abilities: [],
   };
 }
 
-function position(owner: 'A' | 'B', crew: CrewCard): Position {
-  const pos = emptyPosition(owner);
-  pos.crew = crew;
-  pos.turnsActive = 1;
-  return pos;
+function turfWith(...cards: (ToughCard | WeaponCard)[]): Turf {
+  const turf = createTurf();
+  for (const c of cards) addToStack(turf, c);
+  return turf;
 }
 
-describe('archetype abilities', () => {
-  it('BLOOD_FRENZY: shark gets +damage per opponent-card deficit', () => {
-    const attacker = position(
-      'A',
-      makeCrew({ displayName: 'Finn', archetype: 'shark', power: 4 }),
-    );
-    attacker.weaponTop = makeWeapon('blunt', 1);
-    const defender = position('B', makeCrew({ displayName: 'Diver', resistance: 10 }));
+describe('archetype abilities — strike targeting', () => {
+  it('shark targets bottom tough (strike-bottom)', () => {
+    const attacker = turfWith(makeTough({ archetype: 'shark', power: 20 }));
+    const bottom = makeTough({ id: 'bottom', name: 'Bottom', resistance: 3 });
+    const top = makeTough({ id: 'top', name: 'Top', resistance: 3 });
+    const defender = turfWith(bottom, top);
 
-    const context: AttackContext = {
-      ownCardsInPlay: 5,
-      opponentCardsInPlay: 2,
-    };
-    const outcome = resolveDirectAttack(attacker, defender, context);
+    const result = resolveDirectStrike(attacker, defender);
 
-    expect(outcome.description).toContain('BLOOD_FRENZY 3');
+    expect(result.outcome).toBe('kill');
+    expect(result.killedTough?.id).toBe('bottom');
+    expect(defender.stack.some(c => c.card.id === 'top')).toBe(true);
   });
 
-  it('BLOOD_FRENZY: does not trigger when opponent has equal cards', () => {
-    const attacker = position(
-      'A',
-      makeCrew({ displayName: 'Finn', archetype: 'shark', power: 4 }),
-    );
-    attacker.weaponTop = makeWeapon('blunt', 1);
-    const defender = position('B', makeCrew({ displayName: 'Diver', resistance: 10 }));
+  it('ghost targets the lowest-resistance tough (strike-anywhere)', () => {
+    // Updated behavior: ghost's strike-anywhere ("choose which tough to
+    // target" per RULES.md §7) picks the easiest kill by resistance, not
+    // the bottom of the stack. Prior impl was a copy of strike-bottom,
+    // making Ghost indistinguishable from Shark.
+    const attacker = turfWith(makeTough({ archetype: 'ghost', power: 20 }));
+    const bottom = makeTough({ id: 'bottom', name: 'Bottom', resistance: 8 });
+    const top = makeTough({ id: 'top', name: 'Top', resistance: 3 });
+    const defender = turfWith(bottom, top);
 
-    const context: AttackContext = {
-      ownCardsInPlay: 5,
-      opponentCardsInPlay: 5,
-    };
-    const outcome = resolveDirectAttack(attacker, defender, context);
+    const result = resolveDirectStrike(attacker, defender);
 
-    expect(outcome.description).not.toContain('BLOOD_FRENZY');
+    expect(result.outcome).toBe('kill');
+    expect(result.killedTough?.id).toBe('top');
   });
 
-  it('VENDETTA: enforcer doubles damage against at-war target', () => {
-    const attacker = position(
-      'A',
-      makeCrew({ displayName: 'Maker', archetype: 'enforcer', power: 6 }),
-    );
-    attacker.weaponTop = makeWeapon('blunt', 1);
-    const defender = position('B', makeCrew({ displayName: 'Rival', resistance: 10 }));
-    // raw atk 7, def floor/2 = 5, raw dmg = 2 → VENDETTA x2 = 4
-    const resBefore = defender.crew?.resistance ?? 0;
+  it('bruiser targets top tough (default)', () => {
+    const attacker = turfWith(makeTough({ archetype: 'bruiser', power: 20 }));
+    const bottom = makeTough({ id: 'bottom', name: 'Bottom', resistance: 3 });
+    const top = makeTough({ id: 'top', name: 'Top', resistance: 3 });
+    const defender = turfWith(bottom, top);
 
-    const context: AttackContext = {
-      ownCardsInPlay: 1,
-      opponentCardsInPlay: 1,
-      targetIsAtWar: true,
-    };
-    const outcome = resolveDirectAttack(attacker, defender, context);
+    const result = resolveDirectStrike(attacker, defender);
 
-    expect(outcome.description).toContain('VENDETTA x2');
-    expect((defender.crew?.resistance ?? 0) <= resBefore - 3).toBe(true);
+    expect(result.outcome).toBe('kill');
+    expect(result.killedTough?.id).toBe('top');
   });
 
-  it('VENDETTA: does not trigger against peaceful target', () => {
-    const attacker = position(
-      'A',
-      makeCrew({ displayName: 'Maker', archetype: 'enforcer', power: 6 }),
-    );
-    attacker.weaponTop = makeWeapon('blunt', 1);
-    const defender = position('B', makeCrew({ displayName: 'Ally', resistance: 10 }));
+  it('brawler targets top tough (default)', () => {
+    const attacker = turfWith(makeTough({ archetype: 'brawler', power: 20 }));
+    const bottom = makeTough({ id: 'bottom', resistance: 3 });
+    const top = makeTough({ id: 'top', resistance: 3 });
+    const defender = turfWith(bottom, top);
 
-    const context: AttackContext = {
-      ownCardsInPlay: 1,
-      opponentCardsInPlay: 1,
-      targetIsAtWar: false,
-    };
-    const outcome = resolveDirectAttack(attacker, defender, context);
-
-    expect(outcome.description).not.toContain('VENDETTA');
+    expect(resolveTargetToughIdx(defender, attacker)).toBe(1);
   });
 
-  it('BRUISER: ignores precision rule (existing — sanity check)', () => {
-    // Bruiser's precision-ignore is enforced by the environment action
-    // generator, not by resolveDirectAttack. Confirm direct attacks
-    // still work with no context regardless of archetype.
-    const attacker = position(
-      'A',
-      makeCrew({ displayName: 'Brick', archetype: 'bruiser', power: 8 }),
-    );
-    attacker.weaponTop = makeWeapon('blunt', 1);
-    const defender = position('B', makeCrew({ displayName: 'Soft', resistance: 3 }));
+  it('shark targeting with multiple toughs still gets bottom', () => {
+    const attacker = turfWith(makeTough({ archetype: 'shark', power: 20 }));
+    const t1 = makeTough({ id: 't1', resistance: 3 });
+    const t2 = makeTough({ id: 't2', resistance: 3 });
+    const t3 = makeTough({ id: 't3', resistance: 3 });
+    const defender = turfWith(t1, t2, t3);
 
-    const outcome = resolveDirectAttack(attacker, defender);
-    expect(outcome.type).toBe('kill');
+    const result = resolveDirectStrike(attacker, defender);
+
+    expect(result.killedTough?.id).toBe('t1');
   });
 
-  it('CALLED_SHOT: sniper lands at least +1 damage on every hit', () => {
-    const attacker = position(
-      'A',
-      makeCrew({ displayName: 'Scope', archetype: 'sniper', power: 4 }),
-    );
-    attacker.weaponTop = makeWeapon('blunt', 0);
-    const defender = position('B', makeCrew({ displayName: 'Target', resistance: 10 }));
+  it('ghost targeting with interleaved modifiers picks lowest-resistance tough', () => {
+    // Updated behavior. Mods between toughs are ignored when scoring
+    // target choice — ghost picks the lowest-resistance tough.
+    const attacker = turfWith(makeTough({ archetype: 'ghost', power: 20 }));
+    const w = makeWeapon('w1');
+    const bottom = makeTough({ id: 'bottom', resistance: 7 });
+    const top = makeTough({ id: 'top', resistance: 3 });
+    const defender = turfWith(bottom, w, top);
 
-    const outcome = resolveDirectAttack(attacker, defender);
-    expect(outcome.description).toContain('CALLED_SHOT 1');
+    const result = resolveDirectStrike(attacker, defender);
+
+    expect(result.killedTough?.id).toBe('top');
+  });
+});
+
+describe('archetype abilities — combat outcomes', () => {
+  it('direct strike kills when power >= resistance', () => {
+    const attacker = turfWith(
+      makeTough({ archetype: 'bruiser', power: 8 }),
+      makeWeapon('blade', 2),
+    );
+    const defender = turfWith(makeTough({ resistance: 10 }));
+
+    const result = resolveDirectStrike(attacker, defender);
+    expect(result.outcome).toBe('kill');
   });
 
-  it('SCORCHED_EARTH: arsonist gets +1 collateral damage', () => {
-    const attacker = position(
-      'A',
-      makeCrew({ displayName: 'Pyre', archetype: 'arsonist', power: 4 }),
-    );
-    attacker.weaponTop = makeWeapon('blunt', 0);
-    const defender = position('B', makeCrew({ displayName: 'Wall', resistance: 10 }));
+  it('direct strike sicks when power < resistance but >= R/2', () => {
+    // Ghost archetype: does NOT carry the bruiser ignore-resistance bonus,
+    // so the raw P=5 vs R=10 → sick (>= R/2).
+    const attacker = turfWith(makeTough({ archetype: 'ghost', power: 5 }));
+    const defender = turfWith(makeTough({ resistance: 10 }));
 
-    const outcome = resolveDirectAttack(attacker, defender);
-    expect(outcome.description).toContain('SCORCHED_EARTH 1');
-  });
-
-  it('PHANTOM_STRIKE: ghost attack bypasses 2 points of defense', () => {
-    const armedAttacker = position(
-      'A',
-      makeCrew({ displayName: 'Blade', archetype: 'bruiser', power: 5 }),
-    );
-    armedAttacker.weaponTop = makeWeapon('blunt', 2);
-    const defender1 = position('B', makeCrew({ displayName: 'Brick', resistance: 7 }));
-    // atk = 5 + 2 = 7, def = 7 → kill
-    const bruiserOutcome = resolveDirectAttack(armedAttacker, defender1);
-    expect(bruiserOutcome.type).toBe('kill');
-
-    const ghostAttacker = position(
-      'A',
-      makeCrew({ displayName: 'Spook', archetype: 'ghost', power: 3 }),
-    );
-    ghostAttacker.weaponTop = makeWeapon('blunt', 2);
-    const defender2 = position('B', makeCrew({ displayName: 'Brick', resistance: 7 }));
-    // atk = 3 + 2 = 5, def = 7 → 5 + phantom -2 def, so def becomes 5, kill triggers
-    const ghostOutcome = resolveDirectAttack(ghostAttacker, defender2);
-    expect(ghostOutcome.description).toContain('PHANTOM_STRIKE');
-    expect(ghostOutcome.type).toBe('kill');
+    const result = resolveDirectStrike(attacker, defender);
+    expect(result.outcome).toBe('sick');
+    expect(defender.sickTopIdx).toBe(0);
   });
 });

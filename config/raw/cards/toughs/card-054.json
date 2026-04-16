@@ -1,7 +1,8 @@
 {
   "id": "card-054",
-  "type": "crew",
-  "displayName": "Kim \"Medic\" Aguilar",
+  "kind": "tough",
+  "name": "Kim \"Medic\" Aguilar",
+  "tagline": "Does the work no one thanks you for.",
   "archetype": "medic",
   "affiliation": "los_diablos",
   "power": [
@@ -10,10 +11,14 @@
   "resistance": [
     7
   ],
-  "abilityText": "When sacrificed to heal: heals double the normal amount",
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "When sacrificed to heal: heals double the normal amount"
+  ],
   "unlocked": false,
   "unlockCondition": "Win a game in under 11 turns",
   "locked": false,
-  "draft": true,
-  "tagline": "Does the work no one thanks you for."
+  "draft": true
 }

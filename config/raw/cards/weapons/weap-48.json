@@ -1,15 +1,21 @@
 {
   "id": "weap-48",
-  "type": "weapon",
+  "kind": "weapon",
   "name": "Poison Needle",
   "category": "stealth",
-  "bonus": [
+  "power": [
     1
   ],
-  "offenseAbility": "AMBUSH",
-  "offenseAbilityText": "No counter-damage when attacking. Attacker takes zero retaliation.",
-  "defenseAbility": "EVASION",
-  "defenseAbilityText": "First bonus attacks against this position miss entirely.",
+  "resistance": [
+    1
+  ],
+  "rarity": [
+    "common"
+  ],
+  "abilities": [
+    "AMBUSH",
+    "EVASION"
+  ],
   "unlocked": false,
   "unlockCondition": "Win with all 5 weapon categories in your deck",
   "locked": false,
