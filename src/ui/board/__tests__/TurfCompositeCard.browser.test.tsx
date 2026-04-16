@@ -2,7 +2,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TurfCompositeCard } from '../TurfCompositeCard';
 import { renderInBrowser, settleBrowser } from '../../../test/render-browser';
 import { resetTestViewport, setTestViewport } from '../../../test/viewport';
-import type { Turf, ToughCard, WeaponCard, DrugCard, CurrencyCard } from '../../../sim/turf/types';
+import type { Card, StackedCard, Turf, ToughCard, WeaponCard, DrugCard, CurrencyCard } from '../../../sim/turf/types';
+
+function stacked(card: Card, faceUp = true): StackedCard {
+  return { card, faceUp };
+}
 
 function tough(id: string, name: string, aff = 'kings_row'): ToughCard {
   return {
@@ -40,14 +44,18 @@ describe('TurfCompositeCard (browser)', () => {
   });
 
   it('renders empty turf in browser', async () => {
-    const turf: Turf = { id: '0', stack: [] };
+    const turf: Turf = { id: '0', stack: [], closedRanks: false };
     cleanup = (await renderInBrowser(<TurfCompositeCard turf={turf} />)).unmount;
     expect(document.querySelector('.turf-composite-empty')).not.toBeNull();
     expect(document.body.textContent).toContain('Empty Turf');
   });
 
   it('renders populated turf with stats in browser', async () => {
-    const turf: Turf = { id: '1', stack: [tough('t1', 'Alpha'), weapon(), drug(), currency()] };
+    const turf: Turf = {
+      id: '1',
+      stack: [stacked(tough('t1', 'Alpha')), stacked(weapon()), stacked(drug()), stacked(currency())],
+      closedRanks: false,
+    };
     cleanup = (await renderInBrowser(<TurfCompositeCard turf={turf} />)).unmount;
     expect(document.querySelector('[data-testid="turf-composite-1"]')).not.toBeNull();
     expect(document.body.textContent).toContain('Alpha');
@@ -58,7 +66,8 @@ describe('TurfCompositeCard (browser)', () => {
   it('shows affiliation symbols for multi-affiliation turfs', async () => {
     const turf: Turf = {
       id: '2',
-      stack: [tough('t1', 'Alpha', 'kings_row'), tough('t2', 'Bravo', 'iron_devils')],
+      stack: [stacked(tough('t1', 'Alpha', 'kings_row')), stacked(tough('t2', 'Bravo', 'iron_devils'))],
+      closedRanks: false,
     };
     cleanup = (await renderInBrowser(<TurfCompositeCard turf={turf} />)).unmount;
     const symbols = document.querySelectorAll('.turf-composite-affiliations .affiliation-symbol');
@@ -67,7 +76,7 @@ describe('TurfCompositeCard (browser)', () => {
 
   it('fires click handler', async () => {
     const handler = vi.fn();
-    const turf: Turf = { id: '3', stack: [tough('t1', 'Alpha')] };
+    const turf: Turf = { id: '3', stack: [stacked(tough('t1', 'Alpha'))], closedRanks: false };
     cleanup = (await renderInBrowser(<TurfCompositeCard turf={turf} onClick={handler} />)).unmount;
     const el = document.querySelector<HTMLElement>('[data-testid="turf-composite-3"]')!;
     el.click();
@@ -76,7 +85,7 @@ describe('TurfCompositeCard (browser)', () => {
 
   it('renders compact layout on phone viewport', async () => {
     setTestViewport({ width: 390, height: 844, orientation: 'portrait' });
-    const turf: Turf = { id: '4', stack: [tough('t1', 'Alpha')] };
+    const turf: Turf = { id: '4', stack: [stacked(tough('t1', 'Alpha'))], closedRanks: false };
     cleanup = (await renderInBrowser(<TurfCompositeCard turf={turf} compact />)).unmount;
     await settleBrowser();
     expect(document.querySelector('.turf-composite-compact')).not.toBeNull();

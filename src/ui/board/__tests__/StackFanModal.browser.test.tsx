@@ -1,7 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { StackFanModal } from '../StackFanModal';
 import { renderInBrowser, settleBrowser } from '../../../test/render-browser';
-import type { Turf, ToughCard, WeaponCard } from '../../../sim/turf/types';
+import type { Card, StackedCard, Turf, ToughCard, WeaponCard } from '../../../sim/turf/types';
+
+function stacked(card: Card, faceUp = true): StackedCard {
+  return { card, faceUp };
+}
 
 function tough(id: string, name: string): ToughCard {
   return {
@@ -25,7 +29,8 @@ function weapon(): WeaponCard {
 function makeTurf(): Turf {
   return {
     id: 'fan',
-    stack: [tough('t1', 'Alpha'), weapon(), tough('t2', 'Bravo')],
+    stack: [stacked(tough('t1', 'Alpha')), stacked(weapon()), stacked(tough('t2', 'Bravo'))],
+    closedRanks: false,
   };
 }
 
