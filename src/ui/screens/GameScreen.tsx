@@ -83,8 +83,15 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
     if (!actionMode) return;
 
     if (actionMode === 'play_card' && side === 'A' && selectedCardId) {
-      playCardAction(world, index, selectedCardId);
+      const result = playCardAction(world, index, selectedCardId);
       resetAction();
+      // Surface the affiliation-discard case so the player understands
+      // why the card vanished instead of landing on the turf. Sim layer
+      // reports `play_card_discarded_rival` when a rival affiliation
+      // arrives without a buffer (RULES.md §4).
+      if (result?.reason === 'play_card_discarded_rival') {
+        showFlash('RIVAL DISCARDED — no buffer on that turf', 2400);
+      }
       if (checkWin()) return;
       return;
     }

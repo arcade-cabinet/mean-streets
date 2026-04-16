@@ -1,4 +1,4 @@
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { generateTurfCardPools } from '../turf/catalog';
 import { saveBalanceHistory } from '../turf/balance';
@@ -530,10 +530,14 @@ async function main(): Promise<void> {
 }
 
 function isDirectInvocation(): boolean {
-  // Only execute main() when this file is the entry point, not when imported
-  // by tests. Works for both `tsx src/sim/analysis/cli.ts` and node ESM.
-  const entry = process.argv[1] ?? '';
-  return entry.includes('cli.ts') || entry.includes('cli.js');
+  // Only execute main() when this file is the entry point, not when
+  // imported by tests. Use a basename equality check rather than
+  // `.includes('cli.ts')` — the loose form false-matches paths like
+  // `my-cli.ts` or `cli.ts.map`.
+  const entry = process.argv[1];
+  if (!entry) return false;
+  const base = basename(entry);
+  return base === 'cli.ts' || base === 'cli.js' || base === 'cli.mjs';
 }
 
 if (isDirectInvocation()) {
