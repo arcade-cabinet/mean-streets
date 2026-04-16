@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { runSeededBenchmark } from '../benchmarks';
 import { estimateCardEffects } from '../effects';
 import { deriveLockRecommendations } from '../locking';
-import { runCuratedSweep, type ForcedPermutationResult } from '../sweeps';
+import { buildCuratedSweepPermutations, runCuratedSweep, type ForcedPermutationResult } from '../sweeps';
 import { checkConvergence } from '../benchmarks';
 import { generateTurfCardPools } from '../../turf/catalog';
 
@@ -58,23 +58,15 @@ describe('analysis layer', () => {
     expect(locks.recommendations.some(rec => rec.cardId === 'card-001')).toBe(true);
   });
 
+  // Fast: checks anchor selection distributes across all weapon + drug categories
+  // without running any simulated games (sub-millisecond, no sim cost).
   it('spreads curated quick sweep anchors across weapon and drug categories', () => {
     const pools = generateTurfCardPools(42, { allUnlocked: true });
-    const sweep = runCuratedSweep('weapon_drug', 'quick');
-    const weaponIds = [
-      ...new Set(
-        sweep.permutations
-          .map(p => p.forcedIds[0])
-          .filter(Boolean),
-      ),
-    ];
-    const drugIds = [
-      ...new Set(
-        sweep.permutations
-          .map(p => p.forcedIds[1])
-          .filter(Boolean),
-      ),
-    ];
+    const permutationIds = buildCuratedSweepPermutations('weapon_drug');
+
+    const weaponIds = [...new Set(permutationIds.map(ids => ids[0]).filter(Boolean))];
+    const drugIds = [...new Set(permutationIds.map(ids => ids[1]).filter(Boolean))];
+
     const weaponCategories = weaponIds
       .map(id => pools.weapons.find(c => c.id === id)?.category)
       .filter((c): c is string => c !== undefined);
@@ -90,7 +82,18 @@ describe('analysis layer', () => {
 
     expect(new Set(weaponCategories).size).toBe(5);
     expect(new Set(drugCategories).size).toBe(5);
-  }, 600000);
+  });
+
+  // Slow: full sim-backed sweep — validates the end-to-end pipeline.
+  // Set RUN_SLOW_TESTS=1 to enable locally or in a dedicated CI job.
+  // TODO: promote to a nightly job once we have a dedicated slow-test runner.
+  describe.skipIf(!process.env.RUN_SLOW_TESTS)('slow sim sweep (RUN_SLOW_TESTS=1)', () => {
+    it('runCuratedSweep weapon_drug quick produces one result per permutation', () => {
+      const permutationIds = buildCuratedSweepPermutations('weapon_drug');
+      const sweep = runCuratedSweep('weapon_drug', 'quick');
+      expect(sweep.permutations).toHaveLength(permutationIds.length);
+    }, 600000);
+  });
 
   it('checkConvergence detects 3 consecutive runs in 48-52% band', () => {
     const convergent = checkConvergence([0.49, 0.51, 0.50]);

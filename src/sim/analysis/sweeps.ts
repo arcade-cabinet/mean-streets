@@ -140,6 +140,44 @@ function selectAnchorsByGroup<T extends { id: string }>(
   return selected;
 }
 
+/** Returns the ordered list of `forcedIds` arrays the sweep will run — without
+ *  playing any simulated games. Use this for fast schema / distribution checks
+ *  in tests that do not need sim results. */
+export function buildCuratedSweepPermutations(
+  shape: keyof typeof TURF_SIM_CONFIG.sweepProfiles,
+  catalogSeed = TURF_SIM_CONFIG.benchmarkProfiles.smoke.catalogSeed,
+): string[][] {
+  const sweepProfile = TURF_SIM_CONFIG.sweepProfiles[shape];
+  const pools = generateTurfCardPools(catalogSeed, { allUnlocked: true });
+
+  const crewIds = selectAnchorsByGroup(
+    pools.crew, sweepProfile.crewCount,
+    card => card.archetype,
+  );
+  const weaponIds = selectAnchorsByGroup(
+    pools.weapons, sweepProfile.weaponCount,
+    card => card.category,
+  );
+  const drugIds = selectAnchorsByGroup(
+    pools.drugs, sweepProfile.drugCount,
+    card => card.category,
+  );
+
+  const result: string[][] = [];
+  for (const crewId of crewIds.length > 0 ? crewIds : [undefined]) {
+    for (const weaponId of weaponIds.length > 0 ? weaponIds : [undefined]) {
+      for (const drugId of drugIds.length > 0 ? drugIds : [undefined]) {
+        const forcedIds = [crewId, weaponId, drugId].filter(
+          (v): v is string => Boolean(v),
+        );
+        if (forcedIds.length === 0) continue;
+        result.push(forcedIds);
+      }
+    }
+  }
+  return result;
+}
+
 export function runCuratedSweep(
   shape: keyof typeof TURF_SIM_CONFIG.sweepProfiles,
   profile: keyof typeof TURF_SIM_CONFIG.analysisProfiles = 'quick',
