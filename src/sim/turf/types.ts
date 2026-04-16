@@ -1,13 +1,8 @@
 import type { Rng } from '../cards/rng';
 import simConfig from '../../data/ai/turf-sim.json';
 
-// ── Rarity & Categories ─────────────────────────────────────
-
 export type Rarity = 'common' | 'rare' | 'legendary';
-
 export type CardCategory = 'tough' | 'weapon' | 'drug' | 'currency';
-
-// ── Card Types ──────────────────────────────────────────────
 
 export interface ToughCard {
   kind: 'tough';
@@ -56,23 +51,39 @@ export type Card = ToughCard | WeaponCard | DrugCard | CurrencyCard;
 
 export type ModifierCard = WeaponCard | DrugCard | CurrencyCard;
 
-// ── Turf (Board Slot) ───────────────────────────────────────
+// ── Stacked Card, Turf, Queued Action (v0.2) ────────────────
+
+/** `faceUp` is permanent once true (retreat / resolution reveal / abilities). */
+export interface StackedCard {
+  card: Card;
+  faceUp: boolean;
+}
 
 export interface Turf {
   id: string;
-  stack: Card[];
+  stack: StackedCard[];
   sickTopIdx?: number | null;
+  closedRanks: boolean;
+  rivalBufferSpent?: boolean;
 }
 
-// ── Player State ────────────────────────────────────────────
+/** Strike/recruit declared this turn; resolves end-of-turn. Draw/play/retreat are immediate. */
+export interface QueuedAction {
+  kind: 'direct_strike' | 'pushed_strike' | 'funded_recruit';
+  side: 'A' | 'B';
+  turfIdx: number;
+  targetTurfIdx: number;
+}
 
 export interface PlayerState {
   turfs: Turf[];
-  hand: Card[];
   deck: Card[];
   discard: Card[];
   toughsInPlay: number;
   actionsRemaining: number;
+  pending: Card | null;
+  queued: QueuedAction[];
+  turnEnded: boolean;
 }
 
 // ── Difficulty & Game Config ────────────────────────────────
@@ -103,7 +114,7 @@ export const DEFAULT_GAME_CONFIG: GameConfig = {
   firstTurnActions: defaultDiff.firstTurnActions,
 };
 
-// ── Attack Types ────────────────────────────────────────────
+// ── Attacks & Phase ─────────────────────────────────────────
 
 export type AttackType = 'direct' | 'funded' | 'pushed';
 
@@ -115,12 +126,12 @@ export interface AttackOutcome {
   description: string;
 }
 
-// ── Game Phase & Actions ────────────────────────────────────
-
-export type GamePhase = 'combat';
+export type GamePhase = 'action' | 'resolve';
 
 export type TurfActionKind =
+  | 'draw'
   | 'play_card'
+  | 'retreat'
   | 'direct_strike'
   | 'pushed_strike'
   | 'funded_recruit'
@@ -128,15 +139,21 @@ export type TurfActionKind =
   | 'end_turn'
   | 'pass';
 
+/**
+ * Payload by kind: draw/end_turn/pass → side only; play_card → turfIdx+cardId;
+ * retreat → turfIdx+stackIdx; strikes/recruit → turfIdx+targetTurfIdx;
+ * discard → cardId (voluntary pending-modifier discard).
+ */
 export interface TurfAction {
   kind: TurfActionKind;
   side: 'A' | 'B';
   turfIdx?: number;
   targetTurfIdx?: number;
   cardId?: string;
+  stackIdx?: number;
 }
 
-// ── AI Observation ──────────────────────────────────────────
+// ── AI ──────────────────────────────────────────────────────
 
 export interface TurfObservation {
   phase: GamePhase;
@@ -157,8 +174,6 @@ export interface TurfObservation {
   actionsRemaining: number;
   stateKey: string;
 }
-
-// ── AI Planner ──────────────────────────────────────────────
 
 export interface PlannerMemory {
   lastGoal: string | null;
@@ -215,11 +230,9 @@ export interface TurfPolicyArtifact {
 export interface TurfGameState {
   config: GameConfig;
   players: { A: PlayerState; B: PlayerState };
-  turnSide: 'A' | 'B';
   firstPlayer: 'A' | 'B';
   turnNumber: number;
   phase: GamePhase;
-  hasStruck: { A: boolean; B: boolean };
   aiState: { A: string; B: string };
   aiTurnsInState: { A: number; B: number };
   aiMemory: { A: PlannerMemory; B: PlannerMemory };
@@ -236,6 +249,9 @@ export interface TurfGameState {
 
 export interface TurfMetrics {
   turns: number;
+  draws: number;
+  retreats: number;
+  closedRanksEnds: number;
   directStrikes: number;
   pushedStrikes: number;
   fundedRecruits: number;
@@ -257,7 +273,7 @@ export interface TurfMetrics {
   firstStrike: 'A' | 'B' | null;
 }
 
-// ── Deck ────────────────────────────────────────────────────
+// ── Deck & Result ───────────────────────────────────────────
 
 export interface DeckSnapshot {
   cardIds: string[];
