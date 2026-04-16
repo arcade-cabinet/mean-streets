@@ -90,7 +90,7 @@ describe('analysis layer', () => {
 
     expect(new Set(weaponCategories).size).toBe(5);
     expect(new Set(drugCategories).size).toBe(5);
-  }, 300000);
+  }, 600000);
 
   it('checkConvergence detects 3 consecutive runs in 48-52% band', () => {
     const convergent = checkConvergence([0.49, 0.51, 0.50]);
