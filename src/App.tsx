@@ -163,8 +163,8 @@ export default function App() {
       const playerWon = w === 'A';
       const config = activeConfig;
       if (playerWon && config) {
-        const rewards = matchRewardPacks(config.difficulty, config.suddenDeath, true);
-        const newCards = await openRewardPacks(rewards, config.suddenDeath);
+        const rewards = matchRewardPacks(config.difficulty, false, true);
+        const newCards = await openRewardPacks(rewards);
         setLastRewardCards(newCards);
       } else {
         setLastRewardCards([]);
