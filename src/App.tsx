@@ -191,9 +191,7 @@ export default function App() {
         <MainMenuScreen
           onNewGame={handleOpenNewGame}
           onLoadGame={handleLoadGame}
-          onCollection={() => setScreen('collection')}
-          onOpenPack={() => setScreen('pack-opening')}
-          onCardGarage={() => setScreen('card-garage')}
+          onCards={() => setScreen('card-garage')}
           canLoadGame={hasActiveRun}
         />
       )}

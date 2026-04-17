@@ -142,9 +142,7 @@ function renderFixture(fixture: FixtureName) {
         <MainMenuScreen
           onNewGame={() => {}}
           onLoadGame={() => {}}
-          onCollection={() => {}}
-          onOpenPack={() => {}}
-          onCardGarage={() => {}}
+          onCards={() => {}}
           canLoadGame={false}
         />
       );
