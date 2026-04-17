@@ -164,7 +164,7 @@ export default function App() {
       const config = activeConfig;
       if (playerWon && config) {
         const rewards = matchRewardPacks(config.difficulty, false, true);
-        const newCards = await openRewardPacks(rewards);
+        const newCards = await openRewardPacks(rewards, config.difficulty);
         setLastRewardCards(newCards);
       } else {
         setLastRewardCards([]);

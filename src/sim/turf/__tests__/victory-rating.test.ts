@@ -42,8 +42,7 @@ describe('computePerTurfRewards', () => {
     expect(rewards).toHaveLength(1);
     expect(rewards[0].rating).toBe('absolute');
     expect(rewards[0].pack).not.toBeNull();
-    // Absolute = 5-card themed pack.
-    expect(rewards[0].pack!.kind).toMatch(/tough-5|weapon-5|drug-5|currency-5/);
+    expect(rewards[0].pack!.kind).toBe('standard');
   });
 
   it('yields triple pack for Overwhelming', () => {

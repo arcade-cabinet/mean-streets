@@ -46,19 +46,16 @@ const VALID_PACK_KINDS: ReadonlySet<string> = new Set([
   'single', 'triple', 'standard',
 ]);
 
-const TYPE_WEIGHTS: Record<CardCategory, number> = {
-  tough: 50,
-  weapon: 20,
-  drug: 20,
-  currency: 10,
-};
-
 function pickCardType(rng: Rng): CardCategory {
-  const total = TYPE_WEIGHTS.tough + TYPE_WEIGHTS.weapon + TYPE_WEIGHTS.drug + TYPE_WEIGHTS.currency;
+  const weights = TURF_SIM_CONFIG.packEconomy.typeWeights;
+  const total = weights.tough + weights.weapon + weights.drug + weights.currency;
+  if (total <= 0) {
+    throw new Error('turf-sim.json packEconomy.typeWeights must sum to > 0');
+  }
   const roll = rng.next() * total;
   let cum = 0;
   for (const type of ['tough', 'weapon', 'drug', 'currency'] as const) {
-    cum += TYPE_WEIGHTS[type];
+    cum += weights[type];
     if (roll < cum) return type;
   }
   return 'tough';
@@ -186,7 +183,10 @@ export function generatePack(
     const pool = getPool(category);
 
     if (category === 'currency') {
-      cards.push(rng.pick(pool));
+      const available = pool.filter((c) => !usedIds.has(c.id));
+      const picked = rng.pick(available.length > 0 ? available : pool);
+      cards.push(picked);
+      usedIds.add(picked.id);
       continue;
     }
 

@@ -19,17 +19,10 @@ import type {
  * profile layer) hands these bundles to the pack opener.
  */
 
-const PACK_CATEGORIES: ReadonlyArray<PackKind> = [
-  'tough-5',
-  'weapon-5',
-  'drug-5',
-  'currency-5',
-];
-
 const PERFECT_WAR_FALLBACK_CURRENCY = 500;
 
-function rollPackCategory(rng: Rng): PackKind {
-  return rng.pick(PACK_CATEGORIES as PackKind[]);
+function rollPackCategory(_rng: Rng): PackKind {
+  return 'standard';
 }
 
 function makePack(kind: PackKind, rng: Rng): PackInstance {
@@ -71,11 +64,10 @@ export function computePerTurfRewards(
     if (rating === 'standard') {
       return { pack: null, rating, turnsToSeize: s.turnsOnThatTurf };
     }
-    // Pack size scales by rating (5 / 3 / 1). For 'absolute' we want
-    // a 5-card pack, typed by a randomly rolled category (tough-5 /
-    // weapon-5 / drug-5 / currency-5) so players get variety across a
-    // multi-turf war. Smaller ratings use category-less singles /
-    // triples — the generator fills them with a random mix.
+    // Pack size scales by rating (5 / 3 / 1). For 'absolute' we
+    // award a standard 5-card pack; smaller ratings get triples or
+    // singles. The generator fills each slot with a probabilistic
+    // type roll.
     const kind: PackKind =
       rating === 'absolute' ? rollPackCategory(rng) :
       rating === 'overwhelming' ? 'triple' :
