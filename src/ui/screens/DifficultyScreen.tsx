@@ -71,7 +71,7 @@ const TIERS: TierDef[] = [
     turfs: simConfig.difficulty['sudden-death'].turfCount,
     actions: simConfig.difficulty['sudden-death'].actionsPerTurn,
     forcedSuddenDeath: true,
-    tagline: 'One turf, one chance',
+    tagline: 'Better drops, raids auto-kill',
   },
   {
     id: 'ultra-nightmare',
