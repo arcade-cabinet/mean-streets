@@ -6088,16 +6088,86 @@ select {
 .turf-reserves-peek-row { display: flex; align-items: center; gap: 0.5rem; }
 .turf-reserves-peek-position { font-weight: 700; color: #a9a29a; width: 28px; }
 
-/* ---- v0.3 GameScreen layout ---- */
-.game-screen-v3 .game-shell {
+/* ---- v0.3 GameScreen board grid ---- */
+.game-screen-v3 { display: flex; flex-direction: column; height: 100vh; }
+.game-screen-v3 .game-hud-bar { flex-shrink: 0; }
+
+.board-grid {
+  flex: 1;
   display: grid;
-  grid-template-columns: 220px 1fr 220px;
-  gap: 0.75rem;
-  padding: 0 0.5rem;
+  grid-template-columns: 1fr 2fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  min-height: 0;
 }
-.game-sidebar { display: flex; flex-direction: column; gap: 0.5rem; }
-.game-sidebar-left { justify-content: flex-start; }
-.game-sidebar-right { justify-content: flex-start; }
+
+.board-slot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(228, 169, 69, 0.15);
+  border-radius: var(--radius-card, 6px);
+  background: rgba(14, 12, 10, 0.6);
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.15s, background 0.15s;
+}
+.board-slot:hover { border-color: rgba(228, 169, 69, 0.35); }
+.board-slot-tappable { border-color: rgba(228, 169, 69, 0.4); cursor: pointer; }
+.board-slot-tappable:hover { background: rgba(228, 169, 69, 0.06); }
+.board-slot-occupied { border-color: rgba(228, 169, 69, 0.25); }
+
+.board-slot-label {
+  color: rgba(228, 169, 69, 0.3);
+  font-family: var(--font-display, 'Bebas Neue', sans-serif);
+  font-size: 0.85rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  user-select: none;
+}
+.board-slot-count {
+  color: rgba(228, 169, 69, 0.7);
+  font-family: var(--font-display, 'Bebas Neue', sans-serif);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.board-slot-turf { border-width: 2px; }
+.board-slot-turf .turf-composite {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 0;
+}
+
+.board-pending-badge {
+  position: absolute;
+  bottom: 0.25rem;
+  right: 0.25rem;
+  transform: scale(0.6);
+  transform-origin: bottom right;
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.board-end-turn {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  padding: 0.35rem;
+}
+
+/* Phone: collapse holding+market into HUD icons, 2-col grid */
+@media (max-width: 640px) {
+  .board-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+  }
+  .board-slot-holding,
+  .board-slot-market { display: none; }
+}
 .game-mobile-modal-triggers {
   display: flex; gap: 0.5rem; padding: 0.25rem 0.5rem; justify-content: center;
 }
