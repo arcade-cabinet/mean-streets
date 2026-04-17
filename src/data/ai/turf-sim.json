@@ -267,20 +267,17 @@
   },
   "packEconomy": {
     "rarityWeights": { "common": 70, "rare": 25, "legendary": 5 },
-    "suddenDeathBumpChance": 0.3,
+    "typeWeights": { "tough": 50, "weapon": 20, "drug": 20, "currency": 10 },
     "starterGrant": [
-      { "kind": "tough-5", "count": 4 },
-      { "kind": "weapon-5", "count": 1 },
-      { "kind": "drug-5", "count": 1 },
-      { "kind": "currency-5", "count": 1 }
+      { "kind": "standard", "count": 7 }
     ],
     "rewards": {
-      "easy":            { "base": [{ "kind": "single", "count": 1 }],   "suddenDeath": [{ "kind": "triple", "count": 1 }] },
-      "medium":          { "base": [{ "kind": "triple", "count": 1 }],   "suddenDeath": [{ "kind": "tough-5", "count": 1 }] },
-      "hard":            { "base": [{ "kind": "tough-5", "count": 1 }],  "suddenDeath": [{ "kind": "tough-5", "count": 1 }, { "kind": "weapon-5", "count": 1 }] },
-      "nightmare":       { "base": [{ "kind": "tough-5", "count": 1 }, { "kind": "weapon-5", "count": 1 }], "suddenDeath": [{ "kind": "tough-5", "count": 1 }, { "kind": "weapon-5", "count": 1 }, { "kind": "drug-5", "count": 1 }] },
-      "sudden-death":    { "base": [{ "kind": "tough-5", "count": 1 }, { "kind": "drug-5", "count": 1 }],   "suddenDeath": [{ "kind": "tough-5", "count": 1 }, { "kind": "weapon-5", "count": 1 }, { "kind": "drug-5", "count": 1 }] },
-      "ultra-nightmare": { "base": [{ "kind": "tough-5", "count": 2 }, { "kind": "weapon-5", "count": 1 }, { "kind": "drug-5", "count": 1 }], "suddenDeath": [{ "kind": "tough-5", "count": 2 }, { "kind": "weapon-5", "count": 1 }, { "kind": "drug-5", "count": 1 }] }
+      "easy":            { "base": [{ "kind": "single", "count": 1 }] },
+      "medium":          { "base": [{ "kind": "triple", "count": 1 }] },
+      "hard":            { "base": [{ "kind": "standard", "count": 1 }] },
+      "nightmare":       { "base": [{ "kind": "standard", "count": 2 }] },
+      "sudden-death":    { "base": [{ "kind": "standard", "count": 1 }] },
+      "ultra-nightmare": { "base": [{ "kind": "standard", "count": 3 }] }
     }
   },
   "gameDefaults": {

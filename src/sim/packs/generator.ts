@@ -1,10 +1,10 @@
 import type { Rng } from '../cards/rng';
-import type { Card, CardInstance, DifficultyTier, Rarity } from '../turf/types';
+import type { Card, CardCategory, CardInstance, DifficultyTier, Rarity } from '../turf/types';
 import { loadToughCards } from '../cards/catalog';
 import { generateWeapons, generateDrugs, generateCurrency } from '../turf/generators';
 import { TURF_SIM_CONFIG } from '../turf/ai/config';
 import type { PackKind, PackReward } from './types';
-import { PACK_CATEGORY, PACK_SIZE } from './types';
+import { PACK_SIZE } from './types';
 
 // v0.3 pack economy — per RULES §2 / §3:
 //   - Per-slot pull rate picks a card by BASE rarity.
@@ -43,8 +43,26 @@ const DIFFICULTY_REWARD_MULT: Record<DifficultyTier, number> = {
 };
 
 const VALID_PACK_KINDS: ReadonlySet<string> = new Set([
-  'tough-5', 'weapon-5', 'drug-5', 'currency-5', 'single', 'triple',
+  'single', 'triple', 'standard',
 ]);
+
+const TYPE_WEIGHTS: Record<CardCategory, number> = {
+  tough: 50,
+  weapon: 20,
+  drug: 20,
+  currency: 10,
+};
+
+function pickCardType(rng: Rng): CardCategory {
+  const total = TYPE_WEIGHTS.tough + TYPE_WEIGHTS.weapon + TYPE_WEIGHTS.drug + TYPE_WEIGHTS.currency;
+  const roll = rng.next() * total;
+  let cum = 0;
+  for (const type of ['tough', 'weapon', 'drug', 'currency'] as const) {
+    cum += TYPE_WEIGHTS[type];
+    if (roll < cum) return type;
+  }
+  return 'tough';
+}
 
 const RARITY_ORDER: Rarity[] = ['common', 'uncommon', 'rare', 'legendary', 'mythic'];
 
@@ -148,10 +166,6 @@ function pickCardOfBase(
 }
 
 export interface GeneratePackOptions {
-  /** @deprecated v0.3 removed sudden-death; flag is ignored. */
-  suddenDeathWin?: boolean;
-  category?: 'tough' | 'weapon' | 'drug' | 'currency';
-  /** Difficulty of the war that produced this pack (drives roll-up mult). */
   unlockDifficulty?: DifficultyTier;
 }
 
@@ -164,25 +178,18 @@ export function generatePack(
   const size = PACK_SIZE[kind];
   const mult = DIFFICULTY_REWARD_MULT[options.unlockDifficulty ?? 'easy'];
 
-  const category = PACK_CATEGORY[kind] ?? options.category;
-  const pool = category ? getPool(category) : [
-    ...loadToughCards(),
-    ...generateWeapons(),
-    ...generateDrugs(),
-    ...generateCurrency(),
-  ];
-
-  if (category === 'currency') {
-    // Currency cards don't roll up — their rarity is intrinsic to
-    // denomination per RULES §2 — so we skip the two-stage rarity
-    // dance entirely.
-    return Array.from({ length: size }, () => rng.pick(pool));
-  }
-
   const cards: Card[] = [];
   const usedIds = new Set(collection.map((c) => c.id));
 
   for (let i = 0; i < size; i++) {
+    const category = pickCardType(rng);
+    const pool = getPool(category);
+
+    if (category === 'currency') {
+      cards.push(rng.pick(pool));
+      continue;
+    }
+
     const baseRarity = pickBaseRarity(rng);
     const base = pickCardOfBase(pool, baseRarity, rng, usedIds);
     const rolled = rollInstanceRarity(cardBaseRarity(base), rng, mult);

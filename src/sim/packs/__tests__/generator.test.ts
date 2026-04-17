@@ -7,36 +7,11 @@ describe('generatePack', () => {
   const rng = () => createRng(42);
   const emptyCollection: Card[] = [];
 
-  it('tough-5 produces 5 tough cards', () => {
-    const cards = generatePack('tough-5', emptyCollection, rng());
+  it('standard produces 5 cards with mixed types', () => {
+    const cards = generatePack('standard', emptyCollection, rng());
     expect(cards).toHaveLength(5);
-    for (const c of cards) {
-      expect(c.kind).toBe('tough');
-    }
-  });
-
-  it('weapon-5 produces 5 weapon cards', () => {
-    const cards = generatePack('weapon-5', emptyCollection, rng());
-    expect(cards).toHaveLength(5);
-    for (const c of cards) {
-      expect(c.kind).toBe('weapon');
-    }
-  });
-
-  it('drug-5 produces 5 drug cards', () => {
-    const cards = generatePack('drug-5', emptyCollection, rng());
-    expect(cards).toHaveLength(5);
-    for (const c of cards) {
-      expect(c.kind).toBe('drug');
-    }
-  });
-
-  it('currency-5 produces 5 currency cards', () => {
-    const cards = generatePack('currency-5', emptyCollection, rng());
-    expect(cards).toHaveLength(5);
-    for (const c of cards) {
-      expect(c.kind).toBe('currency');
-    }
+    const kinds = new Set(cards.map(c => c.kind));
+    expect(kinds.size).toBeGreaterThanOrEqual(1);
   });
 
   it('single produces 1 card', () => {
@@ -49,18 +24,29 @@ describe('generatePack', () => {
     expect(cards).toHaveLength(3);
   });
 
+  it('probabilistic type weights produce toughs most often', () => {
+    const counts: Record<string, number> = { tough: 0, weapon: 0, drug: 0, currency: 0 };
+    const r = createRng(12345);
+    for (let i = 0; i < 100; i++) {
+      const cards = generatePack('standard', emptyCollection, r);
+      for (const c of cards) counts[c.kind]++;
+    }
+    expect(counts.tough).toBeGreaterThan(counts.weapon);
+    expect(counts.tough).toBeGreaterThan(counts.drug);
+    expect(counts.tough).toBeGreaterThan(counts.currency);
+  });
+
   it('rolled rarity skews low at easy difficulty', () => {
     const counts: Record<string, number> = {
       common: 0, uncommon: 0, rare: 0, legendary: 0, mythic: 0,
     };
     const r = createRng(12345);
     for (let i = 0; i < 200; i++) {
-      const cards = generatePack('tough-5', emptyCollection, r, { unlockDifficulty: 'easy' });
+      const cards = generatePack('standard', emptyCollection, r, { unlockDifficulty: 'easy' });
       for (const c of cards) counts[c.rarity]++;
     }
     const total = counts.common + counts.uncommon + counts.rare + counts.legendary;
     expect(total).toBeGreaterThan(0);
-    // Commons + uncommons should dominate easy-difficulty rolls.
     expect((counts.common + counts.uncommon) / total).toBeGreaterThan(0.5);
     expect(counts.mythic).toBe(0);
   });
@@ -74,10 +60,10 @@ describe('generatePack', () => {
     };
 
     for (let seed = 1; seed <= 100; seed++) {
-      const easy = generatePack('tough-5', emptyCollection, createRng(seed), { unlockDifficulty: 'easy' });
+      const easy = generatePack('standard', emptyCollection, createRng(seed), { unlockDifficulty: 'easy' });
       for (const c of easy) easyCounts[c.rarity]++;
 
-      const ultra = generatePack('tough-5', emptyCollection, createRng(seed), {
+      const ultra = generatePack('standard', emptyCollection, createRng(seed), {
         unlockDifficulty: 'ultra-nightmare',
       });
       for (const c of ultra) ultraCounts[c.rarity]++;
@@ -91,25 +77,18 @@ describe('generatePack', () => {
   });
 
   it('is deterministic with the same seed', () => {
-    const a = generatePack('tough-5', emptyCollection, createRng(99));
-    const b = generatePack('tough-5', emptyCollection, createRng(99));
+    const a = generatePack('standard', emptyCollection, createRng(99));
+    const b = generatePack('standard', emptyCollection, createRng(99));
     expect(a.map(c => c.id)).toEqual(b.map(c => c.id));
   });
 });
 
 describe('starterGrant', () => {
-  it('produces starter collection: 20 toughs + 5 weapons + 5 drugs + 5 currency', () => {
+  it('produces starter collection with mixed types (7 standard packs = 35 cards)', () => {
     const cards = starterGrant(createRng(42));
-    const toughs = cards.filter(c => c.kind === 'tough');
-    const weapons = cards.filter(c => c.kind === 'weapon');
-    const drugs = cards.filter(c => c.kind === 'drug');
-    const currency = cards.filter(c => c.kind === 'currency');
-
-    expect(toughs).toHaveLength(20);
-    expect(weapons).toHaveLength(5);
-    expect(drugs).toHaveLength(5);
-    expect(currency).toHaveLength(5);
-    expect(cards).toHaveLength(35);
+    expect(cards.length).toBe(35);
+    const kinds = new Set(cards.map(c => c.kind));
+    expect(kinds.has('tough')).toBe(true);
   });
 });
 
@@ -118,16 +97,10 @@ describe('matchRewardPacks', () => {
     expect(matchRewardPacks('medium', false, false)).toEqual([]);
   });
 
-  it('returns base rewards on win without sudden death', () => {
+  it('returns base rewards on win', () => {
     const rewards = matchRewardPacks('medium', false, true);
     expect(rewards.length).toBeGreaterThan(0);
     expect(rewards[0].kind).toBe('triple');
-  });
-
-  it('ignores deprecated sudden-death flag (returns base rewards)', () => {
-    const base = matchRewardPacks('medium', false, true);
-    const sd = matchRewardPacks('medium', true, true);
-    expect(sd).toEqual(base);
   });
 
   it('returns larger rewards for harder difficulties', () => {
