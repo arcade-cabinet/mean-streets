@@ -6095,7 +6095,7 @@ select {
 .board-grid {
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
   grid-template-rows: 1fr 1fr;
   gap: 0.5rem;
   padding: 0.5rem;
@@ -6113,6 +6113,7 @@ select {
   cursor: pointer;
   overflow: hidden;
   transition: border-color 0.15s, background 0.15s;
+  align-self: center;
 }
 .board-slot:hover { border-color: rgba(228, 169, 69, 0.35); }
 .board-slot-tappable { border-color: rgba(228, 169, 69, 0.4); cursor: pointer; }
@@ -6134,7 +6135,12 @@ select {
   font-weight: 700;
 }
 
-.board-slot-turf { border-width: 2px; }
+.board-slot-turf {
+  border-width: 2px;
+  aspect-ratio: 5 / 7;
+  max-height: 100%;
+  justify-self: center;
+}
 .board-slot-turf .turf-composite {
   width: 100%;
   height: 100%;

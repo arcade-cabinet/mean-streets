@@ -7,7 +7,7 @@ describe('MythicSymbol', () => {
     const { container } = render(<MythicSymbol mythicId="mythic-01" />);
     const img = container.querySelector('img.mythic-symbol-art');
     expect(img).not.toBeNull();
-    expect(img!.getAttribute('src')).toBe('/assets/mythics/mythic-01.svg');
+    expect(img!.getAttribute('src')).toContain('assets/mythics/mythic-01.svg');
   });
 
   it('renders the shared gold ring svg in addition to the art', () => {

@@ -42,7 +42,7 @@ export function AffiliationSymbol({
   className = '',
 }: AffiliationSymbolProps) {
   const glowClass = GLOW_CLASS[context];
-  const src = `/assets/affiliations/${affiliation}.svg`;
+  const src = `${import.meta.env.BASE_URL}assets/affiliations/${affiliation}.svg`;
 
   return (
     <div
