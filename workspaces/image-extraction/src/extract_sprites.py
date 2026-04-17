@@ -178,8 +178,8 @@ def crop_sprite(img: Image.Image, region: dict, pad: int = 2) -> Image.Image:
 
 def main():
     root = Path(__file__).resolve().parents[3]
-    sheet_dir = root / "public" / "assets" / "sprite-sheets"
-    out_dir = root / "public" / "assets" / "sprites"
+    sheet_dir = root / "raw-assets" / "sprite-sheets"
+    out_dir = root / "raw-assets" / "sprites"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     manifest = {}

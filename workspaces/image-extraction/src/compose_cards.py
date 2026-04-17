@@ -77,7 +77,7 @@ def render_sprite(sprite_path: Path, canvas_w: int = 120, canvas_h: int = 160) -
 
 def main():
     root = Path(__file__).resolve().parents[3]
-    sprites_dir = root / "public" / "assets" / "sprites"
+    sprites_dir = root / "raw-assets" / "sprites"
     clean_labels_path = Path(__file__).parent / "sprite_labels_clean.json"
     catalog_dir = root / "config" / "compiled"
     out_dir = root / "public" / "assets" / "card-art"

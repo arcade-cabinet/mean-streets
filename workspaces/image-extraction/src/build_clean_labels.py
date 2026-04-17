@@ -93,7 +93,7 @@ def fuzzy_correct(ocr_text: str) -> str | None:
 
 def main():
     root = Path(__file__).resolve().parents[3]
-    manifest_path = root / "public" / "assets" / "sprites" / "manifest.json"
+    manifest_path = root / "raw-assets" / "sprites" / "manifest.json"
     manifest = json.loads(manifest_path.read_text())
 
     result = {}

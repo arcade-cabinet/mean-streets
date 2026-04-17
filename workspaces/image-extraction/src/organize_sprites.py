@@ -62,8 +62,8 @@ def section_to_category(section: str) -> str:
 def main():
     root = Path(__file__).resolve().parents[3]
     src_dir = Path(__file__).parent
-    sprites_flat = root / "public" / "assets" / "sprites"
-    out_base = root / "public" / "assets" / "sprites"
+    sprites_flat = root / "raw-assets" / "sprites"
+    out_base = root / "raw-assets" / "sprites"
 
     labels = load_all_labels(src_dir)
     print(f"Labels loaded: {len(labels)}")
