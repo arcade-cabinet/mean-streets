@@ -21,10 +21,20 @@ is in `git log`.
   resolve, reserve turf promotion, base + rolled rarity, and the 10 hand-
   authored mythics.
 
-- **Governance alignment pass** — Current branch `fix/release-please-pnpm`
-  is adding the missing governance and documentation files to bring the repo
-  up to the required standard: `STANDARDS.md`, `docs/TESTING.md`,
-  `docs/DEPLOYMENT.md`, `docs/LORE.md`, `docs/STATE.md`, `.cursor/rules`.
+- **Governance alignment pass** — PR #5 merged: `STANDARDS.md`,
+  `docs/TESTING.md`, `docs/DEPLOYMENT.md`, `docs/LORE.md`, `docs/STATE.md`,
+  `.cursor/rules`, `.github/dependabot.yml`. All global-standard files present.
+
+- **Mythic ability wiring** — PR #9 merged: STRIKE_TWO, CHAIN_THREE,
+  IMMUNITY, TRANSCEND, ABSOLUTE registered in dispatch. 5 integration tests
+  promoted from `describe.skip`. 521 node tests green.
+
+- **E2E expansion** — PR #11 merged: 4 new Playwright specs (`single-lane-flow`,
+  `market-and-holding`, `mythic-engagement`, `war-outcome`). 15 total E2E specs
+  across 4 device profiles.
+
+- **Releases** — v0.4.0 (governance + v0.3 rewrite), v0.5.0 (mythic abilities)
+  tagged via release-please.
 
 - **Simulation infrastructure** — Balance benchmark, curated sweep, lock
   lifecycle, and release gate are wired and operational. `analysis:benchmark`,
@@ -60,19 +70,18 @@ is in `git log`.
 - Reference: `docs/plans/v0.3-paper-playtest.md` and
   `docs/plans/v0.3-paper-playtest-2.md`.
 
-### E2E Expansion
+### E2E Expansion — DONE
 
-- Promote the v0.3 integration smoke suite from `describe.skip` to active
-  (`src/sim/turf/__tests__/v03-integration.test.ts`).
-- Add E2E specs for: `single-lane-flow`, `market-and-holding`,
-  `mythic-engagement`, `card-garage`, `war-outcome`, `retreat-and-closed-ranks`.
-- Reach 70%+ balance lock coverage to unblock the release gate.
+- Integration smoke suite promoted (PR #9).
+- 4 new E2E specs landed (PR #11): `single-lane-flow`, `market-and-holding`,
+  `mythic-engagement`, `war-outcome`.
+- Balance lock coverage at 72% (release gate passes).
 
-### Release Gate
+### Release Gate — PASSING
 
-Currently blocked by:
-- Lock coverage below 70% (run `pnpm run analysis:lock:persist` iteratively).
-- v0.3 integration suite still `describe.skip`-gated.
+- Lock coverage 72% (floor: 70%).
+- Convergence: winRateA 0.41-0.46 across 3 seeds, within [0.40, 0.65] band.
+- Timeout rate 3.6-5.9% (floor: 8%).
 
 ### Post-v0.3 (Future)
 
