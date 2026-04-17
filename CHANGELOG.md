@@ -9,6 +9,14 @@ status: current
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.4.0](https://github.com/arcade-cabinet/mean-streets/compare/v0.3.0...v0.4.0) (2026-04-17)
+
+
+### Features
+
+* production polish batch (Epics A–K) ([#2](https://github.com/arcade-cabinet/mean-streets/issues/2)) ([558491f](https://github.com/arcade-cabinet/mean-streets/commit/558491f75ac6f83ba41b068c77ad6acd5a81f560))
+* v0.3 single-lane turf war rewrite ([#4](https://github.com/arcade-cabinet/mean-streets/issues/4)) ([62ab2e8](https://github.com/arcade-cabinet/mean-streets/commit/62ab2e8bb200569059578061cc8f5091462ba52d))
+
 ## [0.3.0] - 2026-04-17
 
 This is the v0.3 single-lane rewrite. The v0.2 parallel-turf model
