@@ -60,3 +60,4 @@ ios/App/App.xcworkspace/xcuserdata/
 .ralph-tui/
 /tasks/
 src/ui/cards/cardArt.generated.ts
+public/assets/sprites/*.png
