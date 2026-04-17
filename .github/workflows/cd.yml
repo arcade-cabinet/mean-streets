@@ -80,7 +80,7 @@ jobs:
         with:
           lfs: true
 
-      - uses: actions/setup-java@67aec007b1fd4956b80e13d10fce3b718e3db6ab # v4
+      - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
         with:
           distribution: temurin
           java-version: 21
@@ -149,6 +149,9 @@ jobs:
         run: |
           git config user.name "autobalance-bot"
           git config user.email "autobalance-bot@users.noreply.github.com"
+
+      - name: Reset lockfile noise
+        run: git checkout -- pnpm-lock.yaml 2>/dev/null || true
 
       - name: Run autobalance smoke check
         run: |
