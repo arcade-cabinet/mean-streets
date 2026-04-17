@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { World } from 'koota';
 import { useAppShell } from '../../platform';
 import {
-  useActionBudget, useBlackMarket, useDeckCount, useDeckPending,
+  useActionBudget, useBlackMarket, useDeckCount, useDeckPending, useMetrics,
   useHeat, useHolding, useLockup, useMythicPool,
   useQueuedStrikes, useTurfActive, useTurfReserves, useTurnEnded,
 } from '../../ecs/hooks';
@@ -64,6 +64,7 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
   const lockupA = useLockup('A');
   const lockupB = useLockup('B');
   const mythic = useMythicPool();
+  const metrics = useMetrics();
   const turnNumber = budget.turnNumber;
 
   const compact = layout.id === 'phone-portrait' || layout.id === 'folded';
@@ -87,24 +88,31 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
 
   const { aiThinking } = useOpponentTurn({ world, turnEndedA, turnEndedB, onFinish: checkWin });
 
+  const metricsSnapshotRef = useRef({ raids: 0, mythicsFlipped: 0 });
+
   useEffect(() => {
     if (turnEndedA && turnEndedB && !pendingResolveRef.current) {
+      metricsSnapshotRef.current = { raids: metrics.raids, mythicsFlipped: metrics.mythicsFlipped };
       pendingResolveRef.current = {
-        strikes: [...queuedA, ...queuedB], raid: heat >= 0.8, mythic: 0,
+        strikes: [...queuedA, ...queuedB], raid: false, mythic: 0,
       };
     }
-  }, [turnEndedA, turnEndedB, queuedA, queuedB, heat]);
+  }, [turnEndedA, turnEndedB, queuedA, queuedB, metrics.raids, metrics.mythicsFlipped]);
 
   useEffect(() => {
     if (turnNumber !== prevTurnRef.current && prevTurnRef.current !== 0) {
       showFlash(`RESOLVED — Turn ${turnNumber}`, RESOLVE_FLASH_MS);
       if (pendingResolveRef.current) {
+        const raidFired = metrics.raids > metricsSnapshotRef.current.raids;
+        const mythicDelta = metrics.mythicsFlipped - metricsSnapshotRef.current.mythicsFlipped;
+        pendingResolveRef.current.raid = raidFired;
+        pendingResolveRef.current.mythic = mythicDelta;
         setResolution(pendingResolveRef.current);
         pendingResolveRef.current = null;
       }
     }
     prevTurnRef.current = turnNumber;
-  }, [turnNumber, showFlash]);
+  }, [turnNumber, showFlash, metrics.raids, metrics.mythicsFlipped]);
 
   const actions = buildGameActions({
     world, pending, playerActive, opponentActive,

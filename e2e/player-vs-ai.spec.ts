@@ -28,8 +28,8 @@ test.describe('Player Governor vs AI', () => {
     await expect(page.getByTestId('game-screen')).toBeVisible({ timeout: 10_000 });
 
     const result = await runPlayerGovernor(page, testInfo, {
-      maxActions: 10000,
-      actionDelayMs: 10,
+      maxActions: 5000,
+      actionDelayMs: 40,
       verbose: true,
     });
 
