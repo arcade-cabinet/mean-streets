@@ -1,124 +1,75 @@
 import { useAppShell } from '../../platform';
-import { ArchiveRestore, Crosshair, Library, Package, Wrench } from 'lucide-react';
-import { CardFrame } from '../cards';
 
 interface MainMenuScreenProps {
   onNewGame: () => void;
   onLoadGame: () => void;
-  onCollection: () => void;
-  onOpenPack: () => void;
-  onCardGarage: () => void;
+  onCards: () => void;
   canLoadGame: boolean;
-}
-
-interface MenuButtonProps {
-  label: string;
-  detail: string;
-  icon: 'crosshair' | 'load' | 'collection' | 'pack' | 'garage';
-  onClick: () => void;
-  disabled?: boolean;
-  tone?: 'primary' | 'secondary';
-  testId: string;
-}
-
-function MenuButton({ label, detail, icon, onClick, disabled = false, tone = 'secondary', testId }: MenuButtonProps) {
-  const Icon = icon === 'crosshair'
-    ? Crosshair
-    : icon === 'collection'
-      ? Library
-      : icon === 'pack'
-        ? Package
-        : icon === 'garage'
-          ? Wrench
-          : ArchiveRestore;
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      data-testid={testId}
-      className={`menu-button ${tone === 'primary' ? 'menu-button-primary' : ''} ${disabled ? 'menu-button-disabled' : ''}`}
-    >
-      <CardFrame variant="button" className="card-frame-svg card-frame-svg-button" />
-      <span className="menu-button-icon" aria-hidden="true">
-        <Icon size={20} strokeWidth={2.2} />
-      </span>
-      <span className="menu-button-copy">
-        <span className="menu-button-label">{label}</span>
-        <span className="menu-button-detail">{detail}</span>
-      </span>
-    </button>
-  );
+  availablePacks?: number;
 }
 
 export function MainMenuScreen({
   onNewGame,
   onLoadGame,
-  onCollection,
-  onOpenPack,
-  onCardGarage,
+  onCards,
   canLoadGame,
+  availablePacks = 0,
 }: MainMenuScreenProps) {
   const { layout } = useAppShell();
   const heroImage = `${import.meta.env.BASE_URL}assets/hero.png`;
   const logoImage = `${import.meta.env.BASE_URL}assets/logo.png`;
+  const useHero = layout.deviceClass !== 'phone' || layout.id !== 'phone-portrait';
 
   return (
-    <main className="menu-shell" data-testid="main-menu-screen" data-menu-variant={layout.menuVariant} aria-label="Main Menu">
-      <div className="menu-backdrop" style={{ backgroundImage: `url(${heroImage})` }} aria-hidden="true" />
-      <div className="menu-grain" aria-hidden="true" />
-
-      <h1 className="menu-title-a11y">Mean Streets: Precision Starvation</h1>
+    <main
+      className={`menu-shell ${useHero ? 'menu-shell-hero' : 'menu-shell-solid'}`}
+      data-testid="main-menu-screen"
+      aria-label="Main Menu"
+    >
+      {useHero && (
+        <div
+          className="menu-backdrop"
+          style={{ backgroundImage: `url(${heroImage})` }}
+          aria-hidden="true"
+        />
+      )}
 
       <img
         src={logoImage}
-        alt="Mean Streets: Precision Starvation"
-        className={`menu-logo menu-logo-${layout.menuVariant}`}
+        alt="Mean Streets"
+        className="menu-logo"
         data-testid="menu-logo"
       />
 
-      <section className={`menu-content menu-content-${layout.menuVariant}`} aria-label="Menu Actions">
-        <div className="menu-topbar">
-          <div className={`menu-actions menu-actions-${layout.menuVariant}`}>
-            <MenuButton
-              label="New Game"
-              detail="Build your deck and take the street."
-              icon="crosshair"
-              onClick={onNewGame}
-              tone="primary"
-              testId="new-game-button"
-            />
-            <MenuButton
-              label="Load Game"
-              detail={canLoadGame ? 'Resume a committed run from the last save.' : 'No committed run saved yet.'}
-              icon="load"
-              onClick={onLoadGame}
-              disabled={!canLoadGame}
-              testId="load-game-button"
-            />
-            <MenuButton
-              label="Collection"
-              detail="Browse your unlocked cards by rarity and category."
-              icon="collection"
-              onClick={onCollection}
-              testId="collection-button"
-            />
-            <MenuButton
-              label="Open Pack"
-              detail="Crack open a pack and see what you got."
-              icon="pack"
-              onClick={onOpenPack}
-              testId="open-pack-button"
-            />
-            <MenuButton
-              label="Card Garage"
-              detail="Tune deck priorities, merge duplicates, manage unlocks."
-              icon="garage"
-              onClick={onCardGarage}
-              testId="card-garage-button"
-            />
-          </div>
-        </div>
-      </section>
+      <nav className="menu-nav" aria-label="Menu Actions">
+        <button
+          className="menu-btn menu-btn-primary"
+          onClick={onNewGame}
+          data-testid="new-game-button"
+        >
+          New Game
+        </button>
+
+        <button
+          className="menu-btn"
+          onClick={onLoadGame}
+          disabled={!canLoadGame}
+          data-testid="load-game-button"
+        >
+          Load Game
+        </button>
+
+        <button
+          className="menu-btn"
+          onClick={onCards}
+          data-testid="cards-button"
+        >
+          Cards
+          {availablePacks > 0 && (
+            <span className="menu-btn-badge">{availablePacks}</span>
+          )}
+        </button>
+      </nav>
     </main>
   );
 }

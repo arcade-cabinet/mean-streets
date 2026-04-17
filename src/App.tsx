@@ -32,9 +32,11 @@ import {
   MainMenuScreen,
   PackOpeningScreen,
 } from './ui/screens';
+import { CardsScreen } from './ui/screens/CardsScreen';
 
 type Screen =
   | 'menu'
+  | 'cards'
   | 'difficulty'
   | 'combat'
   | 'gameover'
@@ -191,10 +193,15 @@ export default function App() {
         <MainMenuScreen
           onNewGame={handleOpenNewGame}
           onLoadGame={handleLoadGame}
-          onCollection={() => setScreen('collection')}
-          onOpenPack={() => setScreen('pack-opening')}
-          onCardGarage={() => setScreen('card-garage')}
+          onCards={() => setScreen('cards')}
           canLoadGame={hasActiveRun}
+        />
+      )}
+
+      {screen === 'cards' && (
+        <CardsScreen
+          onBack={() => setScreen('menu')}
+          onStartGame={() => setScreen('difficulty')}
         />
       )}
 
