@@ -259,6 +259,16 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
       <QueuedChips strikes={queuedA} />
 
       <div className="board-end-turn">
+        {pending && (
+          <button
+            type="button"
+            className="game-action-btn game-action-btn-danger"
+            onClick={actions.onDiscardPending}
+            data-testid="action-discard-pending"
+          >
+            Discard
+          </button>
+        )}
         <button
           type="button"
           className={`game-action-btn game-action-btn-end-turn ${turnEndedA ? 'game-action-btn-disabled' : ''}`}
