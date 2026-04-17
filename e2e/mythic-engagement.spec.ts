@@ -8,7 +8,8 @@ async function goToGame(page: Page, testInfo: TestInfo) {
   await activate(page.getByTestId('new-game-button'), testInfo);
   await activate(page.getByTestId('close-rules-button'), testInfo);
   await activate(page.getByTestId('diff-tile-easy'), testInfo);
-  await expect(page.getByTestId('game-screen')).toBeVisible();
+  await activate(page.getByTestId('diff-start'), testInfo);
+  await expect(page.getByTestId('game-screen')).toBeVisible({ timeout: 10_000 });
 }
 
 test.describe('mythic engagement (v0.3)', () => {
@@ -43,7 +44,7 @@ test.describe('mythic engagement (v0.3)', () => {
       'mythic-06', 'mythic-07', 'mythic-08', 'mythic-09', 'mythic-10',
     ];
     for (const id of mythicIds) {
-      const response = await page.request.get(`/assets/mythics/${id}.svg`);
+      const response = await page.request.get(`/mean-streets/assets/mythics/${id}.svg`);
       expect(response.status()).toBe(200);
     }
   });

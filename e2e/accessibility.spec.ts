@@ -30,8 +30,7 @@ test('tap-only flow completes menu → difficulty → game start without drag', 
 
   await assertHasAccessibleName(page, 'new-game-button');
   await assertHasAccessibleName(page, 'load-game-button');
-  await assertHasAccessibleName(page, 'collection-button');
-  await assertHasAccessibleName(page, 'open-pack-button');
+  await assertHasAccessibleName(page, 'cards-button');
 
   await tap(page.getByTestId('new-game-button'), testInfo);
   await expect(page.getByRole('heading', { name: 'Rules' })).toBeVisible();
@@ -74,32 +73,4 @@ test('difficulty screen exposes a main landmark', async ({ page }) => {
     );
   });
   expect(hasLandmark, 'difficulty screen should expose a landmark or h1').toBe(true);
-});
-
-test('pack opening is keyboard navigable', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.use.hasTouch === true, 'keyboard test — desktop only');
-
-  await page.goto('/');
-  await expect(page.getByTestId('main-menu-screen')).toBeVisible();
-  await page.getByTestId('open-pack-button').click();
-  await expect(page.getByTestId('pack-opening-screen')).toBeVisible();
-
-  const openBtn = page.getByTestId('pack-open-btn');
-  await expect(openBtn).toBeVisible();
-  await openBtn.focus();
-  await page.keyboard.press('Enter');
-
-  await expect(page.getByTestId('pack-reveal-stage')).toBeVisible({ timeout: 5_000 });
-
-  // Press Space up to 10 times to advance through every revealed card.
-  // Stop as soon as `pack-done-btn` appears — no hardcoded sleeps;
-  // waiting on the actual state change is both faster and more robust
-  // to reveal-animation timing drift across CI runners.
-  const summaryBtn = page.getByTestId('pack-done-btn');
-  for (let i = 0; i < 10; i++) {
-    if (await summaryBtn.isVisible().catch(() => false)) break;
-    await page.keyboard.press('Space');
-  }
-
-  await expect(summaryBtn).toBeVisible({ timeout: 5_000 });
 });
