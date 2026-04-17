@@ -143,6 +143,16 @@ export function useMythicPool(): {
   };
 }
 
+export function useMetrics(): { raids: number; mythicsFlipped: number; kills: number } {
+  const entity = useQueryFirst(GameState);
+  const gs = useTrait(entity, GameState);
+  return {
+    raids: gs?.metrics.raids ?? 0,
+    mythicsFlipped: gs?.metrics.mythicsFlipped ?? 0,
+    kills: gs?.metrics.kills ?? 0,
+  };
+}
+
 export interface TurfStackComposite {
   turf: Turf;
   toughs: ToughCard[];

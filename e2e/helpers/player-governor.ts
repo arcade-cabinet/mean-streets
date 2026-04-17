@@ -130,7 +130,52 @@ type GovernorAction =
   | 'wait';
 
 let drawsThisTurn = 0;
-const MAX_DRAWS_PER_TURN = 4;
+let actionsThisTurn = 0;
+const MAX_DRAWS_PER_TURN = 3;
+const MAX_ACTIONS_PER_TURN = 12;
+
+function parseHeat(state: PerceivedState): number {
+  const match = state.heat.match(/(\d+)/);
+  return match ? parseInt(match[1]) / 100 : 0;
+}
+
+interface ScoredCandidate { action: GovernorAction; score: number }
+
+function scoreActions(state: PerceivedState): ScoredCandidate[] {
+  const candidates: ScoredCandidate[] = [];
+  const heat = parseHeat(state);
+  const budgetFrac = state.actionsTotal > 0 ? state.actionsRemaining / state.actionsTotal : 0;
+  const canStrike = state.playerTurfHasTough && !state.opponentTurfEmpty && state.actionsRemaining > 0;
+  const lastTurf = state.turfsOpponent <= 1;
+
+  // Draw: valuable when board is empty, diminishes as toughs build
+  if (state.canDraw && drawsThisTurn < MAX_DRAWS_PER_TURN && actionsThisTurn < MAX_ACTIONS_PER_TURN) {
+    let score = 0.3;
+    if (state.playerTurfEmpty) score += 2.0; // urgent: need toughs on board
+    else if (!state.playerTurfHasTough) score += 1.5;
+    else score -= 0.5; // already have toughs, drawing is less valuable
+    candidates.push({ action: 'draw', score });
+  }
+
+  // Strike: high value, especially on last turf
+  if (canStrike && state.queuedStrikeCount === 0) {
+    let score = 3.0;
+    if (lastTurf) score += 5.0;
+    score -= heat * 3.0; // heat penalty
+    candidates.push({ action: 'strike_open_fan', score });
+  } else if (canStrike && state.queuedStrikeCount > 0) {
+    // Second strike in same turn — lower priority
+    let score = 1.5;
+    if (lastTurf) score += 3.0;
+    score -= heat * 3.0;
+    candidates.push({ action: 'strike_open_fan', score });
+  }
+
+  // End turn: only attractive when nothing else is valuable
+  candidates.push({ action: 'end_turn', score: state.actionsRemaining <= 0 ? 5.0 : -0.5 });
+
+  return candidates.sort((a, b) => b.score - a.score);
+}
 
 function decide(state: PerceivedState): GovernorAction {
   if (state.gameOver) return 'wait';
@@ -138,30 +183,23 @@ function decide(state: PerceivedState): GovernorAction {
   if (state.turnEnded) return 'wait';
   if (state.actionsRemaining <= 0 && !state.hasPending) return 'end_turn';
 
+  // In-progress multi-step actions take priority
   if (state.strikePromptVisible) return 'strike_target';
   if (state.stackFanOpen) return 'strike_pick_tough';
 
+  // Pending card must be handled before anything else
   if (state.hasPending) {
     if (state.pendingIsTough) return 'place';
     if (state.playerTurfHasTough) return 'place';
     return 'discard';
   }
 
-  const canStrike = state.playerTurfHasTough && !state.opponentTurfEmpty && state.actionsRemaining > 0;
+  // Safety: if we've taken too many actions this turn, end it
+  if (actionsThisTurn >= MAX_ACTIONS_PER_TURN) return 'end_turn';
 
-  if (canStrike && state.queuedStrikeCount === 0) {
-    return 'strike_open_fan';
-  }
-
-  if (state.canDraw && state.actionsRemaining > 0 && drawsThisTurn < MAX_DRAWS_PER_TURN) {
-    return 'draw';
-  }
-
-  if (canStrike) {
-    return 'strike_open_fan';
-  }
-
-  return 'end_turn';
+  // Score remaining actions and pick the best
+  const ranked = scoreActions(state);
+  return ranked.length > 0 ? ranked[0].action : 'end_turn';
 }
 
 async function execute(
@@ -274,6 +312,7 @@ export async function runPlayerGovernor(
       consecutiveWaits = 0;
       consecutiveSameAction = 0;
       drawsThisTurn = 0;
+      actionsThisTurn = 0;
     }
 
     let action = decide(state);
@@ -295,6 +334,7 @@ export async function runPlayerGovernor(
     }
 
     if (action === 'draw') drawsThisTurn++;
+    if (action !== 'wait') actionsThisTurn++;
 
     if (options.verbose && (action !== 'wait' || consecutiveWaits % 50 === 0)) {
       console.log(`[Gov] T${state.turnNumber} A${state.actionsRemaining}/${state.actionsTotal} → ${action} | pending=${state.hasPending}(tough=${state.pendingIsTough}) canDraw=${state.canDraw} turfEmpty=${state.playerTurfEmpty} hasTough=${state.playerTurfHasTough} wait=${state.waitingForOpponent} ended=${state.turnEnded} waits=${consecutiveWaits}`);
