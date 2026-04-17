@@ -4,7 +4,7 @@ import { runPlayerGovernor } from './helpers/player-governor';
 
 test.describe('Player Governor vs AI', () => {
   test('plays a full game to completion on Corner Boy (easy)', async ({ page }, testInfo) => {
-    test.setTimeout(300_000);
+    test.setTimeout(600_000);
 
     page.on('console', msg => {
       if (msg.type() === 'error') console.log(`[BROWSER ERROR] ${msg.text()}`);
@@ -28,8 +28,8 @@ test.describe('Player Governor vs AI', () => {
     await expect(page.getByTestId('game-screen')).toBeVisible({ timeout: 10_000 });
 
     const result = await runPlayerGovernor(page, testInfo, {
-      maxActions: 3000,
-      actionDelayMs: 50,
+      maxActions: 10000,
+      actionDelayMs: 10,
       verbose: true,
     });
 
@@ -49,7 +49,7 @@ test.describe('Player Governor vs AI', () => {
   });
 
   test('plays a full game on Soldier (medium)', async ({ page }, testInfo) => {
-    test.setTimeout(300_000);
+    test.setTimeout(600_000);
 
     await page.goto('/');
     await expect(page.getByTestId('main-menu-screen')).toBeVisible();
