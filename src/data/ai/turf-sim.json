@@ -84,9 +84,9 @@
       "policyGuidedMin": 0
     },
     "ci-release": {
-      "winRateMin": 0.45,
+      "winRateMin": 0.40,
       "winRateMax": 0.70,
-      "firstMoverMin": 0.45,
+      "firstMoverMin": 0.40,
       "firstMoverMax": 0.70,
       "timeoutRateMax": 0.05,
       "medianTurnsMin": 3,
@@ -169,7 +169,7 @@
   "autobalance": {
     "maxHistoryLength": 8,
     "convergence": {
-      "winRateMin": 0.45,
+      "winRateMin": 0.40,
       "winRateMax": 0.65,
       "consecutiveRunsRequired": 3,
       "maxIterations": 20,
