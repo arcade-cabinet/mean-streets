@@ -8,17 +8,14 @@ function wrap(ui: React.ReactElement) {
 }
 
 describe('DifficultyScreen', () => {
-  // v0.3 removes the Sudden Death tile. Remaining tiers: easy, medium,
-  // hard, nightmare, ultra-nightmare. Sudden-death mode no longer
-  // exists as a runtime toggle.
-  it('renders five difficulty tiles (Sudden Death removed in v0.3)', () => {
+  it('renders six difficulty tiles including Sudden Death', () => {
     render(wrap(<DifficultyScreen onSelect={vi.fn()} onBack={vi.fn()} />));
     expect(screen.getByTestId('diff-tile-easy')).not.toBeNull();
     expect(screen.getByTestId('diff-tile-medium')).not.toBeNull();
     expect(screen.getByTestId('diff-tile-hard')).not.toBeNull();
     expect(screen.getByTestId('diff-tile-nightmare')).not.toBeNull();
+    expect(screen.getByTestId('diff-tile-sudden-death')).not.toBeNull();
     expect(screen.getByTestId('diff-tile-ultra-nightmare')).not.toBeNull();
-    expect(screen.queryByTestId('diff-tile-sudden-death')).toBeNull();
   });
 
   it('defaults to medium selected', () => {
@@ -36,14 +33,9 @@ describe('DifficultyScreen', () => {
 
   it('shows tagline for selected tier', () => {
     render(wrap(<DifficultyScreen onSelect={vi.fn()} onBack={vi.fn()} />));
-    expect(screen.getByText('Balanced fight')).not.toBeNull();
+    expect(screen.getByText('Even ground, fair fight')).not.toBeNull();
     fireEvent.click(screen.getByTestId('diff-tile-easy'));
-    expect(screen.getByText('Loose AI, forgiving board')).not.toBeNull();
-  });
-
-  it('Sudden Death checkbox has been removed (v0.3)', () => {
-    render(wrap(<DifficultyScreen onSelect={vi.fn()} onBack={vi.fn()} />));
-    expect(screen.queryByTestId('diff-sudden-death')).toBeNull();
+    expect(screen.getByText('Loose crew, forgiving block')).not.toBeNull();
   });
 
   it('calls onSelect with correct config on Start', () => {
@@ -53,7 +45,6 @@ describe('DifficultyScreen', () => {
     expect(onSelect).toHaveBeenCalledOnce();
     const config = onSelect.mock.calls[0][0];
     expect(config.difficulty).toBe('medium');
-    expect(config.suddenDeath).toBe(false);
     expect(config.turfCount).toBeGreaterThan(0);
     expect(config.actionsPerTurn).toBeGreaterThan(0);
   });
@@ -75,7 +66,7 @@ describe('DifficultyScreen', () => {
     expect(screen.getByTestId('diff-tile-easy').getAttribute('role')).toBe('radio');
   });
 
-  it('displays turf count and actions per turn on ultra-nightmare tile', () => {
+  it('displays turf count and actions per turn on tiles', () => {
     render(wrap(<DifficultyScreen onSelect={vi.fn()} onBack={vi.fn()} />));
     const tile = screen.getByTestId('diff-tile-ultra-nightmare');
     expect(tile.textContent).toMatch(/\d+ turfs? · \d+ act\/turn/);

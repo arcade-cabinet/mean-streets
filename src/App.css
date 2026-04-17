@@ -6095,11 +6095,13 @@ select {
 .board-grid {
   flex: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
+  grid-template-columns: auto 1fr auto;
   grid-template-rows: 1fr 1fr;
   gap: 0.5rem;
   padding: 0.5rem;
   min-height: 0;
+  align-items: center;
+  justify-items: center;
 }
 
 .board-slot {
@@ -6113,7 +6115,6 @@ select {
   cursor: pointer;
   overflow: hidden;
   transition: border-color 0.15s, background 0.15s;
-  align-self: center;
 }
 .board-slot:hover { border-color: rgba(228, 169, 69, 0.35); }
 .board-slot-tappable { border-color: rgba(228, 169, 69, 0.4); cursor: pointer; }
@@ -6123,7 +6124,7 @@ select {
 .board-slot-label {
   color: rgba(228, 169, 69, 0.3);
   font-family: var(--font-display, 'Bebas Neue', sans-serif);
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
   user-select: none;
@@ -6137,8 +6138,8 @@ select {
 
 .board-slot-draw,
 .board-slot-reserves {
-  aspect-ratio: 5 / 7;
-  max-height: 100%;
+  width: 5rem;
+  height: 7rem;
   flex-direction: column;
   gap: 0.25rem;
 }
@@ -6146,7 +6147,7 @@ select {
 .board-slot-turf {
   border-width: 2px;
   aspect-ratio: 5 / 7;
-  max-height: 100%;
+  height: min(100%, 40vh);
   justify-self: center;
 }
 .board-slot-turf .turf-composite {
@@ -6154,6 +6155,9 @@ select {
   height: 100%;
   border: none;
   border-radius: 0;
+}
+.board-slot-turf .turf-composite-empty-label {
+  font-size: 0.65rem;
 }
 
 .board-pending-badge {
@@ -6358,7 +6362,7 @@ select {
 /* ---- Simplified Main Menu (v0.3) ---- */
 .menu-shell-hero .menu-backdrop {
   background-size: cover;
-  background-position: top center;
+  background-position: center center;
 }
 .menu-shell-solid {
   background: linear-gradient(180deg, #0e0c0a 0%, #1a1410 100%);
@@ -6490,8 +6494,8 @@ select {
   overflow-y: auto;
   overflow-x: hidden;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 0.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(176px, 1fr));
+  gap: 0.75rem;
   padding: 0.75rem;
   align-content: start;
 }

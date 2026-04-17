@@ -17,7 +17,7 @@ describe('DifficultyScreen (browser)', () => {
     )).unmount;
 
     expect(document.querySelector('[data-testid="difficulty-screen"]')).not.toBeNull();
-    expect(document.querySelectorAll('[role="radio"]').length).toBe(5);
+    expect(document.querySelectorAll('[role="radio"]').length).toBe(6);
   });
 
   it('selects a tier on click', async () => {

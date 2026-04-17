@@ -42,7 +42,7 @@ const AFFILIATION_COLORS: Record<string, string> = {
   jade_dragon: 'card-affiliation-jade-dragon',
   los_diablos: 'card-affiliation-los-diablos',
   southside_saints: 'card-affiliation-southside-saints',
-  the_reapers: 'card-affiliation-the-reapers',
+  reapers: 'card-affiliation-reapers',
   dead_rabbits: 'card-affiliation-dead-rabbits',
   neon_snakes: 'card-affiliation-neon-snakes',
   black_market: 'card-affiliation-black-market',
