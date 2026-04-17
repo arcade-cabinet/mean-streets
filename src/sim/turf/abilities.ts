@@ -29,6 +29,10 @@ export interface TangibleBonus {
   sickOnHit: boolean;
   targetOverride: 'bottom' | 'anywhere' | null;
   ignoreResistance: boolean;
+  /** ABSOLUTE (mythic-10): busted result still deals exactly 1 HP damage. */
+  absoluteMin: boolean;
+  /** TRANSCEND (mythic-07): attacker ignores affiliation conflict penalties. */
+  ignoreAffiliation: boolean;
 }
 
 export type IntangibleOutcome =
@@ -75,6 +79,8 @@ export function applyTangibles(
     sickOnHit: false,
     targetOverride: null,
     ignoreResistance: false,
+    absoluteMin: false,
+    ignoreAffiliation: false,
   };
   for (const sc of attackerTurf.stack)
     applyCardToBonus(sc.card, 'attacker', bonus);
@@ -85,6 +91,8 @@ export function applyTangibles(
     if (t.archetype === 'shark' && !bonus.targetOverride)
       bonus.targetOverride = 'bottom';
     if (t.archetype === 'ghost') bonus.targetOverride = 'anywhere';
+    if (t.abilities.includes('ABSOLUTE')) bonus.absoluteMin = true;
+    if (t.abilities.includes('TRANSCEND')) bonus.ignoreAffiliation = true;
   }
   return bonus;
 }

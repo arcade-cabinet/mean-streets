@@ -10,7 +10,11 @@ import {
   turfCurrency,
   turfToughs,
 } from './board';
-import { resolveTargetToughIdx, topToughIdx, toughName } from './stack-ops';
+import {
+  resolveTargetToughIdx,
+  topToughIdx,
+  toughName,
+} from './stack-ops';
 import type {
   AttackOutcome,
   Card,
@@ -137,13 +141,19 @@ function runStrike(
   const R = bonus.ignoreResistance ? 0
     : Math.max(0, toughCombatResistance(def, targetIdx) + bonus.defResistDelta);
 
-  const { outcome, damage } = computeDamage(P, R);
+  let { outcome, damage } = computeDamage(P, R);
+  // ABSOLUTE (mythic-10): a busted result still deals exactly 1 HP damage.
+  if (outcome === 'busted' && bonus.absoluteMin) {
+    outcome = 'wound';
+    damage = 1;
+    notes.push('ABSOLUTE');
+  }
   if (outcome === 'busted')
     return busted(`${label} busted (${P} vs ${R})`, notes);
 
   target.hp = Math.max(0, target.hp - damage);
   if (target.hp <= 0 || outcome === 'kill') {
-    const k = applyKill(atk, def, targetIdx, bonus.sickOnHit, notes);
+    const k = applyKill(atk, def, targetIdx, bonus.sickOnHit, notes, bonus.ignoreAffiliation);
     return mk('kill',
       `${label}: ${name} killed (${P} vs ${R}, ${damage} dmg)`,
       {
@@ -167,7 +177,7 @@ interface KillOutput { k: ToughCard; transferred: Card[]; discarded: Card[]; sic
 
 function applyKill(
   atk: Turf, def: Turf, targetIdx: number,
-  sickOnHit: boolean, notes: string[],
+  sickOnHit: boolean, notes: string[], ignoreAffiliation = false,
 ): KillOutput {
   const targetEntry = def.stack[targetIdx];
   const tough = targetEntry.card as ToughCard;
@@ -191,7 +201,8 @@ function applyKill(
   const transferred: Card[] = [];
   const discarded: Card[] = [];
   for (const mod of mods) {
-    if (turfAffiliationConflict(atk, mod)) discarded.push(mod);
+    // TRANSCEND (mythic-07): ignore affiliation conflict — all mods transfer.
+    if (!ignoreAffiliation && turfAffiliationConflict(atk, mod)) discarded.push(mod);
     else {
       addToStack(atk, mod, { faceUp: false });
       transferred.push(mod);
@@ -266,6 +277,58 @@ export function resolveFundedRecruit(atk: Turf, def: Turf): StrikeResult {
   return busted(`Funded recruit failed ($${spent} < ${threshold}, ${relation} x${mult.toFixed(2)})`);
 }
 
+// ── Chain strike helper (STRIKE_TWO / CHAIN_THREE) ────────
+/**
+ * Fire up to `extra` additional chain strikes. Each hit targets the NEXT
+ * distinct tough below the previous target in the original stack order.
+ *
+ * Strategy: before the primary strike we snapshot all tough indices in the
+ * defender stack from top to bottom. The primary takes slot 0 of that list;
+ * chain hits take slots 1, 2, … up to `extra`. After kills the stack shrinks
+ * but the snapshotted card references remain valid — we locate each target
+ * card by identity, not by index.
+ *
+ * Each hit uses attacker's full power vs. the target's resistance independently.
+ * Kills remove the tough from the stack so seize reconciliation sees an empty turf.
+ */
+function runChainStrikes(
+  atk: Turf, def: Turf, extra: number,
+  preStrikeOrder: import('./types').ToughCard[],
+  primaryNotes: string[],
+): void {
+  // preStrikeOrder[0] was the primary target (already resolved).
+  // Chain hits are preStrikeOrder[1], [2], … up to `extra` slots.
+  for (let i = 0; i < extra; i++) {
+    const chainTarget = preStrikeOrder[i + 1];
+    if (!chainTarget) break;
+    // Find the card by identity in the current (possibly shrunken) stack.
+    const targetIdx = def.stack.findIndex(
+      (sc) => sc.card.kind === 'tough' && sc.card === chainTarget,
+    );
+    if (targetIdx < 0) break; // already removed (earlier chain kill cascaded)
+    const atkTopIdx = topToughIdx(atk);
+    const P = atkTopIdx >= 0 ? toughCombatPower(atk, atkTopIdx) : 0;
+    const R = toughCombatResistance(def, targetIdx);
+    const { outcome, damage } = computeDamage(P, R);
+    if (outcome === 'busted') {
+      primaryNotes.push(`chain[${i + 1}]: ${chainTarget.name} busted (${P} vs ${R})`);
+      continue;
+    }
+    chainTarget.hp = Math.max(0, chainTarget.hp - damage);
+    primaryNotes.push(
+      `chain[${i + 1}]: ${chainTarget.name} ${outcome} (${P} vs ${R}, ${damage} dmg, HP ${chainTarget.hp}/${chainTarget.maxHp})`,
+    );
+    if (chainTarget.hp <= 0 || outcome === 'kill') {
+      chainTarget.hp = 0;
+      // Remove killed tough from stack for seize detection.
+      const killIdx = def.stack.findIndex(
+        (sc) => sc.card.kind === 'tough' && sc.card === chainTarget,
+      );
+      if (killIdx >= 0) def.stack.splice(killIdx, 1);
+    }
+  }
+}
+
 // ── resolveStrikeNow ──────────────────────────────────────
 export function resolveStrikeNow(
   state: TurfGameState, queued: QueuedAction,
@@ -276,9 +339,40 @@ export function resolveStrikeNow(
   const dTurf = opp.turfs[queued.targetTurfIdx];
   if (!aTurf || !dTurf) return busted('Turf no longer exists');
   setTopFaceUp(dTurf);
-  if (queued.kind === 'direct_strike') return resolveDirectStrike(aTurf, dTurf);
-  if (queued.kind === 'pushed_strike') return resolvePushedStrike(aTurf, dTurf);
-  return resolveFundedRecruit(aTurf, dTurf);
+
+  // STRIKE_TWO / CHAIN_THREE: check for chain ability and snapshot defender
+  // stack order BEFORE the primary strike mutates it.
+  const atkTopIdx = topToughIdx(aTurf);
+  let chainExtra = 0;
+  if (atkTopIdx >= 0) {
+    const atkTop = aTurf.stack[atkTopIdx].card as import('./types').ToughCard;
+    chainExtra = atkTop.abilities.includes('CHAIN_THREE')
+      ? 2
+      : atkTop.abilities.includes('STRIKE_TWO')
+        ? 1
+        : 0;
+  }
+  // Snapshot all toughs in defender stack from top to bottom by identity.
+  // Used to locate chain targets even after primary-strike kills shift indices.
+  const preStrikeDefOrder: import('./types').ToughCard[] = [];
+  if (chainExtra > 0) {
+    for (let i = dTurf.stack.length - 1; i >= 0; i--) {
+      const e = dTurf.stack[i];
+      if (e.card.kind === 'tough') preStrikeDefOrder.push(e.card);
+    }
+  }
+
+  let result: StrikeResult;
+  if (queued.kind === 'direct_strike') result = resolveDirectStrike(aTurf, dTurf);
+  else if (queued.kind === 'pushed_strike') result = resolvePushedStrike(aTurf, dTurf);
+  else return resolveFundedRecruit(aTurf, dTurf);
+
+  if (chainExtra > 0 && preStrikeDefOrder.length > 1) {
+    const chainNotes = result.abilityNotes ? [...result.abilityNotes] : [];
+    runChainStrikes(aTurf, dTurf, chainExtra, preStrikeDefOrder, chainNotes);
+    result = { ...result, abilityNotes: chainNotes };
+  }
+  return result;
 }
 
 // ── Legacy bridge ─────────────────────────────────────────

@@ -1,6 +1,7 @@
 import { TURF_SIM_CONFIG } from './ai/config';
 import { addToStack } from './board';
 import { lockupDuration } from './heat';
+import { hasImmunity } from './ability-hooks';
 import { RARITY_RANK } from './market';
 import { killToughAtIdx } from './stack-ops';
 import type {
@@ -40,6 +41,10 @@ export function sendToHolding(
   const player = state.players[side];
   const located = findTough(player, toughId);
   if (!located) return;
+  // IMMUNITY (mythic-08): this tough cannot be sent to Holding.
+  const turfEntry = player.turfs[located.turfIdx];
+  const toughEntry = turfEntry?.stack[located.stackIdx];
+  if (toughEntry?.card.kind === 'tough' && hasImmunity(toughEntry.card)) return;
   const turf = player.turfs[located.turfIdx];
   const { tough, mods } = killToughAtIdx(turf, located.stackIdx);
   const custodyMods: ModifierCard[] = [];
