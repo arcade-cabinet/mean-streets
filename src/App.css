@@ -6135,6 +6135,14 @@ select {
   font-weight: 700;
 }
 
+.board-slot-draw,
+.board-slot-reserves {
+  aspect-ratio: 5 / 7;
+  max-height: 100%;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
 .board-slot-turf {
   border-width: 2px;
   aspect-ratio: 5 / 7;
