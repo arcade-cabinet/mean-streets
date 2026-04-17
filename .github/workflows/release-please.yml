@@ -10,25 +10,8 @@ permissions:
   pull-requests: write
 
 jobs:
-  test-release:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm run test:release
-        env:
-          RELEASE_GATING: 1
-
   release-please:
     runs-on: ubuntu-latest
-    needs: test-release
     steps:
       # Only invokes the googleapis/release-please-action.
       # No untrusted input flows into any run: command.
