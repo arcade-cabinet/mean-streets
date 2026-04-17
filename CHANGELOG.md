@@ -9,6 +9,14 @@ status: current
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.7.1](https://github.com/arcade-cabinet/mean-streets/compare/v0.7.0...v0.7.1) (2026-04-17)
+
+
+### Bug Fixes
+
+* **ui:** fix broken card art SVGs + enforce portrait card slot ratio ([#20](https://github.com/arcade-cabinet/mean-streets/issues/20)) ([b580a12](https://github.com/arcade-cabinet/mean-streets/commit/b580a12131c6674f157b633b8bc3ba555663a70a))
+* **ui:** uniform portrait aspect ratio for all board slots ([#21](https://github.com/arcade-cabinet/mean-streets/issues/21)) ([f862170](https://github.com/arcade-cabinet/mean-streets/commit/f862170cbc4caad706750d9380357c70e1cfabe4))
+
 ## [0.7.0](https://github.com/arcade-cabinet/mean-streets/compare/v0.6.0...v0.7.0) (2026-04-17)
 
 
