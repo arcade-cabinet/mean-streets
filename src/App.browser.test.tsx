@@ -30,14 +30,13 @@ describe('App flow', () => {
     cleanup?.();
   });
 
-  it('renders the v0.2 main menu with all entry points', async () => {
+  it('renders the main menu with 3 entry points', async () => {
     cleanup = (await renderInBrowser(<App />)).unmount;
 
     expect(document.querySelector('[data-testid="main-menu-screen"]')).not.toBeNull();
     expect(document.querySelector('[data-testid="new-game-button"]')).not.toBeNull();
     expect(document.querySelector('[data-testid="load-game-button"]')).not.toBeNull();
-    expect(document.querySelector('[data-testid="collection-button"]')).not.toBeNull();
-    expect(document.querySelector('[data-testid="open-pack-button"]')).not.toBeNull();
+    expect(document.querySelector('[data-testid="cards-button"]')).not.toBeNull();
   });
 
   it('opens rules onboarding on first New Game, then routes to difficulty', async () => {
@@ -46,7 +45,6 @@ describe('App flow', () => {
     await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="new-game-button"]')!);
     await settleBrowser();
 
-    // First launch: rules onboarding modal appears.
     expect(await waitForSelector('[data-testid="close-rules-button"]')).not.toBeNull();
     await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="close-rules-button"]')!);
     await settleBrowser();
@@ -57,27 +55,17 @@ describe('App flow', () => {
     expect(document.querySelector('[data-testid="diff-tile-hard"]')).not.toBeNull();
     expect(document.querySelector('[data-testid="diff-tile-nightmare"]')).not.toBeNull();
     expect(document.querySelector('[data-testid="diff-tile-ultra-nightmare"]')).not.toBeNull();
-    // v0.3 removed the Sudden Death toggle.
     expect(document.querySelector('[data-testid="diff-sudden-death"]')).toBeNull();
     expect(document.querySelector('[data-testid="diff-start"]')).not.toBeNull();
   });
 
-  it('routes Collection entry point to the collection screen', async () => {
+  it('routes Cards entry point to the cards screen', async () => {
     cleanup = (await renderInBrowser(<App />)).unmount;
 
-    await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="collection-button"]')!);
+    await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="cards-button"]')!);
     await settleBrowser();
 
-    expect(await waitForSelector('[data-testid="collection-screen"]')).not.toBeNull();
-  });
-
-  it('routes Open Pack entry point to the pack opening screen', async () => {
-    cleanup = (await renderInBrowser(<App />)).unmount;
-
-    await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="open-pack-button"]')!);
-    await settleBrowser();
-
-    expect(await waitForSelector('[data-testid="pack-opening-screen"]')).not.toBeNull();
+    expect(await waitForSelector('[data-testid="cards-screen"]')).not.toBeNull();
   });
 
   it('difficulty -> start spawns the game screen', async () => {
@@ -85,7 +73,6 @@ describe('App flow', () => {
 
     await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="new-game-button"]')!);
     await settleBrowser();
-
     await dismissRulesOnboarding();
 
     expect(await waitForSelector('[data-testid="difficulty-screen"]')).not.toBeNull();
@@ -98,7 +85,5 @@ describe('App flow', () => {
 
     expect(await waitForSelector('[data-testid="game-screen"]', 10000)).not.toBeNull();
     expect(document.querySelector('[data-testid="action-budget"]')).not.toBeNull();
-    // v0.2: handless — assert the draw-action button instead of hand-row.
-    expect(document.querySelector('[data-testid="action-draw"]')).not.toBeNull();
   });
 });
