@@ -19,8 +19,10 @@ const CATEGORY_TABS: { id: CategoryFilter; label: string }[] = [
 const RARITY_FILTERS: { id: Rarity | 'all'; label: string }[] = [
   { id: 'all', label: 'All' },
   { id: 'common', label: 'Common' },
+  { id: 'uncommon', label: 'Uncommon' },
   { id: 'rare', label: 'Rare' },
   { id: 'legendary', label: 'Legendary' },
+  { id: 'mythic', label: 'Mythic' },
 ];
 
 interface CollectionScreenProps {
@@ -42,7 +44,9 @@ function countByCategory(cards: CardType[]): Record<CardCategory, number> {
 }
 
 function countByRarity(cards: CardType[]): Record<Rarity, number> {
-  const counts: Record<Rarity, number> = { common: 0, rare: 0, legendary: 0 };
+  const counts: Record<Rarity, number> = {
+    common: 0, uncommon: 0, rare: 0, legendary: 0, mythic: 0,
+  };
   for (const c of cards) counts[c.rarity]++;
   return counts;
 }

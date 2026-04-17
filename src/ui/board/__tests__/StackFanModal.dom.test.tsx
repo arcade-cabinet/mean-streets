@@ -16,6 +16,8 @@ function tough(id: string, name: string): ToughCard {
     resistance: 4,
     rarity: 'common',
     abilities: [],
+    maxHp: 4,
+    hp: 4,
   };
 }
 
@@ -45,6 +47,8 @@ function makeTurf(): Turf {
       stacked(weapon()),
       stacked(tough('tough-b', 'Bravo')),
     ],
+    isActive: true,
+    reserveIndex: 0,
   };
 }
 
@@ -61,7 +65,7 @@ describe('StackFanModal', () => {
   });
 
   it('renders nothing for empty stack even when open', () => {
-    const turf: Turf = { id: 'empty', stack: [], closedRanks: false };
+    const turf: Turf = { id: 'empty', stack: [], closedRanks: false, isActive: true, reserveIndex: 0 };
     const { container } = render(
       wrap(<StackFanModal turf={turf} open={true} onClose={vi.fn()} />),
     );
@@ -189,6 +193,8 @@ describe('StackFanModal', () => {
         stacked(tough('tough-a', 'Alpha'), false),
         stacked(tough('tough-b', 'Bravo'), false),
       ],
+      isActive: true,
+      reserveIndex: 0,
     };
     const { container } = render(
       wrap(<StackFanModal turf={turf} open={true} isOwn={false} onClose={vi.fn()} />),

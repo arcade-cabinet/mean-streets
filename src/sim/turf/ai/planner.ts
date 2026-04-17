@@ -15,6 +15,14 @@ import {
   scoreAll,
   TurfGoalEvaluator,
 } from './planner-goals';
+import {
+  buildHeatMgmt,
+  buildMythicHunt,
+  buildStackRebuild,
+  desireHeatMgmt,
+  desireMythicHunt,
+  desireStackRebuild,
+} from './planner-goals-v03';
 import { selectAction } from './policy';
 
 // Does the player own at least one turf where a retreat would shield a
@@ -202,6 +210,24 @@ function buildThink(owner: PlannerOwner): Think {
           'discard',
           'pass',
         ]),
+    ),
+  );
+
+  // v0.3 evaluators. Biases: heat_management 0.8 mid-priority (fires
+  // above heat 0.4), mythic_hunt 1.2 offensive opportunity (opp mythic on
+  // active), stack_rebuild 1.5 highest (rebuilds the lane after seizure).
+  brain.addEvaluator(
+    new TurfGoalEvaluator('heat_management', 0.8, desireHeatMgmt, buildHeatMgmt),
+  );
+  brain.addEvaluator(
+    new TurfGoalEvaluator('mythic_hunt', 1.2, desireMythicHunt, buildMythicHunt),
+  );
+  brain.addEvaluator(
+    new TurfGoalEvaluator(
+      'stack_rebuild',
+      pl.stackRebuild.bias,
+      desireStackRebuild,
+      buildStackRebuild,
     ),
   );
 

@@ -5,7 +5,6 @@ import {
   Shield,
   Skull,
   Swords,
-  Zap,
 } from 'lucide-react';
 import { useState } from 'react';
 import simConfig from '../../data/ai/turf-sim.json';
@@ -65,22 +64,13 @@ const TIERS: TierDef[] = [
     tagline: 'You lose 1 action',
   },
   {
-    id: 'sudden-death',
-    label: 'Sudden Death',
-    icon: Zap,
-    turfs: simConfig.difficulty['sudden-death'].turfCount,
-    actions: simConfig.difficulty['sudden-death'].actionsPerTurn,
-    forcedSuddenDeath: true,
-    tagline: '1 turf, one seizure ends it',
-  },
-  {
     id: 'ultra-nightmare',
     label: 'Ultra-Nightmare',
     icon: AlertTriangle,
     turfs: simConfig.difficulty['ultra-nightmare'].turfCount,
     actions: simConfig.difficulty['ultra-nightmare'].actionsPerTurn,
-    forcedSuddenDeath: true,
-    tagline: '2-ply AI + sudden death',
+    forcedSuddenDeath: false,
+    tagline: '2-ply AI + merciless',
   },
 ];
 
@@ -100,22 +90,18 @@ export function DifficultyScreen({ onSelect, onBack }: DifficultyScreenProps) {
   const { layout } = useAppShell();
   const compact = layout.id === 'phone-portrait' || layout.id === 'folded';
   const [selected, setSelected] = useState<DifficultyTier>('medium');
-  const [suddenDeath, setSuddenDeath] = useState(false);
 
   const selectedTier = TIERS.find((t) => t.id === selected)!;
-  const sdForced = selectedTier.forcedSuddenDeath;
-  const sdActive = sdForced || suddenDeath;
 
+  // v0.3 removes Sudden Death as a game mode. The GameConfig field is
+  // kept wired to `false` for back-compat; builds that still read the
+  // flag now get a pure combat cadence.
   function handleSelect(tier: DifficultyTier) {
     setSelected(tier);
-    const def = TIERS.find((t) => t.id === tier)!;
-    if (def.forcedSuddenDeath) {
-      setSuddenDeath(true);
-    }
   }
 
   function handleStart() {
-    onSelect(buildConfig(selected, sdActive));
+    onSelect(buildConfig(selected, false));
   }
 
   return (
@@ -167,18 +153,6 @@ export function DifficultyScreen({ onSelect, onBack }: DifficultyScreenProps) {
       <div className="diff-footer">
         <div className="diff-detail">
           <span className="diff-detail-tagline">{selectedTier.tagline}</span>
-          <label
-            className={`diff-sd-toggle ${sdForced ? 'diff-sd-forced' : ''}`}
-          >
-            <input
-              type="checkbox"
-              checked={sdActive}
-              disabled={sdForced}
-              onChange={(e) => setSuddenDeath(e.target.checked)}
-              data-testid="diff-sudden-death"
-            />
-            <span>Sudden Death{sdForced ? ' (locked)' : ''}</span>
-          </label>
         </div>
         <button
           className="diff-start"

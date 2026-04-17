@@ -1,5 +1,12 @@
 import { describe, expect, it, beforeEach } from 'vitest';
-import type { ToughCard, WeaponCard, DrugCard, CurrencyCard, PlayerState, Turf } from '../types';
+import type {
+  ToughCard,
+  WeaponCard,
+  DrugCard,
+  CurrencyCard,
+  PlayerState,
+  Turf,
+} from '../types';
 import {
   createTurf,
   resetTurfIdCounter,
@@ -15,29 +22,62 @@ import {
   seizeTurf,
 } from '../board';
 
-function tough(id: string, power = 5, resistance = 5, affiliation = 'freelance'): ToughCard {
+function tough(
+  id: string,
+  power = 5,
+  resistance = 5,
+  affiliation = 'freelance',
+): ToughCard {
   return {
-    kind: 'tough', id, name: id, tagline: '', archetype: 'bruiser',
-    affiliation, power, resistance, rarity: 'common', abilities: [],
+    kind: 'tough',
+    id,
+    name: id,
+    tagline: '',
+    archetype: 'bruiser',
+    affiliation,
+    power,
+    resistance,
+    rarity: 'common',
+    abilities: [],
+    maxHp: resistance,
+    hp: resistance,
   };
 }
 
 function weapon(id: string, power = 3, resistance = 1): WeaponCard {
   return {
-    kind: 'weapon', id, name: id, category: 'bladed',
-    power, resistance, rarity: 'common', abilities: [],
+    kind: 'weapon',
+    id,
+    name: id,
+    category: 'bladed',
+    power,
+    resistance,
+    rarity: 'common',
+    abilities: [],
   };
 }
 
 function drug(id: string, power = 2, resistance = 1): DrugCard {
   return {
-    kind: 'drug', id, name: id, category: 'stimulant',
-    power, resistance, rarity: 'common', abilities: [],
+    kind: 'drug',
+    id,
+    name: id,
+    category: 'stimulant',
+    power,
+    resistance,
+    rarity: 'common',
+    abilities: [],
   };
 }
 
 function currency(id: string, denomination: 100 | 1000 = 100): CurrencyCard {
-  return { kind: 'currency', id, name: `$${denomination}`, denomination, rarity: 'common' };
+  return {
+    kind: 'currency',
+    id,
+    name: `$${denomination}`,
+    denomination,
+    rarity: 'common',
+  };
 }
 
 function makePlayer(turfs: Turf[]): PlayerState {
@@ -257,12 +297,14 @@ describe('seizeTurf', () => {
     expect(defender.turfs).toHaveLength(1);
   });
 
-  it('transfers modifiers to attacker destination turf', () => {
+  it("removes the seized turf (modifier cleanup is resolve.ts' responsibility)", () => {
+    // v0.3: board.seizeTurf is a pure remove. Modifiers on the seized
+    // turf get routed to the Black Market from resolve.ts, not here.
     const defTurf = createTurf();
     addToStack(defTurf, tough('d1'));
     addToStack(defTurf, weapon('w1'));
     addToStack(defTurf, drug('dr1'));
-    const defender = makePlayer([defTurf]);
+    const defender = makePlayer([defTurf, createTurf()]);
 
     const atkTurf = createTurf();
     addToStack(atkTurf, tough('a1'));
@@ -270,8 +312,10 @@ describe('seizeTurf', () => {
 
     seizeTurf(defender, 0, attacker, 0);
 
-    expect(atkTurf.stack.some(c => c.card.id === 'w1')).toBe(true);
-    expect(atkTurf.stack.some(c => c.card.id === 'dr1')).toBe(true);
+    // Seized turf removed from defender; attacker turf unchanged.
+    expect(defender.turfs).toHaveLength(1);
+    expect(atkTurf.stack.some((c) => c.card.id === 'w1')).toBe(false);
+    expect(atkTurf.stack.some((c) => c.card.id === 'dr1')).toBe(false);
   });
 
   it('does nothing if defender turf does not exist', () => {

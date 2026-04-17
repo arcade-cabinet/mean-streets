@@ -12,7 +12,8 @@
     7
   ],
   "rarity": [
-    "common"
+    "common",
+    "uncommon"
   ],
   "abilities": [
     "On play: swap your top tough with any card in your hand (top tough goes to hand at current HP)"

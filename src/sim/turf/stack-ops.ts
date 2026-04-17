@@ -83,7 +83,7 @@ export function transferMods(
     if (turfAffiliationConflict(attackerTurf, mod)) {
       discarded.push(mod);
     } else {
-      addToStack(attackerTurf, mod, false);
+      addToStack(attackerTurf, mod, { faceUp: false });
       transferred.push(mod);
     }
   }

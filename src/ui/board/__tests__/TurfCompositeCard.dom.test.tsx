@@ -13,7 +13,7 @@ import type {
 } from '../../../sim/turf/types';
 
 function tough(overrides: Partial<ToughCard> = {}): ToughCard {
-  return {
+  const base: ToughCard = {
     kind: 'tough',
     id: 'tough-brick',
     name: 'Brick Malone',
@@ -24,8 +24,16 @@ function tough(overrides: Partial<ToughCard> = {}): ToughCard {
     resistance: 5,
     rarity: 'common',
     abilities: [],
-    ...overrides,
+    maxHp: 5,
+    hp: 5,
   };
+  // If override bumps resistance, keep HP in lockstep so v0.3's
+  // HP-clamp math doesn't zero the advertised stats.
+  if (overrides.resistance !== undefined) {
+    base.maxHp = overrides.resistance;
+    base.hp = overrides.resistance;
+  }
+  return { ...base, ...overrides };
 }
 
 function weapon(): WeaponCard {
@@ -77,6 +85,8 @@ function makeTurf(
     id,
     closedRanks: opts.closedRanks ?? false,
     stack: cards.map((c) => stacked(c, opts.faceUp ?? true)),
+    isActive: true,
+    reserveIndex: 0,
   };
 }
 
@@ -142,6 +152,8 @@ describe('TurfCompositeCard', () => {
       closedRanks: false,
       stack: [stacked(t)],
       sickTopIdx: 0,
+      isActive: true,
+      reserveIndex: 0,
     };
     const { container } = render(wrap(<TurfCompositeCard turf={turf} />));
     expect(container.querySelector('.turf-composite-sick-badge')).not.toBeNull();

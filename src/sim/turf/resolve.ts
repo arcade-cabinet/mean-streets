@@ -1,143 +1,234 @@
 import { applyTangibles, runIntangiblesPhase } from './abilities';
 import { TURF_SIM_CONFIG } from './ai/config';
-import { resolveStrikeNow } from './attacks';
+import { resolveStrikeNow, type StrikeOutcome } from './attacks';
 import {
   hasToughOnTurf,
+  modifiersByOwner,
   positionPower,
   positionResistance,
-  seizeTurf,
+  promoteReserveTurf,
+  turfCurrency,
+  turfModifiers,
 } from './board';
-import type { GameConfig, QueuedAction, TurfGameState } from './types';
+import { computeHeat, lockupDuration, raidProbability } from './heat';
+import { combatBribeProbability, lockupProcess, returnFromHolding } from './holding';
+import { wipeMarket } from './market';
+import type {
+  GameConfig,
+  ModifierCard,
+  QueuedAction,
+  TurfGameState,
+} from './types';
 
-// Local copy of actionsForTurn to avoid a circular import with environment.ts.
 function actionsForTurn(
   config: GameConfig,
   turnNumber: number,
   side: 'A' | 'B',
 ): number {
-  const base =
-    turnNumber <= 1 ? config.firstTurnActions : config.actionsPerTurn;
+  const base = turnNumber <= 1 ? config.firstTurnActions : config.actionsPerTurn;
   const profiles = TURF_SIM_CONFIG.difficultyProfiles as Record<
     string,
     { actionBonus: number; playerActionPenalty: number } | undefined
   >;
   const profile = profiles[config.difficulty];
   if (!profile) return base;
-  const isAI = side === 'B';
-  if (isAI && profile.actionBonus) return base + profile.actionBonus;
-  if (!isAI && profile.playerActionPenalty) {
+  if (side === 'B' && profile.actionBonus) return base + profile.actionBonus;
+  if (side === 'A' && profile.playerActionPenalty)
     return Math.max(1, base - profile.playerActionPenalty);
-  }
   return base;
 }
 
 interface RankedAction {
   queued: QueuedAction;
   dominance: number;
+  defenderR: number;
 }
 
 function opponent(side: 'A' | 'B'): 'A' | 'B' {
   return side === 'A' ? 'B' : 'A';
 }
 
-/**
- * Compute dominance for a queued attack: `attacker power + tangible bonus
- * + loyalty atk` minus defender tangible/resist contribution (the defender
- * number is folded in so ties break toward the defender: higher dominance
- * = stronger offensive swing). For ordering, we use attacker-minus-defender
- * so a close match lands near zero and ties push to the defender's
- * resistance bucket (defensive inertia).
- */
-function dominanceForQueued(state: TurfGameState, q: QueuedAction): number {
+function dominanceForQueued(state: TurfGameState, q: QueuedAction): RankedAction {
   const atk = state.players[q.side].turfs[q.turfIdx];
   const def = state.players[opponent(q.side)].turfs[q.targetTurfIdx];
-  if (!atk || !def) return -Number.POSITIVE_INFINITY;
+  if (!atk || !def) {
+    return {
+      queued: q,
+      dominance: Number.NEGATIVE_INFINITY,
+      defenderR: 0,
+    };
+  }
   const bonus = applyTangibles(atk, def);
   const aPower = positionPower(atk) + bonus.atkPowerDelta;
   const dResist = bonus.ignoreResistance
     ? 0
     : positionResistance(def) + bonus.defResistDelta;
-  return aPower - dResist;
+  return { queued: q, dominance: aPower - dResist, defenderR: dResist };
 }
 
 /**
- * Resolve all queued actions for both players at end-of-turn. Assumes both
- * `state.players.A.turnEnded` and `state.players.B.turnEnded` are true.
- *
- * Order of operations:
- *   1. Compute dominance for every queued action.
- *   2. Sort by dominance descending; ties favor the defender side (offense
- *      has to overcome inertia).
- *   3. For each queued action: run intangibles → if canceled, skip; if
- *      redirected, mutate targetTurfIdx; if proceed, call `resolveStrikeNow`.
- *   4. After resolving, scan for defender turfs with zero living toughs →
- *      seize.
- *   5. Clear queued arrays, turnEnded flags, pending-placement cards.
- *   6. Increment turnNumber, reset action budgets, reset phase to 'action'.
- *   7. Check winner: if either player has 0 turfs, set `state.winner`.
+ * Try a currency bribe to cancel a strike. Defender spends the largest
+ * single currency denomination that is ≤ turf cash; success probability
+ * looked up on the tiered table. Returns true if strike canceled.
+ */
+function maybeCombatBribe(state: TurfGameState, q: QueuedAction): boolean {
+  const def = state.players[opponent(q.side)].turfs[q.targetTurfIdx];
+  if (!def) return false;
+  const cash = turfCurrency(def);
+  if (cash.length === 0) return false;
+  // Pick the highest-denomination currency card as bribe (greedy).
+  const denom = Math.max(...cash.map((c) => c.denomination));
+  const p = combatBribeProbability(denom);
+  if (p <= 0) return false;
+  if (state.rng.next() >= p) return false;
+  // Success: consume one card of that denomination.
+  const idx = def.stack.findIndex(
+    (sc) => sc.card.kind === 'currency' && sc.card.denomination === denom,
+  );
+  if (idx >= 0) def.stack.splice(idx, 1);
+  state.metrics.bribesAccepted++;
+  return true;
+}
+
+/**
+ * Raid phase. If triggered: wipe market, sweep face-up tops on both
+ * active turfs into lockup, cancel queued strikes whose source tough
+ * was locked up. Returns true if a raid fired.
+ */
+function raidPhase(state: TurfGameState): boolean {
+  const heat = computeHeat(state).total;
+  state.heat = heat;
+  const p = raidProbability(heat, state.config.difficulty);
+  if (state.rng.next() >= p) return false;
+
+  state.metrics.raids++;
+  wipeMarket(state);
+
+  for (const side of ['A', 'B'] as const) {
+    const player = state.players[side];
+    const active = player.turfs[0];
+    if (!active || active.closedRanks) continue;
+    const topIdx = active.stack.length - 1;
+    if (topIdx < 0) continue;
+    const top = active.stack[topIdx];
+    if (!top.faceUp) continue;
+    if (top.card.kind !== 'tough') continue;
+
+    // Bail? If turf cash includes a $500+ denomination, burn it to cancel.
+    const cashIdx = active.stack.findIndex(
+      (sc) => sc.card.kind === 'currency' && sc.card.denomination >= 500,
+    );
+    if (cashIdx >= 0) {
+      active.stack.splice(cashIdx, 1);
+      continue;
+    }
+
+    // Lockup the top tough + its modifiers.
+    const lockedTough = top.card;
+    const lockedMods: ModifierCard[] = modifiersByOwner(active, lockedTough.id);
+    // Remove the tough from the stack.
+    active.stack.splice(topIdx, 1);
+    // Remove every mod bound to that tough.
+    for (let i = active.stack.length - 1; i >= 0; i--) {
+      const sc = active.stack[i];
+      if (sc.card.kind !== 'tough' && sc.owner === lockedTough.id) {
+        active.stack.splice(i, 1);
+      }
+    }
+    state.lockup[side].push({
+      tough: lockedTough,
+      attachedModifiers: lockedMods,
+      turnsRemaining: lockupDuration(state.config.difficulty),
+    });
+    if (player.toughsInPlay > 0) player.toughsInPlay--;
+
+    // Cancel queued strikes from this side targeting via this tough.
+    player.queued = player.queued.filter((q) => {
+      const src = player.turfs[q.turfIdx];
+      if (!src) return false;
+      return src.stack.some(
+        (sc) => sc.card.kind === 'tough' && sc.card.hp > 0,
+      );
+    });
+  }
+  return true;
+}
+
+/**
+ * Apply the full resolve phase: raid → combat → seize reconciliation →
+ * holding sweep → lockup process → cleanup → action budgets.
  */
 export function resolvePhase(state: TurfGameState): void {
   state.phase = 'resolve';
 
+  // 1. Raid phase (may clear queued strikes by locking up sources).
+  raidPhase(state);
+
+  // 2. Combat Pass 1: rank queued actions by dominance.
   const ranked: RankedAction[] = [];
   for (const side of ['A', 'B'] as const) {
-    for (const queued of state.players[side].queued) {
-      ranked.push({
-        queued,
-        dominance: dominanceForQueued(state, queued),
-      });
+    for (const q of state.players[side].queued) {
+      ranked.push(dominanceForQueued(state, q));
     }
   }
+  // Higher dominance first. Ties → higher defender R wins (defender inertia).
+  ranked.sort((a, b) => {
+    if (b.dominance !== a.dominance) return b.dominance - a.dominance;
+    return b.defenderR - a.defenderR;
+  });
 
-  // Sort: highest dominance first; ties favor defender — since we're
-  // ordering *attacker actions*, "tie favors defender" means in a tie
-  // between two attacker actions targeting symmetric turfs, the action
-  // whose attacker has weaker position (higher defender inertia) resolves
-  // later. We implement as: equal dominance → stable ordering preserved.
-  // Defensive inertia is already baked into the `dominance` calc.
-  ranked.sort((a, b) => b.dominance - a.dominance);
-
-  // Track (defenderSide, turfIdx, attackerSide) for every attack that
-  // resolved — only these turfs are seizable if their toughs are wiped.
-  // A turf that never had a tough (fresh turf on turn 1) is NOT seized
-  // by an unrelated side's resolve pass.
+  // 3. Combat Pass 2: priority chain per queued strike.
   const attackedBy: Map<string, 'A' | 'B'> = new Map();
-  const attackKey = (defSide: 'A' | 'B', idx: number) => `${defSide}:${idx}`;
+  const key = (defSide: 'A' | 'B', idx: number) => `${defSide}:${idx}`;
 
   for (const ra of ranked) {
     const q = ra.queued;
+    // 3a. Currency bribe → may cancel strike outright.
+    if (maybeCombatBribe(state, q)) continue;
+    // 3b. Drugs + weapons intangibles (counter / redirect / bribe ability).
     const verdict = runIntangiblesPhase(state, q);
     if (verdict.kind === 'canceled') continue;
-    if (verdict.kind === 'redirected') {
-      q.targetTurfIdx = verdict.newTargetTurfIdx;
-    }
+    if (verdict.kind === 'redirected') q.targetTurfIdx = verdict.newTargetTurfIdx;
+    // 3c. Resolve the strike (damage math happens here).
     const result = resolveStrikeNow(state, q);
     accrueMetrics(state, q, result.outcome);
-    // Record attacker-of-record for this defender turf (last-writer-wins
-    // is fine — the seize sweep only cares that *someone* struck here).
-    attackedBy.set(attackKey(opponent(q.side), q.targetTurfIdx), q.side);
+    attackedBy.set(key(opponent(q.side), q.targetTurfIdx), q.side);
   }
 
-  // Seize sweep: only turfs that were attacked this resolve phase AND now
-  // have zero living toughs. Empty-from-the-start turfs are left alone.
+  // 4. Seize reconciliation: any defender turf that was attacked AND has
+  // no living tough now → seize + promote reserve.
   for (const atkSide of ['A', 'B'] as const) {
     const defSide = opponent(atkSide);
     const defender = state.players[defSide];
-    const attacker = state.players[atkSide];
     for (let i = defender.turfs.length - 1; i >= 0; i--) {
-      if (attackedBy.get(attackKey(defSide, i)) !== atkSide) continue;
+      if (attackedBy.get(key(defSide, i)) !== atkSide) continue;
       if (hasToughOnTurf(defender.turfs[i])) continue;
-      seizeTurf(defender, i, attacker, 0);
+      // Send dead turf's surviving modifiers to the Black Market.
+      const mods = turfModifiers(defender.turfs[i]);
+      for (const m of mods) state.blackMarket.push(m);
+      const previousTurns = state.warStats.seizures
+        .filter((s) => s.seizedBy === atkSide)
+        .reduce((sum, s) => sum + s.turnsOnThatTurf, 0);
+      state.warStats.seizures.push({
+        seizedBy: atkSide,
+        seizedTurfIdx: i,
+        turnsOnThatTurf: state.turnNumber - previousTurns,
+      });
       state.metrics.seizures++;
+      if (i === 0) promoteReserveTurf(defender);
+      else defender.turfs.splice(i, 1);
     }
   }
 
-  // Clear per-turn mutable slots.
+  // 5. Holding & lockup sweeps.
+  for (const side of ['A', 'B'] as const) returnFromHolding(state, side);
+  lockupProcess(state);
+
+  // 6. Cleanup.
   for (const side of ['A', 'B'] as const) {
     const p = state.players[side];
     p.queued.length = 0;
     p.turnEnded = false;
-    // Any leftover pending card at resolve time failed placement → discard.
     if (p.pending) {
       p.discard.push(p.pending);
       state.metrics.cardsDiscarded++;
@@ -156,11 +247,16 @@ export function resolvePhase(state: TurfGameState): void {
   }
   state.phase = 'action';
 
-  // Winner detection: zero-turfs = match over.
-  if (state.players.A.turfs.length === 0) {
+  // 7. Winner detection.
+  const aEmpty = state.players.A.turfs.length === 0;
+  const bEmpty = state.players.B.turfs.length === 0;
+  if (aEmpty && bEmpty) {
+    state.winner = null;
+    state.endReason = 'draw';
+  } else if (aEmpty) {
     state.winner = 'B';
     state.endReason = 'total_seizure';
-  } else if (state.players.B.turfs.length === 0) {
+  } else if (bEmpty) {
     state.winner = 'A';
     state.endReason = 'total_seizure';
   }
@@ -169,7 +265,7 @@ export function resolvePhase(state: TurfGameState): void {
 function accrueMetrics(
   state: TurfGameState,
   q: QueuedAction,
-  outcome: 'kill' | 'sick' | 'busted',
+  outcome: StrikeOutcome,
 ): void {
   const m = state.metrics;
   if (q.kind === 'direct_strike') m.directStrikes++;
@@ -178,26 +274,25 @@ function accrueMetrics(
   if (!m.firstStrike) m.firstStrike = q.side;
   if (outcome === 'kill') {
     m.kills++;
-    state.players[opponent(q.side)].toughsInPlay = Math.max(
-      0,
-      state.players[opponent(q.side)].toughsInPlay - 1,
-    );
+    const opp = state.players[opponent(q.side)];
+    opp.toughsInPlay = Math.max(0, opp.toughsInPlay - 1);
     if (q.kind === 'funded_recruit') state.players[q.side].toughsInPlay++;
-  } else if (outcome === 'sick') {
-    m.spiked++;
-  } else {
+  } else if (outcome === 'busted') {
     m.busts++;
+  } else {
+    // wound / serious_wound / crushing → stat metric; preserve legacy 'spiked'.
+    m.spiked++;
   }
 }
 
-/** Test/debug helper — surface dominance values without running the phase. */
 export function __debug_dominances(
   state: TurfGameState,
 ): Array<{ queued: QueuedAction; dominance: number }> {
   const out: Array<{ queued: QueuedAction; dominance: number }> = [];
   for (const side of ['A', 'B'] as const) {
     for (const q of state.players[side].queued) {
-      out.push({ queued: q, dominance: dominanceForQueued(state, q) });
+      const r = dominanceForQueued(state, q);
+      out.push({ queued: r.queued, dominance: r.dominance });
     }
   }
   return out;

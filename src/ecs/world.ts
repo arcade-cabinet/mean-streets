@@ -15,6 +15,7 @@ import type {
   Card,
   PlayerState,
   GameConfig,
+  TurfGameState,
 } from '../sim/turf/types';
 import { DEFAULT_GAME_CONFIG } from '../sim/turf/types';
 import {
@@ -48,11 +49,15 @@ function initPlayerState(
   side: 'A' | 'B',
 ): PlayerState {
   const shuffled = rng.shuffle(deck.map((c) => ({ ...c })));
-  const turfs = Array.from({ length: config.turfCount }, () => createTurf());
+  // v0.3 single-lane: turfs[0] is the active engagement; turfs[1..] are
+  // reserves in queue order. `createTurf({ isActive, reserveIndex })`
+  // stamps those flags so renderers can distinguish without scanning.
+  const turfs = Array.from({ length: config.turfCount }, (_, i) =>
+    createTurf({ isActive: i === 0, reserveIndex: i }),
+  );
 
-  // v0.2 handless model: both sides act in parallel each turn; both
-  // receive turn-1 action budgets on spawn. No opening hand — players
-  // draw via the `draw` action into `pending`.
+  // Both sides act in parallel; both receive turn-1 action budgets on
+  // spawn. No opening hand — players draw via `draw` into `pending`.
   return {
     turfs,
     deck: shuffled,
@@ -63,6 +68,26 @@ function initPlayerState(
     queued: [],
     turnEnded: false,
   };
+}
+
+/**
+ * Ten canonical mythic card ids matching the authored cards in
+ * config/raw/cards/mythics/ (mythic-01 … mythic-10). Kept in sync with
+ * `sim/turf/game.ts::loadMythicIds`.
+ */
+function defaultMythicPool(): string[] {
+  return [
+    'mythic-01',
+    'mythic-02',
+    'mythic-03',
+    'mythic-04',
+    'mythic-05',
+    'mythic-06',
+    'mythic-07',
+    'mythic-08',
+    'mythic-09',
+    'mythic-10',
+  ];
 }
 
 export function createGameWorld(
@@ -91,12 +116,16 @@ export function createGameWorld(
   const initialTurn = 1;
   const initialBudget = playerA.actionsRemaining;
 
-  const initialGameState = {
+  // v0.3 adds shared-resource state: heat, black market, voluntary
+  // holding, lockup (N-turn seizure custody), a ten-card mythic pool,
+  // and war statistics. Sim is the source of truth; ECS traits just
+  // expose these fields to React hooks without duplicating them.
+  const initialGameState: TurfGameState = {
     config,
     players: { A: playerA, B: playerB },
     firstPlayer,
     turnNumber: initialTurn,
-    phase: 'action' as const,
+    phase: 'action',
     aiState: { A: 'BUILDING', B: 'BUILDING' },
     aiTurnsInState: { A: 0, B: 0 },
     aiMemory: { A: emptyPlannerMemory(), B: emptyPlannerMemory() },
@@ -107,6 +136,13 @@ export function createGameWorld(
     winner: null,
     endReason: null,
     metrics: emptyMetrics(),
+    heat: 0,
+    blackMarket: [],
+    holding: { A: [], B: [] },
+    lockup: { A: [], B: [] },
+    mythicPool: defaultMythicPool(),
+    mythicAssignments: {},
+    warStats: { seizures: [] },
   };
 
   world.spawn(

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- The Phantom: Dissolving silhouette (NO_REVEAL) -->
+  <!-- Phantom shape fading -->
+  <path d="M24 46 Q24 22 32 16 Q40 22 40 46 L37 50 L34 46 L31 50 L27 46 Z"
+        stroke="#D4A017" stroke-width="2" stroke-linejoin="round"
+        fill="#1A1A1A" fill-opacity="0.5" opacity="0.85"/>
+  <!-- Fragmenting particles -->
+  <circle cx="20" cy="32" r="1" fill="#D4A017" opacity="0.5"/>
+  <circle cx="18" cy="26" r="0.8" fill="#D4A017" opacity="0.35"/>
+  <circle cx="16" cy="20" r="0.6" fill="#D4A017" opacity="0.25"/>
+  <circle cx="44" cy="32" r="1" fill="#D4A017" opacity="0.5"/>
+  <circle cx="46" cy="26" r="0.8" fill="#D4A017" opacity="0.35"/>
+  <circle cx="48" cy="20" r="0.6" fill="#D4A017" opacity="0.25"/>
+  <!-- No-eyes (placeholder mask) -->
+  <path d="M28 26 L30 26" stroke="#D4A017" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M34 26 L36 26" stroke="#D4A017" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Question-mark above (ambiguity) -->
+  <circle cx="32" cy="10" r="1" fill="#D4A017" opacity="0.6"/>
+</svg>

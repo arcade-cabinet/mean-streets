@@ -30,6 +30,8 @@ function tough(
     resistance,
     rarity: 'common',
     abilities: [],
+    maxHp: resistance,
+    hp: resistance,
   };
 }
 

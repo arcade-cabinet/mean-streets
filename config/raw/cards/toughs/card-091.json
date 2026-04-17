@@ -12,7 +12,8 @@
     7
   ],
   "rarity": [
-    "common"
+    "common",
+    "rare"
   ],
   "abilities": [
     "On attack: also deals 1 damage to the card behind your top tough (next in line)"

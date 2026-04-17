@@ -20,23 +20,40 @@ export function retreatViable(turf: Turf): boolean {
   return false;
 }
 
+/** At least two toughs on turf + at least one modifier to swap. */
+export function modifierSwapViable(turf: Turf): boolean {
+  let toughs = 0;
+  let mods = 0;
+  for (const sc of turf.stack) {
+    if (sc.card.kind === 'tough' && sc.card.hp > 0) toughs++;
+    else if (sc.card.kind === 'weapon' || sc.card.kind === 'drug') mods++;
+  }
+  return toughs >= 2 && mods >= 1;
+}
+
 export function buildPrompt(
   mode: ActionMode,
   strikePhase: StrikePhase,
   hasPending: boolean,
   retreatTurfIdx: number | null,
 ): string | null {
-  if (hasPending && !isStrikeMode(mode) && mode !== 'retreat')
-    return 'Tap one of your turfs to place the pending card';
+  if (hasPending && !isStrikeMode(mode) && mode !== 'retreat' && mode !== 'modifier_swap')
+    return 'Tap your active turf to place the pending card';
   if (mode === 'play_card' && !hasPending)
     return 'Draw a card first, then tap a turf';
   if (mode === 'retreat' && retreatTurfIdx === null)
-    return 'Tap one of your turfs to open its stack';
+    return 'Tap your active turf to open its stack';
   if (mode === 'retreat')
-    return 'Tap a face-up card in the fan to retreat it to top';
+    return 'Tap a face-up tough in the fan to retreat it to top';
+  if (mode === 'modifier_swap')
+    return 'Tap your active turf, then pick a modifier and destination tough';
+  if (mode === 'send_to_market')
+    return 'Tap your active turf, then pick a tough to send to the market';
+  if (mode === 'send_to_holding')
+    return 'Tap your active turf, then pick a tough to send to holding';
   if (isStrikeMode(mode)) {
     return strikePhase === 'pick-source'
-      ? 'Select your turf to attack from'
+      ? 'Select your active turf to attack from'
       : 'Select opponent turf to target';
   }
   return null;

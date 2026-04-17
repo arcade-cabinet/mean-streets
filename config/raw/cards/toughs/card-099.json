@@ -12,10 +12,12 @@
     11
   ],
   "rarity": [
-    "common"
+    "common",
+    "legendary"
   ],
   "abilities": [
-    "On play: peek at the top 2 cards of your own deck, reorder them"
+    "On play: peek at the top 2 cards of your own deck, reorder them",
+    "FIELD_MEDIC"
   ],
   "unlocked": false,
   "unlockCondition": "Deal 30 total damage in a single game",

@@ -1,6 +1,6 @@
 ---
 title: Visual Review Workflow
-updated: 2026-04-15
+updated: 2026-04-17
 status: current
 domain: ui
 ---
@@ -25,13 +25,23 @@ Both commands render the Playwright visual fixtures and export screenshots to:
 artifacts/visual-review/<project>/<fixture>.png
 ```
 
-## Current Fixture Set
+## Current Fixture Set (v0.3)
 
-- `menu` — Main menu with 4 navigation buttons
-- `difficulty` — 2x3 difficulty tier grid with sudden death toggle
-- `deck-garage` — Saved deck browser
-- `combat` — GameScreen with turf rows, action bar, hand
-- `card` — All card kinds (tough, weapon, drug, currency) at 3 rarity levels
+- `menu` — Main menu with navigation buttons (New Game, Load, Collection, Card Garage, Open Pack)
+- `difficulty` — Difficulty tier grid (Easy/Medium/Hard/Nightmare/Ultra — Sudden Death removed)
+- `card-garage` — Collection management UI with enable/disable + priority slider 1-10 + merge UI + auto-toggles
+- `game-single-lane` — GameScreen with 1v1 active turf + reserves indicator + heat meter + queued strikes
+- `game-heat-high` — GameScreen variant with heat ≥ 0.7 showing raid-imminent state
+- `game-market-open` — GameScreen with BlackMarketPanel expanded (modal on phone)
+- `game-holding-active` — GameScreen with HoldingPanel showing tough in custody + lockup countdown
+- `game-resolution` — Resolution overlay mid-animation (queued strike landing, dominance order)
+- `stack-fan` — StackFanModal showing own-side (all face-up) vs opponent-side (mostly face-down + some revealed)
+- `card-base` — All card kinds at all 5 rolled rarities (common/uncommon/rare/legendary/mythic)
+- `card-mythic` — All 10 mythics with their unique SVG art + shared gold ring treatment
+- `card-wounded` — Tough card showing HP bar at full/wounded/critical states
+- `card-unlock-diff` — Card showing unlock-difficulty icon variants (easy/medium/hard/nightmare/ultra)
+- `pack-opening` — Sealed → revealing → summary flow with rolled-rarity reveal animation
+- `game-over` — Winner screen with per-turf ratings + war outcome + reward pack queue
 
 ## Review Targets
 
@@ -40,16 +50,22 @@ and the live hero art in `public/assets/hero.png`.
 
 Focus review on:
 
-- Turf composite card readability (power/resistance badges, roster, affiliation icons)
-- Card frame: rarity border tinting, kind surface tints, portrait area
-- Affiliation symbol glow (loyal=gold, rival=red) visibility
-- Action bar button sizing and touch target adequacy at phone breakpoints
-- Stack fan modal: carousel navigation clarity, card rendering at modal scale
-- Black / dark-red / cold-metal balance across all screens
-- Typography emphasis and hierarchy
-- Spacing, density, and empty-space usage
-- Mobile portrait clarity versus tablet/wide composition
-- Consistency across menu, difficulty, game, collection, and pack opening
+- **Single-lane readability**: is the active 1v1 engagement clear? Reserves indicator unambiguous?
+- **Heat meter**: 0-100% scale legible, color gradient at raid thresholds, positioned centrally
+- **Turf composite card**: power/resistance badges, HP bar per tough, roster, affiliation icons, closed-ranks indicator
+- **Card frame v0.3**: rolled-rarity border (grey/blue/gold/red/custom-mythic), unlock-difficulty icon top-left, kind surface tints, portrait area
+- **Mythic visual language**: shared gold-ring treatment across all 10, per-mythic unique SVG readable at card scale
+- **Affiliation symbol glow**: loyal=gold, rival=red visibility — compared to mythic gold ring (distinction clear?)
+- **Action bar sizing**: new buttons (Draw, Retreat, Modifier Swap, Send to Market, Send to Holding, Direct/Pushed/Funded) fit on phone portrait
+- **BlackMarketPanel + HoldingPanel**: modal on phone vs inline on tablet/desktop, readable at glance
+- **Stack fan modal**: face-down opponent cards clearly marked, face-up revealed cards distinct, HP bar visible per tough
+- **Resolution overlay**: dominance-ordered strike animation, intangible trigger flashes, mythic flip animation
+- **Card Garage merge UI**: pyramid cost clarity (2→1 upgrade path), priority slider responsiveness, auto-toggles distinct
+- **Black / dark-red / cold-metal balance** across all screens
+- **Typography emphasis and hierarchy**
+- **Spacing, density, and empty-space usage**
+- **Mobile portrait clarity** versus tablet/wide composition
+- **Consistency across** menu, difficulty, game, collection, card-garage, pack-opening, game-over
 
 ## Current Test Surface
 
@@ -64,9 +80,15 @@ Focus review on:
 - Exported screenshots are intentionally ignored by git.
 - Playwright attachments still land in `test-results/` for one-off debugging.
 - If visual changes are made, regenerate the export set before doing subjective review.
-- FixtureApp supports 5 fixtures: menu, difficulty, deck-garage, combat, card.
-- Pack opening, collection, and game over screens are tested via live
-  navigation flows in `e2e/app-flow.spec.ts` and `e2e/pack-opening.spec.ts`.
+- FixtureApp supports the v0.3 fixture set (listed above). Some fixtures
+  are state-dependent (game-heat-high, game-market-open) — FixtureApp
+  accepts a `scenario` query param to seed the sim to the target state.
+- Pack opening, collection, card-garage, and game-over screens are
+  tested via live navigation flows in `e2e/app-flow.spec.ts`,
+  `e2e/pack-opening.spec.ts`, `e2e/card-garage.spec.ts`, and
+  `e2e/war-outcome.spec.ts`.
+- Resolution overlay + heat-meter reactivity are tested via
+  `e2e/single-lane-flow.spec.ts` with scripted sim state.
 
 ## Gap Analysis Worksheet
 
@@ -97,4 +119,5 @@ characters.
 
 ### Change-log
 
+- 2026-04-17 — Updated fixture set for v0.3 single-lane rewrite: HeatMeter, BlackMarketPanel, HoldingPanel, MythicBadge, and TurfCompositeCard with HP bars replace v0.2 parallel-turf fixtures.
 - 2026-04-15 — Updated fixture set and review targets for v0.2 (stack redesign).

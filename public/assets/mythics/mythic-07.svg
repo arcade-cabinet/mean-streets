@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- The Fixer: Infinity/knot symbol (transcending affiliation lines) -->
+  <path d="M20 32 Q12 22 20 18 Q28 20 32 32 Q36 44 44 46 Q52 42 44 32 Q36 22 32 32 Q28 42 20 46 Q12 42 20 32 Z"
+        stroke="#D4A017" stroke-width="2.5" stroke-linejoin="round"
+        fill="#1A1A1A" fill-opacity="0.3"/>
+  <!-- Central junction node -->
+  <circle cx="32" cy="32" r="3" fill="#D4A017"/>
+  <circle cx="32" cy="32" r="1" fill="#1A1A1A"/>
+  <!-- Strike-through affiliation boundaries -->
+  <path d="M8 32 L20 32" stroke="#D4A017" stroke-width="1" stroke-linecap="round" opacity="0.4"/>
+  <path d="M44 32 L56 32" stroke="#D4A017" stroke-width="1" stroke-linecap="round" opacity="0.4"/>
+</svg>

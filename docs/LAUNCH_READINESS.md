@@ -1,6 +1,6 @@
 ---
 title: Launch Readiness Checklist
-updated: 2026-04-14
+updated: 2026-04-17
 status: current
 domain: ops
 ---
@@ -26,8 +26,8 @@ before the build moves forward.
 
 ## Cards & balance
 
-- [ ] `pnpm exec tsx src/sim/analysis/cli.ts runner-contract --profile ci`
-      shows reserve-start fires (rate > 0)
+- [ ] `pnpm run analysis:benchmark` — Medium AI-vs-AI winrate in
+      [0.48, 0.52] for ≥ 3 consecutive seeded runs
 - [ ] `pnpm run analysis:autobalance:dry` reports 0 unstable cards
       OR every unstable card has a planned tuning step
 - [ ] `sim/reports/turf/balance-history.json` committed and shows
@@ -35,8 +35,9 @@ before the build moves forward.
 
 ## Mobile flows (real device, NOT just emulator)
 
-- [ ] Android physical: golden path — menu → new game → deckbuilder
-      → start game → first combat round → quit
+- [ ] Android physical: golden path — menu → difficulty → card garage
+      (merge + toggles) → war start → first turf engagement →
+      seize-and-promote → win/loss → quit
 - [ ] iOS physical: same golden path
 - [ ] Android: kill app → reopen → "Load Game" resumes the same phase
 - [ ] iOS: same resume flow

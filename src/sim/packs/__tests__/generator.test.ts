@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createRng } from '../../cards/rng';
 import { generatePack, starterGrant, matchRewardPacks } from '../generator';
-import type { Card, Rarity } from '../../turf/types';
+import type { Card } from '../../turf/types';
 
 describe('generatePack', () => {
   const rng = () => createRng(42);
@@ -49,37 +49,45 @@ describe('generatePack', () => {
     expect(cards).toHaveLength(3);
   });
 
-  it('rarity distribution follows 70/25/5 weights over many packs', () => {
-    const counts: Record<Rarity, number> = { common: 0, rare: 0, legendary: 0 };
+  it('rolled rarity skews low at easy difficulty', () => {
+    const counts: Record<string, number> = {
+      common: 0, uncommon: 0, rare: 0, legendary: 0, mythic: 0,
+    };
     const r = createRng(12345);
     for (let i = 0; i < 200; i++) {
-      const cards = generatePack('tough-5', emptyCollection, r);
+      const cards = generatePack('tough-5', emptyCollection, r, { unlockDifficulty: 'easy' });
       for (const c of cards) counts[c.rarity]++;
     }
-    const total = counts.common + counts.rare + counts.legendary;
-    expect(counts.common / total).toBeGreaterThan(0.5);
-    expect(counts.rare / total).toBeGreaterThan(0.1);
-    expect(counts.legendary / total).toBeGreaterThan(0.01);
+    const total = counts.common + counts.uncommon + counts.rare + counts.legendary;
+    expect(total).toBeGreaterThan(0);
+    // Commons + uncommons should dominate easy-difficulty rolls.
+    expect((counts.common + counts.uncommon) / total).toBeGreaterThan(0.5);
+    expect(counts.mythic).toBe(0);
   });
 
-  it('sudden death win bumps rarity up', () => {
-    const normalCounts: Record<Rarity, number> = { common: 0, rare: 0, legendary: 0 };
-    const sdCounts: Record<Rarity, number> = { common: 0, rare: 0, legendary: 0 };
+  it('high-difficulty multiplier boosts roll-up probability', () => {
+    const easyCounts: Record<string, number> = {
+      common: 0, uncommon: 0, rare: 0, legendary: 0, mythic: 0,
+    };
+    const ultraCounts: Record<string, number> = {
+      common: 0, uncommon: 0, rare: 0, legendary: 0, mythic: 0,
+    };
 
     for (let seed = 1; seed <= 100; seed++) {
-      const normal = generatePack('tough-5', emptyCollection, createRng(seed));
-      for (const c of normal) normalCounts[c.rarity]++;
+      const easy = generatePack('tough-5', emptyCollection, createRng(seed), { unlockDifficulty: 'easy' });
+      for (const c of easy) easyCounts[c.rarity]++;
 
-      const sd = generatePack('tough-5', emptyCollection, createRng(seed), { suddenDeathWin: true });
-      for (const c of sd) sdCounts[c.rarity]++;
+      const ultra = generatePack('tough-5', emptyCollection, createRng(seed), {
+        unlockDifficulty: 'ultra-nightmare',
+      });
+      for (const c of ultra) ultraCounts[c.rarity]++;
     }
 
-    const normalRareRate = (normalCounts.rare + normalCounts.legendary) /
-      (normalCounts.common + normalCounts.rare + normalCounts.legendary);
-    const sdRareRate = (sdCounts.rare + sdCounts.legendary) /
-      (sdCounts.common + sdCounts.rare + sdCounts.legendary);
-
-    expect(sdRareRate).toBeGreaterThanOrEqual(normalRareRate);
+    const easyTotal = easyCounts.common + easyCounts.uncommon + easyCounts.rare + easyCounts.legendary;
+    const ultraTotal = ultraCounts.common + ultraCounts.uncommon + ultraCounts.rare + ultraCounts.legendary;
+    const easyHigh = (easyCounts.rare + easyCounts.legendary) / easyTotal;
+    const ultraHigh = (ultraCounts.rare + ultraCounts.legendary) / ultraTotal;
+    expect(ultraHigh).toBeGreaterThanOrEqual(easyHigh);
   });
 
   it('is deterministic with the same seed', () => {
@@ -116,10 +124,10 @@ describe('matchRewardPacks', () => {
     expect(rewards[0].kind).toBe('triple');
   });
 
-  it('returns sudden death rewards on win with sudden death', () => {
-    const rewards = matchRewardPacks('medium', true, true);
-    expect(rewards.length).toBeGreaterThan(0);
-    expect(rewards[0].kind).toBe('tough-5');
+  it('ignores deprecated sudden-death flag (returns base rewards)', () => {
+    const base = matchRewardPacks('medium', false, true);
+    const sd = matchRewardPacks('medium', true, true);
+    expect(sd).toEqual(base);
   });
 
   it('returns larger rewards for harder difficulties', () => {

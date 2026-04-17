@@ -12,7 +12,8 @@
     7
   ],
   "rarity": [
-    "common"
+    "common",
+    "uncommon"
   ],
   "abilities": [
     "On play: peek at the top 2 cards of your own deck, reorder them"

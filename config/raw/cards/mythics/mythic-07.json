@@ -1,0 +1,19 @@
+{
+  "id": "mythic-07",
+  "kind": "tough",
+  "name": "The Fixer",
+  "tagline": "Colors don't matter. Only the deal.",
+  "archetype": "fixer",
+  "affiliation": "freelance",
+  "power": [7],
+  "resistance": [7],
+  "rarity": ["mythic"],
+  "abilities": ["TRANSCEND"],
+  "mythic_signature": {
+    "description": "Immune to affiliation penalties. Rival affiliations don't drain buffer or trigger discard when The Fixer is in play. Loyal bonuses still apply to other toughs on the turf; The Fixer simply doesn't care.",
+    "balance_note": "Balanced stats. The value is stacking flexibility — The Fixer lets you run a rainbow turf without buffer economy. Opens whole archetype compositions that were previously walled off by affiliation conflict."
+  },
+  "unlocked": false,
+  "locked": true,
+  "draft": true
+}

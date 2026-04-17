@@ -1,5 +1,11 @@
 import compiledToughs from '../../../config/compiled/toughs.json';
-import { type CompiledTough, CompiledToughSchema } from './schemas';
+import compiledMythics from '../../../config/compiled/mythics.json';
+import {
+  type CompiledMythic,
+  CompiledMythicSchema,
+  type CompiledTough,
+  CompiledToughSchema,
+} from './schemas';
 import type { ToughCard } from '../turf/types';
 import simConfig from '../../data/ai/turf-sim.json';
 
@@ -7,7 +13,14 @@ const parsed = (compiledToughs as unknown[]).map((entry) =>
   CompiledToughSchema.parse(entry),
 );
 
-function toToughCard(card: CompiledTough): ToughCard {
+// Mythic pool is validated at module load so authoring mistakes (e.g. a
+// rarity history that doesn't end in 'mythic') crash the app early
+// rather than producing corrupted CardInstances at runtime.
+const parsedMythics = (compiledMythics as unknown[]).map((entry) =>
+  CompiledMythicSchema.parse(entry),
+);
+
+function toToughCard(card: CompiledTough | CompiledMythic): ToughCard {
   return {
     kind: 'tough',
     id: card.id,
@@ -18,6 +31,10 @@ function toToughCard(card: CompiledTough): ToughCard {
     power: card.power,
     resistance: card.resistance,
     rarity: card.rarity,
+    // v0.3: HP starts equal to resistance; tough instances are dealt
+    // damage via resolve.ts, not mutated here.
+    maxHp: card.resistance,
+    hp: card.resistance,
     // Defensive copy: each callsite gets its own abilities array so a
     // downstream mutation (e.g. ECS system appending a buff tag) cannot
     // bleed into the shared catalog snapshot.
@@ -41,4 +58,29 @@ export function loadStarterToughCards(starterCount = simConfig.starterCollection
  */
 export function loadCompiledToughs(): CompiledTough[] {
   return parsed.map((t) => ({ ...t, abilities: [...t.abilities] }));
+}
+
+/**
+ * Load every compiled mythic as a runtime ToughCard (mythics share the
+ * tough card shape — §11 says mythics are a subset of toughs with
+ * `rarity: 'mythic'`). hp/maxHp are defaulted to resistance, identical
+ * to `loadToughCards`.
+ *
+ * These are intentionally **not** included in `loadToughCards()` output
+ * because mythics never enter the common pack pool (§3.3 drop rate is
+ * 0%). Callers that want the mythic pool (e.g. `game.ts` seeding
+ * `state.mythicPool`) call this loader explicitly.
+ */
+export function loadMythicCards(): ToughCard[] {
+  return parsedMythics.map(toToughCard);
+}
+
+/** Return the 10 mythic card ids as a fresh array for `mythicPool` seeding. */
+export function loadMythicPoolIds(): string[] {
+  return parsedMythics.map((m) => m.id);
+}
+
+/** Raw compiled mythic records (includes `mythic_signature` doc block). */
+export function loadCompiledMythics(): CompiledMythic[] {
+  return parsedMythics.map((m) => ({ ...m, abilities: [...m.abilities] }));
 }

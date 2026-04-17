@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { StackedCard, Turf } from '../../sim/turf/types';
+import type { StackedCard, ToughCard, Turf } from '../../sim/turf/types';
 import { Card } from '../cards';
 
 interface StackFanModalProps {
@@ -12,6 +12,11 @@ interface StackFanModalProps {
   /** Called when a face-up card in the stack is tapped. Pass in retreat
    * flow; undefined otherwise. */
   onCardPick?: (stackIdx: number) => void;
+  /** When true, render HP bars beneath each tough. v0.3 §4. */
+  showHp?: boolean;
+  /** When true, render owner-line arrows from each modifier to its parent
+   * tough in the stack. Useful during modifier-swap mode. */
+  showOwnerLines?: boolean;
 }
 
 /** Face-down back tile. Simple CSS-driven placeholder — no asset art. */
@@ -26,12 +31,33 @@ function CardBack({ position }: { position: string }) {
   );
 }
 
+/** Render a compact HP pip row for a tough card. */
+function ToughHp({ tough }: { tough: ToughCard }) {
+  const max = tough.maxHp ?? 0;
+  const cur = typeof tough.hp === 'number' ? tough.hp : max;
+  if (max <= 0) return null;
+  const pct = Math.max(0, Math.min(100, Math.round((cur / max) * 100)));
+  return (
+    <div className="stack-fan-hp" data-testid={`stack-fan-hp-${tough.id}`}>
+      <span className="stack-fan-hp-label">HP</span>
+      <div className="stack-fan-hp-bar">
+        <div className="stack-fan-hp-fill" style={{ width: `${pct}%` }} />
+      </div>
+      <span className="stack-fan-hp-value">
+        {cur}/{max}
+      </span>
+    </div>
+  );
+}
+
 export function StackFanModal({
   turf,
   open,
   onClose,
   isOwn = true,
   onCardPick,
+  showHp = false,
+  showOwnerLines = false,
 }: StackFanModalProps) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const touchStartX = useRef(0);
@@ -68,6 +94,18 @@ export function StackFanModal({
     }
   }, [stackLen]);
 
+  // Map tough.id → stackIdx so we can draw owner-line arrows from a
+  // modifier's position toward its owning tough. Declared before the
+  // early-return so hooks run in a stable order.
+  // Computed per-render (not memoized) because the sim mutates
+  // turf.stack in-place, keeping the array reference stable while
+  // indices change — memoizing on the array ref would return stale data.
+  const toughIndexById = new Map<string, number>();
+  for (let i = 0; i < turf.stack.length; i++) {
+    const c = turf.stack[i].card;
+    if (c.kind === 'tough') toughIndexById.set(c.id, i);
+  }
+
   if (!open || stackLen === 0) return null;
 
   function renderStacked(sc: StackedCard, i: number, positionLabel: string) {
@@ -79,6 +117,9 @@ export function StackFanModal({
           onCardPick?.(i);
         }
       : undefined;
+    const isTough = sc.card.kind === 'tough';
+    const ownerIdx = !isTough && sc.owner ? toughIndexById.get(sc.owner) ?? null : null;
+    const arrowDir = ownerIdx == null ? null : ownerIdx < i ? 'left' : ownerIdx > i ? 'right' : null;
     return (
       <div
         key={`${sc.card.id}-${i}`}
@@ -95,6 +136,16 @@ export function StackFanModal({
         data-testid={`stack-fan-card-${i}`}
       >
         {showFace ? <Card card={sc.card} /> : <CardBack position={positionLabel} />}
+        {showHp && showFace && isTough && <ToughHp tough={sc.card as ToughCard} />}
+        {showOwnerLines && arrowDir && (
+          <span
+            className={`stack-fan-owner-arrow stack-fan-owner-arrow-${arrowDir}`}
+            aria-hidden="true"
+            data-testid={`stack-fan-owner-arrow-${i}`}
+          >
+            {arrowDir === 'left' ? '←' : '→'}
+          </span>
+        )}
         <div className="stack-fan-card-position">{positionLabel}</div>
       </div>
     );

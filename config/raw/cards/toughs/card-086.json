@@ -12,7 +12,8 @@
     10
   ],
   "rarity": [
-    "common"
+    "common",
+    "rare"
   ],
   "abilities": [
     "On play: opponent must reveal their highest-power card in hand for the rest of the round"

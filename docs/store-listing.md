@@ -1,6 +1,6 @@
 ---
 title: Store Listing Copy
-updated: 2026-04-14
+updated: 2026-04-17
 status: draft
 domain: product
 ---
@@ -21,25 +21,34 @@ Gritty tactical 1v1 card brawler. No dice. Every play matters.
 ## Full description (4000 chars)
 
 > You run a crew of toughs in a city where every block is someone
-> else's. Seize five positions. Keep your reserves alive. Pack your
-> backpacks tight.
+> else's. Seize turf. Burn through reserves. Last crew standing wins.
 >
-> Mean Streets: Precision Starvation is a fully-deterministic 1v1 card
-> brawler. 25 crew + 25 quarter-card modifiers in your deck. No dice,
-> no coin flips, no luck-spikes. The only randomness is draw order —
+> Mean Streets: Precision Starvation is a 1v1 card brawler built on
+> near-deterministic rules. 100 toughs, 50 weapons, 50 drugs, 10 mythics
+> — five rarity tiers from common to mythic. No dice, no coin flips.
+> Draw order and probabilistic bribes introduce the only randomness —
 > every decision you make is the decision that matters.
 >
 > **Features**
 >
-> - **Deterministic combat**: Win by outplaying, not outrolling.
-> - **12 archetypes, 10 affiliations**: Every tough has a role and a
->   loyalty. Stack them right, build pressure, seize turf.
-> - **Runner backpacks**: Equip a reserve tough with a backpack, deploy
->   them as a runner, dispense payload under fire.
-> - **Simulation-proven balance**: Every shipped card is locked by a
->   weekly autobalance loop that runs thousands of simulated games.
-> - **Cross-platform**: Web, Android, iOS — your profile and deck sync
->   through local SQLite.
+> - **Single-lane turf wars**: One active turf per side — reserves
+>   promote when your frontline falls. Best of N where N scales with
+>   difficulty.
+> - **HP + damage tiers**: Wound, crush, or instant-kill. Wounded
+>   toughs fight weaker. Every hit matters.
+> - **Heat + raids**: Stack too much power, attract police attention.
+>   Raids wipe your Black Market before combat even starts.
+> - **Black Market + Holding**: Trade mods, heal wounded toughs, risk
+>   the cops. Bribe your way out — or lose your crew to lockup.
+> - **10 hand-authored Mythics**: Earned by killing enemy mythics, not
+>   pulled from packs. Each one warps the game.
+> - **Simulation-proven balance**: Common card stats are tuned by an
+>   autobalance loop running thousands of simulated games; mythic
+>   signature abilities are individually paper-playtested. Deployment
+>   requires passing the release gate (Medium AI winrate in [0.48, 0.52]
+>   for 3 consecutive seeded runs).
+> - **Cross-platform**: Web, Android, iOS — local persistence via SQLite
+>   (no cross-device sync).
 > - **One-hand portrait play**: Designed mobile-first. Tablets and
 >   landscape get their own deliberate compositions.
 >
@@ -61,11 +70,11 @@ Per device profile (iPhone 6.7", iPhone 5.5", iPad Pro 12.9",
 Android phone, Android 7" tablet, Android 10" tablet):
 
 1. Menu screen — "Mean Streets: Precision Starvation"
-2. Deckbuilder — packing a backpack
-3. Buildup phase — three lanes built out
-4. Combat — mid-attack with ability indicators
-5. Crew card detail — archetype, affiliation, ability text
-6. Game Over — victory screen with metrics
+2. Card Garage — merge pyramid + priority sliders
+3. Single-lane turf — active stacks with HP bars
+4. Combat — mid-strike with damage tier indicators
+5. Heat meter + Black Market panel open
+6. Game Over — war outcome with victory rating
 
 Source fixtures live in `artifacts/visual-review/` (produced by
 `pnpm run visual:export:headless`). Final screenshot set is composed

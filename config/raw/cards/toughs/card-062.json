@@ -12,7 +12,8 @@
     7
   ],
   "rarity": [
-    "common"
+    "common",
+    "uncommon"
   ],
   "abilities": [
     "On play: opponent must reveal the rightmost card in their hand for the rest of the round"

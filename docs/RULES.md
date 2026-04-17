@@ -592,7 +592,7 @@ game-warping abilities.
 Each of the 10 mythics has a unique signature ability. The pool
 (hand-authored):
 
-1. **The Shadow** — STRIKE_TWO: single strike hits top + one card
+1. **The Silhouette** — STRIKE_TWO: single strike hits top + one card
    below in the opponent's stack.
 2. **The Accountant** — CLEAN_SLATE: one-shot, resets heat to 0.0.
 3. **The Architect** — BUILD_TURF: carve out an extra reserve turf
@@ -713,7 +713,7 @@ AI decision quality modulates by difficulty:
 | Medium           | Top-3 sampling, 15% noise                          |
 | Hard             | Top-2 sampling, 5% noise, +1 action                |
 | Nightmare        | Best action, 0% noise, −1 player action            |
-| Ultra-Nightmare  | Best + 2-ply lookahead, sudden-death auto-on        |
+| Ultra-Nightmare  | Best + 2-ply lookahead, 1-turf match, perma-lockup  |
 
 AI also runs collection curation (merge + enable/disable + priority)
 before each war using the same planner that scores moves. AI's

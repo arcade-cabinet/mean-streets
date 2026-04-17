@@ -12,7 +12,8 @@
     8
   ],
   "rarity": [
-    "common"
+    "common",
+    "uncommon"
   ],
   "abilities": [
     "After attacking: cannot be targeted for the opponent's next turn"

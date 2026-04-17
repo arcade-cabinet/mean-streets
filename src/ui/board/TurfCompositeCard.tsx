@@ -33,13 +33,53 @@ function affiliationContext(affiliations: string[], aff: string): 'none' | 'loya
   return 'none';
 }
 
-function bestRarity(toughs: ToughCard[]): 'common' | 'rare' | 'legendary' {
-  let best: 'common' | 'rare' | 'legendary' = 'common';
+type BestRarity = 'common' | 'uncommon' | 'rare' | 'legendary' | 'mythic';
+
+function bestRarity(toughs: ToughCard[]): BestRarity {
+  const order: Record<BestRarity, number> = {
+    common: 0, uncommon: 1, rare: 2, legendary: 3, mythic: 4,
+  };
+  let best: BestRarity = 'common';
   for (const t of toughs) {
-    if (t.rarity === 'legendary') return 'legendary';
-    if (t.rarity === 'rare') best = 'rare';
+    if (order[t.rarity as BestRarity] > order[best]) {
+      best = t.rarity as BestRarity;
+    }
   }
   return best;
+}
+
+/** HP % as 0..1. Guards against missing HP fields on legacy fixtures. */
+function hpFraction(t: ToughCard): number {
+  if (!t.maxHp || t.maxHp <= 0) return 1;
+  const h = typeof t.hp === 'number' ? t.hp : t.maxHp;
+  return Math.max(0, Math.min(1, h / t.maxHp));
+}
+
+function hpBarColor(frac: number): string {
+  if (frac <= 0.25) return 'var(--ms-hp-critical, #ef4444)';
+  if (frac <= 0.5) return 'var(--ms-hp-low, #f59e0b)';
+  return 'var(--ms-hp-full, #22c55e)';
+}
+
+function ToughHpBar({ tough }: { tough: ToughCard }) {
+  const frac = hpFraction(tough);
+  const pct = Math.round(frac * 100);
+  return (
+    <div
+      className="turf-composite-hp-bar"
+      data-testid={`hp-bar-${tough.id}`}
+      role="meter"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={pct}
+      aria-label={`${tough.name} HP ${pct}%`}
+    >
+      <div
+        className="turf-composite-hp-fill"
+        style={{ width: `${pct}%`, backgroundColor: hpBarColor(frac) }}
+      />
+    </div>
+  );
 }
 
 function modifierSummary(mods: Card[]): { weapons: number; drugs: number } {
@@ -139,6 +179,7 @@ export function TurfCompositeCard({ turf, compact, isOwn = true, onClick }: Turf
             <span className="turf-composite-stat turf-composite-stat-power">{power}</span>
             <span className="turf-composite-stat turf-composite-stat-resistance">{resistance}</span>
           </div>
+          <ToughHpBar tough={topTough} />
           {closedRanks && <div className="turf-composite-closed-ranks-badge">CLOSED RANKS</div>}
         </div>
       </div>
@@ -189,6 +230,8 @@ export function TurfCompositeCard({ turf, compact, isOwn = true, onClick }: Turf
             {toughs.map((t, i) => (
               <div key={t.id} className="turf-composite-roster-entry">
                 <span className="turf-composite-roster-name">{t.name}</span>
+                {t.rarity === 'mythic' && <span className="turf-composite-mythic-chip">M</span>}
+                <ToughHpBar tough={t} />
                 {i === toughs.length - 1 && turf.sickTopIdx != null && (
                   <span className="turf-composite-sick-badge">SICK</span>
                 )}

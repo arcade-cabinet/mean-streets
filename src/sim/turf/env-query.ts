@@ -4,6 +4,7 @@ import {
   positionResistance,
   turfAffiliationConflict,
 } from './board';
+import { isToughInCustody } from './holding';
 import type {
   Card,
   PlayerState,
@@ -23,6 +24,16 @@ export function normalizeActionKey(action: TurfAction): string {
       return `play_card:${action.turfIdx}:${action.cardId}`;
     case 'retreat':
       return `retreat:${action.turfIdx}:${action.stackIdx}`;
+    case 'modifier_swap':
+      return `modifier_swap:${action.turfIdx}:${action.toughId}:${action.targetToughId}:${action.cardId}`;
+    case 'send_to_market':
+      return `send_to_market:${action.toughId}`;
+    case 'send_to_holding':
+      return `send_to_holding:${action.toughId}`;
+    case 'black_market_trade':
+      return `black_market_trade:${action.targetRarity}:${(action.offeredMods ?? []).join(',')}`;
+    case 'black_market_heal':
+      return `black_market_heal:${action.healTarget}:${(action.offeredMods ?? []).join(',')}`;
     case 'direct_strike':
     case 'pushed_strike':
     case 'funded_recruit':
@@ -33,27 +44,35 @@ export function normalizeActionKey(action: TurfAction): string {
       return 'end_turn';
     case 'pass':
       return 'pass';
+    default: {
+      // Exhaustiveness guard + safe fallback for forward-compat.
+      const _exhaustive: never = action.kind;
+      return `unknown:${String(_exhaustive)}`;
+    }
   }
 }
 
 export function policyActionKey(action: TurfAction): string {
   switch (action.kind) {
     case 'draw':
-      return 'draw';
     case 'play_card':
-      return 'play_card';
     case 'retreat':
-      return 'retreat';
+    case 'modifier_swap':
+    case 'send_to_market':
+    case 'send_to_holding':
+    case 'black_market_trade':
+    case 'black_market_heal':
     case 'direct_strike':
     case 'pushed_strike':
     case 'funded_recruit':
-      return action.kind;
     case 'discard':
-      return 'discard';
     case 'end_turn':
-      return 'end_turn';
     case 'pass':
-      return 'pass';
+      return action.kind;
+    default: {
+      const _exhaustive: never = action.kind;
+      return `unknown:${String(_exhaustive)}`;
+    }
   }
 }
 
@@ -84,10 +103,6 @@ export function createObservation(
   const oppPower = opp.turfs.reduce((s, t) => s + positionPower(t), 0);
   const oppDef = opp.turfs.reduce((s, t) => s + positionResistance(t), 0);
 
-  // `handToughs/handWeapons/...` legacy observation fields now count the
-  // single pending-placement card (if any) plus visible deck-top info is
-  // unavailable (cards are hidden until drawn). This preserves the
-  // interface shape for the AI planner without lying about hand contents.
   return {
     phase: state.phase,
     side,
@@ -105,12 +120,13 @@ export function createObservation(
     opponentPower: oppPower,
     opponentDefense: oppDef,
     actionsRemaining: own.actionsRemaining,
-    stateKey: stateKey(state, own, opp),
+    stateKey: stateKey(state, side, own, opp),
   };
 }
 
 function stateKey(
   state: TurfGameState,
+  side: 'A' | 'B',
   own: PlayerState,
   opp: PlayerState,
 ): string {
@@ -124,6 +140,10 @@ function stateKey(
     own.actionsRemaining,
     own.deck.length,
     pend,
+    Math.round(state.heat * 10),
+    state.blackMarket.length,
+    state.holding[side].length,
+    state.lockup[side].length,
   ].join('|');
 }
 
@@ -136,63 +156,82 @@ export function enumerateLegalActions(
   const player = state.players[side];
   const opp = state.players[side === 'A' ? 'B' : 'A'];
   const actions: TurfAction[] = [];
+  const activeIdx = 0;
+  const active = player.turfs[activeIdx];
+
+  const hasBudget = player.actionsRemaining > 0;
 
   // draw (no pending, deck non-empty)
-  if (player.pending === null && player.deck.length > 0) {
+  if (hasBudget && player.pending === null && player.deck.length > 0) {
     actions.push({ kind: 'draw', side });
   }
 
-  // play_card (have pending)
-  if (player.pending !== null) {
+  // play_card (have pending; active turf only)
+  if (player.pending !== null && active) {
     const card = player.pending;
-    for (let t = 0; t < player.turfs.length; t++) {
-      const turf = player.turfs[t];
-      if (isModifierCard(card) && turf.stack.length === 0) continue;
-      if (card.kind === 'tough' && turfAffiliationConflict(turf, card))
-        continue;
-      actions.push({ kind: 'play_card', side, turfIdx: t, cardId: card.id });
+    // discard is always free (no budget check); play_card costs 1 action.
+    if (hasBudget) {
+      if (!(isModifierCard(card) && active.stack.length === 0)) {
+        if (!(card.kind === 'tough' && turfAffiliationConflict(active, card))) {
+          actions.push({
+            kind: 'play_card',
+            side,
+            turfIdx: activeIdx,
+            cardId: card.id,
+          });
+        }
+      }
     }
-    // Discard option for stuck modifiers.
     actions.push({ kind: 'discard', side, cardId: card.id });
   }
 
-  // retreat (turf has ≥2 face-up cards, swap to non-top face-up)
-  for (let t = 0; t < player.turfs.length; t++) {
-    const turf = player.turfs[t];
-    if (turf.stack.length < 2) continue;
-    for (let s = 0; s < turf.stack.length - 1; s++) {
-      if (turf.stack[s].faceUp) {
-        actions.push({ kind: 'retreat', side, turfIdx: t, stackIdx: s });
+  // retreat — active turf, stack size ≥ 2, swap to any face-up non-top.
+  if (hasBudget && active && active.stack.length >= 2) {
+    for (let s = 0; s < active.stack.length - 1; s++) {
+      if (active.stack[s].faceUp) {
+        actions.push({ kind: 'retreat', side, turfIdx: activeIdx, stackIdx: s });
       }
     }
   }
 
-  // strikes (source turf not closed-ranks, has a living tough; target has tough)
-  for (let t = 0; t < player.turfs.length; t++) {
-    const src = player.turfs[t];
-    if (src.closedRanks) continue;
-    if (!hasToughOnTurf(src)) continue;
-    for (let d = 0; d < opp.turfs.length; d++) {
-      if (!hasToughOnTurf(opp.turfs[d])) continue;
-      actions.push({
-        kind: 'direct_strike',
-        side,
-        turfIdx: t,
-        targetTurfIdx: d,
-      });
-      actions.push({
-        kind: 'pushed_strike',
-        side,
-        turfIdx: t,
-        targetTurfIdx: d,
-      });
-      actions.push({
-        kind: 'funded_recruit',
-        side,
-        turfIdx: t,
-        targetTurfIdx: d,
-      });
+  // modifier_swap — active turf only, between two different toughs.
+  if (hasBudget && active) {
+    const toughIds: string[] = [];
+    for (const sc of active.stack) {
+      if (sc.card.kind === 'tough') toughIds.push(sc.card.id);
     }
+    for (const from of toughIds) {
+      if (isToughInCustody(state, side, from)) continue;
+      for (const to of toughIds) {
+        if (from === to) continue;
+        for (const sc of active.stack) {
+          if (sc.card.kind === 'tough' || sc.owner !== from) continue;
+          actions.push({
+            kind: 'modifier_swap',
+            side,
+            turfIdx: activeIdx,
+            toughId: from,
+            targetToughId: to,
+            cardId: sc.card.id,
+          });
+        }
+      }
+    }
+    // send_to_market / send_to_holding per tough.
+    for (const id of toughIds) {
+      if (isToughInCustody(state, side, id)) continue;
+      actions.push({ kind: 'send_to_market', side, toughId: id });
+      actions.push({ kind: 'send_to_holding', side, toughId: id });
+    }
+  }
+
+  // strikes (source = active turf not closed-ranks, has a living tough;
+  // target = opponent active turf with a living tough).
+  const oppActive = opp.turfs[0];
+  if (hasBudget && active && !active.closedRanks && hasToughOnTurf(active) && oppActive && hasToughOnTurf(oppActive)) {
+    actions.push({ kind: 'direct_strike', side, turfIdx: 0, targetTurfIdx: 0 });
+    actions.push({ kind: 'pushed_strike', side, turfIdx: 0, targetTurfIdx: 0 });
+    actions.push({ kind: 'funded_recruit', side, turfIdx: 0, targetTurfIdx: 0 });
   }
 
   actions.sort((a, b) =>

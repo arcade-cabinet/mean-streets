@@ -5,6 +5,8 @@ import { resolveDirectStrike } from '../attacks';
 import { resolveTargetToughIdx } from '../stack-ops';
 
 function makeTough(overrides: Partial<ToughCard> = {}): ToughCard {
+  const resistance = overrides.resistance ?? 6;
+  const maxHp = overrides.maxHp ?? resistance;
   return {
     kind: 'tough',
     id: overrides.id ?? 'tough-1',
@@ -13,17 +15,25 @@ function makeTough(overrides: Partial<ToughCard> = {}): ToughCard {
     archetype: overrides.archetype ?? 'bruiser',
     affiliation: overrides.affiliation ?? 'freelance',
     power: overrides.power ?? 6,
-    resistance: overrides.resistance ?? 6,
+    resistance,
     rarity: 'common',
     abilities: [],
+    maxHp,
+    hp: overrides.hp ?? maxHp,
     ...overrides,
   };
 }
 
 function makeWeapon(id: string, power = 3): WeaponCard {
   return {
-    kind: 'weapon', id, name: id, category: 'bladed',
-    power, resistance: 1, rarity: 'common', abilities: [],
+    kind: 'weapon',
+    id,
+    name: id,
+    category: 'bladed',
+    power,
+    resistance: 1,
+    rarity: 'common',
+    abilities: [],
   };
 }
 
@@ -44,7 +54,7 @@ describe('archetype abilities — strike targeting', () => {
 
     expect(result.outcome).toBe('kill');
     expect(result.killedTough?.id).toBe('bottom');
-    expect(defender.stack.some(c => c.card.id === 'top')).toBe(true);
+    expect(defender.stack.some((c) => c.card.id === 'top')).toBe(true);
   });
 
   it('ghost targets the lowest-resistance tough (strike-anywhere)', () => {
@@ -123,14 +133,27 @@ describe('archetype abilities — combat outcomes', () => {
     expect(result.outcome).toBe('kill');
   });
 
-  it('direct strike sicks when power < resistance but >= R/2', () => {
-    // Ghost archetype: does NOT carry the bruiser ignore-resistance bonus,
-    // so the raw P=5 vs R=10 → sick (>= R/2).
+  it('direct strike busts when power < resistance (v0.3 no partial sick)', () => {
+    // v0.3 replaces "sick when P >= R/2" with straight bust when P < R.
+    // Ghost has no ignore-resistance, so raw P=5 vs R=10 → busted.
     const attacker = turfWith(makeTough({ archetype: 'ghost', power: 5 }));
     const defender = turfWith(makeTough({ resistance: 10 }));
 
     const result = resolveDirectStrike(attacker, defender);
-    expect(result.outcome).toBe('sick');
-    expect(defender.sickTopIdx).toBe(0);
+    expect(result.outcome).toBe('busted');
+  });
+
+  it('direct strike wounds when R <= P < 1.5R (HP reduced, tough survives)', () => {
+    // v0.3 wound tier. P=7 vs R=6 → wound, dmg=2, hp 6→4. Ghost archetype
+    // to skip bruiser's ignoreResistance.
+    const attacker = turfWith(makeTough({ archetype: 'ghost', power: 7 }));
+    const defender = turfWith(makeTough({ resistance: 6, maxHp: 6, hp: 6 }));
+
+    const result = resolveDirectStrike(attacker, defender);
+    expect(result.outcome).toBe('wound');
+    // Tough still in stack with reduced HP.
+    const surviving = defender.stack.find((e) => e.card.kind === 'tough');
+    expect(surviving).toBeDefined();
+    expect((surviving!.card as ToughCard).hp).toBe(4);
   });
 });

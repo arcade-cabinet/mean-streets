@@ -1,6 +1,6 @@
 ---
 title: Architecture
-updated: 2026-04-16
+updated: 2026-04-17
 status: current
 domain: technical
 ---
@@ -40,35 +40,58 @@ in [PRODUCTION.md](./PRODUCTION.md).
 ```
 config/
   raw/cards/                      # Authored per-card JSON (dev source of truth)
-    toughs/card-*.json            # 100 tough characters
-    weapons/weap-*.json           # 50 weapons
-    drugs/drug-*.json             # 50 drugs
+    toughs/card-*.json            # 100 toughs (55 common / 25 uncommon / 15 rare / 5 legendary)
+    weapons/weap-*.json           # 50 weapons (28/12/8/2)
+    drugs/drug-*.json             # 50 drugs (28/12/8/2)
     currency/currency-*.json      # 2 currency cards ($100, $1000)
+    mythics/mythic-*.json         # 10 hand-authored mythics (never in packs)
   compiled/                       # Build-time outputs (gitignored)
-    toughs.json, weapons.json, drugs.json, currency.json
-                                  # Flattened: stat arrays collapsed to latest value
+    toughs.json, weapons.json, drugs.json, currency.json, mythics.json
+                                  # Flattened: stat arrays collapsed to latest value;
+                                  # toughs get hp = maxHp = resistance at compile time
 
 src/
   sim/turf/                       # Active game engine (runs without React)
-    types.ts                      # Card/StackedCard/Turf/PlayerState/QueuedAction/GameConfig/Action/Metrics
-    board.ts                      # Stack ops (StackedCard[]), power/resistance, affiliation conflict, seizure
+    types.ts                      # Card/StackedCard/Turf/PlayerState/QueuedAction/CardInstance/
+                                  # ToughInCustody/WarStats + heat/blackMarket/holding/lockup
+                                  # mythicPool/mythicAssignments on TurfGameState
+    board.ts                      # Stack ops, power/resistance with HP clamp,
+                                  # affiliation conflict, seizure, promoteReserveTurf,
+                                  # modifiersByOwner
     stack-ops.ts                  # Reusable stack navigation: topToughIdx, killToughAtIdx, transferMods
-    attacks.ts                    # resolveStrikeNow: direct, pushed, funded recruit (called from resolve.ts)
-    abilities.ts                  # applyTangibles + runIntangiblesPhase (counter/bribe/selfAttack/flip)
-    abilities-effects.ts          # ABILITY_INDEX: authored-flag → tangible delta + intangible handler
-    resolve.ts                    # resolvePhase: dominance → intangibles → tangible combat → seizure
-    environment.ts                # stepAction (draw, play_card, retreat, queue strikes, end_turn)
-    env-query.ts                  # createObservation, enumerateLegalActions, policy keys
-    game.ts                       # Match lifecycle: createMatch, runTurn (both sides), isGameOver
+    attacks.ts                    # resolveStrikeNow with tiered damage (glance/wound/serious/crushing)
+    abilities.ts                  # applyTangibles (rarity-scaled) + runIntangiblesPhase
+                                  # (probabilistic bribes + counter/redirect)
+    abilities-effects.ts          # ABILITY_INDEX: authored-flag → TangibleDelta / IntangibleHandlerId
+    ability-hooks.ts              # Passive hooks: hasImmunity, hasNoReveal, hasTranscend,
+                                  # hasInsight, hasStrikeTwo, hasChainThree, hasAbsolute,
+                                  # hasLaunder, hasLowProfile — consumed by sim + UI
+    ability-handlers.ts           # Intangible handler bodies (runCleanSlate, runBuildTurf,
+                                  # runStrikeRetreated, maybeBribe, etc.)
+    heat.ts                       # computeHeat(state), raidProbability(heat, difficulty)
+    market.ts                     # sendToMarket/tradeAtMarket/healAtMarket/returnFromMarket/wipeMarket
+    holding.ts                    # sendToHolding/holdingCheck/bribeSuccess/returnFromHolding/lockupProcess
+    resolve.ts                    # resolvePhase: raid → combat pass 1 dominance → pass 2 priority chain
+                                  # → seize reconciliation → promoteReserveTurf
+    environment.ts                # stepAction: draw, play_card, retreat, modifier_swap,
+                                  # send_to_market, send_to_holding, black_market_trade,
+                                  # black_market_heal, queued strikes, discard, end_turn
+    env-query.ts                  # createObservation (with heat/market/holding/lockup/pending),
+                                  # enumerateLegalActions, policy keys
+    game.ts                       # createMatch, runTurn, isGameOver (A/B/draw/timeout)
     generators.ts                 # generateCurrency, generateWeapons, generateDrugs
-    deck-builder.ts               # buildAutoDeck → flat Card[] (with preference-weighted shuffle)
+    deck-builder.ts               # buildAutoDeck → flat Card[] (with CardInstance priority shuffle)
     benchmark.ts                  # playSimulatedGame: seeded AI-vs-AI loop
     balance.ts                    # Per-card performance, lock lifecycle, v2 history
     sweep.ts                      # Forced-inclusion permutation sweeps
     ai/                           # AI decision pipeline
-      planner.ts                  # Yuka GOAP: composite goals over new action set
-      scoring.ts                  # Score draw, play, retreat, queued strikes, end_turn
+      planner.ts                  # Yuka GOAP: composite goals over v0.3 action set
+      planner-goals.ts            # Goal definitions: heat_management, mythic_hunt, stack_rebuild,
+                                  # build_stack, direct_pressure, pushed_pressure, funded_pressure,
+                                  # anti_stall, draw_tempo, retreat_shield
+      scoring.ts                  # Score all v0.3 actions: draw/play/retreat/swap/market/holding/queued
       policy.ts                   # selectAction: difficulty-gated top-K + noise
+      curator.ts                  # Pre-war collection curation for AI (merge + priority + enable/disable)
   sim/analysis/                   # Dev-only analysis tooling
     cli.ts                        # `analysis:*` npm scripts entry point
     benchmarks.ts                 # checkConvergence (48-52% winrate band)
@@ -82,27 +105,46 @@ src/
     compile.ts                    # authored → compiled transform (latestStat)
     rng.ts                        # Seeded Mulberry32 PRNG: createRng, next, shuffle
   sim/packs/
-    generator.ts                  # generatePack, starterGrant, matchRewardPacks
-    types.ts                      # PackKind, PackInstance, PackReward
+    generator.ts                  # generatePack, starterGrant (rolled rarity), matchRewardPacks
+    rewards.ts                    # computePerTurfRewards + computeWarOutcomeReward
+                                  # (Absolute/Overwhelming/Decisive/Standard + Perfect/Flawless/Dominant/Won)
+    mythic-pool.ts                # Pool tracking, flip-on-combat, escalating-currency fallback
+    types.ts                      # PackKind, PackInstance, PackReward, MythicDraw
 
   ecs/                            # Koota ECS bridge
-    traits.ts                     # GameState, PlayerA/B, ActionBudget, TurnEnded, DeckPending, QueuedStrike
+    traits.ts                     # GameState, PlayerA/B, ActionBudget, TurnEnded, DeckPending,
+                                  # QueuedStrike, Heat, BlackMarket, Holding, Lockup, MythicPool
     world.ts                      # createGameWorld(config, seed, deck)
-    actions.ts                    # drawAction, playCardAction, retreatAction, queueStrikeAction, endTurnAction
-    hooks.ts                      # useDeckPending, useTurnEnded, useQueuedStrikes, usePlayerTurfs, useActionBudget
+    actions.ts                    # drawAction, playCardAction, retreatAction, modifierSwapAction,
+                                  # sendToMarketAction, sendToHoldingAction, blackMarketTradeAction,
+                                  # blackMarketHealAction, queueStrikeAction, endTurnAction
+    hooks.ts                      # useTurfActive, useTurfReserves, useDeckPending, useTurnEnded,
+                                  # useQueuedStrikes, useHeat, useBlackMarket, useHolding,
+                                  # useLockup, useMythicPool, useActionBudget
 
   platform/                       # Capacitor shell, device, persistence
     AppShell.tsx                  # Device/layout provider + safe-area shell
     device.ts, layout.ts          # Orientation, screen size, layout classification
     persistence/                  # SQLite: PlayerProfile, collection, saved games
-      collection.ts               # loadCollection, addCardsToCollection, grantStarterCollection
+      collection.ts               # loadCollection (CardInstance[]), addCardsToCollection,
+                                  # grantStarterCollection, loadPreferences, mergeInstances
+      profile.ts                  # PlayerProfile + aiCollection mirror + mythicAssignments
+                                  # + warStats
+      ai-profile.ts               # Parallel AI collection tracking (invisible to player)
 
   ui/                             # React presentation layer
-    screens/                      # MainMenu, Difficulty, Game, Collection, CardGarage, PackOpening, GameOver
-    cards/                        # Card (unified v0.2), CardFrame, ModCard
-    board/                        # TurfView, TurfRow, TurfCompositeCard, StackFanModal, StreetDivider
-    affiliations/                 # AffiliationSymbol (SVG glow), getAffiliationRelation
-    hud/                          # GameHUD (turn counter, action budget, queued-strikes row)
+    screens/                      # MainMenu, Difficulty, Game, Collection, CardGarage,
+                                  # PackOpening, GameOver
+    cards/                        # Card (unified v0.3 w/ unlock-difficulty icon + rolled-rarity
+                                  # border + mythic treatment), CardFrame, ModCard
+    board/                        # TurfView (single-lane 1v1 + reserves indicator),
+                                  # TurfCompositeCard (HP bar per tough), StackFanModal,
+                                  # BlackMarketPanel, HoldingPanel, HeatMeter, MythicBadge,
+                                  # StreetDivider
+    affiliations/                 # AffiliationSymbol, MythicSymbol (shared gold ring),
+                                  # getAffiliationRelation
+    hud/                          # GameHUD (turn counter, action budget, queued-strikes row,
+                                  # heat meter, reserve count)
     dnd/                          # DraggableCard, DragContext, DropTarget, OrientationOverlay
     filters/                      # GrittyFilters (SVG noir glow defs)
     hooks/                        # useCollection
@@ -120,7 +162,7 @@ scripts/                          # Dev-time build helpers
 e2e/                              # Playwright specs (4 device profiles)
   app-flow.spec.ts                # Menu → difficulty → game flow
   accessibility.spec.ts           # Tap-only, landmarks, keyboard navigation
-  difficulty-grid.spec.ts         # Difficulty selection + sudden death toggle
+  difficulty-grid.spec.ts         # Difficulty selection (5 tiers, no Sudden Death in v0.3)
   pack-opening.spec.ts            # Sealed → reveal → summary flow
   responsive-alignment.spec.ts    # Overflow checks across fixtures
   visual-fixtures.spec.ts         # Fixture screenshots for review
@@ -154,66 +196,102 @@ files and commits each tuning iteration.
 ### Game Simulation
 
 ```
-Compiled card pools + CardPreferences
-  → buildAutoDeck(toughs, weapons, drugs, currency, rng, prefs)
-    → filters disabled cards; biases shuffle by priority (1–10)
-    → flat Card[N]
+Compiled card pools + CardInstance[] collection + Preferences
+  → buildAutoDeck(collection, rng, prefs)
+    → filters disabled instances; biases shuffle by priority (1–10)
+    → flat Card[N] materialized from CardInstance (apply rarity scaling)
   → createMatch(config, { deckA, deckB }) → MatchState
-  → Each turn, both players independently:
+    → turfs[0].isActive=true, turfs[1..].isActive=false (reserves)
+    → heat=0, blackMarket=[], holding={A:[],B:[]}, lockup={A:[],B:[]}
+    → mythicPool = 10 unassigned ids; mythicAssignments = {}
+  → Each turn, both players independently apply actions in parallel:
     → stepAction per action: draw (→ pending), play_card (pending → turf),
-      retreat, queue strike (direct/pushed/funded), discard, end_turn
+      retreat, modifier_swap, send_to_market, send_to_holding,
+      black_market_trade, black_market_heal, queued strikes, discard, end_turn
   → When both players turnEnded:
     → resolvePhase(state):
-      1. Sort queued actions by dominance (power + tangibles + loyalty)
-      2. For each: runIntangiblesPhase → counter/bribe/selfAttack/flip
-      3. Surviving actions → resolveStrikeNow → kill/sick/bust
-      4. Seize turfs with zero living toughs
-      5. Enforce placement cleanup (top modifier discarded, closedRanks flag)
-      6. Reset action budgets, clear queues, phase back to 'action'
-  → isGameOver(match) → 'A' | 'B' | null (0-turf seizure or timeout)
-  → Metrics collection → JSON report
+      1. Raid phase first:
+         - computeHeat → raidProbability = heat² × difficulty_coef
+         - If fires: wipeMarket, sweep face-up active tops to Lockup,
+           defender can bail $500 (cops pocket full tribute)
+         - Closed Ranks turfs exempt
+      2. Combat Pass 1: compute dominance per queued strike
+         (cumulative_P + tangibles + loyalty - cumulative_R)
+         Sort by dominance desc. Ties favor defender.
+      3. Combat Pass 2 per queued: priority chain
+         - Affiliations (loyal/rival bonuses)
+         - Currency bribes (probabilistic: 500=70%, 1k=85%, 2k=95%, 5k=99%)
+         - Drugs (intangible: PATCHUP/LAUNDER/LOW_PROFILE/CLEAN_SLATE/…)
+         - Weapons (intangible: PARRY/EVASION/DETERRENT/…)
+      4. Tiered damage on survival (glance/wound/serious/crushing)
+         + HP clamp on wounded toughs
+      5. Seize reconciliation: empty defender turf → promoteReserveTurf
+      6. Cleanup: clear queues, reset turnEnded, reset action budgets
+         (5 if new active turf's first turn, else 3/4/3 by difficulty)
+  → isGameOver(match) → 'A' | 'B' | 'draw' | null
+  → Metrics collection → JSON report (including heat history, raid counts,
+    market activity, mythic flips)
 ```
 
 ### AI Decision Pipeline
 
 ```
 TurfGameState + TurfObservation
-  → Fuzzy inputs: crewStrength, threatLevel, resourceLevel, danger
+  → Fuzzy inputs: crewStrength, threatLevel, resourceLevel, danger, heatAmbient
   → Yuka FuzzyModule defuzzification → aggression/patience/desperation
-  → GOAP goals: build_stack, direct_pressure, funded_pressure,
-    pushed_pressure, anti_stall, draw_tempo, retreat_shield
-  → scoreAll(legalActions) over new action set → ScoredAction[]
+  → GOAP goals: build_stack, direct_pressure, pushed_pressure,
+    funded_pressure, anti_stall, draw_tempo, retreat_shield,
+    heat_management, mythic_hunt, stack_rebuild
+  → scoreAll(legalActions) over v0.3 action set → ScoredAction[]
     → draw scored by deck-info value vs action budget
     → retreat scored by top-shield delta
-    → queued strikes scored with intangible-awareness
+    → modifier_swap scored by stat realignment value
+    → send_to_market scored by trade/heal value vs tough sacrifice
+    → send_to_holding scored by heat relief vs custody risk
+    → queued strikes scored with intangible-awareness (known face-up mods)
   → selectAction(scored, difficulty, rng)
     → per-difficulty top-K filter + noise injection
   → Chosen action → stepAction(gs, action)
+
+Pre-war collection curation:
+  curator.ts runs same scoring over collection state
+  → enable/disable + priority 1-10 + merge recommendations
+  → applied to AI's next-war deck
 ```
 
-### ECS → UI Rendering
+### ECS → UI Rendering (v0.3 single-lane)
 
 ```
 createGameWorld(config, seed, deck)
   → Koota world with GameState, PlayerA, PlayerB, TurnEnded,
-    DeckPending, QueuedStrike traits
-GameScreen:
-  → usePlayerTurfs('A') → Turf[]
-  → useDeckPending('A') → Card | null (drawn-but-unplaced)
+    DeckPending, QueuedStrike, Heat, BlackMarket, Holding, Lockup, MythicPool
+
+GameScreen (single-lane layout):
+  → useTurfActive('A') → Turf (the one active turf)
+  → useTurfReserves('A') → number (count of reserves behind active)
+  → useTurfActive('B') → Turf (opponent's active)
+  → useTurfReserves('B') → number
+  → useDeckPending('A') → Card | null
   → useQueuedStrikes('A') → QueuedAction[]
-  → useTurnEnded(['A','B']) → boolean pair (drives waiting overlay)
-  → renders TurfView (TurfCompositeCard × N turfs)
-  → renders pending-placement chip + queued-strike chips
-User action (e.g., Draw):
-  → drawAction(world)
-  → stepAction(gs, { kind: 'draw', side: 'A' })
-  → pending slot populated
-  → Koota subscriptions fire → React re-renders
+  → useTurnEnded(['A','B']) → boolean pair
+  → useHeat() → number (shared scalar, drives HeatMeter)
+  → useBlackMarket() → ModifierCard[] (shared pool, drives BlackMarketPanel)
+  → useHolding('A') → ToughInCustody[] (drives HoldingPanel)
+  → useLockup('A') → ToughInCustody[] (drives Lockup indicator)
+  → useMythicPool() → { unassigned: string[]; assignments: Record<string, 'A'|'B'> }
+
+User action (e.g., Send to Market):
+  → sendToMarketAction(world, 'A', toughId)
+  → stepAction(gs, { kind: 'send_to_market', side: 'A', toughId })
+  → Koota subscriptions fire → BlackMarketPanel re-renders
+  → Animation: tough card slides from turf → market panel
 
 On both sides ending turn:
   → resolvePhase triggered by stepAction
-  → resolution overlay animates each queued action in dominance order
-  → final state renders after animation
+  → If raid fires: market-wipe animation + lockup-sweep animation
+  → Otherwise: combat overlay animates each queued action in dominance order
+  → Mythic flip-on-kill → badge slide from loser to winner
+  → Final state renders after animation
 ```
 
 ### Analysis Pipeline

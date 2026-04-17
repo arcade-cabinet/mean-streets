@@ -1,5 +1,5 @@
 import { useAppShell } from '../../platform';
-import { ArchiveRestore, Crosshair, Library, Package } from 'lucide-react';
+import { ArchiveRestore, Crosshair, Library, Package, Wrench } from 'lucide-react';
 import { CardFrame } from '../cards';
 
 interface MainMenuScreenProps {
@@ -7,13 +7,14 @@ interface MainMenuScreenProps {
   onLoadGame: () => void;
   onCollection: () => void;
   onOpenPack: () => void;
+  onCardGarage: () => void;
   canLoadGame: boolean;
 }
 
 interface MenuButtonProps {
   label: string;
   detail: string;
-  icon: 'crosshair' | 'load' | 'collection' | 'pack';
+  icon: 'crosshair' | 'load' | 'collection' | 'pack' | 'garage';
   onClick: () => void;
   disabled?: boolean;
   tone?: 'primary' | 'secondary';
@@ -27,7 +28,9 @@ function MenuButton({ label, detail, icon, onClick, disabled = false, tone = 'se
       ? Library
       : icon === 'pack'
         ? Package
-        : ArchiveRestore;
+        : icon === 'garage'
+          ? Wrench
+          : ArchiveRestore;
   return (
     <button
       onClick={onClick}
@@ -52,6 +55,7 @@ export function MainMenuScreen({
   onLoadGame,
   onCollection,
   onOpenPack,
+  onCardGarage,
   canLoadGame,
 }: MainMenuScreenProps) {
   const { layout } = useAppShell();
@@ -104,6 +108,13 @@ export function MainMenuScreen({
               icon="pack"
               onClick={onOpenPack}
               testId="open-pack-button"
+            />
+            <MenuButton
+              label="Card Garage"
+              detail="Tune deck priorities, merge duplicates, manage unlocks."
+              icon="garage"
+              onClick={onCardGarage}
+              testId="card-garage-button"
             />
           </div>
         </div>

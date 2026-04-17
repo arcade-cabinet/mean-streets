@@ -15,6 +15,7 @@ import type {
   TurfAction,
   TurfGameState,
   TurfMetrics,
+  WarStats,
 } from './types';
 import { DEFAULT_GAME_CONFIG } from './types';
 
@@ -29,7 +30,9 @@ export interface MatchState {
 // ── Player initialization ─────────────────────────────────
 
 function createPlayer(config: GameConfig, deck: Card[], rng: Rng): PlayerState {
-  const turfs = Array.from({ length: config.turfCount }, () => createTurf());
+  const turfs = Array.from({ length: config.turfCount }, (_, i) =>
+    createTurf({ isActive: i === 0, reserveIndex: i }),
+  );
   const shuffled = rng.shuffle([...deck]);
   return {
     turfs,
@@ -41,6 +44,27 @@ function createPlayer(config: GameConfig, deck: Card[], rng: Rng): PlayerState {
     queued: [],
     turnEnded: false,
   };
+}
+
+function loadMythicIds(): string[] {
+  // Canonical ids matching the authored mythic cards in
+  // config/raw/cards/mythics/ (mythic-01 … mythic-10).
+  return [
+    'mythic-01',
+    'mythic-02',
+    'mythic-03',
+    'mythic-04',
+    'mythic-05',
+    'mythic-06',
+    'mythic-07',
+    'mythic-08',
+    'mythic-09',
+    'mythic-10',
+  ];
+}
+
+function emptyWarStats(): WarStats {
+  return { seizures: [] };
 }
 
 function createGameState(
@@ -70,6 +94,13 @@ function createGameState(
     winner: null,
     endReason: null,
     metrics: emptyMetrics(),
+    heat: 0,
+    blackMarket: [],
+    holding: { A: [], B: [] },
+    lockup: { A: [], B: [] },
+    mythicPool: loadMythicIds(),
+    mythicAssignments: {},
+    warStats: emptyWarStats(),
   };
 }
 
@@ -88,7 +119,6 @@ export function createMatch(
   const deckA = options.deckA ?? [];
   const deckB = options.deckB ?? [];
   const game = createGameState(config, seed, deckA, deckB);
-  // Seed both players' per-turn action budgets off turn 1 = firstTurnActions.
   game.players.A.actionsRemaining = actionsForTurn(config, 1, 'A');
   game.players.B.actionsRemaining = actionsForTurn(config, 1, 'B');
   return {
@@ -98,16 +128,6 @@ export function createMatch(
   };
 }
 
-/**
- * Apply a full turn for both players. Each side's sequence is played in
- * order until that side's `turnEnded` flag flips. Resolve phase is
- * automatically triggered inside `stepAction` when both sides' `turnEnded`
- * is true (the last `end_turn` fires it).
- *
- * Either side may end first; the other's remaining queue is then applied
- * against post-resolve state (which is unusual but safe — tests should
- * avoid it). Normal flow: both lists terminate in `end_turn`.
- */
 export function runTurn(
   match: MatchState,
   actionsA: TurfAction[],
@@ -119,15 +139,12 @@ export function runTurn(
   applySide(game, actionsA, 'A');
   applySide(game, actionsB, 'B');
 
-  // If neither `end_turn` was issued, manually trigger the resolve phase
-  // by synthesising end_turn for any side whose turnEnded stayed false.
   if (!game.winner) {
     if (!game.players.A.turnEnded)
       stepAction(game, { kind: 'end_turn', side: 'A' });
     if (!game.players.B.turnEnded)
       stepAction(game, { kind: 'end_turn', side: 'B' });
   }
-
   return match;
 }
 
@@ -156,12 +173,20 @@ export function isGameOver(match: MatchState): 'A' | 'B' | null {
   const { game } = match;
   if (game.winner) return game.winner;
 
-  if (game.players.A.turfs.length === 0) {
+  const aEmpty = game.players.A.turfs.length === 0;
+  const bEmpty = game.players.B.turfs.length === 0;
+
+  if (aEmpty && bEmpty) {
+    game.winner = null;
+    game.endReason = 'draw';
+    return null;
+  }
+  if (aEmpty) {
     game.winner = 'B';
     game.endReason = 'total_seizure';
     return 'B';
   }
-  if (game.players.B.turfs.length === 0) {
+  if (bEmpty) {
     game.winner = 'A';
     game.endReason = 'total_seizure';
     return 'A';
@@ -170,11 +195,16 @@ export function isGameOver(match: MatchState): 'A' | 'B' | null {
   if (match.turnCount >= match.maxTurns) {
     const turfsA = game.players.A.turfs.length;
     const turfsB = game.players.B.turfs.length;
-    game.winner = turfsA >= turfsB ? 'A' : 'B';
+    if (turfsA !== turfsB) {
+      game.winner = turfsA > turfsB ? 'A' : 'B';
+    } else {
+      // Equal turfs at timeout: coin-flip using the game's seeded rng so
+      // results are deterministic per seed but not systematically biased.
+      game.winner = game.rng.next() < 0.5 ? 'A' : 'B';
+    }
     game.endReason = 'timeout';
     return game.winner;
   }
-
   return null;
 }
 

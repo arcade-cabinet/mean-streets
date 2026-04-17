@@ -4,7 +4,6 @@
 // Yuka ships JSDoc types that treat `owner` as a strict `GameEntity`
 // with ~40 fields we don't use. The imports are re-typed via local
 // *Like interfaces so we can extend them with `PlannerOwner`.
-// biome-ignore lint/suspicious/noExplicitAny: Yuka's JS base types
 // @ts-expect-error Yuka does not ship TypeScript declarations
 import { CompositeGoal as RawCompositeGoal, Goal as RawGoal, GoalEvaluator as RawGoalEvaluator } from 'yuka';
 
@@ -61,7 +60,10 @@ export type GoalName =
   | 'pushed_pressure'
   | 'draw_tempo'
   | 'retreat_shield'
-  | 'anti_stall';
+  | 'anti_stall'
+  | 'heat_management'
+  | 'mythic_hunt'
+  | 'stack_rebuild';
 
 export interface PlannerOwner {
   brain: CompositeGoalLike;

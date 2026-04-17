@@ -21,8 +21,30 @@ export interface AppSettings {
   rulesSeen: boolean;
 }
 
+/**
+ * Per-instance metadata for an unlocked card (v0.3).
+ *
+ * `rolledRarity` is the instance-specific rarity at the time of pack-open
+ * (§2 base+rolled rarity). `unlockDifficulty` is the difficulty at which
+ * the instance entered the collection (§3.3 bonus reward multiplier tag).
+ *
+ * Stored as a map keyed by cardId alongside `unlockedCardIds` for
+ * backward-compat: readers that don't know about instances still see the
+ * old-shape array. Readers that do (collection.ts) join the two.
+ */
+export interface StoredCardInstance {
+  rolledRarity: 'common' | 'uncommon' | 'rare' | 'legendary' | 'mythic';
+  unlockDifficulty: 'easy' | 'medium' | 'hard' | 'nightmare' | 'sudden-death' | 'ultra-nightmare';
+}
+
 export interface PlayerProfile {
   unlockedCardIds: string[];
+  /**
+   * Optional v0.3 sidecar: per-card-id instance metadata. Omitted on old
+   * saves; collection.ts fills defaults when a cardId has no instance
+   * entry (baseRarity from catalog, 'easy' difficulty).
+   */
+  cardInstances?: Record<string, StoredCardInstance>;
   wins: number;
   lastPlayedAt: string | null;
 }

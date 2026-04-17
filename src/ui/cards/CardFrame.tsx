@@ -6,16 +6,22 @@ interface CardFrameProps {
   className?: string;
 }
 
+// 5-tier v0.3 rolled-rarity palette. Each tier gets its own frame tint; the
+// mythic tier is reserved for the 10 unique mythic cards and visibly glows.
 const RARITY_ACCENT: Record<Rarity, string> = {
   common: 'rgba(148, 163, 184, 0.32)',
+  uncommon: 'rgba(52, 211, 153, 0.34)',
   rare: 'rgba(56, 189, 248, 0.36)',
   legendary: 'rgba(245, 158, 11, 0.42)',
+  mythic: 'rgba(239, 68, 68, 0.48)',
 };
 
 const RARITY_STROKE: Record<Rarity, string> = {
   common: 'rgba(148, 163, 184, 0.18)',
+  uncommon: 'rgba(52, 211, 153, 0.22)',
   rare: 'rgba(56, 189, 248, 0.22)',
   legendary: 'rgba(245, 158, 11, 0.26)',
+  mythic: 'rgba(239, 68, 68, 0.32)',
 };
 
 export function CardFrame({ variant, rarity, className }: CardFrameProps) {

@@ -12,10 +12,12 @@
     10
   ],
   "rarity": [
-    "common"
+    "common",
+    "legendary"
   ],
   "abilities": [
-    "On play: swap 1 card from your hand with 1 from your stack"
+    "On play: swap 1 card from your hand with 1 from your stack",
+    "FIELD_MEDIC"
   ],
   "unlocked": false,
   "unlockCondition": "Deal 38 total damage in a single game",

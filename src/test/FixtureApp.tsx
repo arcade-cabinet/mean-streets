@@ -25,6 +25,7 @@ interface FixtureAppProps {
 }
 
 function tough(overrides: Partial<ToughCard> = {}): ToughCard {
+  const resistance = overrides.resistance ?? 6;
   return {
     kind: 'tough',
     id: overrides.id ?? 'tough-fixture',
@@ -33,9 +34,13 @@ function tough(overrides: Partial<ToughCard> = {}): ToughCard {
     archetype: overrides.archetype ?? 'bruiser',
     affiliation: overrides.affiliation ?? 'kings_row',
     power: overrides.power ?? 7,
-    resistance: overrides.resistance ?? 6,
+    resistance,
     rarity: overrides.rarity ?? 'common',
     abilities: overrides.abilities ?? [],
+    // v0.3: toughs carry hp/maxHp. Fixture default mirrors `resistance`,
+    // matching the authored convention in `sim/turf/types.ts`.
+    maxHp: overrides.maxHp ?? resistance,
+    hp: overrides.hp ?? resistance,
     ...overrides,
   };
 }
@@ -139,6 +144,7 @@ function renderFixture(fixture: FixtureName) {
           onLoadGame={() => {}}
           onCollection={() => {}}
           onOpenPack={() => {}}
+          onCardGarage={() => {}}
           canLoadGame={false}
         />
       );
