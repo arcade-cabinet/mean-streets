@@ -23,11 +23,11 @@ Gritty tactical 1v1 card brawler. No dice. Every play matters.
 > You run a crew of toughs in a city where every block is someone
 > else's. Seize turf. Burn through reserves. Last crew standing wins.
 >
-> Mean Streets: Precision Starvation is a fully-deterministic 1v1 card
-> brawler. 100 toughs, 50 weapons, 50 drugs, 10 mythics — five rarity
-> tiers from common to mythic. No dice, no coin flips, no luck-spikes.
-> The only randomness is draw order — every decision you make is the
-> decision that matters.
+> Mean Streets: Precision Starvation is a 1v1 card brawler built on
+> near-deterministic rules. 100 toughs, 50 weapons, 50 drugs, 10 mythics
+> — five rarity tiers from common to mythic. No dice, no coin flips.
+> Draw order and probabilistic bribes introduce the only randomness —
+> every decision you make is the decision that matters.
 >
 > **Features**
 >
@@ -42,10 +42,13 @@ Gritty tactical 1v1 card brawler. No dice. Every play matters.
 >   the cops. Bribe your way out — or lose your crew to lockup.
 > - **10 hand-authored Mythics**: Earned by killing enemy mythics, not
 >   pulled from packs. Each one warps the game.
-> - **Simulation-proven balance**: Every shipped card is locked by an
->   autobalance loop that runs thousands of simulated games.
-> - **Cross-platform**: Web, Android, iOS — your collection syncs
->   through local SQLite.
+> - **Simulation-proven balance**: Common card stats are tuned by an
+>   autobalance loop running thousands of simulated games; mythic
+>   signature abilities are individually paper-playtested. Deployment
+>   requires passing the release gate (Medium AI winrate in [0.48, 0.52]
+>   for 3 consecutive seeded runs).
+> - **Cross-platform**: Web, Android, iOS — local persistence via SQLite
+>   (no cross-device sync).
 > - **One-hand portrait play**: Designed mobile-first. Tablets and
 >   landscape get their own deliberate compositions.
 >

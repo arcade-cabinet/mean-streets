@@ -46,8 +46,9 @@ export function ResolutionOverlay({
       timerRef.current = null;
     }
     setPhase({ kind: 'done' });
-    onDone();
-  }, [onDone]);
+    // onDone() is called by the useEffect when phase becomes 'done',
+    // so we don't call it here to avoid the double-callback.
+  }, []);
 
   // Drive the phase state machine on mount + each phase change. Each
   // branch schedules the next transition and returns a single cleanup

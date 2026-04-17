@@ -3,13 +3,14 @@ import { TURF_SIM_CONFIG } from './ai/config';
 import { resolveStrikeNow, type StrikeOutcome } from './attacks';
 import {
   hasToughOnTurf,
+  modifiersByOwner,
   positionPower,
   positionResistance,
   promoteReserveTurf,
   turfCurrency,
   turfModifiers,
 } from './board';
-import { computeHeat, raidProbability } from './heat';
+import { computeHeat, lockupDuration, raidProbability } from './heat';
 import { combatBribeProbability, lockupProcess, returnFromHolding } from './holding';
 import { wipeMarket } from './market';
 import type {
@@ -124,9 +125,7 @@ function raidPhase(state: TurfGameState): boolean {
 
     // Lockup the top tough + its modifiers.
     const lockedTough = top.card;
-    const lockedMods: ModifierCard[] = [];
-    const modsAll = turfModifiers(active);
-    for (const m of modsAll) lockedMods.push(m);
+    const lockedMods: ModifierCard[] = modifiersByOwner(active, lockedTough.id);
     // Remove the tough from the stack.
     active.stack.splice(topIdx, 1);
     // Remove every mod bound to that tough.
@@ -139,7 +138,7 @@ function raidPhase(state: TurfGameState): boolean {
     state.lockup[side].push({
       tough: lockedTough,
       attachedModifiers: lockedMods,
-      turnsRemaining: state.config.difficulty === 'ultra-nightmare' ? 999 : 1,
+      turnsRemaining: lockupDuration(state.config.difficulty),
     });
     if (player.toughsInPlay > 0) player.toughsInPlay--;
 
@@ -207,10 +206,13 @@ export function resolvePhase(state: TurfGameState): void {
       // Send dead turf's surviving modifiers to the Black Market.
       const mods = turfModifiers(defender.turfs[i]);
       for (const m of mods) state.blackMarket.push(m);
+      const previousTurns = state.warStats.seizures
+        .filter((s) => s.seizedBy === atkSide)
+        .reduce((sum, s) => sum + s.turnsOnThatTurf, 0);
       state.warStats.seizures.push({
         seizedBy: atkSide,
         seizedTurfIdx: i,
-        turnsOnThatTurf: state.turnNumber,
+        turnsOnThatTurf: state.turnNumber - previousTurns,
       });
       state.metrics.seizures++;
       if (i === 0) promoteReserveTurf(defender);

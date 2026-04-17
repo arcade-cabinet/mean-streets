@@ -47,21 +47,19 @@ function createPlayer(config: GameConfig, deck: Card[], rng: Rng): PlayerState {
 }
 
 function loadMythicIds(): string[] {
-  // v0.3: mythic pool lives in a future compiled artifact. We seed with a
-  // conventional set of 10 ids matching RULES §11 — Dex will author the
-  // card JSONs in Epic F. Keeping the ids stable now lets mythic flows
-  // be wired without blocking on those files.
+  // Canonical ids matching the authored mythic cards in
+  // config/raw/cards/mythics/ (mythic-01 … mythic-10).
   return [
-    'silhouette',
-    'accountant',
-    'architect',
-    'informer',
-    'ghost-mythic',
-    'warlord',
-    'fixer',
-    'magistrate',
-    'phantom',
-    'reaper',
+    'mythic-01',
+    'mythic-02',
+    'mythic-03',
+    'mythic-04',
+    'mythic-05',
+    'mythic-06',
+    'mythic-07',
+    'mythic-08',
+    'mythic-09',
+    'mythic-10',
   ];
 }
 

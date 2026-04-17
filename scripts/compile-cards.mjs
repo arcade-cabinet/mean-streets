@@ -123,7 +123,11 @@ function compileCurrency({ file, data }) {
 }
 
 function compileMythic({ file, data }) {
-  requireFields(data, ['id', 'kind', 'name', 'archetype', 'affiliation', 'power', 'resistance', 'rarity', 'abilities', 'unlocked', 'locked'], `mythics/${file}`);
+  requireFields(
+    data,
+    ['id', 'kind', 'name', 'archetype', 'affiliation', 'power', 'resistance', 'rarity', 'abilities', 'mythic_signature', 'unlocked', 'locked'],
+    `mythics/${file}`,
+  );
   if (data.kind !== 'tough') throw new Error(`mythics/${file}: expected kind=tough (mythics are toughs), got ${data.kind}`);
   const rarity = latest(data.rarity);
   if (rarity !== 'mythic') throw new Error(`mythics/${file}: expected rarity=mythic, got ${rarity}`);
@@ -138,7 +142,7 @@ function compileMythic({ file, data }) {
     resistance: latest(data.resistance),
     rarity,
     abilities: data.abilities,
-    ...(data.mythic_signature ? { mythic_signature: data.mythic_signature } : {}),
+    mythic_signature: data.mythic_signature,
     unlocked: data.unlocked,
     ...(data.unlockCondition ? { unlockCondition: data.unlockCondition } : {}),
     locked: data.locked,
@@ -155,10 +159,13 @@ function main() {
   if (weaponsRaw.length === 0) throw new Error(`No raw weapon cards in ${join(RAW_DIR, 'weapons')}`);
   if (drugsRaw.length === 0) throw new Error(`No raw drug cards in ${join(RAW_DIR, 'drugs')}`);
   if (currencyRaw.length === 0) throw new Error(`No raw currency cards in ${join(RAW_DIR, 'currency')}`);
-  // Mythics are authored separately (§11 v0.3). Empty pool is legal —
-  // the game treats `mythicPool` as optional and the retagger never
-  // seeds it — so we only warn, not throw.
+  // Mythics are authored separately (§11 v0.3). Empty pool is legal in
+  // local dev — the game treats `mythicPool` as optional — so we warn
+  // locally but fail fast in CI to prevent shipping an empty catalog.
   if (mythicsRaw.length === 0) {
+    if (process.env.CI) {
+      throw new Error('[compile-cards] No mythic cards found in config/raw/cards/mythics/ — refusing to compile in CI with empty mythics catalog');
+    }
     console.warn('[compile-cards] WARN: no mythic cards found in config/raw/cards/mythics/');
   }
 

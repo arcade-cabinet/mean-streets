@@ -71,23 +71,22 @@ function initPlayerState(
 }
 
 /**
- * Ten fixed mythic card ids per RULES §11. Kept in sync with
- * `sim/turf/game.ts::loadMythicIds`; Dex will replace both call sites
- * with a compiled artifact in Epic F. Until then these ids stay stable
- * so UI mock-ups wire cleanly.
+ * Ten canonical mythic card ids matching the authored cards in
+ * config/raw/cards/mythics/ (mythic-01 … mythic-10). Kept in sync with
+ * `sim/turf/game.ts::loadMythicIds`.
  */
 function defaultMythicPool(): string[] {
   return [
-    'silhouette',
-    'accountant',
-    'architect',
-    'informer',
-    'ghost-mythic',
-    'warlord',
-    'fixer',
-    'magistrate',
-    'phantom',
-    'reaper',
+    'mythic-01',
+    'mythic-02',
+    'mythic-03',
+    'mythic-04',
+    'mythic-05',
+    'mythic-06',
+    'mythic-07',
+    'mythic-08',
+    'mythic-09',
+    'mythic-10',
   ];
 }
 

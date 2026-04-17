@@ -50,8 +50,9 @@ describe('computeDamage — tier thresholds', () => {
     expect(computeDamage(30, 10).outcome).toBe('kill');
   });
 
-  it('R=0 edge: busted if P is 0, else kill (any P is instant)', () => {
+  it('R=0 edge: P=0 vs R=0 → wound (no kill trigger, no bust); P>0 vs R=0 → instant kill', () => {
     expect(computeDamage(0, 0).outcome).toBe('wound');
+    expect(computeDamage(1, 0).outcome).toBe('kill');
   });
 });
 

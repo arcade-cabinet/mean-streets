@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { StackedCard, ToughCard, Turf } from '../../sim/turf/types';
 import { Card } from '../cards';
 
@@ -97,14 +97,14 @@ export function StackFanModal({
   // Map tough.id → stackIdx so we can draw owner-line arrows from a
   // modifier's position toward its owning tough. Declared before the
   // early-return so hooks run in a stable order.
-  const toughIndexById = useMemo(() => {
-    const m = new Map<string, number>();
-    for (let i = 0; i < turf.stack.length; i++) {
-      const c = turf.stack[i].card;
-      if (c.kind === 'tough') m.set(c.id, i);
-    }
-    return m;
-  }, [turf.stack]);
+  // Computed per-render (not memoized) because the sim mutates
+  // turf.stack in-place, keeping the array reference stable while
+  // indices change — memoizing on the array ref would return stale data.
+  const toughIndexById = new Map<string, number>();
+  for (let i = 0; i < turf.stack.length; i++) {
+    const c = turf.stack[i].card;
+    if (c.kind === 'tough') toughIndexById.set(c.id, i);
+  }
 
   if (!open || stackLen === 0) return null;
 

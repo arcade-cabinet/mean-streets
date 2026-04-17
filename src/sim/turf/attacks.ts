@@ -80,7 +80,7 @@ export function computeDamage(P: number, R: number): {
   outcome: StrikeOutcome; damage: number;
 } {
   if (P < R) return { outcome: 'busted', damage: 0 };
-  if (R > 0 && P >= R * D.instantKillRatio) return { outcome: 'kill', damage: 9999 };
+  if ((R > 0 && P >= R * D.instantKillRatio) || (R === 0 && P > 0)) return { outcome: 'kill', damage: 9999 };
   if (R > 0 && P >= R * D.crushingRatio)
     return { outcome: 'crushing', damage: Math.max(D.minDamage, P - R + D.crushingBonus) };
   if (R > 0 && P >= R * D.seriousRatio)
@@ -253,7 +253,7 @@ export function resolveFundedRecruit(atk: Turf, def: Turf): StrikeResult {
   const threshold = target.resistance * mult;
 
   if (spent >= threshold) {
-    removeFromStack(def, targetIdx);
+    const k = applyKill(atk, def, targetIdx, false, []);
     if (turfAffiliationConflict(atk, target)) {
       return mk('kill', `Recruited ${target.name} but discarded — rival without buffer`,
         { discardedMods: [target], killedTough: target, targetToughId: target.id });
@@ -261,7 +261,7 @@ export function resolveFundedRecruit(atk: Turf, def: Turf): StrikeResult {
     addToStack(atk, target, { faceUp: false });
     return mk('kill',
       `Recruited ${target.name} ($${spent} vs ${threshold}, ${relation} x${mult.toFixed(2)})`,
-      { transferredMods: [target], killedTough: target, targetToughId: target.id });
+      { transferredMods: [target, ...k.transferred], killedTough: target, targetToughId: target.id });
   }
   return busted(`Funded recruit failed ($${spent} < ${threshold}, ${relation} x${mult.toFixed(2)})`);
 }

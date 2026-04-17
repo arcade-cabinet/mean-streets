@@ -63,7 +63,7 @@ interface CardRowItemProps {
 export function CardRowItem({
   row: { card, pref }, onChange, duplicateCount = 0, onMerge,
 }: CardRowItemProps) {
-  const canMerge = duplicateCount >= 3;
+  const canMerge = duplicateCount >= 1;
   return (
     <div
       className={`garage-row ${!pref.enabled ? 'garage-row-disabled' : ''}`}
@@ -76,7 +76,7 @@ export function CardRowItem({
         <span
           className={`garage-row-dupes ${canMerge ? 'garage-row-dupes-mergeable' : ''}`}
           data-testid={`garage-dupes-${card.id}`}
-          title={canMerge ? 'Merge 3 copies to roll one tier higher' : 'Need 3 duplicates to merge'}
+          title={canMerge ? 'Merge 2 copies to roll one tier higher' : 'Need 2 copies to merge'}
         >
           ×{duplicateCount + 1}
         </span>
@@ -86,7 +86,7 @@ export function CardRowItem({
         className={`garage-row-merge ${canMerge ? '' : 'garage-row-merge-disabled'}`}
         onClick={() => canMerge && onMerge?.(card.id)}
         disabled={!canMerge}
-        aria-label={canMerge ? `Merge three copies of ${card.name}` : 'Merge locked'}
+        aria-label={canMerge ? `Merge two copies of ${card.name}` : 'Merge locked'}
         data-testid={`garage-merge-${card.id}`}
       >
         <Shuffle size={14} />

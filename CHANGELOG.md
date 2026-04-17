@@ -123,7 +123,27 @@ Archived: [docs/archive/RULES-v0.2.md](docs/archive/RULES-v0.2.md).
   only on combat defeat, matching the loyalty narrative.
 
 ### Fixed
-- None yet. (v0.3 is architectural; follow-up patches track issues.)
+- Raid lockup incorrectly swept all turf modifiers into custody instead
+  of only those owned by the locked tough — now uses `modifiersByOwner`.
+- Lockup duration was hardcoded to 1 turn (except ultra-nightmare);
+  now reads per-difficulty values from `heat.lockupDuration` config.
+- `turnsOnThatTurf` in war stats recorded the global turn number instead
+  of the relative engagement duration since the previous seizure.
+- `resolveFundedRecruit` orphaned modifiers on the defender's turf when
+  recruiting a tough; now calls `applyKill` to transfer or discard mods.
+- `computeDamage` returned `wound` for R=0 attackers with positive P;
+  undefended targets are now correctly treated as instant kills.
+- Merge threshold in Card Garage required 4 copies (3 duplicates) instead
+  of the rules-specified 2 copies (1 duplicate).
+- `handleModifierSwap` did not reveal conflict cards moved to the active
+  tough — both swapped modifiers are now set `faceUp` when touching active.
+- Mythic pool seeded with placeholder ids (`silhouette`, `accountant`, …)
+  that didn't match authored cards; updated to canonical `mythic-01…10`.
+- `ResolutionOverlay` called `onDone` twice (from `finish()` and from the
+  `phase.kind === 'done'` effect branch); consolidated to single call site.
+- `StackFanModal` memoized `toughIndexById` on array reference, causing
+  stale owner-line arrows after in-place stack mutations; now keyed on
+  content identity string.
 
 ### Infrastructure
 - Task batch driven execution via `docs/plans/v0.3-task-batch.md`

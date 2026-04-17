@@ -129,7 +129,10 @@ export function handleModifierSwap(
   } else {
     sourceMod.owner = action.targetToughId;
   }
-  if (touchesActive) sourceMod.faceUp = true;
+  if (touchesActive) {
+    sourceMod.faceUp = true;
+    if (conflict) conflict.faceUp = true;
+  }
   state.metrics.modifierSwaps++;
 }
 
