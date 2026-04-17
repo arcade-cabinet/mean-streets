@@ -1,0 +1,99 @@
+{
+  "_doc": "Each archetype defines pools for each layer. Compositor picks one per layer seeded by card ID.",
+  "bruiser": {
+    "body": ["heavy", "average"],
+    "head": ["shaved", "hood", "bandana"],
+    "torso": ["biker-cut", "hoodie", "leather-jacket"],
+    "arms": ["fists"],
+    "legs": ["plant-tank", "wide-braced"],
+    "back": []
+  },
+  "enforcer": {
+    "body": ["heavy", "average", "tall-longcoat"],
+    "head": ["hood-mask", "shaved", "fedora"],
+    "torso": ["leather-jacket", "bomber", "tactical-vest"],
+    "arms": ["pistol", "crowbar"],
+    "legs": ["plant-tank", "stalk-lunge"],
+    "back": ["shotgun"]
+  },
+  "snitch": {
+    "body": ["lean", "average"],
+    "head": ["cap", "pompadour", "hood"],
+    "torso": ["hoodie", "denim-jacket"],
+    "arms": ["pistol", "fists"],
+    "legs": ["casual-slouch", "flank-lean"],
+    "back": ["phone-holster"]
+  },
+  "lookout": {
+    "body": ["lean", "average"],
+    "head": ["cap", "bandana", "hood"],
+    "torso": ["hoodie", "bomber"],
+    "arms": ["fists"],
+    "legs": ["run", "flank-lean", "casual-slouch"],
+    "back": []
+  },
+  "ghost": {
+    "body": ["lean", "tall-longcoat"],
+    "head": ["hood-mask", "hood", "ski-mask"],
+    "torso": ["hoodie", "overcoat"],
+    "arms": ["knife", "fists"],
+    "legs": ["stalk-lunge", "casual-slouch"],
+    "back": []
+  },
+  "hustler": {
+    "body": ["average", "lean"],
+    "head": ["fedora", "pompadour", "cap"],
+    "torso": ["suit-coat", "denim-jacket", "bomber"],
+    "arms": ["fists"],
+    "legs": ["casual-slouch", "flank-lean"],
+    "back": ["gym-bag"]
+  },
+  "fixer": {
+    "body": ["average", "lean"],
+    "head": ["fedora", "shaved", "pompadour"],
+    "torso": ["suit-coat", "bomber", "puffer-jacket"],
+    "arms": ["fists", "pistol"],
+    "legs": ["casual-slouch", "plant-tank"],
+    "back": ["phone-holster"]
+  },
+  "medic": {
+    "body": ["average", "lean"],
+    "head": ["cap", "shaved", "bandana"],
+    "torso": ["tactical-vest", "hoodie", "apron"],
+    "arms": ["fists"],
+    "legs": ["kneel-recover", "plant-tank"],
+    "back": ["medbag", "backpack"]
+  },
+  "arsonist": {
+    "body": ["average", "heavy"],
+    "head": ["hood-mask", "ski-mask", "bandana"],
+    "torso": ["hoodie", "biker-cut"],
+    "arms": ["chain", "fists"],
+    "legs": ["stalk-lunge", "run"],
+    "back": ["backpack"]
+  },
+  "shark": {
+    "body": ["average", "lean"],
+    "head": ["fedora", "pompadour", "slick-femme"],
+    "torso": ["suit-coat", "leather-jacket"],
+    "arms": ["fists"],
+    "legs": ["casual-slouch", "flank-lean"],
+    "back": []
+  },
+  "wheelman": {
+    "body": ["average", "lean"],
+    "head": ["cap", "shaved", "hood"],
+    "torso": ["bomber", "denim-jacket", "hoodie"],
+    "arms": ["fists"],
+    "legs": ["casual-slouch", "run"],
+    "back": ["gym-bag"]
+  },
+  "fence": {
+    "body": ["average", "heavy"],
+    "head": ["fedora", "cap", "shaved"],
+    "torso": ["suit-coat", "puffer-jacket", "overcoat"],
+    "arms": ["fists"],
+    "legs": ["plant-tank", "casual-slouch"],
+    "back": ["backpack", "gym-bag"]
+  }
+}

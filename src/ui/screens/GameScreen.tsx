@@ -86,7 +86,7 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
     return false;
   }, [totalPlayerTurfs, totalOpponentTurfs, onGameOver]);
 
-  const { aiThinking } = useOpponentTurn({ world, turnEndedA, turnEndedB, onFinish: checkWin });
+  const { aiThinking, aiAction } = useOpponentTurn({ world, turnEndedA, turnEndedB, onFinish: checkWin });
 
   const metricsSnapshotRef = useRef({ raids: 0, mythicsFlipped: 0 });
 
@@ -215,7 +215,7 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
       {flash && <div className="game-flash"><span className="game-flash-pill">{flash}</span></div>}
       {(aiThinking || (turnEndedA && !turnEndedB)) && (
         <div className="game-overlay" data-testid="opponent-turn-overlay">
-          <div className="game-overlay-pill">Waiting for opponent…</div>
+          <div className="game-overlay-pill">{aiAction ?? 'Waiting for opponent…'}</div>
         </div>
       )}
 

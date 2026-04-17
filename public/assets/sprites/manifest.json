@@ -1,3240 +1,727 @@
 {
-  "silhouettes02": [
-    {
-      "id": "silhouettes02_000",
-      "file": "silhouettes02_000.png",
-      "bbox": [
-        33,
-        85,
-        101,
-        239
-      ],
-      "size": [
-        68,
-        154
-      ],
-      "label": "ean",
-      "label_bbox": [
-        58,
-        255,
-        83,
-        263
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_001",
-      "file": "silhouettes02_001.png",
-      "bbox": [
-        127,
-        85,
-        192,
-        238
-      ],
-      "size": [
-        65,
-        153
-      ],
-      "label": "Wverage",
-      "label_bbox": [
-        143,
-        255,
-        190,
-        266
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_002",
-      "file": "silhouettes02_002.png",
-      "bbox": [
-        215,
-        86,
-        288,
-        237
-      ],
-      "size": [
-        73,
-        151
-      ],
-      "label": "deay",
-      "label_bbox": [
-        242,
-        255,
-        258,
-        263
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_003",
-      "file": "silhouettes02_003.png",
-      "bbox": [
-        307,
-        86,
-        378,
-        238
-      ],
-      "size": [
-        71,
-        152
-      ],
-      "label": "-ongcoat",
-      "label_bbox": [
-        332,
-        255,
-        385,
-        266
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_004",
-      "file": "silhouettes02_004.png",
-      "bbox": [
-        398,
-        86,
-        466,
-        237
-      ],
-      "size": [
-        68,
-        151
-      ],
-      "label": "Tall-Lo",
-      "label_bbox": [
-        402,
-        253,
-        435,
-        263
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_005",
-      "file": "silhouettes02_005.png",
-      "bbox": [
-        538,
-        82,
-        593,
-        154
-      ],
-      "size": [
-        55,
-        72
-      ],
-      "label": "Hood",
-      "label_bbox": [
-        549,
-        165,
-        586,
-        176
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_006",
-      "file": "silhouettes02_006.png",
-      "bbox": [
-        615,
-        84,
-        666,
-        153
-      ],
-      "size": [
-        51,
-        69
-      ],
-      "label": "-ap",
-      "label_bbox": [
-        635,
-        168,
-        652,
-        179
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_007",
-      "file": "silhouettes02_007.png",
-      "bbox": [
-        692,
-        83,
-        743,
-        153
-      ],
-      "size": [
-        51,
-        70
-      ],
-      "label": "ravec",
-      "label_bbox": [
-        711,
-        168,
-        734,
-        176
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_008",
-      "file": "silhouettes02_008.png",
-      "bbox": [
-        769,
-        86,
-        820,
-        153
-      ],
-      "size": [
-        51,
-        67
-      ],
-      "label": "Fedc",
-      "label_bbox": [
-        770,
-        165,
-        794,
-        176
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_009",
-      "file": "silhouettes02_009.png",
-      "bbox": [
-        850,
-        82,
-        906,
-        152
-      ],
-      "size": [
-        56,
-        70
-      ],
-      "label": "andana",
-      "label_bbox": [
-        860,
-        168,
-        902,
-        176
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_010",
-      "file": "silhouettes02_010.png",
-      "bbox": [
-        936,
-        86,
-        987,
-        151
-      ],
-      "size": [
-        51,
-        65
-      ],
-      "label": "-Ma",
-      "label_bbox": [
-        960,
-        167,
-        969,
-        175
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_011",
-      "file": "silhouettes02_011.png",
-      "bbox": [
-        540,
-        200,
-        591,
-        261
-      ],
-      "size": [
-        51,
-        61
-      ],
-      "label": "sMas",
-      "label_bbox": [
-        568,
-        280,
-        584,
-        289
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_012",
-      "file": "silhouettes02_012.png",
-      "bbox": [
-        611,
-        200,
-        670,
-        266
-      ],
-      "size": [
-        59,
-        66
-      ],
-      "label": "-Ma",
-      "label_bbox": [
-        640,
-        281,
-        649,
-        290
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_013",
-      "file": "silhouettes02_013.png",
-      "bbox": [
-        694,
-        200,
-        740,
-        268
-      ],
-      "size": [
-        46,
-        68
-      ],
-      "label": "Mohika",
-      "label_bbox": [
-        692,
-        281,
-        723,
-        290
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_014",
-      "file": "silhouettes02_014.png",
-      "bbox": [
-        769,
-        201,
-        825,
-        263
-      ],
-      "size": [
-        56,
-        62
-      ],
-      "label": "awkSlickFemmeBandagedI",
-      "label_bbox": [
-        730,
-        280,
-        897,
-        293
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_015",
-      "file": "silhouettes02_015.png",
-      "bbox": [
-        850,
-        202,
-        900,
-        266
-      ],
-      "size": [
-        50,
-        64
-      ],
-      "label": "iFenme",
-      "label_bbox": [
-        900,
-        281,
-        936,
-        290
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_016",
-      "file": "silhouettes02_016.png",
-      "bbox": [
-        932,
-        200,
-        982,
-        266
-      ],
-      "size": [
-        50,
-        66
-      ],
-      "label": "ShortFerme",
-      "label_bbox": [
-        939,
-        280,
-        1006,
-        290
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_017",
-      "file": "silhouettes02_017.png",
-      "bbox": [
-        20,
-        391,
-        81,
-        464
-      ],
-      "size": [
-        61,
-        73
-      ],
-      "label": "Hood",
-      "label_bbox": [
-        30,
-        482,
-        67,
-        492
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "silhouettes02_018",
-      "file": "silhouettes02_018.png",
-      "bbox": [
-        87,
-        391,
-        152,
-        459
-      ],
-      "size": [
-        65,
-        68
-      ],
-      "label": "Cay",
-      "label_bbox": [
-        102,
-        482,
-        119,
-        492
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "silhouettes02_019",
-      "file": "silhouettes02_019.png",
-      "bbox": [
-        161,
-        392,
-        233,
-        467
-      ],
-      "size": [
-        72,
-        75
-      ],
-      "label": "avec",
-      "label_bbox": [
-        189,
-        485,
-        212,
-        492
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "silhouettes02_020",
-      "file": "silhouettes02_020.png",
-      "bbox": [
-        243,
-        393,
-        312,
-        463
-      ],
-      "size": [
-        69,
-        70
-      ],
-      "label": "Fed",
-      "label_bbox": [
-        253,
-        482,
-        277,
-        492
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "silhouettes02_021",
-      "file": "silhouettes02_021.png",
-      "bbox": [
-        324,
-        396,
-        389,
-        459
-      ],
-      "size": [
-        65,
-        63
-      ],
-      "label": "-ompz",
-      "label_bbox": [
-        327,
-        484,
-        357,
-        495
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "silhouettes02_022",
-      "file": "silhouettes02_022.png",
-      "bbox": [
-        404,
-        395,
-        487,
-        458
-      ],
-      "size": [
-        83,
-        63
-      ],
-      "label": "Hood+Mz",
-      "label_bbox": [
-        408,
-        482,
-        466,
-        492
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "silhouettes02_023",
-      "file": "silhouettes02_023.png",
-      "bbox": [
-        527,
-        392,
-        596,
-        479
-      ],
-      "size": [
-        69,
-        87
-      ],
-      "label": "Joodie",
-      "label_bbox": [
-        546,
-        499,
-        584,
-        507
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "silhouettes02_024",
-      "file": "silhouettes02_024.png",
-      "bbox": [
-        601,
-        392,
-        672,
-        478
-      ],
-      "size": [
-        71,
-        86
-      ],
-      "label": "somber",
-      "label_bbox": [
-        612,
-        499,
-        657,
-        507
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "silhouettes02_025",
-      "file": "silhouettes02_025.png",
-      "bbox": [
-        675,
-        392,
-        747,
-        474
-      ],
-      "size": [
-        72,
-        82
-      ],
-      "label": "ical",
-      "label_bbox": [
-        701,
-        499,
-        716,
-        507
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "silhouettes02_026",
-      "file": "silhouettes02_026.png",
-      "bbox": [
-        750,
-        392,
-        824,
-        475
-      ],
-      "size": [
-        74,
-        83
-      ],
-      "label": "Der",
-      "label_bbox": [
-        768,
-        497,
-        786,
-        507
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "silhouettes02_027",
-      "file": "silhouettes02_027.png",
-      "bbox": [
-        833,
-        393,
-        909,
-        479
-      ],
-      "size": [
-        76,
-        86
-      ],
-      "label": "athe",
-      "label_bbox": [
-        862,
-        497,
-        876,
-        507
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "silhouettes02_028",
-      "file": "silhouettes02_028.png",
-      "bbox": [
-        915,
-        392,
-        995,
-        482
-      ],
-      "size": [
-        80,
-        90
-      ],
-      "label": "ker",
-      "label_bbox": [
-        948,
-        499,
-        962,
-        507
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "silhouettes02_029",
-      "file": "silhouettes02_029.png",
-      "bbox": [
-        17,
-        524,
-        103,
-        659
-      ],
-      "size": [
-        86,
-        135
-      ],
-      "label": "2unner",
-      "label_bbox": [
-        39,
-        675,
-        81,
-        683
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "silhouettes02_030",
-      "file": "silhouettes02_030.png",
-      "bbox": [
-        114,
-        523,
-        196,
-        655
-      ],
-      "size": [
-        82,
-        132
-      ],
-      "label": "-Br",
-      "label_bbox": [
-        156,
-        673,
-        165,
-        683
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "silhouettes02_031",
-      "file": "silhouettes02_031.png",
-      "bbox": [
-        205,
-        525,
-        297,
-        656
-      ],
-      "size": [
-        92,
-        131
-      ],
-      "label": "Rt",
-      "label_bbox": [
-        234,
-        673,
-        243,
-        683
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "silhouettes02_032",
-      "file": "silhouettes02_032.png",
-      "bbox": [
-        306,
-        527,
-        400,
-        658
-      ],
-      "size": [
-        94,
-        131
-      ],
-      "label": "Junchec",
-      "label_bbox": [
-        333,
-        675,
-        376,
-        683
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "silhouettes02_033",
-      "file": "silhouettes02_033.png",
-      "bbox": [
-        406,
-        529,
-        494,
-        654
-      ],
-      "size": [
-        88,
-        125
-      ],
-      "label": "dunchec",
-      "label_bbox": [
-        431,
-        675,
-        474,
-        683
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "silhouettes02_034",
-      "file": "silhouettes02_034.png",
-      "bbox": [
-        527,
-        532,
-        603,
-        608
-      ],
-      "size": [
-        76,
-        76
-      ],
-      "label": "Joodie",
-      "label_bbox": [
-        550,
-        628,
-        588,
-        636
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "silhouettes02_035",
-      "file": "silhouettes02_035.png",
-      "bbox": [
-        607,
-        533,
-        679,
-        610
-      ],
-      "size": [
-        72,
-        77
-      ],
-      "label": "ber",
-      "label_bbox": [
-        642,
-        625,
-        659,
-        636
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "silhouettes02_036",
-      "file": "silhouettes02_036.png",
-      "bbox": [
-        684,
-        530,
-        761,
-        611
-      ],
-      "size": [
-        77,
-        81
-      ],
-      "label": "",
-      "label_bbox": [
-        702,
-        608,
-        721,
-        611
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "silhouettes02_037",
-      "file": "silhouettes02_037.png",
-      "bbox": [
-        775,
-        535,
-        875,
-        606
-      ],
-      "size": [
-        100,
-        71
-      ],
-      "label": "cu",
-      "label_bbox": [
-        832,
-        625,
-        842,
-        636
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "silhouettes02_038",
-      "file": "silhouettes02_038.png",
-      "bbox": [
-        898,
-        532,
-        997,
-        612
-      ],
-      "size": [
-        99,
-        80
-      ],
-      "label": "pron",
-      "label_bbox": [
-        941,
-        627,
-        973,
-        638
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "silhouettes02_039",
-      "file": "silhouettes02_039.png",
-      "bbox": [
-        24,
-        791,
-        84,
-        837
-      ],
-      "size": [
-        60,
-        46
-      ],
-      "label": "tn",
-      "label_bbox": [
-        26,
-        846,
-        77,
-        878
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_040",
-      "file": "silhouettes02_040.png",
-      "bbox": [
-        91,
-        794,
-        167,
-        878
-      ],
-      "size": [
-        76,
-        84
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_041",
-      "file": "silhouettes02_041.png",
-      "bbox": [
-        175,
-        791,
-        253,
-        873
-      ],
-      "size": [
-        78,
-        82
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_042",
-      "file": "silhouettes02_042.png",
-      "bbox": [
-        258,
-        799,
-        375,
-        867
-      ],
-      "size": [
-        117,
-        68
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_043",
-      "file": "silhouettes02_043.png",
-      "bbox": [
-        537,
-        794,
-        613,
-        952
-      ],
-      "size": [
-        76,
-        158
-      ],
-      "label": "-Ta",
-      "label_bbox": [
-        579,
-        968,
-        588,
-        978
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_044",
-      "file": "silhouettes02_044.png",
-      "bbox": [
-        624,
-        797,
-        696,
-        951
-      ],
-      "size": [
-        72,
-        154
-      ],
-      "label": "Stalk-Le",
-      "label_bbox": [
-        627,
-        968,
-        670,
-        978
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_045",
-      "file": "silhouettes02_045.png",
-      "bbox": [
-        784,
-        796,
-        856,
-        953
-      ],
-      "size": [
-        72,
-        157
-      ],
-      "label": "reel-",
-      "label_bbox": [
-        808,
-        970,
-        822,
-        978
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_046",
-      "file": "silhouettes02_046.png",
-      "bbox": [
-        852,
-        799,
-        932,
-        951
-      ],
-      "size": [
-        80,
-        152
-      ],
-      "label": "QUIN",
-      "label_bbox": [
-        907,
-        970,
-        922,
-        978
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_047",
-      "file": "silhouettes02_047.png",
-      "bbox": [
-        379,
-        804,
-        499,
-        851
-      ],
-      "size": [
-        120,
-        47
-      ],
-      "label": "om",
-      "label_bbox": [
-        430,
-        857,
-        498,
-        892
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_048",
-      "file": "silhouettes02_048.png",
-      "bbox": [
-        700,
-        800,
-        783,
-        950
-      ],
-      "size": [
-        83,
-        150
-      ],
-      "label": "1k-Le",
-      "label_bbox": [
-        739,
-        968,
-        758,
-        978
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_049",
-      "file": "silhouettes02_049.png",
-      "bbox": [
-        941,
-        805,
-        1012,
-        953
-      ],
-      "size": [
-        71,
-        148
-      ],
-      "label": "sual",
-      "label_bbox": [
-        978,
-        971,
-        994,
-        978
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_050",
-      "file": "silhouettes02_050.png",
-      "bbox": [
-        338,
-        846,
-        412,
-        888
-      ],
-      "size": [
-        74,
-        42
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_051",
-      "file": "silhouettes02_051.png",
-      "bbox": [
-        25,
-        897,
-        118,
-        948
-      ],
-      "size": [
-        93,
-        51
-      ],
-      "label": "ists",
-      "label_bbox": [
-        47,
-        969,
-        72,
-        977
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_052",
-      "file": "silhouettes02_052.png",
-      "bbox": [
-        117,
-        894,
-        231,
-        944
-      ],
-      "size": [
-        114,
-        50
-      ],
-      "label": "istol",
-      "label_bbox": [
-        130,
-        969,
-        156,
-        977
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_053",
-      "file": "silhouettes02_053.png",
-      "bbox": [
-        238,
-        886,
-        360,
-        945
-      ],
-      "size": [
-        122,
-        59
-      ],
-      "label": "Knife",
-      "label_bbox": [
-        311,
-        966,
-        340,
-        977
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_054",
-      "file": "silhouettes02_054.png",
-      "bbox": [
-        460,
-        896,
-        488,
-        951
-      ],
-      "size": [
-        28,
-        55
-      ],
-      "label": "Bz",
-      "label_bbox": [
-        460,
-        966,
-        469,
-        977
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_055",
-      "file": "silhouettes02_055.png",
-      "bbox": [
-        375,
-        912,
-        439,
-        953
-      ],
-      "size": [
-        64,
-        41
-      ],
-      "label": "-rowk",
-      "label_bbox": [
-        387,
-        969,
-        412,
-        977
-      ],
-      "section": ""
-    },
-    {
-      "id": "silhouettes02_056",
-      "file": "silhouettes02_056.png",
-      "bbox": [
-        31,
-        1082,
-        98,
-        1215
-      ],
-      "size": [
-        67,
-        133
-      ],
-      "label": "lant",
-      "label_bbox": [
-        47,
-        1233,
-        62,
-        1240
-      ],
-      "section": "BACKACCESSORIES"
-    },
-    {
-      "id": "silhouettes02_057",
-      "file": "silhouettes02_057.png",
-      "bbox": [
-        103,
-        1084,
-        186,
-        1211
-      ],
-      "size": [
-        83,
-        127
-      ],
-      "label": "1kStalk-Lur",
-      "label_bbox": [
-        97,
-        1230,
-        164,
-        1240
-      ],
-      "section": "BACKACCESSORIES"
-    },
-    {
-      "id": "silhouettes02_058",
-      "file": "silhouettes02_058.png",
-      "bbox": [
-        189,
-        1084,
-        289,
-        1209
-      ],
-      "size": [
-        100,
-        125
-      ],
-      "label": "Lean",
-      "label_bbox": [
-        242,
-        1232,
-        264,
-        1239
-      ],
-      "section": "BACKACCESSORIES"
-    },
-    {
-      "id": "silhouettes02_059",
-      "file": "silhouettes02_059.png",
-      "bbox": [
-        284,
-        1084,
-        370,
-        1216
-      ],
-      "size": [
-        86,
-        132
-      ],
-      "label": "Cneel-",
-      "label_bbox": [
-        296,
-        1232,
-        318,
-        1239
-      ],
-      "section": "BACKACCESSORIES"
-    },
-    {
-      "id": "silhouettes02_060",
-      "file": "silhouettes02_060.png",
-      "bbox": [
-        380,
-        1084,
-        482,
-        1209
-      ],
-      "size": [
-        102,
-        125
-      ],
-      "label": "aun",
-      "label_bbox": [
-        400,
-        1232,
-        415,
-        1239
-      ],
-      "section": "BACKACCESSORIES"
-    },
-    {
-      "id": "silhouettes02_061",
-      "file": "silhouettes02_061.png",
-      "bbox": [
-        548,
-        1087,
-        620,
-        1238
-      ],
-      "size": [
-        72,
-        151
-      ],
-      "label": "Backpack",
-      "label_bbox": [
-        555,
-        1256,
-        616,
-        1269
-      ],
-      "section": "BACKACCESSORIES"
-    },
-    {
-      "id": "silhouettes02_062",
-      "file": "silhouettes02_062.png",
-      "bbox": [
-        630,
-        1089,
-        704,
-        1238
-      ],
-      "size": [
-        74,
-        149
-      ],
-      "label": "Medbax",
-      "label_bbox": [
-        640,
-        1256,
-        690,
-        1266
-      ],
-      "section": "BACKACCESSORIES"
-    },
-    {
-      "id": "silhouettes02_063",
-      "file": "silhouettes02_063.png",
-      "bbox": [
-        715,
-        1083,
-        791,
-        1241
-      ],
-      "size": [
-        76,
-        158
-      ],
-      "label": "rotgun",
-      "label_bbox": [
-        744,
-        1259,
-        785,
-        1269
-      ],
-      "section": "BACKACCESSORIES"
-    },
-    {
-      "id": "silhouettes02_064",
-      "file": "silhouettes02_064.png",
-      "bbox": [
-        802,
-        1088,
-        893,
-        1239
-      ],
-      "size": [
-        91,
-        151
-      ],
-      "label": "sym",
-      "label_bbox": [
-        821,
-        1259,
-        842,
-        1269
-      ],
-      "section": "BACKACCESSORIES"
-    },
-    {
-      "id": "silhouettes02_065",
-      "file": "silhouettes02_065.png",
-      "bbox": [
-        903,
-        1086,
-        983,
-        1240
-      ],
-      "size": [
-        80,
-        154
-      ],
-      "label": "Hols",
-      "label_bbox": [
-        945,
-        1256,
-        965,
-        1266
-      ],
-      "section": "BACKACCESSORIES"
-    },
-    {
-      "id": "silhouettes02_066",
-      "file": "silhouettes02_066.png",
-      "bbox": [
-        160,
-        1346,
-        257,
-        1421
-      ],
-      "size": [
-        97,
-        75
-      ],
-      "label": "lror",
-      "label_bbox": [
-        192,
-        1432,
-        213,
-        1442
-      ],
-      "section": "FCREWMARKS3"
-    },
-    {
-      "id": "silhouettes02_067",
-      "file": "silhouettes02_067.png",
-      "bbox": [
-        275,
-        1347,
-        354,
-        1422
-      ],
-      "size": [
-        79,
-        75
-      ],
-      "label": "Jade",
-      "label_bbox": [
-        290,
-        1430,
-        326,
-        1443
-      ],
-      "section": "FCREWMARKS3"
-    },
-    {
-      "id": "silhouettes02_068",
-      "file": "silhouettes02_068.png",
-      "bbox": [
-        40,
-        1351,
-        145,
-        1423
-      ],
-      "size": [
-        105,
-        72
-      ],
-      "label": "",
-      "label_bbox": [
-        79,
-        1432,
-        122,
-        1446
-      ],
-      "section": "FCREWMARKS3"
-    },
-    {
-      "id": "silhouettes02_069",
-      "file": "silhouettes02_069.png",
-      "bbox": [
-        375,
-        1354,
-        478,
-        1415
-      ],
-      "size": [
-        103,
-        61
-      ],
-      "label": "OS",
-      "label_bbox": [
-        418,
-        1433,
-        444,
-        1443
-      ],
-      "section": "FCREWMARKS3"
-    },
-    {
-      "id": "silhouettes02_070",
-      "file": "silhouettes02_070.png",
-      "bbox": [
-        491,
-        1355,
-        588,
-        1411
-      ],
-      "size": [
-        97,
-        56
-      ],
-      "label": "thside",
-      "label_bbox": [
-        538,
-        1431,
-        579,
-        1445
-      ],
-      "section": "FCREWMARKS3"
-    },
-    {
-      "id": "silhouettes02_071",
-      "file": "silhouettes02_071.png",
-      "bbox": [
-        603,
-        1353,
-        675,
-        1415
-      ],
-      "size": [
-        72,
-        62
-      ],
-      "label": "feapers",
-      "label_bbox": [
-        617,
-        1437,
-        685,
-        1451
-      ],
-      "section": "FCREWMARKS3"
-    },
-    {
-      "id": "silhouettes02_072",
-      "file": "silhouettes02_072.png",
-      "bbox": [
-        696,
-        1358,
-        788,
-        1414
-      ],
-      "size": [
-        92,
-        56
-      ],
-      "label": "ear",
-      "label_bbox": [
-        727,
-        1434,
-        752,
-        1445
-      ],
-      "section": "FCREWMARKS3"
-    },
-    {
-      "id": "silhouettes02_073",
-      "file": "silhouettes02_073.png",
-      "bbox": [
-        802,
-        1360,
-        885,
-        1416
-      ],
-      "size": [
-        83,
-        56
-      ],
-      "label": "leon",
-      "label_bbox": [
-        829,
-        1434,
-        869,
-        1444
-      ],
-      "section": "FCREWMARKS3"
-    },
-    {
-      "id": "silhouettes02_074",
-      "file": "silhouettes02_074.png",
-      "bbox": [
-        901,
-        1351,
-        947,
-        1395
-      ],
-      "size": [
-        46,
-        44
-      ],
-      "label": "um",
-      "label_bbox": [
-        910,
-        1397,
-        973,
-        1412
-      ],
-      "section": "FCREWMARKS3"
-    }
-  ],
-  "sillhouettes01": [
-    {
-      "id": "sillhouettes01_000",
-      "file": "sillhouettes01_000.png",
-      "bbox": [
-        32,
-        86,
-        97,
-        245
-      ],
-      "size": [
-        65,
-        159
-      ],
-      "label": "ean",
-      "label_bbox": [
-        54,
-        257,
-        79,
-        265
-      ],
-      "section": ""
-    },
-    {
-      "id": "sillhouettes01_001",
-      "file": "sillhouettes01_001.png",
-      "bbox": [
-        125,
-        86,
-        192,
-        244
-      ],
-      "size": [
-        67,
-        158
-      ],
-      "label": "Average",
-      "label_bbox": [
-        140,
-        257,
-        187,
-        268
-      ],
-      "section": ""
-    },
-    {
-      "id": "sillhouettes01_002",
-      "file": "sillhouettes01_002.png",
-      "bbox": [
-        215,
-        87,
-        283,
-        243
-      ],
-      "size": [
-        68,
-        156
-      ],
-      "label": "jeavy",
-      "label_bbox": [
-        241,
-        257,
-        273,
-        268
-      ],
-      "section": ""
-    },
-    {
-      "id": "sillhouettes01_003",
-      "file": "sillhouettes01_003.png",
-      "bbox": [
-        307,
-        85,
-        374,
-        244
-      ],
-      "size": [
-        67,
-        159
-      ],
-      "label": "Fedc",
-      "label_bbox": [
-        323,
-        254,
-        347,
-        265
-      ],
-      "section": ""
-    },
-    {
-      "id": "sillhouettes01_004",
-      "file": "sillhouettes01_004.png",
-      "bbox": [
-        392,
-        96,
-        488,
-        242
-      ],
-      "size": [
-        96,
-        146
-      ],
-      "label": "-ongcoat",
-      "label_bbox": [
-        430,
-        257,
-        481,
-        268
-      ],
-      "section": ""
-    },
-    {
-      "id": "sillhouettes01_005",
-      "file": "sillhouettes01_005.png",
-      "bbox": [
-        533,
-        84,
-        586,
-        153
-      ],
-      "size": [
-        53,
-        69
-      ],
-      "section": ""
-    },
-    {
-      "id": "sillhouettes01_006",
-      "file": "sillhouettes01_006.png",
-      "bbox": [
-        604,
-        88,
-        656,
-        153
-      ],
-      "size": [
-        52,
-        65
-      ],
-      "section": ""
-    },
-    {
-      "id": "sillhouettes01_007",
-      "file": "sillhouettes01_007.png",
-      "bbox": [
-        672,
-        87,
-        723,
-        155
-      ],
-      "size": [
-        51,
-        68
-      ],
-      "section": ""
-    },
-    {
-      "id": "sillhouettes01_008",
-      "file": "sillhouettes01_008.png",
-      "bbox": [
-        742,
-        86,
-        789,
-        152
-      ],
-      "size": [
-        47,
-        66
-      ],
-      "section": ""
-    },
-    {
-      "id": "sillhouettes01_009",
-      "file": "sillhouettes01_009.png",
-      "bbox": [
-        814,
-        87,
-        866,
-        154
-      ],
-      "size": [
-        52,
-        67
-      ],
-      "section": ""
-    },
-    {
-      "id": "sillhouettes01_010",
-      "file": "sillhouettes01_010.png",
-      "bbox": [
-        888,
-        86,
-        933,
-        152
-      ],
-      "size": [
-        45,
-        66
-      ],
-      "section": ""
-    },
-    {
-      "id": "sillhouettes01_011",
-      "file": "sillhouettes01_011.png",
-      "bbox": [
-        954,
-        88,
-        999,
-        152
-      ],
-      "size": [
-        45,
-        64
-      ],
-      "section": ""
-    },
-    {
-      "id": "sillhouettes01_012",
-      "file": "sillhouettes01_012.png",
-      "bbox": [
-        536,
-        171,
-        584,
-        240
-      ],
-      "size": [
-        48,
-        69
-      ],
-      "label": "Hood",
-      "label_bbox": [
-        541,
-        254,
-        578,
-        265
-      ],
-      "section": ""
-    },
-    {
-      "id": "sillhouettes01_013",
-      "file": "sillhouettes01_013.png",
-      "bbox": [
-        606,
-        169,
-        656,
-        240
-      ],
-      "size": [
-        50,
-        71
-      ],
-      "label": "Car",
-      "label_bbox": [
-        613,
-        254,
-        631,
-        265
-      ],
-      "section": ""
-    },
-    {
-      "id": "sillhouettes01_014",
-      "file": "sillhouettes01_014.png",
-      "bbox": [
-        674,
-        173,
-        725,
-        240
-      ],
-      "size": [
-        51,
-        67
-      ],
-      "label": "laVe",
-      "label_bbox": [
-        691,
-        257,
-        706,
-        265
-      ],
-      "section": ""
-    },
-    {
-      "id": "sillhouettes01_015",
-      "file": "sillhouettes01_015.png",
-      "bbox": [
-        745,
-        168,
-        798,
-        239
-      ],
-      "size": [
-        53,
-        71
-      ],
-      "label": "dora",
-      "label_bbox": [
-        769,
-        257,
-        791,
-        265
-      ],
-      "section": ""
-    },
-    {
-      "id": "sillhouettes01_016",
-      "file": "sillhouettes01_016.png",
-      "bbox": [
-        817,
-        172,
-        864,
-        241
-      ],
-      "size": [
-        47,
-        69
-      ],
-      "label": "jJandana",
-      "label_bbox": [
-        818,
-        257,
-        868,
-        265
-      ],
-      "section": ""
-    },
-    {
-      "id": "sillhouettes01_017",
-      "file": "sillhouettes01_017.png",
-      "bbox": [
-        880,
-        173,
-        939,
-        246
-      ],
-      "size": [
-        59,
-        73
-      ],
-      "label": "-ompac",
-      "label_bbox": [
-        883,
-        257,
-        917,
-        268
-      ],
-      "section": ""
-    },
-    {
-      "id": "sillhouettes01_018",
-      "file": "sillhouettes01_018.png",
-      "bbox": [
-        953,
-        173,
-        998,
-        234
-      ],
-      "size": [
-        45,
-        61
-      ],
-      "label": "Hood-Mask",
-      "label_bbox": [
-        949,
-        254,
-        1010,
-        264
-      ],
-      "section": ""
-    },
-    {
-      "id": "sillhouettes01_019",
-      "file": "sillhouettes01_019.png",
-      "bbox": [
-        24,
-        388,
-        78,
-        450
-      ],
-      "size": [
-        54,
-        62
-      ],
-      "label": "Jooc",
-      "label_bbox": [
-        46,
-        464,
-        63,
-        473
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "sillhouettes01_020",
-      "file": "sillhouettes01_020.png",
-      "bbox": [
-        98,
-        391,
-        143,
-        447
-      ],
-      "size": [
-        45,
-        56
-      ],
-      "label": "Car",
-      "label_bbox": [
-        106,
-        461,
-        124,
-        472
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "sillhouettes01_021",
-      "file": "sillhouettes01_021.png",
-      "bbox": [
-        167,
-        388,
-        208,
-        444
-      ],
-      "size": [
-        41,
-        56
-      ],
-      "label": "1ave",
-      "label_bbox": [
-        179,
-        464,
-        195,
-        472
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "sillhouettes01_022",
-      "file": "sillhouettes01_022.png",
-      "bbox": [
-        235,
-        391,
-        283,
-        444
-      ],
-      "size": [
-        48,
-        53
-      ],
-      "label": "Fedc",
-      "label_bbox": [
-        234,
-        461,
-        258,
-        472
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "sillhouettes01_023",
-      "file": "sillhouettes01_023.png",
-      "bbox": [
-        306,
-        393,
-        346,
-        447
-      ],
-      "size": [
-        40,
-        54
-      ],
-      "label": "3andanaPome",
-      "label_bbox": [
-        306,
-        464,
-        387,
-        473
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "sillhouettes01_024",
-      "file": "sillhouettes01_024.png",
-      "bbox": [
-        364,
-        392,
-        417,
-        446
-      ],
-      "size": [
-        53,
-        54
-      ],
-      "label": "npadou",
-      "label_bbox": [
-        388,
-        462,
-        413,
-        475
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "sillhouettes01_025",
-      "file": "sillhouettes01_025.png",
-      "bbox": [
-        431,
-        392,
-        483,
-        449
-      ],
-      "size": [
-        52,
-        57
-      ],
-      "label": "HodMask",
-      "label_bbox": [
-        433,
-        462,
-        495,
-        472
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "sillhouettes01_026",
-      "file": "sillhouettes01_026.png",
-      "bbox": [
-        522,
-        389,
-        598,
-        494
-      ],
-      "size": [
-        76,
-        105
-      ],
-      "label": "Hoodie",
-      "label_bbox": [
-        536,
-        506,
-        576,
-        517
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "sillhouettes01_027",
-      "file": "sillhouettes01_027.png",
-      "bbox": [
-        601,
-        391,
-        678,
-        490
-      ],
-      "size": [
-        77,
-        99
-      ],
-      "label": "jomber",
-      "label_bbox": [
-        619,
-        509,
-        664,
-        517
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "sillhouettes01_028",
-      "file": "sillhouettes01_028.png",
-      "bbox": [
-        682,
-        390,
-        754,
-        488
-      ],
-      "size": [
-        72,
-        98
-      ],
-      "label": "Tactical",
-      "label_bbox": [
-        687,
-        509,
-        727,
-        517
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "sillhouettes01_029",
-      "file": "sillhouettes01_029.png",
-      "bbox": [
-        762,
-        390,
-        832,
-        489
-      ],
-      "size": [
-        70,
-        99
-      ],
-      "label": "De",
-      "label_bbox": [
-        783,
-        506,
-        793,
-        517
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "sillhouettes01_030",
-      "file": "sillhouettes01_030.png",
-      "bbox": [
-        837,
-        389,
-        918,
-        488
-      ],
-      "size": [
-        81,
-        99
-      ],
-      "label": "eat",
-      "label_bbox": [
-        860,
-        509,
-        875,
-        517
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "sillhouettes01_031",
-      "file": "sillhouettes01_031.png",
-      "bbox": [
-        924,
-        391,
-        1006,
-        490
-      ],
-      "size": [
-        82,
-        99
-      ],
-      "label": "cu",
-      "label_bbox": [
-        968,
-        506,
-        978,
-        517
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "sillhouettes01_032",
-      "file": "sillhouettes01_032.png",
-      "bbox": [
-        19,
-        501,
-        134,
-        640
-      ],
-      "size": [
-        115,
-        139
-      ],
-      "label": "tunner",
-      "label_bbox": [
-        59,
-        656,
-        100,
-        664
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "sillhouettes01_033",
-      "file": "sillhouettes01_033.png",
-      "bbox": [
-        145,
-        503,
-        240,
-        641
-      ],
-      "size": [
-        95,
-        138
-      ],
-      "label": "-Br",
-      "label_bbox": [
-        193,
-        653,
-        202,
-        664
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "sillhouettes01_034",
-      "file": "sillhouettes01_034.png",
-      "bbox": [
-        253,
-        505,
-        362,
-        639
-      ],
-      "size": [
-        109,
-        134
-      ],
-      "label": "2unner",
-      "label_bbox": [
-        298,
-        656,
-        339,
-        664
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "sillhouettes01_035",
-      "file": "sillhouettes01_035.png",
-      "bbox": [
-        369,
-        504,
-        494,
-        640
-      ],
-      "size": [
-        125,
-        136
-      ],
-      "label": "duneck",
-      "label_bbox": [
-        411,
-        656,
-        437,
-        664
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "sillhouettes01_036",
-      "file": "sillhouettes01_036.png",
-      "bbox": [
-        526,
-        539,
-        599,
-        619
-      ],
-      "size": [
-        73,
-        80
-      ],
-      "label": "Cc",
-      "label_bbox": [
-        567,
-        638,
-        577,
-        649
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "sillhouettes01_037",
-      "file": "sillhouettes01_037.png",
-      "bbox": [
-        608,
-        539,
-        681,
-        622
-      ],
-      "size": [
-        73,
-        83
-      ],
-      "label": "Puffer",
-      "label_bbox": [
-        610,
-        638,
-        643,
-        649
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "sillhouettes01_038",
-      "file": "sillhouettes01_038.png",
-      "bbox": [
-        685,
-        539,
-        774,
-        622
-      ],
-      "size": [
-        89,
-        83
-      ],
-      "label": "oat",
-      "label_bbox": [
-        733,
-        641,
-        750,
-        649
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "sillhouettes01_039",
-      "file": "sillhouettes01_039.png",
-      "bbox": [
-        786,
-        546,
-        884,
-        622
-      ],
-      "size": [
-        98,
-        76
-      ],
-      "label": "pron",
-      "label_bbox": [
-        821,
-        641,
-        852,
-        652
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "sillhouettes01_040",
-      "file": "sillhouettes01_040.png",
-      "bbox": [
-        898,
-        539,
-        1004,
-        622
-      ],
-      "size": [
-        106,
-        83
-      ],
-      "label": "vercoat",
-      "label_bbox": [
-        942,
-        641,
-        981,
-        649
-      ],
-      "section": "TORSOS"
-    },
-    {
-      "id": "sillhouettes01_041",
-      "file": "sillhouettes01_041.png",
-      "bbox": [
-        21,
-        791,
-        88,
-        859
-      ],
-      "size": [
-        67,
-        68
-      ],
-      "label": "Ca",
-      "label_bbox": [
-        43,
-        880,
-        110,
-        910
-      ],
-      "section": "LEGSSTANCES"
-    },
-    {
-      "id": "sillhouettes01_042",
-      "file": "sillhouettes01_042.png",
-      "bbox": [
-        134,
-        778,
-        219,
-        869
-      ],
-      "size": [
-        85,
-        91
-      ],
-      "section": "LEGSSTANCES"
-    },
-    {
-      "id": "sillhouettes01_043",
-      "file": "sillhouettes01_043.png",
-      "bbox": [
-        221,
-        784,
-        282,
-        878
-      ],
-      "size": [
-        61,
-        94
-      ],
-      "section": "LEGSSTANCES"
-    },
-    {
-      "id": "sillhouettes01_044",
-      "file": "sillhouettes01_044.png",
-      "bbox": [
-        287,
-        783,
-        404,
-        867
-      ],
-      "size": [
-        117,
-        84
-      ],
-      "section": "LEGSSTANCES"
-    },
-    {
-      "id": "sillhouettes01_045",
-      "file": "sillhouettes01_045.png",
-      "bbox": [
-        402,
-        796,
-        497,
-        834
-      ],
-      "size": [
-        95,
-        38
-      ],
-      "section": "LEGSSTANCES"
-    },
-    {
-      "id": "sillhouettes01_046",
-      "file": "sillhouettes01_046.png",
-      "bbox": [
-        525,
-        783,
-        610,
-        938
-      ],
-      "size": [
-        85,
-        155
-      ],
-      "label": "Ta",
-      "label_bbox": [
-        574,
-        958,
-        583,
-        969
-      ],
-      "section": "LEGSSTANCES"
-    },
-    {
-      "id": "sillhouettes01_047",
-      "file": "sillhouettes01_047.png",
-      "bbox": [
-        615,
-        783,
-        688,
-        941
-      ],
-      "size": [
-        73,
-        158
-      ],
-      "label": "Stalk-Lt",
-      "label_bbox": [
-        631,
-        959,
-        667,
-        969
-      ],
-      "section": "LEGSSTANCES"
-    },
-    {
-      "id": "sillhouettes01_048",
-      "file": "sillhouettes01_048.png",
-      "bbox": [
-        694,
-        783,
-        775,
-        942
-      ],
-      "size": [
-        81,
-        159
-      ],
-      "label": "lank",
-      "label_bbox": [
-        719,
-        961,
-        735,
-        969
-      ],
-      "section": "LEGSSTANCES"
-    },
-    {
-      "id": "sillhouettes01_049",
-      "file": "sillhouettes01_049.png",
-      "bbox": [
-        778,
-        783,
-        868,
-        941
-      ],
-      "size": [
-        90,
-        158
-      ],
-      "label": "1eel",
-      "label_bbox": [
-        815,
-        964,
-        831,
-        972
-      ],
-      "section": "LEGSSTANCES"
-    },
-    {
-      "id": "sillhouettes01_050",
-      "file": "sillhouettes01_050.png",
-      "bbox": [
-        874,
-        784,
-        930,
-        946
-      ],
-      "size": [
-        56,
-        162
-      ],
-      "label": "Re",
-      "label_bbox": [
-        904,
-        961,
-        913,
-        972
-      ],
-      "section": "LEGSSTANCES"
-    },
-    {
-      "id": "sillhouettes01_051",
-      "file": "sillhouettes01_051.png",
-      "bbox": [
-        939,
-        796,
-        1015,
-        942
-      ],
-      "size": [
-        76,
-        146
-      ],
-      "label": "Zasual",
-      "label_bbox": [
-        962,
-        961,
-        994,
-        969
-      ],
-      "section": "LEGSSTANCES"
-    },
-    {
-      "id": "sillhouettes01_052",
-      "file": "sillhouettes01_052.png",
-      "bbox": [
-        358,
-        824,
-        399,
-        901
-      ],
-      "size": [
-        41,
-        77
-      ],
-      "section": "LEGSSTANCES"
-    },
-    {
-      "id": "sillhouettes01_053",
-      "file": "sillhouettes01_053.png",
-      "bbox": [
-        93,
-        838,
-        119,
-        886
-      ],
-      "size": [
-        26,
-        48
-      ],
-      "section": "LEGSSTANCES"
-    },
-    {
-      "id": "sillhouettes01_054",
-      "file": "sillhouettes01_054.png",
-      "bbox": [
-        419,
-        842,
-        486,
-        898
-      ],
-      "size": [
-        67,
-        56
-      ],
-      "section": "LEGSSTANCES"
-    },
-    {
-      "id": "sillhouettes01_055",
-      "file": "sillhouettes01_055.png",
-      "bbox": [
-        138,
-        881,
-        219,
-        932
-      ],
-      "size": [
-        81,
-        51
-      ],
-      "section": "LEGSSTANCES"
-    },
-    {
-      "id": "sillhouettes01_056",
-      "file": "sillhouettes01_056.png",
-      "bbox": [
-        246,
-        889,
-        354,
-        938
-      ],
-      "size": [
-        108,
-        49
-      ],
-      "label": "Se",
-      "label_bbox": [
-        222,
-        946,
-        345,
-        970
-      ],
-      "section": "LEGSSTANCES"
-    },
-    {
-      "id": "sillhouettes01_057",
-      "file": "sillhouettes01_057.png",
-      "bbox": [
-        444,
-        886,
-        463,
-        947
-      ],
-      "size": [
-        19,
-        61
-      ],
-      "section": "LEGSSTANCES"
-    },
-    {
-      "id": "sillhouettes01_058",
-      "file": "sillhouettes01_058.png",
-      "bbox": [
-        144,
-        923,
-        226,
-        969
-      ],
-      "size": [
-        82,
-        46
-      ],
-      "label": "tol",
-      "label_bbox": [
-        180,
-        996,
-        189,
-        1005
-      ],
-      "section": "LEGSSTANCES"
-    },
-    {
-      "id": "sillhouettes01_059",
-      "file": "sillhouettes01_059.png",
-      "bbox": [
-        473,
-        915,
-        489,
-        980
-      ],
-      "size": [
-        16,
-        65
-      ],
-      "label": "vain",
-      "label_bbox": [
-        474,
-        996,
-        494,
-        1005
-      ],
-      "section": "LEGSSTANCES"
-    },
-    {
-      "id": "sillhouettes01_060",
-      "file": "sillhouettes01_060.png",
-      "bbox": [
-        31,
-        930,
-        132,
-        975
-      ],
-      "size": [
-        101,
-        45
-      ],
-      "label": "sts",
-      "label_bbox": [
-        71,
-        995,
-        84,
-        1005
-      ],
-      "section": "LEGSSTANCES"
-    },
-    {
-      "id": "sillhouettes01_061",
-      "file": "sillhouettes01_061.png",
-      "bbox": [
-        363,
-        925,
-        435,
-        973
-      ],
-      "size": [
-        72,
-        48
-      ],
-      "label": "Srowt",
-      "label_bbox": [
-        388,
-        996,
-        414,
-        1005
-      ],
-      "section": "LEGSSTANCES"
-    },
-    {
-      "id": "sillhouettes01_062",
-      "file": "sillhouettes01_062.png",
-      "bbox": [
-        25,
-        1119,
-        120,
-        1254
-      ],
-      "size": [
-        95,
-        135
-      ],
-      "label": "lant",
-      "label_bbox": [
-        48,
-        1269,
-        63,
-        1277
-      ],
-      "section": "BACKACCESSORIES4"
-    },
-    {
-      "id": "sillhouettes01_063",
-      "file": "sillhouettes01_063.png",
-      "bbox": [
-        119,
-        1119,
-        210,
-        1253
-      ],
-      "size": [
-        91,
-        134
-      ],
-      "label": "Stak-Lu",
-      "label_bbox": [
-        124,
-        1267,
-        166,
-        1277
-      ],
-      "section": "BACKACCESSORIES4"
-    },
-    {
-      "id": "sillhouettes01_064",
-      "file": "sillhouettes01_064.png",
-      "bbox": [
-        213,
-        1119,
-        286,
-        1252
-      ],
-      "size": [
-        73,
-        133
-      ],
-      "label": "1k-Le",
-      "label_bbox": [
-        239,
-        1266,
-        258,
-        1277
-      ],
-      "section": "BACKACCESSORIES4"
-    },
-    {
-      "id": "sillhouettes01_065",
-      "file": "sillhouettes01_065.png",
-      "bbox": [
-        288,
-        1119,
-        377,
-        1251
-      ],
-      "size": [
-        89,
-        132
-      ],
-      "label": "neel-",
-      "label_bbox": [
-        327,
-        1269,
-        342,
-        1277
-      ],
-      "section": "BACKACCESSORIES4"
-    },
-    {
-      "id": "sillhouettes01_066",
-      "file": "sillhouettes01_066.png",
-      "bbox": [
-        380,
-        1118,
-        490,
-        1252
-      ],
-      "size": [
-        110,
-        134
-      ],
-      "label": "al-Sic",
-      "label_bbox": [
-        429,
-        1266,
-        449,
-        1276
-      ],
-      "section": "BACKACCESSORIES4"
-    },
-    {
-      "id": "sillhouettes01_067",
-      "file": "sillhouettes01_067.png",
-      "bbox": [
-        548,
-        1118,
-        623,
-        1289
-      ],
-      "size": [
-        75,
-        171
-      ],
-      "label": "ackpack",
-      "label_bbox": [
-        569,
-        1307,
-        606,
-        1317
-      ],
-      "section": "BACKACCESSORIES4"
-    },
-    {
-      "id": "sillhouettes01_068",
-      "file": "sillhouettes01_068.png",
-      "bbox": [
-        632,
-        1120,
-        709,
-        1289
-      ],
-      "size": [
-        77,
-        169
-      ],
-      "label": "Aedbe",
-      "label_bbox": [
-        655,
-        1303,
-        681,
-        1314
-      ],
-      "section": "BACKACCESSORIES4"
-    },
-    {
-      "id": "sillhouettes01_069",
-      "file": "sillhouettes01_069.png",
-      "bbox": [
-        712,
-        1119,
-        801,
-        1289
-      ],
-      "size": [
-        89,
-        170
-      ],
-      "label": "Shote",
-      "label_bbox": [
-        733,
-        1304,
-        765,
-        1314
-      ],
-      "section": "BACKACCESSORIES4"
-    },
-    {
-      "id": "sillhouettes01_070",
-      "file": "sillhouettes01_070.png",
-      "bbox": [
-        811,
-        1119,
-        892,
-        1293
-      ],
-      "size": [
-        81,
-        174
-      ],
-      "label": "sym",
-      "label_bbox": [
-        830,
-        1306,
-        851,
-        1317
-      ],
-      "section": "BACKACCESSORIES4"
-    },
-    {
-      "id": "sillhouettes01_071",
-      "file": "sillhouettes01_071.png",
-      "bbox": [
-        897,
-        1120,
-        999,
-        1289
-      ],
-      "size": [
-        102,
-        169
-      ],
-      "label": "Holste",
-      "label_bbox": [
-        945,
-        1304,
-        977,
-        1314
-      ],
-      "section": "BACKACCESSORIES4"
-    },
-    {
-      "id": "sillhouettes01_072",
-      "file": "sillhouettes01_072.png",
-      "bbox": [
-        547,
-        1343,
-        992,
-        1515
-      ],
-      "size": [
-        445,
-        172
-      ],
-      "section": ""
-    },
-    {
-      "id": "sillhouettes01_073",
-      "file": "sillhouettes01_073.png",
-      "bbox": [
-        27,
-        1384,
-        118,
-        1450
-      ],
-      "size": [
-        91,
-        66
-      ],
-      "label": "ing",
-      "label_bbox": [
-        71,
-        1461,
-        80,
-        1470
-      ],
-      "section": ""
-    },
-    {
-      "id": "sillhouettes01_074",
-      "file": "sillhouettes01_074.png",
-      "bbox": [
-        127,
-        1383,
-        204,
-        1450
-      ],
-      "size": [
-        77,
-        67
-      ],
-      "label": "Iron",
-      "label_bbox": [
-        155,
-        1463,
-        181,
-        1471
-      ],
-      "section": ""
-    },
-    {
-      "id": "sillhouettes01_075",
-      "file": "sillhouettes01_075.png",
-      "bbox": [
-        214,
-        1376,
-        279,
-        1450
-      ],
-      "size": [
-        65,
-        74
-      ],
-      "label": "ade",
-      "label_bbox": [
-        246,
-        1459,
-        256,
-        1471
-      ],
-      "section": ""
-    },
-    {
-      "id": "sillhouettes01_076",
-      "file": "sillhouettes01_076.png",
-      "bbox": [
-        287,
-        1385,
-        374,
-        1445
-      ],
-      "size": [
-        87,
-        60
-      ],
-      "label": "",
-      "label_bbox": [
-        328,
-        1461,
-        337,
-        1470
-      ],
-      "section": ""
-    },
-    {
-      "id": "sillhouettes01_077",
-      "file": "sillhouettes01_077.png",
-      "bbox": [
-        387,
-        1390,
-        476,
-        1440
-      ],
-      "size": [
-        89,
-        50
-      ],
-      "label": "thside",
-      "label_bbox": [
-        427,
-        1458,
-        460,
-        1470
-      ],
-      "section": ""
-    },
-    {
-      "id": "sillhouettes01_078",
-      "file": "sillhouettes01_078.png",
-      "bbox": [
-        735,
-        1441,
-        794,
-        1494
-      ],
-      "size": [
-        59,
-        53
-      ],
-      "section": ""
-    }
-  ]
+  "silhouettes02_000": {
+    "category": "bodies",
+    "label": "lean",
+    "file": "bodies/lean.png"
+  },
+  "silhouettes02_001": {
+    "category": "bodies",
+    "label": "average",
+    "file": "bodies/average.png"
+  },
+  "silhouettes02_002": {
+    "category": "bodies",
+    "label": "heavy",
+    "file": "bodies/heavy.png"
+  },
+  "silhouettes02_003": {
+    "category": "bodies",
+    "label": "tall-longcoat",
+    "file": "bodies/tall-longcoat.png"
+  },
+  "silhouettes02_004": {
+    "category": "bodies",
+    "label": "tall-longcoat",
+    "file": "bodies/tall-longcoat-2.png"
+  },
+  "silhouettes02_005": {
+    "category": "bodies",
+    "label": "hood",
+    "file": "bodies/hood.png"
+  },
+  "silhouettes02_006": {
+    "category": "bodies",
+    "label": "cap",
+    "file": "bodies/cap.png"
+  },
+  "silhouettes02_007": {
+    "category": "bodies",
+    "label": "shaved",
+    "file": "bodies/shaved.png"
+  },
+  "silhouettes02_008": {
+    "category": "bodies",
+    "label": "fedora",
+    "file": "bodies/fedora.png"
+  },
+  "silhouettes02_009": {
+    "category": "bodies",
+    "label": "bandana",
+    "file": "bodies/bandana.png"
+  },
+  "silhouettes02_010": {
+    "category": "bodies",
+    "label": "ski-mask",
+    "file": "bodies/ski-mask.png"
+  },
+  "silhouettes02_011": {
+    "category": "bodies",
+    "label": "ski-mask",
+    "file": "bodies/ski-mask-2.png"
+  },
+  "silhouettes02_012": {
+    "category": "bodies",
+    "label": "ski-mask",
+    "file": "bodies/ski-mask-3.png"
+  },
+  "silhouettes02_013": {
+    "category": "bodies",
+    "label": "mohawk",
+    "file": "bodies/mohawk.png"
+  },
+  "silhouettes02_014": {
+    "category": "bodies",
+    "label": "slick-femme",
+    "file": "bodies/slick-femme.png"
+  },
+  "silhouettes02_015": {
+    "category": "bodies",
+    "label": "slick-femme",
+    "file": "bodies/slick-femme-2.png"
+  },
+  "silhouettes02_016": {
+    "category": "bodies",
+    "label": "short-femme",
+    "file": "bodies/short-femme.png"
+  },
+  "silhouettes02_017": {
+    "category": "torsos",
+    "label": "hood",
+    "file": "torsos/hood.png"
+  },
+  "silhouettes02_018": {
+    "category": "torsos",
+    "label": "cap",
+    "file": "torsos/cap.png"
+  },
+  "silhouettes02_019": {
+    "category": "torsos",
+    "label": "shaved",
+    "file": "torsos/shaved.png"
+  },
+  "silhouettes02_020": {
+    "category": "torsos",
+    "label": "fedora",
+    "file": "torsos/fedora.png"
+  },
+  "silhouettes02_022": {
+    "category": "torsos",
+    "label": "hood",
+    "file": "torsos/hood-2.png"
+  },
+  "silhouettes02_023": {
+    "category": "torsos",
+    "label": "hoodie",
+    "file": "torsos/hoodie.png"
+  },
+  "silhouettes02_024": {
+    "category": "torsos",
+    "label": "bomber",
+    "file": "torsos/bomber.png"
+  },
+  "silhouettes02_025": {
+    "category": "torsos",
+    "label": "cap",
+    "file": "torsos/cap-2.png"
+  },
+  "silhouettes02_027": {
+    "category": "torsos",
+    "label": "bat",
+    "file": "torsos/bat.png"
+  },
+  "silhouettes02_028": {
+    "category": "torsos",
+    "label": "knife",
+    "file": "torsos/knife.png"
+  },
+  "silhouettes02_029": {
+    "category": "torsos",
+    "label": "runner",
+    "file": "torsos/runner.png"
+  },
+  "silhouettes02_030": {
+    "category": "torsos",
+    "label": "wide-braced",
+    "file": "torsos/wide-braced.png"
+  },
+  "silhouettes02_032": {
+    "category": "torsos",
+    "label": "hunched",
+    "file": "torsos/hunched.png"
+  },
+  "silhouettes02_033": {
+    "category": "torsos",
+    "label": "hunched",
+    "file": "torsos/hunched-2.png"
+  },
+  "silhouettes02_034": {
+    "category": "torsos",
+    "label": "hoodie",
+    "file": "torsos/hoodie-2.png"
+  },
+  "silhouettes02_035": {
+    "category": "torsos",
+    "label": "bomber",
+    "file": "torsos/bomber-2.png"
+  },
+  "silhouettes02_038": {
+    "category": "torsos",
+    "label": "apron",
+    "file": "torsos/apron.png"
+  },
+  "silhouettes02_043": {
+    "category": "torsos",
+    "label": "plant-tank",
+    "file": "torsos/plant-tank.png"
+  },
+  "silhouettes02_044": {
+    "category": "torsos",
+    "label": "stalk-lunge",
+    "file": "torsos/stalk-lunge.png"
+  },
+  "silhouettes02_045": {
+    "category": "torsos",
+    "label": "reapers",
+    "file": "torsos/reapers.png"
+  },
+  "silhouettes02_046": {
+    "category": "torsos",
+    "label": "run",
+    "file": "torsos/run.png"
+  },
+  "silhouettes02_047": {
+    "category": "torsos",
+    "label": "bomber",
+    "file": "torsos/bomber-3.png"
+  },
+  "silhouettes02_048": {
+    "category": "torsos",
+    "label": "flank-lean",
+    "file": "torsos/flank-lean.png"
+  },
+  "silhouettes02_049": {
+    "category": "torsos",
+    "label": "casual-slouch",
+    "file": "torsos/casual-slouch.png"
+  },
+  "silhouettes02_051": {
+    "category": "torsos",
+    "label": "fists",
+    "file": "torsos/fists.png"
+  },
+  "silhouettes02_052": {
+    "category": "torsos",
+    "label": "pistol",
+    "file": "torsos/pistol.png"
+  },
+  "silhouettes02_053": {
+    "category": "torsos",
+    "label": "knife",
+    "file": "torsos/knife-2.png"
+  },
+  "silhouettes02_055": {
+    "category": "arms",
+    "label": "mohawk",
+    "file": "arms/mohawk.png"
+  },
+  "silhouettes02_056": {
+    "category": "legs",
+    "label": "lean",
+    "file": "legs/lean.png"
+  },
+  "silhouettes02_057": {
+    "category": "legs",
+    "label": "stalk-lunge",
+    "file": "legs/stalk-lunge.png"
+  },
+  "silhouettes02_058": {
+    "category": "legs",
+    "label": "lean",
+    "file": "legs/lean-2.png"
+  },
+  "silhouettes02_059": {
+    "category": "legs",
+    "label": "kneel-recover",
+    "file": "legs/kneel-recover.png"
+  },
+  "silhouettes02_060": {
+    "category": "legs",
+    "label": "run",
+    "file": "legs/run.png"
+  },
+  "silhouettes02_061": {
+    "category": "legs",
+    "label": "backpack",
+    "file": "legs/backpack.png"
+  },
+  "silhouettes02_062": {
+    "category": "legs",
+    "label": "medbag",
+    "file": "legs/medbag.png"
+  },
+  "silhouettes02_063": {
+    "category": "legs",
+    "label": "shotgun",
+    "file": "legs/shotgun.png"
+  },
+  "silhouettes02_065": {
+    "category": "legs",
+    "label": "hood",
+    "file": "legs/hood.png"
+  },
+  "silhouettes02_066": {
+    "category": "crew-marks",
+    "label": "crowbar",
+    "file": "crew-marks/crowbar.png"
+  },
+  "silhouettes02_067": {
+    "category": "crew-marks",
+    "label": "jade_dragon",
+    "file": "crew-marks/jade_dragon.png"
+  },
+  "silhouettes02_070": {
+    "category": "crew-marks",
+    "label": "southside_saints",
+    "file": "crew-marks/southside_saints.png"
+  },
+  "silhouettes02_071": {
+    "category": "crew-marks",
+    "label": "reapers",
+    "file": "crew-marks/reapers.png"
+  },
+  "silhouettes02_072": {
+    "category": "crew-marks",
+    "label": "reapers",
+    "file": "crew-marks/reapers-2.png"
+  },
+  "silhouettes02_073": {
+    "category": "crew-marks",
+    "label": "lean",
+    "file": "crew-marks/lean.png"
+  },
+  "silhouettes03_000": {
+    "category": "headers",
+    "label": "contraband-street-economy",
+    "file": "headers/contraband-street-economy.png"
+  },
+  "silhouettes03_001": {
+    "category": "contraband",
+    "label": "drug-bag",
+    "file": "contraband/drug-bag.png"
+  },
+  "silhouettes03_002": {
+    "category": "contraband",
+    "label": "pill-bottle",
+    "file": "contraband/pill-bottle.png"
+  },
+  "silhouettes03_003": {
+    "category": "contraband",
+    "label": "herb-bag",
+    "file": "contraband/herb-bag.png"
+  },
+  "silhouettes03_004": {
+    "category": "contraband",
+    "label": "prescription-bottle",
+    "file": "contraband/prescription-bottle.png"
+  },
+  "silhouettes03_005": {
+    "category": "contraband",
+    "label": "brick-kilo",
+    "file": "contraband/brick-kilo.png"
+  },
+  "silhouettes03_006": {
+    "category": "contraband",
+    "label": "syringe",
+    "file": "contraband/syringe.png"
+  },
+  "silhouettes03_007": {
+    "category": "contraband",
+    "label": "brass-knuckles",
+    "file": "contraband/brass-knuckles.png"
+  },
+  "silhouettes03_008": {
+    "category": "contraband",
+    "label": "duffel-bag",
+    "file": "contraband/duffel-bag.png"
+  },
+  "silhouettes03_009": {
+    "category": "contraband",
+    "label": "burner-phone",
+    "file": "contraband/burner-phone.png"
+  },
+  "silhouettes03_010": {
+    "category": "contraband",
+    "label": "paper-bag",
+    "file": "contraband/paper-bag.png"
+  },
+  "silhouettes03_011": {
+    "category": "contraband",
+    "label": "cash-stack",
+    "file": "contraband/cash-stack.png"
+  },
+  "silhouettes03_012": {
+    "category": "contraband",
+    "label": "wrapped-bricks",
+    "file": "contraband/wrapped-bricks.png"
+  },
+  "silhouettes03_013": {
+    "category": "contraband",
+    "label": "fist-front",
+    "file": "contraband/fist-front.png"
+  },
+  "silhouettes03_014": {
+    "category": "contraband",
+    "label": "wallet",
+    "file": "contraband/wallet.png"
+  },
+  "silhouettes03_015": {
+    "category": "contraband",
+    "label": "fist-raised",
+    "file": "contraband/fist-raised.png"
+  },
+  "silhouettes03_016": {
+    "category": "contraband",
+    "label": "fist-alt",
+    "file": "contraband/fist-alt.png"
+  },
+  "silhouettes03_017": {
+    "category": "contraband",
+    "label": "money-clip",
+    "file": "contraband/money-clip.png"
+  },
+  "silhouettes03_018": {
+    "category": "headers",
+    "label": "weapons-tools",
+    "file": "headers/weapons-tools.png"
+  },
+  "silhouettes03_019": {
+    "category": "weapons",
+    "label": "fist-small",
+    "file": "weapons/fist-small.png"
+  },
+  "silhouettes03_020": {
+    "category": "weapons",
+    "label": "fist-punch",
+    "file": "weapons/fist-punch.png"
+  },
+  "silhouettes03_021": {
+    "category": "weapons",
+    "label": "crowbar",
+    "file": "weapons/crowbar.png"
+  },
+  "silhouettes03_022": {
+    "category": "weapons",
+    "label": "chain",
+    "file": "weapons/chain.png"
+  },
+  "silhouettes03_023": {
+    "category": "weapons",
+    "label": "holster-pistol",
+    "file": "weapons/holster-pistol.png"
+  },
+  "silhouettes03_024": {
+    "category": "weapons",
+    "label": "hook-blade",
+    "file": "weapons/hook-blade.png"
+  },
+  "silhouettes03_025": {
+    "category": "weapons",
+    "label": "grenade",
+    "file": "weapons/grenade.png"
+  },
+  "silhouettes03_026": {
+    "category": "weapons",
+    "label": "pistol-compact",
+    "file": "weapons/pistol-compact.png"
+  },
+  "silhouettes03_027": {
+    "category": "weapons",
+    "label": "pistol-full",
+    "file": "weapons/pistol-full.png"
+  },
+  "silhouettes03_028": {
+    "category": "weapons",
+    "label": "ammo-box",
+    "file": "weapons/ammo-box.png"
+  },
+  "silhouettes03_029": {
+    "category": "headers",
+    "label": "footer",
+    "file": "headers/footer.png"
+  },
+  "sillhouettes01_000": {
+    "category": "bodies",
+    "label": "lean",
+    "file": "bodies/lean-2.png"
+  },
+  "sillhouettes01_001": {
+    "category": "bodies",
+    "label": "average",
+    "file": "bodies/average-2.png"
+  },
+  "sillhouettes01_002": {
+    "category": "bodies",
+    "label": "heavy",
+    "file": "bodies/heavy-2.png"
+  },
+  "sillhouettes01_003": {
+    "category": "bodies",
+    "label": "fedora",
+    "file": "bodies/fedora-2.png"
+  },
+  "sillhouettes01_004": {
+    "category": "bodies",
+    "label": "tall-longcoat",
+    "file": "bodies/tall-longcoat-3.png"
+  },
+  "sillhouettes01_012": {
+    "category": "bodies",
+    "label": "hood",
+    "file": "bodies/hood-2.png"
+  },
+  "sillhouettes01_013": {
+    "category": "bodies",
+    "label": "cap",
+    "file": "bodies/cap-2.png"
+  },
+  "sillhouettes01_014": {
+    "category": "bodies",
+    "label": "shaved",
+    "file": "bodies/shaved-2.png"
+  },
+  "sillhouettes01_015": {
+    "category": "bodies",
+    "label": "fedora",
+    "file": "bodies/fedora-3.png"
+  },
+  "sillhouettes01_016": {
+    "category": "bodies",
+    "label": "bandana",
+    "file": "bodies/bandana-2.png"
+  },
+  "sillhouettes01_017": {
+    "category": "bodies",
+    "label": "pompadour",
+    "file": "bodies/pompadour.png"
+  },
+  "sillhouettes01_018": {
+    "category": "bodies",
+    "label": "hood-mask",
+    "file": "bodies/hood-mask.png"
+  },
+  "sillhouettes01_019": {
+    "category": "torsos",
+    "label": "monocle",
+    "file": "torsos/monocle.png"
+  },
+  "sillhouettes01_020": {
+    "category": "torsos",
+    "label": "cap",
+    "file": "torsos/cap-3.png"
+  },
+  "sillhouettes01_021": {
+    "category": "torsos",
+    "label": "shaved",
+    "file": "torsos/shaved-2.png"
+  },
+  "sillhouettes01_022": {
+    "category": "torsos",
+    "label": "fedora",
+    "file": "torsos/fedora-2.png"
+  },
+  "sillhouettes01_023": {
+    "category": "torsos",
+    "label": "bandana",
+    "file": "torsos/bandana.png"
+  },
+  "sillhouettes01_024": {
+    "category": "torsos",
+    "label": "pompadour",
+    "file": "torsos/pompadour.png"
+  },
+  "sillhouettes01_025": {
+    "category": "torsos",
+    "label": "hood-mask",
+    "file": "torsos/hood-mask.png"
+  },
+  "sillhouettes01_026": {
+    "category": "torsos",
+    "label": "hoodie",
+    "file": "torsos/hoodie-3.png"
+  },
+  "sillhouettes01_027": {
+    "category": "torsos",
+    "label": "bomber",
+    "file": "torsos/bomber-4.png"
+  },
+  "sillhouettes01_028": {
+    "category": "torsos",
+    "label": "tactical-vest",
+    "file": "torsos/tactical-vest.png"
+  },
+  "sillhouettes01_029": {
+    "category": "torsos",
+    "label": "hoodie",
+    "file": "torsos/hoodie-4.png"
+  },
+  "sillhouettes01_030": {
+    "category": "torsos",
+    "label": "bat",
+    "file": "torsos/bat-2.png"
+  },
+  "sillhouettes01_032": {
+    "category": "torsos",
+    "label": "runner",
+    "file": "torsos/runner-2.png"
+  },
+  "sillhouettes01_033": {
+    "category": "torsos",
+    "label": "wide-braced",
+    "file": "torsos/wide-braced-2.png"
+  },
+  "sillhouettes01_034": {
+    "category": "torsos",
+    "label": "runner",
+    "file": "torsos/runner-3.png"
+  },
+  "sillhouettes01_035": {
+    "category": "torsos",
+    "label": "runner",
+    "file": "torsos/runner-4.png"
+  },
+  "sillhouettes01_037": {
+    "category": "torsos",
+    "label": "puffer-jacket",
+    "file": "torsos/puffer-jacket.png"
+  },
+  "sillhouettes01_038": {
+    "category": "torsos",
+    "label": "bat",
+    "file": "torsos/bat-3.png"
+  },
+  "sillhouettes01_039": {
+    "category": "torsos",
+    "label": "apron",
+    "file": "torsos/apron-2.png"
+  },
+  "sillhouettes01_040": {
+    "category": "torsos",
+    "label": "overcoat",
+    "file": "torsos/overcoat.png"
+  },
+  "sillhouettes01_041": {
+    "category": "torsos",
+    "label": "cap",
+    "file": "torsos/cap-4.png"
+  },
+  "sillhouettes01_047": {
+    "category": "torsos",
+    "label": "stalk-lunge",
+    "file": "torsos/stalk-lunge-2.png"
+  },
+  "sillhouettes01_048": {
+    "category": "torsos",
+    "label": "lean",
+    "file": "torsos/lean.png"
+  },
+  "sillhouettes01_050": {
+    "category": "torsos",
+    "label": "runner",
+    "file": "torsos/runner-5.png"
+  },
+  "sillhouettes01_051": {
+    "category": "torsos",
+    "label": "casual-slouch",
+    "file": "torsos/casual-slouch-2.png"
+  },
+  "sillhouettes01_056": {
+    "category": "torsos",
+    "label": "shaved",
+    "file": "torsos/shaved-3.png"
+  },
+  "sillhouettes01_058": {
+    "category": "arms",
+    "label": "pistol",
+    "file": "arms/pistol.png"
+  },
+  "sillhouettes01_059": {
+    "category": "arms",
+    "label": "chain",
+    "file": "arms/chain.png"
+  },
+  "sillhouettes01_060": {
+    "category": "arms",
+    "label": "fists",
+    "file": "arms/fists.png"
+  },
+  "sillhouettes01_061": {
+    "category": "arms",
+    "label": "kings_row",
+    "file": "arms/kings_row.png"
+  },
+  "sillhouettes01_062": {
+    "category": "back",
+    "label": "lean",
+    "file": "back/lean.png"
+  },
+  "sillhouettes01_063": {
+    "category": "back",
+    "label": "stalk-lunge",
+    "file": "back/stalk-lunge.png"
+  },
+  "sillhouettes01_064": {
+    "category": "back",
+    "label": "flank-lean",
+    "file": "back/flank-lean.png"
+  },
+  "sillhouettes01_065": {
+    "category": "back",
+    "label": "kneel-recover",
+    "file": "back/kneel-recover.png"
+  },
+  "sillhouettes01_066": {
+    "category": "back",
+    "label": "casual-slouch",
+    "file": "back/casual-slouch.png"
+  },
+  "sillhouettes01_067": {
+    "category": "back",
+    "label": "backpack",
+    "file": "back/backpack.png"
+  },
+  "sillhouettes01_068": {
+    "category": "back",
+    "label": "shaved",
+    "file": "back/shaved.png"
+  },
+  "sillhouettes01_069": {
+    "category": "back",
+    "label": "shotgun",
+    "file": "back/shotgun.png"
+  },
+  "sillhouettes01_071": {
+    "category": "back",
+    "label": "phone-holster",
+    "file": "back/phone-holster.png"
+  },
+  "sillhouettes01_073": {
+    "category": "crew-marks",
+    "label": "kings_row",
+    "file": "crew-marks/kings_row.png"
+  },
+  "sillhouettes01_074": {
+    "category": "crew-marks",
+    "label": "apron",
+    "file": "crew-marks/apron.png"
+  },
+  "sillhouettes01_075": {
+    "category": "crew-marks",
+    "label": "jade_dragon",
+    "file": "crew-marks/jade_dragon-2.png"
+  },
+  "sillhouettes01_077": {
+    "category": "crew-marks",
+    "label": "southside_saints",
+    "file": "crew-marks/southside_saints-2.png"
+  }
 }

@@ -1,0 +1,12 @@
+[project]
+name = "image-extraction"
+version = "0.1.0"
+description = "Sprite sheet extraction and card art compositing for Mean Streets"
+requires-python = ">=3.14"
+dependencies = [
+    "pillow>=11.0",
+    "pytesseract>=0.3",
+]
+
+[tool.uv]
+package = false

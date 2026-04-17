@@ -1,0 +1,39 @@
+{
+  "_doc": "Manual labels for silhouettes03.png — no text labels on this sheet",
+  "contraband": {
+    "silhouettes03_001": "drug-bag",
+    "silhouettes03_002": "pill-bottle",
+    "silhouettes03_003": "herb-bag",
+    "silhouettes03_004": "prescription-bottle",
+    "silhouettes03_005": "brick-kilo",
+    "silhouettes03_006": "syringe",
+    "silhouettes03_007": "brass-knuckles",
+    "silhouettes03_008": "duffel-bag",
+    "silhouettes03_009": "burner-phone",
+    "silhouettes03_010": "paper-bag",
+    "silhouettes03_011": "cash-stack",
+    "silhouettes03_012": "wrapped-bricks",
+    "silhouettes03_013": "fist-front",
+    "silhouettes03_014": "wallet",
+    "silhouettes03_015": "fist-raised",
+    "silhouettes03_016": "fist-alt",
+    "silhouettes03_017": "money-clip"
+  },
+  "weapons": {
+    "silhouettes03_019": "fist-small",
+    "silhouettes03_020": "fist-punch",
+    "silhouettes03_021": "crowbar",
+    "silhouettes03_022": "chain",
+    "silhouettes03_023": "holster-pistol",
+    "silhouettes03_024": "hook-blade",
+    "silhouettes03_025": "grenade",
+    "silhouettes03_026": "pistol-compact",
+    "silhouettes03_027": "pistol-full",
+    "silhouettes03_028": "ammo-box"
+  },
+  "headers": {
+    "silhouettes03_000": "contraband-street-economy",
+    "silhouettes03_018": "weapons-tools",
+    "silhouettes03_029": "footer"
+  }
+}

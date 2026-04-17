@@ -1,0 +1,1112 @@
+{
+  "silhouettes02": {
+    "silhouettes02_000": {
+      "ocr": "ean",
+      "corrected": "lean",
+      "section": "bodies",
+      "y": 85
+    },
+    "silhouettes02_001": {
+      "ocr": "Wverage",
+      "corrected": "average",
+      "section": "bodies",
+      "y": 85
+    },
+    "silhouettes02_002": {
+      "ocr": "deay",
+      "corrected": "heavy",
+      "section": "bodies",
+      "y": 86
+    },
+    "silhouettes02_003": {
+      "ocr": "-ongcoat",
+      "corrected": "tall-longcoat",
+      "section": "bodies",
+      "y": 86
+    },
+    "silhouettes02_004": {
+      "ocr": "Tall-Lo",
+      "corrected": "tall-longcoat",
+      "section": "bodies",
+      "y": 86
+    },
+    "silhouettes02_005": {
+      "ocr": "Hood",
+      "corrected": "hood",
+      "section": "bodies",
+      "y": 82
+    },
+    "silhouettes02_006": {
+      "ocr": "-ap",
+      "corrected": "cap",
+      "section": "bodies",
+      "y": 84
+    },
+    "silhouettes02_007": {
+      "ocr": "ravec",
+      "corrected": "shaved",
+      "section": "bodies",
+      "y": 83
+    },
+    "silhouettes02_008": {
+      "ocr": "Fedc",
+      "corrected": "fedora",
+      "section": "bodies",
+      "y": 86
+    },
+    "silhouettes02_009": {
+      "ocr": "andana",
+      "corrected": "bandana",
+      "section": "bodies",
+      "y": 82
+    },
+    "silhouettes02_010": {
+      "ocr": "-Ma",
+      "corrected": "ski-mask",
+      "section": "bodies",
+      "y": 86
+    },
+    "silhouettes02_011": {
+      "ocr": "sMas",
+      "corrected": "ski-mask",
+      "section": "bodies",
+      "y": 200
+    },
+    "silhouettes02_012": {
+      "ocr": "-Ma",
+      "corrected": "ski-mask",
+      "section": "bodies",
+      "y": 200
+    },
+    "silhouettes02_013": {
+      "ocr": "Mohika",
+      "corrected": "mohawk",
+      "section": "bodies",
+      "y": 200
+    },
+    "silhouettes02_014": {
+      "ocr": "awkSlickFemmeBandagedI",
+      "corrected": "slick-femme",
+      "section": "bodies",
+      "y": 201
+    },
+    "silhouettes02_015": {
+      "ocr": "iFenme",
+      "corrected": "slick-femme",
+      "section": "bodies",
+      "y": 202
+    },
+    "silhouettes02_016": {
+      "ocr": "ShortFerme",
+      "corrected": "short-femme",
+      "section": "bodies",
+      "y": 200
+    },
+    "silhouettes02_017": {
+      "ocr": "Hood",
+      "corrected": "hood",
+      "section": "torsos_head",
+      "y": 391
+    },
+    "silhouettes02_018": {
+      "ocr": "Cay",
+      "corrected": "cap",
+      "section": "torsos_head",
+      "y": 391
+    },
+    "silhouettes02_019": {
+      "ocr": "avec",
+      "corrected": "shaved",
+      "section": "torsos_head",
+      "y": 392
+    },
+    "silhouettes02_020": {
+      "ocr": "Fed",
+      "corrected": "fedora",
+      "section": "torsos_head",
+      "y": 393
+    },
+    "silhouettes02_021": {
+      "ocr": "-ompz",
+      "corrected": null,
+      "section": "torsos_head",
+      "y": 396
+    },
+    "silhouettes02_022": {
+      "ocr": "Hood+Mz",
+      "corrected": "hood",
+      "section": "torsos_head",
+      "y": 395
+    },
+    "silhouettes02_023": {
+      "ocr": "Joodie",
+      "corrected": "hoodie",
+      "section": "torsos_head",
+      "y": 392
+    },
+    "silhouettes02_024": {
+      "ocr": "somber",
+      "corrected": "bomber",
+      "section": "torsos_head",
+      "y": 392
+    },
+    "silhouettes02_025": {
+      "ocr": "ical",
+      "corrected": "cap",
+      "section": "torsos_head",
+      "y": 392
+    },
+    "silhouettes02_026": {
+      "ocr": "Der",
+      "corrected": null,
+      "section": "torsos_head",
+      "y": 392
+    },
+    "silhouettes02_027": {
+      "ocr": "athe",
+      "corrected": "bat",
+      "section": "torsos_head",
+      "y": 393
+    },
+    "silhouettes02_028": {
+      "ocr": "ker",
+      "corrected": "knife",
+      "section": "torsos_head",
+      "y": 392
+    },
+    "silhouettes02_029": {
+      "ocr": "2unner",
+      "corrected": "runner",
+      "section": "torsos_body",
+      "y": 524
+    },
+    "silhouettes02_030": {
+      "ocr": "-Br",
+      "corrected": "wide-braced",
+      "section": "torsos_body",
+      "y": 523
+    },
+    "silhouettes02_031": {
+      "ocr": "Rt",
+      "corrected": null,
+      "section": "torsos_body",
+      "y": 525
+    },
+    "silhouettes02_032": {
+      "ocr": "Junchec",
+      "corrected": "hunched",
+      "section": "torsos_body",
+      "y": 527
+    },
+    "silhouettes02_033": {
+      "ocr": "dunchec",
+      "corrected": "hunched",
+      "section": "torsos_body",
+      "y": 529
+    },
+    "silhouettes02_034": {
+      "ocr": "Joodie",
+      "corrected": "hoodie",
+      "section": "torsos_body",
+      "y": 532
+    },
+    "silhouettes02_035": {
+      "ocr": "ber",
+      "corrected": "bomber",
+      "section": "torsos_body",
+      "y": 533
+    },
+    "silhouettes02_036": {
+      "ocr": "",
+      "corrected": null,
+      "section": "torsos_body",
+      "y": 530
+    },
+    "silhouettes02_037": {
+      "ocr": "cu",
+      "corrected": null,
+      "section": "torsos_body",
+      "y": 535
+    },
+    "silhouettes02_038": {
+      "ocr": "pron",
+      "corrected": "apron",
+      "section": "torsos_body",
+      "y": 532
+    },
+    "silhouettes02_039": {
+      "ocr": "tn",
+      "corrected": null,
+      "section": "torsos_body2",
+      "y": 791
+    },
+    "silhouettes02_040": {
+      "ocr": "",
+      "corrected": null,
+      "section": "torsos_body2",
+      "y": 794
+    },
+    "silhouettes02_041": {
+      "ocr": "",
+      "corrected": null,
+      "section": "torsos_body2",
+      "y": 791
+    },
+    "silhouettes02_042": {
+      "ocr": "",
+      "corrected": null,
+      "section": "torsos_body2",
+      "y": 799
+    },
+    "silhouettes02_043": {
+      "ocr": "-Ta",
+      "corrected": "plant-tank",
+      "section": "torsos_body2",
+      "y": 794
+    },
+    "silhouettes02_044": {
+      "ocr": "Stalk-Le",
+      "corrected": "stalk-lunge",
+      "section": "torsos_body2",
+      "y": 797
+    },
+    "silhouettes02_045": {
+      "ocr": "reel-",
+      "corrected": "reapers",
+      "section": "torsos_body2",
+      "y": 796
+    },
+    "silhouettes02_046": {
+      "ocr": "QUIN",
+      "corrected": "run",
+      "section": "torsos_body2",
+      "y": 799
+    },
+    "silhouettes02_047": {
+      "ocr": "om",
+      "corrected": "bomber",
+      "section": "torsos_body2",
+      "y": 804
+    },
+    "silhouettes02_048": {
+      "ocr": "1k-Le",
+      "corrected": "flank-lean",
+      "section": "torsos_body2",
+      "y": 800
+    },
+    "silhouettes02_049": {
+      "ocr": "sual",
+      "corrected": "casual-slouch",
+      "section": "torsos_body2",
+      "y": 805
+    },
+    "silhouettes02_050": {
+      "ocr": "",
+      "corrected": null,
+      "section": "torsos_body2",
+      "y": 846
+    },
+    "silhouettes02_051": {
+      "ocr": "ists",
+      "corrected": "fists",
+      "section": "torsos_body2",
+      "y": 897
+    },
+    "silhouettes02_052": {
+      "ocr": "istol",
+      "corrected": "pistol",
+      "section": "torsos_body2",
+      "y": 894
+    },
+    "silhouettes02_053": {
+      "ocr": "Knife",
+      "corrected": "knife",
+      "section": "torsos_body2",
+      "y": 886
+    },
+    "silhouettes02_054": {
+      "ocr": "Bz",
+      "corrected": null,
+      "section": "torsos_body2",
+      "y": 896
+    },
+    "silhouettes02_055": {
+      "ocr": "-rowk",
+      "corrected": "mohawk",
+      "section": "arms_items",
+      "y": 912
+    },
+    "silhouettes02_056": {
+      "ocr": "lant",
+      "corrected": "lean",
+      "section": "legs_stances",
+      "y": 1082
+    },
+    "silhouettes02_057": {
+      "ocr": "1kStalk-Lur",
+      "corrected": "stalk-lunge",
+      "section": "legs_stances",
+      "y": 1084
+    },
+    "silhouettes02_058": {
+      "ocr": "Lean",
+      "corrected": "lean",
+      "section": "legs_stances",
+      "y": 1084
+    },
+    "silhouettes02_059": {
+      "ocr": "Cneel-",
+      "corrected": "kneel-recover",
+      "section": "legs_stances",
+      "y": 1084
+    },
+    "silhouettes02_060": {
+      "ocr": "aun",
+      "corrected": "run",
+      "section": "legs_stances",
+      "y": 1084
+    },
+    "silhouettes02_061": {
+      "ocr": "Backpack",
+      "corrected": "backpack",
+      "section": "legs_stances",
+      "y": 1087
+    },
+    "silhouettes02_062": {
+      "ocr": "Medbax",
+      "corrected": "medbag",
+      "section": "legs_stances",
+      "y": 1089
+    },
+    "silhouettes02_063": {
+      "ocr": "rotgun",
+      "corrected": "shotgun",
+      "section": "legs_stances",
+      "y": 1083
+    },
+    "silhouettes02_064": {
+      "ocr": "sym",
+      "corrected": null,
+      "section": "legs_stances",
+      "y": 1088
+    },
+    "silhouettes02_065": {
+      "ocr": "Hols",
+      "corrected": "hood",
+      "section": "legs_stances",
+      "y": 1086
+    },
+    "silhouettes02_066": {
+      "ocr": "lror",
+      "corrected": "crowbar",
+      "section": "crew_marks",
+      "y": 1346
+    },
+    "silhouettes02_067": {
+      "ocr": "Jade",
+      "corrected": "jade_dragon",
+      "section": "crew_marks",
+      "y": 1347
+    },
+    "silhouettes02_068": {
+      "ocr": "",
+      "corrected": null,
+      "section": "crew_marks",
+      "y": 1351
+    },
+    "silhouettes02_069": {
+      "ocr": "OS",
+      "corrected": null,
+      "section": "crew_marks",
+      "y": 1354
+    },
+    "silhouettes02_070": {
+      "ocr": "thside",
+      "corrected": "southside_saints",
+      "section": "crew_marks",
+      "y": 1355
+    },
+    "silhouettes02_071": {
+      "ocr": "feapers",
+      "corrected": "reapers",
+      "section": "crew_marks",
+      "y": 1353
+    },
+    "silhouettes02_072": {
+      "ocr": "ear",
+      "corrected": "reapers",
+      "section": "crew_marks",
+      "y": 1358
+    },
+    "silhouettes02_073": {
+      "ocr": "leon",
+      "corrected": "lean",
+      "section": "crew_marks",
+      "y": 1360
+    },
+    "silhouettes02_074": {
+      "ocr": "um",
+      "corrected": null,
+      "section": "crew_marks",
+      "y": 1351
+    }
+  },
+  "silhouettes03": {
+    "silhouettes03_000": {
+      "ocr": "",
+      "corrected": null,
+      "section": "bodies",
+      "y": 25
+    },
+    "silhouettes03_001": {
+      "ocr": "",
+      "corrected": null,
+      "section": "bodies",
+      "y": 240
+    },
+    "silhouettes03_002": {
+      "ocr": "",
+      "corrected": null,
+      "section": "bodies",
+      "y": 248
+    },
+    "silhouettes03_003": {
+      "ocr": "",
+      "corrected": null,
+      "section": "bodies",
+      "y": 252
+    },
+    "silhouettes03_004": {
+      "ocr": "",
+      "corrected": null,
+      "section": "heads_row1",
+      "y": 272
+    },
+    "silhouettes03_005": {
+      "ocr": "",
+      "corrected": null,
+      "section": "heads_row1",
+      "y": 277
+    },
+    "silhouettes03_006": {
+      "ocr": "",
+      "corrected": null,
+      "section": "heads_row2",
+      "y": 303
+    },
+    "silhouettes03_007": {
+      "ocr": "",
+      "corrected": null,
+      "section": "heads_row2",
+      "y": 339
+    },
+    "silhouettes03_008": {
+      "ocr": "",
+      "corrected": null,
+      "section": "torsos_head",
+      "y": 432
+    },
+    "silhouettes03_009": {
+      "ocr": "",
+      "corrected": null,
+      "section": "torsos_head",
+      "y": 439
+    },
+    "silhouettes03_010": {
+      "ocr": "",
+      "corrected": null,
+      "section": "torsos_head",
+      "y": 449
+    },
+    "silhouettes03_011": {
+      "ocr": "",
+      "corrected": null,
+      "section": "torsos_head",
+      "y": 454
+    },
+    "silhouettes03_012": {
+      "ocr": "",
+      "corrected": null,
+      "section": "torsos_head",
+      "y": 484
+    },
+    "silhouettes03_013": {
+      "ocr": "",
+      "corrected": null,
+      "section": "torsos_body",
+      "y": 623
+    },
+    "silhouettes03_014": {
+      "ocr": "",
+      "corrected": null,
+      "section": "torsos_body",
+      "y": 616
+    },
+    "silhouettes03_015": {
+      "ocr": "",
+      "corrected": null,
+      "section": "torsos_body",
+      "y": 629
+    },
+    "silhouettes03_016": {
+      "ocr": "",
+      "corrected": null,
+      "section": "torsos_body",
+      "y": 631
+    },
+    "silhouettes03_017": {
+      "ocr": "",
+      "corrected": null,
+      "section": "torsos_lower",
+      "y": 645
+    },
+    "silhouettes03_018": {
+      "ocr": "",
+      "corrected": null,
+      "section": "torsos_body2",
+      "y": 785
+    },
+    "silhouettes03_019": {
+      "ocr": "",
+      "corrected": null,
+      "section": "arms_items",
+      "y": 918
+    },
+    "silhouettes03_020": {
+      "ocr": "",
+      "corrected": null,
+      "section": "arms_items",
+      "y": 928
+    },
+    "silhouettes03_021": {
+      "ocr": "",
+      "corrected": null,
+      "section": "back_accessories",
+      "y": 1152
+    },
+    "silhouettes03_022": {
+      "ocr": "",
+      "corrected": null,
+      "section": "back_accessories",
+      "y": 1159
+    },
+    "silhouettes03_023": {
+      "ocr": "",
+      "corrected": null,
+      "section": "back_accessories",
+      "y": 1170
+    },
+    "silhouettes03_024": {
+      "ocr": "",
+      "corrected": null,
+      "section": "back_accessories",
+      "y": 1162
+    },
+    "silhouettes03_025": {
+      "ocr": "",
+      "corrected": null,
+      "section": "back_accessories",
+      "y": 1216
+    },
+    "silhouettes03_026": {
+      "ocr": "",
+      "corrected": null,
+      "section": "back_accessories",
+      "y": 1247
+    },
+    "silhouettes03_027": {
+      "ocr": "",
+      "corrected": null,
+      "section": "back_accessories",
+      "y": 1243
+    },
+    "silhouettes03_028": {
+      "ocr": "",
+      "corrected": null,
+      "section": "crew_marks",
+      "y": 1252
+    },
+    "silhouettes03_029": {
+      "ocr": "al",
+      "corrected": null,
+      "section": "crew_marks",
+      "y": 1389
+    }
+  },
+  "sillhouettes01": {
+    "sillhouettes01_000": {
+      "ocr": "ean",
+      "corrected": "lean",
+      "section": "bodies",
+      "y": 86
+    },
+    "sillhouettes01_001": {
+      "ocr": "Average",
+      "corrected": "average",
+      "section": "bodies",
+      "y": 86
+    },
+    "sillhouettes01_002": {
+      "ocr": "jeavy",
+      "corrected": "heavy",
+      "section": "bodies",
+      "y": 87
+    },
+    "sillhouettes01_003": {
+      "ocr": "Fedc",
+      "corrected": "fedora",
+      "section": "bodies",
+      "y": 85
+    },
+    "sillhouettes01_004": {
+      "ocr": "-ongcoat",
+      "corrected": "tall-longcoat",
+      "section": "bodies",
+      "y": 96
+    },
+    "sillhouettes01_005": {
+      "ocr": "",
+      "corrected": null,
+      "section": "bodies",
+      "y": 84
+    },
+    "sillhouettes01_006": {
+      "ocr": "",
+      "corrected": null,
+      "section": "bodies",
+      "y": 88
+    },
+    "sillhouettes01_007": {
+      "ocr": "",
+      "corrected": null,
+      "section": "bodies",
+      "y": 87
+    },
+    "sillhouettes01_008": {
+      "ocr": "",
+      "corrected": null,
+      "section": "bodies",
+      "y": 86
+    },
+    "sillhouettes01_009": {
+      "ocr": "",
+      "corrected": null,
+      "section": "bodies",
+      "y": 87
+    },
+    "sillhouettes01_010": {
+      "ocr": "",
+      "corrected": null,
+      "section": "bodies",
+      "y": 86
+    },
+    "sillhouettes01_011": {
+      "ocr": "",
+      "corrected": null,
+      "section": "bodies",
+      "y": 88
+    },
+    "sillhouettes01_012": {
+      "ocr": "Hood",
+      "corrected": "hood",
+      "section": "bodies",
+      "y": 171
+    },
+    "sillhouettes01_013": {
+      "ocr": "Car",
+      "corrected": "cap",
+      "section": "bodies",
+      "y": 169
+    },
+    "sillhouettes01_014": {
+      "ocr": "laVe",
+      "corrected": "shaved",
+      "section": "bodies",
+      "y": 173
+    },
+    "sillhouettes01_015": {
+      "ocr": "dora",
+      "corrected": "fedora",
+      "section": "bodies",
+      "y": 168
+    },
+    "sillhouettes01_016": {
+      "ocr": "jJandana",
+      "corrected": "bandana",
+      "section": "bodies",
+      "y": 172
+    },
+    "sillhouettes01_017": {
+      "ocr": "-ompac",
+      "corrected": "pompadour",
+      "section": "bodies",
+      "y": 173
+    },
+    "sillhouettes01_018": {
+      "ocr": "Hood-Mask",
+      "corrected": "hood-mask",
+      "section": "bodies",
+      "y": 173
+    },
+    "sillhouettes01_019": {
+      "ocr": "Jooc",
+      "corrected": "monocle",
+      "section": "torsos_head",
+      "y": 388
+    },
+    "sillhouettes01_020": {
+      "ocr": "Car",
+      "corrected": "cap",
+      "section": "torsos_head",
+      "y": 391
+    },
+    "sillhouettes01_021": {
+      "ocr": "1ave",
+      "corrected": "shaved",
+      "section": "torsos_head",
+      "y": 388
+    },
+    "sillhouettes01_022": {
+      "ocr": "Fedc",
+      "corrected": "fedora",
+      "section": "torsos_head",
+      "y": 391
+    },
+    "sillhouettes01_023": {
+      "ocr": "3andanaPome",
+      "corrected": "bandana",
+      "section": "torsos_head",
+      "y": 393
+    },
+    "sillhouettes01_024": {
+      "ocr": "npadou",
+      "corrected": "pompadour",
+      "section": "torsos_head",
+      "y": 392
+    },
+    "sillhouettes01_025": {
+      "ocr": "HodMask",
+      "corrected": "hood-mask",
+      "section": "torsos_head",
+      "y": 392
+    },
+    "sillhouettes01_026": {
+      "ocr": "Hoodie",
+      "corrected": "hoodie",
+      "section": "torsos_head",
+      "y": 389
+    },
+    "sillhouettes01_027": {
+      "ocr": "jomber",
+      "corrected": "bomber",
+      "section": "torsos_head",
+      "y": 391
+    },
+    "sillhouettes01_028": {
+      "ocr": "Tactical",
+      "corrected": "tactical-vest",
+      "section": "torsos_head",
+      "y": 390
+    },
+    "sillhouettes01_029": {
+      "ocr": "De",
+      "corrected": "hoodie",
+      "section": "torsos_head",
+      "y": 390
+    },
+    "sillhouettes01_030": {
+      "ocr": "eat",
+      "corrected": "bat",
+      "section": "torsos_head",
+      "y": 389
+    },
+    "sillhouettes01_031": {
+      "ocr": "cu",
+      "corrected": null,
+      "section": "torsos_head",
+      "y": 391
+    },
+    "sillhouettes01_032": {
+      "ocr": "tunner",
+      "corrected": "runner",
+      "section": "torsos_body",
+      "y": 501
+    },
+    "sillhouettes01_033": {
+      "ocr": "-Br",
+      "corrected": "wide-braced",
+      "section": "torsos_body",
+      "y": 503
+    },
+    "sillhouettes01_034": {
+      "ocr": "2unner",
+      "corrected": "runner",
+      "section": "torsos_body",
+      "y": 505
+    },
+    "sillhouettes01_035": {
+      "ocr": "duneck",
+      "corrected": "runner",
+      "section": "torsos_body",
+      "y": 504
+    },
+    "sillhouettes01_036": {
+      "ocr": "Cc",
+      "corrected": null,
+      "section": "torsos_body",
+      "y": 539
+    },
+    "sillhouettes01_037": {
+      "ocr": "Puffer",
+      "corrected": "puffer-jacket",
+      "section": "torsos_body",
+      "y": 539
+    },
+    "sillhouettes01_038": {
+      "ocr": "oat",
+      "corrected": "bat",
+      "section": "torsos_body",
+      "y": 539
+    },
+    "sillhouettes01_039": {
+      "ocr": "pron",
+      "corrected": "apron",
+      "section": "torsos_body",
+      "y": 546
+    },
+    "sillhouettes01_040": {
+      "ocr": "vercoat",
+      "corrected": "overcoat",
+      "section": "torsos_body",
+      "y": 539
+    },
+    "sillhouettes01_041": {
+      "ocr": "Ca",
+      "corrected": "cap",
+      "section": "torsos_body2",
+      "y": 791
+    },
+    "sillhouettes01_042": {
+      "ocr": "",
+      "corrected": null,
+      "section": "torsos_body2",
+      "y": 778
+    },
+    "sillhouettes01_043": {
+      "ocr": "",
+      "corrected": null,
+      "section": "torsos_body2",
+      "y": 784
+    },
+    "sillhouettes01_044": {
+      "ocr": "",
+      "corrected": null,
+      "section": "torsos_body2",
+      "y": 783
+    },
+    "sillhouettes01_045": {
+      "ocr": "",
+      "corrected": null,
+      "section": "torsos_body2",
+      "y": 796
+    },
+    "sillhouettes01_046": {
+      "ocr": "Ta",
+      "corrected": null,
+      "section": "torsos_body2",
+      "y": 783
+    },
+    "sillhouettes01_047": {
+      "ocr": "Stalk-Lt",
+      "corrected": "stalk-lunge",
+      "section": "torsos_body2",
+      "y": 783
+    },
+    "sillhouettes01_048": {
+      "ocr": "lank",
+      "corrected": "lean",
+      "section": "torsos_body2",
+      "y": 783
+    },
+    "sillhouettes01_049": {
+      "ocr": "1eel",
+      "corrected": null,
+      "section": "torsos_body2",
+      "y": 783
+    },
+    "sillhouettes01_050": {
+      "ocr": "Re",
+      "corrected": "runner",
+      "section": "torsos_body2",
+      "y": 784
+    },
+    "sillhouettes01_051": {
+      "ocr": "Zasual",
+      "corrected": "casual-slouch",
+      "section": "torsos_body2",
+      "y": 796
+    },
+    "sillhouettes01_052": {
+      "ocr": "",
+      "corrected": null,
+      "section": "torsos_body2",
+      "y": 824
+    },
+    "sillhouettes01_053": {
+      "ocr": "",
+      "corrected": null,
+      "section": "torsos_body2",
+      "y": 838
+    },
+    "sillhouettes01_054": {
+      "ocr": "",
+      "corrected": null,
+      "section": "torsos_body2",
+      "y": 842
+    },
+    "sillhouettes01_055": {
+      "ocr": "",
+      "corrected": null,
+      "section": "torsos_body2",
+      "y": 881
+    },
+    "sillhouettes01_056": {
+      "ocr": "Se",
+      "corrected": "shaved",
+      "section": "torsos_body2",
+      "y": 889
+    },
+    "sillhouettes01_057": {
+      "ocr": "",
+      "corrected": null,
+      "section": "torsos_body2",
+      "y": 886
+    },
+    "sillhouettes01_058": {
+      "ocr": "tol",
+      "corrected": "pistol",
+      "section": "arms_items",
+      "y": 923
+    },
+    "sillhouettes01_059": {
+      "ocr": "vain",
+      "corrected": "chain",
+      "section": "arms_items",
+      "y": 915
+    },
+    "sillhouettes01_060": {
+      "ocr": "sts",
+      "corrected": "fists",
+      "section": "arms_items",
+      "y": 930
+    },
+    "sillhouettes01_061": {
+      "ocr": "Srowt",
+      "corrected": "kings_row",
+      "section": "arms_items",
+      "y": 925
+    },
+    "sillhouettes01_062": {
+      "ocr": "lant",
+      "corrected": "lean",
+      "section": "back_accessories",
+      "y": 1119
+    },
+    "sillhouettes01_063": {
+      "ocr": "Stak-Lu",
+      "corrected": "stalk-lunge",
+      "section": "back_accessories",
+      "y": 1119
+    },
+    "sillhouettes01_064": {
+      "ocr": "1k-Le",
+      "corrected": "flank-lean",
+      "section": "back_accessories",
+      "y": 1119
+    },
+    "sillhouettes01_065": {
+      "ocr": "neel-",
+      "corrected": "kneel-recover",
+      "section": "back_accessories",
+      "y": 1119
+    },
+    "sillhouettes01_066": {
+      "ocr": "al-Sic",
+      "corrected": "casual-slouch",
+      "section": "back_accessories",
+      "y": 1118
+    },
+    "sillhouettes01_067": {
+      "ocr": "ackpack",
+      "corrected": "backpack",
+      "section": "back_accessories",
+      "y": 1118
+    },
+    "sillhouettes01_068": {
+      "ocr": "Aedbe",
+      "corrected": "shaved",
+      "section": "back_accessories",
+      "y": 1120
+    },
+    "sillhouettes01_069": {
+      "ocr": "Shote",
+      "corrected": "shotgun",
+      "section": "back_accessories",
+      "y": 1119
+    },
+    "sillhouettes01_070": {
+      "ocr": "sym",
+      "corrected": null,
+      "section": "back_accessories",
+      "y": 1119
+    },
+    "sillhouettes01_071": {
+      "ocr": "Holste",
+      "corrected": "phone-holster",
+      "section": "back_accessories",
+      "y": 1120
+    },
+    "sillhouettes01_072": {
+      "ocr": "",
+      "corrected": null,
+      "section": "crew_marks",
+      "y": 1343
+    },
+    "sillhouettes01_073": {
+      "ocr": "ing",
+      "corrected": "kings_row",
+      "section": "crew_marks",
+      "y": 1384
+    },
+    "sillhouettes01_074": {
+      "ocr": "Iron",
+      "corrected": "apron",
+      "section": "crew_marks",
+      "y": 1383
+    },
+    "sillhouettes01_075": {
+      "ocr": "ade",
+      "corrected": "jade_dragon",
+      "section": "crew_marks",
+      "y": 1376
+    },
+    "sillhouettes01_076": {
+      "ocr": "",
+      "corrected": null,
+      "section": "crew_marks",
+      "y": 1385
+    },
+    "sillhouettes01_077": {
+      "ocr": "thside",
+      "corrected": "southside_saints",
+      "section": "crew_marks",
+      "y": 1390
+    },
+    "sillhouettes01_078": {
+      "ocr": "",
+      "corrected": null,
+      "section": "crew_marks",
+      "y": 1441
+    }
+  }
+}
