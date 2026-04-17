@@ -160,8 +160,13 @@ export function playSimulatedGame(
   opts: PlayGameOptions,
 ): TurfGameResult {
   const rng = createRng(seed);
-  const deckA = buildAutoDeck(opts.pools, rng, opts.deckPolicyA);
-  const deckB = buildAutoDeck(opts.pools, rng, opts.deckPolicyB);
+  // Use independent sub-RNGs for each deck so A's shuffle doesn't consume
+  // RNG state that B would otherwise use. Derived from seed with
+  // prime-offset interleaving to ensure independence.
+  const rngA = createRng(seed * 2 + 1);
+  const rngB = createRng(seed * 3 + 7);
+  const deckA = buildAutoDeck(opts.pools, rngA, opts.deckPolicyA);
+  const deckB = buildAutoDeck(opts.pools, rngB, opts.deckPolicyB);
   const config = opts.config ?? DEFAULT_GAME_CONFIG;
   const match = createMatch(config, { seed, deckA, deckB });
   const exploreRate = opts.explorationRate ?? 0;
@@ -169,17 +174,20 @@ export function playSimulatedGame(
   while (!isGameOver(match)) {
     match.turnCount++;
 
-    // Both sides take their turn in parallel (no alternating side); the
-    // resolve phase fires automatically inside `end_turn` when both
-    // `turnEnded` flags are true.
-    runSideTurn(match.game, 'A', {
+    // Alternate who moves first each turn to eliminate systematic first-mover
+    // informational bias in the benchmark. A acts first on odd turns, B on
+    // even turns. Resolve still fires when both turnEnded flags are set.
+    const aFirst = match.turnCount % 2 === 1;
+    const [first, second] = aFirst ? (['A', 'B'] as const) : (['B', 'A'] as const);
+
+    runSideTurn(match.game, first, {
       rng,
       explorationRate: exploreRate,
       capturePolicySamples: opts.capturePolicySamples,
       policyArtifact: opts.policyArtifact,
     });
     if (match.game.winner) break;
-    runSideTurn(match.game, 'B', {
+    runSideTurn(match.game, second, {
       rng,
       explorationRate: exploreRate,
       capturePolicySamples: opts.capturePolicySamples,

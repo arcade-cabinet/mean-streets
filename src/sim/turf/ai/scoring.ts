@@ -10,11 +10,14 @@ import {
   hasToughOnTurf,
   positionPower,
   positionResistance,
+  toughCombatPower,
+  toughCombatResistance,
   turfAffiliationConflict,
   turfCurrency,
   turfToughs,
 } from '../board';
 import { policyActionKey } from '../env-query';
+import { resolveTargetToughIdx } from '../stack-ops';
 import { topToughIdx } from '../stack-ops';
 import type {
   Card,
@@ -54,13 +57,26 @@ function pendingCard(
 }
 
 // Attacker-vs-defender dominance using tangible bonuses (cashBonus is
-// the Pushed currency modifier).
+// the Pushed currency modifier). Uses individual tough combat stats (top
+// attacker vs target defender) to match the actual resolveStrikeNow logic,
+// avoiding the overestimate from positionPower which sums all toughs.
 function strikeDominance(atk: Turf, def: Turf, cashBonus = 0): number {
   const bonus = applyTangibles(atk, def);
-  const P = Math.max(0, positionPower(atk) + cashBonus + bonus.atkPowerDelta);
+  const atkTopIdx = topToughIdx(atk);
+  const defTargetIdx = resolveTargetToughIdx(def, atk);
+  const P = Math.max(
+    0,
+    (atkTopIdx >= 0 ? toughCombatPower(atk, atkTopIdx) : 0) +
+      cashBonus +
+      bonus.atkPowerDelta,
+  );
   const R = bonus.ignoreResistance
     ? 0
-    : Math.max(0, positionResistance(def) + bonus.defResistDelta);
+    : Math.max(
+        0,
+        (defTargetIdx >= 0 ? toughCombatResistance(def, defTargetIdx) : 0) +
+          bonus.defResistDelta,
+      );
   return P - R;
 }
 
@@ -158,6 +174,12 @@ function scoreDirect(state: TurfGameState, action: TurfAction): number {
   const t = resolveAttackTurfs(state, action);
   if (!t) return NEG_INF;
   const margin = strikeDominance(t.atk, t.def);
+  // Definite bust (individual P < individual R) → skip; don't queue
+  // wasteful strikes that will 100% miss. Abilities (tangibles/intangibles)
+  // can only modify the outcome AFTER the queue phase; checking the pre-ability
+  // margin here avoids infinite bust loops on bad matchups. Note: abilities
+  // that grant atkPowerDelta > 0 are already folded in via strikeDominance.
+  if (margin < 0) return NEG_INF;
   let s = margin * aw.killMargin;
   if (margin >= 0) s += aw.seizeBonus;
   else if (
@@ -185,10 +207,12 @@ function scorePushed(state: TurfGameState, action: TurfAction): number {
   const t = resolveAttackTurfs(state, action);
   if (!t) return NEG_INF;
   const currency = turfCurrency(t.atk);
-  if (currency.length === 0) return -5;
+  if (currency.length === 0) return NEG_INF;
 
   const cashBonus = currency[0].denomination / combat.pushedDenominationScale;
   const margin = strikeDominance(t.atk, t.def, cashBonus);
+  // Skip definite busts even with currency boost.
+  if (margin < 0) return NEG_INF;
   let s = margin * aw.killMargin + aw.flipBonus + aw.splashBonus;
   if (margin >= 0) s += sc.pushedKillBonus;
   if (t.defP.turfs.length <= 1) s += sc.lastTurfBonus;
@@ -203,7 +227,7 @@ function scoreRecruit(state: TurfGameState, action: TurfAction): number {
   const t = resolveAttackTurfs(state, action);
   if (!t) return NEG_INF;
   const totalCash = turfCurrency(t.atk).reduce((x, c) => x + c.denomination, 0);
-  if (totalCash < combat.fundedRecruitMinCash) return -5;
+  if (totalCash < combat.fundedRecruitMinCash) return NEG_INF;
   const tgtIdx = topToughIdx(t.def);
   if (tgtIdx < 0) return -5;
   const target = t.def.stack[tgtIdx].card;

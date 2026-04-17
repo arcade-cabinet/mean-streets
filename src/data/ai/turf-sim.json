@@ -335,10 +335,10 @@
       "bias": 1.0
     },
     "directPressure": {
-      "base": 0.4,
-      "marginScale": 0.5,
+      "base": 1.2,
+      "marginScale": 0.6,
       "lastTurfBonus": 3,
-      "bias": 1.1
+      "bias": 1.4
     },
     "fundedPressure": {
       "baseWithCurrency": 0.6,
@@ -349,6 +349,9 @@
     "pushedPressure": {
       "base": 0.3,
       "bias": 1.1
+    },
+    "stackRebuild": {
+      "bias": 1.0
     },
     "antiStall": {
       "consecutivePassThreshold": 1,

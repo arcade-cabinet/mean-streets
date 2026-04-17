@@ -197,7 +197,13 @@ export function isGameOver(match: MatchState): 'A' | 'B' | null {
   if (match.turnCount >= match.maxTurns) {
     const turfsA = game.players.A.turfs.length;
     const turfsB = game.players.B.turfs.length;
-    game.winner = turfsA >= turfsB ? 'A' : 'B';
+    if (turfsA !== turfsB) {
+      game.winner = turfsA > turfsB ? 'A' : 'B';
+    } else {
+      // Equal turfs at timeout: coin-flip using the game's seeded rng so
+      // results are deterministic per seed but not systematically biased.
+      game.winner = game.rng.next() < 0.5 ? 'A' : 'B';
+    }
     game.endReason = 'timeout';
     return game.winner;
   }

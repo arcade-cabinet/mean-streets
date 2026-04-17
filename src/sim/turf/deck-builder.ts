@@ -22,12 +22,18 @@ function normalizeBias(value: number | undefined, fallback: number): number {
   return Math.max(0, Math.min(1, value ?? fallback));
 }
 
+/** Deep-copy a ToughCard so HP mutations during play don't corrupt the pool. */
+function cloneTough(t: ToughCard): ToughCard {
+  return { ...t, abilities: [...t.abilities], hp: t.maxHp };
+}
+
 export function buildAutoDeck(
   pools: TurfCardPools,
   rng: Rng,
   policy: AutoDeckPolicy = {},
 ): Card[] {
-  const crewPool = [...pools.crew] as ToughCard[];
+  // Clone tough cards so in-game HP mutations don't corrupt the shared pool.
+  const crewPool = pools.crew.map(cloneTough);
   const weaponPool = [...pools.weapons] as WeaponCard[];
   const drugPool = [...pools.drugs] as DrugCard[];
   const cashPool = [...pools.cash] as CurrencyCard[];

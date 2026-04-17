@@ -225,7 +225,7 @@ function buildThink(owner: PlannerOwner): Think {
   brain.addEvaluator(
     new TurfGoalEvaluator(
       'stack_rebuild',
-      1.5,
+      pl.stackRebuild.bias,
       desireStackRebuild,
       buildStackRebuild,
     ),

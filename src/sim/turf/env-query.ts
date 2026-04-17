@@ -159,29 +159,34 @@ export function enumerateLegalActions(
   const activeIdx = 0;
   const active = player.turfs[activeIdx];
 
+  const hasBudget = player.actionsRemaining > 0;
+
   // draw (no pending, deck non-empty)
-  if (player.pending === null && player.deck.length > 0) {
+  if (hasBudget && player.pending === null && player.deck.length > 0) {
     actions.push({ kind: 'draw', side });
   }
 
   // play_card (have pending; active turf only)
   if (player.pending !== null && active) {
     const card = player.pending;
-    if (!(isModifierCard(card) && active.stack.length === 0)) {
-      if (!(card.kind === 'tough' && turfAffiliationConflict(active, card))) {
-        actions.push({
-          kind: 'play_card',
-          side,
-          turfIdx: activeIdx,
-          cardId: card.id,
-        });
+    // discard is always free (no budget check); play_card costs 1 action.
+    if (hasBudget) {
+      if (!(isModifierCard(card) && active.stack.length === 0)) {
+        if (!(card.kind === 'tough' && turfAffiliationConflict(active, card))) {
+          actions.push({
+            kind: 'play_card',
+            side,
+            turfIdx: activeIdx,
+            cardId: card.id,
+          });
+        }
       }
     }
     actions.push({ kind: 'discard', side, cardId: card.id });
   }
 
   // retreat — active turf, stack size ≥ 2, swap to any face-up non-top.
-  if (active && active.stack.length >= 2) {
+  if (hasBudget && active && active.stack.length >= 2) {
     for (let s = 0; s < active.stack.length - 1; s++) {
       if (active.stack[s].faceUp) {
         actions.push({ kind: 'retreat', side, turfIdx: activeIdx, stackIdx: s });
@@ -190,7 +195,7 @@ export function enumerateLegalActions(
   }
 
   // modifier_swap — active turf only, between two different toughs.
-  if (active) {
+  if (hasBudget && active) {
     const toughIds: string[] = [];
     for (const sc of active.stack) {
       if (sc.card.kind === 'tough') toughIds.push(sc.card.id);
@@ -223,7 +228,7 @@ export function enumerateLegalActions(
   // strikes (source = active turf not closed-ranks, has a living tough;
   // target = opponent active turf with a living tough).
   const oppActive = opp.turfs[0];
-  if (active && !active.closedRanks && hasToughOnTurf(active) && oppActive && hasToughOnTurf(oppActive)) {
+  if (hasBudget && active && !active.closedRanks && hasToughOnTurf(active) && oppActive && hasToughOnTurf(oppActive)) {
     actions.push({ kind: 'direct_strike', side, turfIdx: 0, targetTurfIdx: 0 });
     actions.push({ kind: 'pushed_strike', side, turfIdx: 0, targetTurfIdx: 0 });
     actions.push({ kind: 'funded_recruit', side, turfIdx: 0, targetTurfIdx: 0 });

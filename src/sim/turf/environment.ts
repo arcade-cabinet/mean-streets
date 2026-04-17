@@ -89,7 +89,10 @@ export function updatePlannerMemory(
   memory: PlannerMemory, action: TurfAction, reward: number,
 ): void {
   memory.lastActionKind = action.kind;
-  if (action.kind === 'pass' || action.kind === 'end_turn')
+  // Only true "doing nothing" actions count as passes. end_turn is the
+  // normal turn-close and does NOT escalate anti_stall — the AI may have
+  // played several productive actions before ending.
+  if (action.kind === 'pass')
     memory.consecutivePasses++;
   else memory.consecutivePasses = 0;
   const lane = action.targetTurfIdx ?? action.turfIdx;
