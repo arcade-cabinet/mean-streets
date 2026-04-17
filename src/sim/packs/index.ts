@@ -9,7 +9,7 @@ export type {
   WarOutcomeReward,
   RewardBundle,
 } from './types';
-export { PACK_SIZE, PACK_CATEGORY } from './types';
+export { PACK_SIZE } from './types';
 export {
   generatePack,
   generatePackInstances,

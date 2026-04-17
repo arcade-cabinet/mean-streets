@@ -1,4 +1,4 @@
-name: Mobile Release
+name: Release
 
 on:
   push:
@@ -18,7 +18,6 @@ jobs:
   android:
     runs-on: ubuntu-latest
     env:
-      # Only used in the artifact name (static interpolation), never piped to a shell.
       TARGET_REF: ${{ github.event.inputs.ref || github.ref_name }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

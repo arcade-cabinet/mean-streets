@@ -238,7 +238,6 @@ export async function grantStarterCollection(): Promise<Card[]> {
 
 export async function openRewardPacks(
   rewards: PackReward[],
-  suddenDeathWin: boolean,
   unlockDifficulty: DifficultyTier = DEFAULT_UNLOCK_DIFFICULTY,
 ): Promise<Card[]> {
   const baseCollection = await loadCollection();
@@ -251,7 +250,7 @@ export async function openRewardPacks(
 
   for (const reward of rewards) {
     for (let i = 0; i < reward.count; i++) {
-      const packCards = generatePack(reward.kind, runningCollection, rng, { suddenDeathWin });
+      const packCards = generatePack(reward.kind, runningCollection, rng);
       newCards.push(...packCards);
       for (const card of packCards) {
         if (!seenIds.has(card.id)) {

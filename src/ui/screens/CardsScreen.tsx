@@ -37,7 +37,7 @@ export function CardsScreen({
   return (
     <div className="cards-screen" data-testid="cards-screen">
       <div className="cards-hud">
-        <button type="button" className="cards-hud-btn" onClick={onBack}>
+        <button type="button" className="cards-hud-btn" onClick={onBack} data-testid="cards-back">
           Back
         </button>
         <span className="cards-hud-title">Collection</span>

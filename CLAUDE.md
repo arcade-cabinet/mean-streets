@@ -56,7 +56,7 @@ pnpm run test               # Node + DOM unit tests (fast)
 pnpm run test:node          # Pure node tests (sim, pure logic)
 pnpm run test:dom           # jsdom tests (presentational components)
 pnpm run test:browser       # Vitest browser-playwright (real Chromium)
-pnpm run test:e2e           # Playwright end-to-end
+pnpm run test:e2e           # Playwright end-to-end (LOCAL ONLY — not in CI)
 pnpm run test:visual        # Playwright visual fixture capture
 pnpm run test:release       # Release gate (requires RELEASE_GATING=1)
 pnpm run analysis:benchmark # Rerun balance benchmark → sim/reports/analysis/
@@ -214,7 +214,10 @@ pnpm run cap:sync           # Build + sync web assets to Capacitor
   native shell configuration.
 - `e2e/*.spec.ts` — Playwright end-to-end against the dev server
   (configured in `playwright.config.ts`; runs desktop-chromium,
-  iphone-14, pixel-7, ipad-pro-landscape projects).
+  iphone-14, pixel-7, ipad-pro-landscape projects). **E2E is NOT in
+  PR CI** — it runs in `cd.yml` on push to main (gates deploy) and
+  on-demand locally via `pnpm run test:e2e`. Run locally before
+  merging large UI changes.
 - Integration smoke scaffold: `src/sim/turf/__tests__/v03-integration.test.ts`
   — describe.skip-gated suite to be promoted as modules stabilize.
 
