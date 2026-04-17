@@ -9,6 +9,18 @@ status: current
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.0](https://github.com/arcade-cabinet/mean-streets/compare/v0.5.0...v0.6.0) (2026-04-17)
+
+
+### Features
+
+* **ui:** board grid layout + simplified menu + cards screen + browser tests ([#15](https://github.com/arcade-cabinet/mean-streets/issues/15)) ([831e28c](https://github.com/arcade-cabinet/mean-streets/commit/831e28cb6f33e1b1ff4c131a9d9fdde9800edb99))
+
+
+### Documentation
+
+* update STATE.md — E2E + mythics + governance done ([#12](https://github.com/arcade-cabinet/mean-streets/issues/12)) ([88798a4](https://github.com/arcade-cabinet/mean-streets/commit/88798a4ce481d6f94d207787bc1245b9453e45a5))
+
 ## [0.5.0](https://github.com/arcade-cabinet/mean-streets/compare/v0.4.0...v0.5.0) (2026-04-17)
 
 
