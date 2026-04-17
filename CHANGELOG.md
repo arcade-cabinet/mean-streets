@@ -9,6 +9,23 @@ status: current
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.7.0](https://github.com/arcade-cabinet/mean-streets/compare/v0.6.0...v0.7.0) (2026-04-17)
+
+
+### Features
+
+* **packs:** single draw pile with probabilistic type drops ([#16](https://github.com/arcade-cabinet/mean-streets/issues/16)) ([21a3f5d](https://github.com/arcade-cabinet/mean-streets/commit/21a3f5d6684361bdfab7702631817bcb4b688fd6))
+
+
+### Bug Fixes
+
+* **ci:** correct setup-java SHA + reset lockfile noise in autobalance ([#17](https://github.com/arcade-cabinet/mean-streets/issues/17)) ([fa52842](https://github.com/arcade-cabinet/mean-streets/commit/fa52842a27c8ccc8f1aee8c3300cc47d0c620c6d))
+
+
+### Documentation
+
+* update STATE.md ([#18](https://github.com/arcade-cabinet/mean-streets/issues/18)) ([ef50601](https://github.com/arcade-cabinet/mean-streets/commit/ef506016fec0fa6e2413b3d58bd894e745979767))
+
 ## [0.6.0](https://github.com/arcade-cabinet/mean-streets/compare/v0.5.0...v0.6.0) (2026-04-17)
 
 
