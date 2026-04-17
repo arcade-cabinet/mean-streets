@@ -68,6 +68,14 @@ export function buildGameActions(a: BuildArgs) {
     if (a.pending && side === 'A' && !isStrikeMode(m) && !stackModes.includes(m)) {
       placePending(); return;
     }
+    if (!m && side === 'A' && a.playerActive && a.playerActive.stack.length > 0 && !a.pending) {
+      a.setModal({ kind: 'stack', turf: a.playerActive, isOwn: true });
+      return;
+    }
+    if (!m && side === 'B' && a.opponentActive && a.opponentActive.stack.length > 0) {
+      a.setModal({ kind: 'stack', turf: a.opponentActive, isOwn: false });
+      return;
+    }
     if (!m) return;
     if (m === 'play_card' && side === 'A') { placePending(); return; }
     if (stackModes.includes(m) && side === 'A' && a.playerActive) {
@@ -102,6 +110,13 @@ export function buildGameActions(a: BuildArgs) {
     if (m === 'send_to_holding' && sc.card.kind === 'tough') {
       const r = sendToHoldingAction(a.world, 'A', sc.card.id);
       reset(); if (r) a.flash('SENT TO HOLDING', 900); return;
+    }
+    if (!m && sc.card.kind === 'tough' && sc.faceUp && a.opponentActive && hasToughOnTurf(a.opponentActive)) {
+      a.setMode('direct_strike');
+      a.setStrikePhase('pick-target');
+      a.setModal({ kind: 'none' });
+      a.flash('Tap opponent turf to strike', 1500);
+      return;
     }
     if (m !== 'modifier_swap') return;
     if (a.modal.kind === 'swap' && sc.card.kind === 'tough' && sc.card.id !== a.modal.sourceToughId) {

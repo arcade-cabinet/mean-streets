@@ -33,6 +33,8 @@ export interface PerceivedState {
   canDraw: boolean;
   gameOver: boolean;
   placeFailed: boolean;
+  stackFanOpen: boolean;
+  strikePromptVisible: boolean;
 }
 
 async function perceive(page: Page): Promise<PerceivedState> {
@@ -50,7 +52,7 @@ async function perceive(page: Page): Promise<PerceivedState> {
         opponentTurfEmpty: true, heat: '0%',
         turfsPlayer: 0, turfsOpponent: 0,
         queuedStrikeCount: 0, canDraw: false, gameOver: true,
-        placeFailed: false,
+        placeFailed: false, stackFanOpen: false, strikePromptVisible: false,
       } satisfies PerceivedState;
     }
 
@@ -103,12 +105,16 @@ async function perceive(page: Page): Promise<PerceivedState> {
     const promptText = promptEl?.textContent ?? '';
     const placeFailed = hasPending && promptText.includes('place');
 
+    const stackFanOpen = !!qs('.stack-fan-modal') || !!qs('[data-testid^="stack-fan"]');
+    const strikePromptText = qs('.game-flash-pill')?.textContent ?? '';
+    const strikePromptVisible = strikePromptText.includes('opponent') || strikePromptText.includes('strike');
+
     return {
       turnNumber, actionsRemaining, actionsTotal, deckCount,
       hasPending, pendingIsTough, turnEnded, waitingForOpponent,
       playerTurfEmpty, playerTurfHasTough, opponentTurfEmpty,
       heat, turfsPlayer, turfsOpponent, queuedStrikeCount,
-      canDraw, gameOver, placeFailed,
+      canDraw, gameOver, placeFailed, stackFanOpen, strikePromptVisible,
     } satisfies PerceivedState;
   });
 }
@@ -117,6 +123,9 @@ type GovernorAction =
   | 'draw'
   | 'place'
   | 'discard'
+  | 'strike_open_fan'
+  | 'strike_pick_tough'
+  | 'strike_target'
   | 'end_turn'
   | 'wait';
 
@@ -125,22 +134,30 @@ function decide(state: PerceivedState): GovernorAction {
   if (state.waitingForOpponent) return 'wait';
   if (state.turnEnded) return 'wait';
 
+  if (state.strikePromptVisible) {
+    return 'strike_target';
+  }
+
+  if (state.stackFanOpen) {
+    return 'strike_pick_tough';
+  }
+
   if (state.hasPending) {
-    if (state.pendingIsTough) {
-      return 'place';
-    }
-    if (state.playerTurfHasTough) {
-      return 'place';
-    }
+    if (state.pendingIsTough) return 'place';
+    if (state.playerTurfHasTough) return 'place';
     return 'discard';
+  }
+
+  if (state.playerTurfHasTough && !state.opponentTurfEmpty && state.actionsRemaining > 0 && !state.canDraw) {
+    return 'strike_open_fan';
   }
 
   if (state.canDraw && state.actionsRemaining > 0 && state.deckCount > 0) {
     return 'draw';
   }
 
-  if (state.actionsRemaining <= 0 || !state.canDraw) {
-    return 'end_turn';
+  if (state.playerTurfHasTough && !state.opponentTurfEmpty && state.actionsRemaining > 0) {
+    return 'strike_open_fan';
   }
 
   return 'end_turn';
@@ -163,20 +180,37 @@ async function execute(
       break;
     }
     case 'discard': {
-      const btn = page.getByTestId('action-discard-pending');
-      if (await btn.isVisible().catch(() => false)) {
-        await activate(btn, testInfo);
+      const market = page.getByTestId('slot-market');
+      await activate(market, testInfo);
+      break;
+    }
+    case 'strike_open_fan': {
+      const turf = page.getByTestId('turf-lane-A');
+      await activate(turf, testInfo);
+      break;
+    }
+    case 'strike_pick_tough': {
+      const card = page.getByTestId('stack-fan-card-0');
+      if (await card.isVisible().catch(() => false)) {
+        await activate(card, testInfo);
       } else {
-        const cancel = page.locator('.game-prompt-cancel');
-        if (await cancel.isVisible().catch(() => false)) {
-          await activate(cancel, testInfo);
+        const close = page.locator('.stack-fan-close');
+        if (await close.isVisible().catch(() => false)) {
+          await activate(close, testInfo);
         }
       }
       break;
     }
+    case 'strike_target': {
+      const oppTurf = page.getByTestId('turf-lane-B');
+      await activate(oppTurf, testInfo);
+      break;
+    }
     case 'end_turn': {
       const btn = page.getByTestId('action-end_turn');
-      await activate(btn, testInfo);
+      if (await btn.isVisible().catch(() => false)) {
+        await activate(btn, testInfo);
+      }
       break;
     }
     case 'wait':

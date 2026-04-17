@@ -116,6 +116,12 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
   const exhausted = budget.remaining <= 0;
   const promptText = buildPrompt(mode, strikePhase, pending !== null, null);
 
+  useEffect(() => {
+    if (exhausted && !turnEndedA && !pending) {
+      actions.onEndTurn();
+    }
+  }, [exhausted, turnEndedA, pending, actions]);
+
   const canDraw = !exhausted && !turnEndedA && !pending && deckCount > 0;
   const holdingAll = [...holdingA, ...holdingB, ...lockupA, ...lockupB];
   const drawerOpen = modal.kind === 'drawer-market' || modal.kind === 'drawer-holding';
@@ -154,7 +160,17 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
       <div className="game-hud-bar">
         <span className="game-hud-bar-turn">Turn {turnNumber}</span>
         <span className="game-hud-bar-budget" data-testid="action-budget">
-          Actions: {budget.remaining}/{budget.total}
+          {budget.remaining}/{budget.total}
+          {!turnEndedA && budget.remaining > 0 && (
+            <button
+              type="button"
+              className="game-hud-end-btn"
+              onClick={actions.onEndTurn}
+              data-testid="action-end_turn"
+            >
+              END
+            </button>
+          )}
         </span>
         <span className="game-hud-bar-turfs">Turfs {totalPlayerTurfs} vs {totalOpponentTurfs}</span>
         <HeatMeter value={heat} compact={compact} />
@@ -164,7 +180,13 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
         <button
           type="button"
           className={`game-hud-panel-btn ${market.length > 0 ? 'game-hud-panel-btn-active' : ''}`}
-          onClick={() => setModal(modal.kind === 'drawer-market' ? { kind: 'none' } : { kind: 'drawer-market' })}
+          onClick={() => {
+            if (pending && (pending.kind === 'weapon' || pending.kind === 'drug' || pending.kind === 'currency')) {
+              actions.onDiscardPending();
+              return;
+            }
+            setModal(modal.kind === 'drawer-market' ? { kind: 'none' } : { kind: 'drawer-market' });
+          }}
           data-testid="slot-market"
         >
           Market {market.length > 0 ? `(${market.length})` : ''}
@@ -258,27 +280,6 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
 
       <QueuedChips strikes={queuedA} />
 
-      <div className="board-end-turn">
-        {pending && (
-          <button
-            type="button"
-            className="game-action-btn game-action-btn-danger"
-            onClick={actions.onDiscardPending}
-            data-testid="action-discard-pending"
-          >
-            Discard
-          </button>
-        )}
-        <button
-          type="button"
-          className={`game-action-btn game-action-btn-end-turn ${turnEndedA ? 'game-action-btn-disabled' : ''}`}
-          disabled={turnEndedA}
-          onClick={actions.onEndTurn}
-          data-testid="action-end_turn"
-        >
-          End Turn
-        </button>
-      </div>
 
       {(modal.kind === 'stack' || modal.kind === 'swap') && (
         <StackFanModal
