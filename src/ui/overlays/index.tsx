@@ -92,16 +92,16 @@ export function RulesPanel({ compact = false }: RulesPanelProps) {
   return (
     <div className={`app-modal-body ${compact ? 'app-modal-body-compact' : ''}`}>
       <section className="modal-section">
-        <span className="modal-section-label">Deck</span>
-        <p className="modal-helper">Build 25 crew and 25 modifiers — weapons, drugs, and cash. Place crew on the street and stack modifiers to boost their power and defense.</p>
+        <span className="modal-section-label">The War</span>
+        <p className="modal-helper">Each side defends one active turf at a time. Stack toughs and modifiers to build power. When your turf falls, the next reserve promotes up. Lose all your turfs and you lose the war.</p>
       </section>
       <section className="modal-section">
         <span className="modal-section-label">Combat</span>
-        <p className="modal-helper">Direct, funded, and pushed attacks are deterministic. There are no dice rolls or coin flips, only board state and draw order.</p>
+        <p className="modal-helper">Strikes deal damage based on your power vs their resistance. Toughs have HP — wounds accumulate across turns. No dice, no coin flips. Only board state and draw order.</p>
       </section>
       <section className="modal-section">
-        <span className="modal-section-label">Win</span>
-        <p className="modal-helper">Seize 5 positions before the rival crew does.</p>
+        <span className="modal-section-label">The Street</span>
+        <p className="modal-helper">Heat rises as you play cards. High heat attracts raids — cops seize your toughs. Use the Black Market to trade modifiers, or send toughs to Holding to protect them.</p>
       </section>
     </div>
   );
