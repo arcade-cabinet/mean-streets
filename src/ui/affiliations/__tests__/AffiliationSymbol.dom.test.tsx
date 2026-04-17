@@ -9,7 +9,7 @@ describe('AffiliationSymbol', () => {
     );
     const img = container.querySelector('img');
     expect(img).not.toBeNull();
-    expect(img!.getAttribute('src')).toBe('/assets/affiliations/kings_row.svg');
+    expect(img!.getAttribute('src')).toContain('assets/affiliations/kings_row.svg');
   });
 
   it('renders with data-testid', () => {

@@ -32,7 +32,7 @@ export function MythicSymbol({
     // image silently.
     throw new Error(`MythicSymbol: invalid mythicId "${mythicId}"`);
   }
-  const src = `/assets/mythics/${mythicId}.svg`;
+  const src = `${import.meta.env.BASE_URL}assets/mythics/${mythicId}.svg`;
   const activeClass = active ? 'mythic-symbol-active' : '';
 
   return (
