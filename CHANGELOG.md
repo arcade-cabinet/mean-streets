@@ -1,6 +1,6 @@
 ---
 title: Changelog
-updated: 2026-04-16
+updated: 2026-04-17
 status: current
 ---
 
@@ -9,7 +9,7 @@ status: current
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [0.3.0] - unreleased
+## [0.3.0] - 2026-04-17
 
 This is the v0.3 single-lane rewrite. The v0.2 parallel-turf model
 is gone. Sudden Death is gone (covered by turf progression + raids).
