@@ -15,110 +15,87 @@ is in `git log`.
 
 ### Recently Completed
 
-- **v0.3 single-lane rewrite** — The core game engine rewrite landed via PR
-  #4 (merged 2026-04-17 into `main`). This was the full stack redesign: HP +
-  damage tiers, heat + raids, Black Market + Holding, handless queue-and-
-  resolve, reserve turf promotion, base + rolled rarity, and the 10 hand-
-  authored mythics.
+- **v0.3 single-lane rewrite** — Full stack redesign: HP + damage tiers,
+  heat + raids, Black Market + Holding, handless queue-and-resolve, reserve
+  turf promotion, base + rolled rarity, 10 hand-authored mythics.
 
-- **Governance alignment pass** — PR #5 merged: `STANDARDS.md`,
-  `docs/TESTING.md`, `docs/DEPLOYMENT.md`, `docs/LORE.md`, `docs/STATE.md`,
-  `.cursor/rules`, `.github/dependabot.yml`. All global-standard files present.
+- **Board grid layout** — PR #15: 3x2 card-slot board, simplified 3-button
+  main menu (New Game / Load Game / Cards), full-viewport cards screen.
 
-- **Mythic ability wiring** — PR #9 merged: STRIKE_TWO, CHAIN_THREE,
-  IMMUNITY, TRANSCEND, ABSOLUTE registered in dispatch. 5 integration tests
-  promoted from `describe.skip`. 521 node tests green.
+- **Pack simplification** — PR #16: single draw pile with probabilistic type
+  drops (tough 50% / weapon 20% / drug 20% / currency 10%). Removed typed
+  pack kinds (tough-5, weapon-5, drug-5, currency-5). Config-driven weights
+  from turf-sim.json.
 
-- **E2E expansion** — PR #11 merged: 4 new Playwright specs (`single-lane-flow`,
-  `market-and-holding`, `mythic-engagement`, `war-outcome`). 15 total E2E specs
-  across 4 device profiles.
+- **Workflow consolidation** — PR #16: 3 workflows per global standards.
+  `ci.yml` (PR gate: lint, test, build, browser tests), `release.yml`
+  (tag → Android AAB + iOS archive), `cd.yml` (push main → E2E gate →
+  Pages deploy + debug APK + release-please + autobalance).
 
-- **Releases** — v0.4.0 (governance + v0.3 rewrite), v0.5.0 (mythic abilities)
-  tagged via release-please.
+- **Browser test expansion** — 95 Vitest browser tests across 15 files:
+  GameOverScreen, CollectionScreen, PackOpeningScreen, CardGarageScreen,
+  BlackMarketPanel, HoldingPanel, plus existing Card, TurfCompositeCard,
+  StackFanModal, DifficultyScreen, GameScreen, MainMenuScreen, CardsScreen,
+  ResponsiveLayouts, App flow.
 
-- **Simulation infrastructure** — Balance benchmark, curated sweep, lock
-  lifecycle, and release gate are wired and operational. `analysis:benchmark`,
-  `analysis:lock`, `analysis:lock:persist` all run.
+- **E2E spec alignment** — All E2E specs updated for v0.3 board layout
+  testids. E2E removed from PR CI (runs in cd.yml on push to main). 142
+  passing / 34 skipped across 4 device viewports.
 
-- **CI/CD pipeline** — `ci.yml` (PR gate), `cd.yml` (Pages deploy with
-  release gate), `mobile-release.yml` (tag-triggered Android + iOS), and
-  `autobalance.yml` (weekly cron) are all in place.
+- **Releases** — v0.4.0 (governance + v0.3), v0.5.0 (mythic abilities),
+  v0.6.0 (board grid + browser tests).
 
-- **Mythic card authoring** — All 10 mythic JSON files and SVG placeholder
-  art are in place. Abilities registered in `ability-hooks.ts`.
+### Test Coverage
+
+| Suite | Count | Runner |
+|-------|-------|--------|
+| Node (sim, ECS, pure logic) | 518 | `pnpm run test:node` |
+| DOM (jsdom presentational) | varies | `pnpm run test:dom` |
+| Browser (real Chromium) | 95 | `pnpm run test:browser` |
+| E2E (4 device viewports) | 142 pass / 34 skip | `pnpm run test:e2e` (local) |
 
 ## Current Work
 
-**Branch: `fix/release-please-pnpm`**
-
-- Aligning governance files to the required project standard (this pass).
-- Fixing release-please configuration for pnpm projects.
+No active feature branches. Main is green.
 
 ## What Comes Next
 
 ### Visual Polish Pass
 
-- Designer review of the full UI surface — TurfView, Card, HUD, panels.
+- Designer review of the full UI surface.
 - Screenshot capture and visual regression baseline via `pnpm run test:visual`.
-- Address any layout or spacing issues found during visual review.
 
 ### Paper Playtesting
 
-- Individual paper-playtest of each of the 10 mythic cards to validate their
-  balance note assumptions (simulation cannot tune game-warping abilities the
-  same way it tunes common stats).
-- Reference: `docs/plans/v0.3-paper-playtest.md` and
-  `docs/plans/v0.3-paper-playtest-2.md`.
-
-### E2E Expansion — DONE
-
-- Integration smoke suite promoted (PR #9).
-- 4 new E2E specs landed (PR #11): `single-lane-flow`, `market-and-holding`,
-  `mythic-engagement`, `war-outcome`.
-- Balance lock coverage at 72% (release gate passes).
-
-### Release Gate — PASSING
-
-- Lock coverage 72% (floor: 70%).
-- Convergence: winRateA 0.41-0.46 across 3 seeds, within [0.40, 0.65] band.
-- Timeout rate 3.6-5.9% (floor: 8%).
+- Individual paper-playtest of each of the 10 mythic cards.
+- Reference: `docs/plans/v0.3-paper-playtest.md`.
 
 ### Post-v0.3 (Future)
 
 - **Mythic art** — Replace geometric SVG placeholders with editorial
-  illustrations. This is explicitly deferred past v0.3 launch.
-- **AI curation tuning** — `curator.ts` heuristics may benefit from
-  simulation tuning post-launch. Currently functional but simple.
-- **Mythic ability registration** — All 10 mythic signature abilities are
-  authored; some intangible handler bodies may need validation against
-  edge-case resolution sequences.
-- **Pack economy expansion** — Seasonal packs, themed affiliation bundles,
-  milestone packs.
-- **Multiplayer** — Async PvP is a natural extension of the AI-mirror pattern.
-  Deferred until single-player v0.3 core is locked.
+  illustrations.
+- **AI curation tuning** — `curator.ts` heuristics, post-launch.
+- **Pack economy expansion** — Seasonal packs, themed affiliation bundles.
+- **Multiplayer** — Async PvP, deferred until single-player core is locked.
 
 ## Known Gaps
-
-These are tracked in [PRODUCTION.md](./PRODUCTION.md) under post-merge
-blockers. Summarized here for orientation:
 
 | Gap | Status |
 |-----|--------|
 | Mythic art — geometric SVG placeholders | Post-v0.3 editorial pass |
 | AI curation heuristics | Functional; post-launch tuning |
 | Mythic ability edge-case validation | Paper-playtest dependent |
-| `usePlayerTurfs` backward-compat alias | Retire in Epic G completion |
-| v0.3 integration suite (`describe.skip`) | Promote when modules stabilize |
-| Balance lock coverage < 70% | Run `analysis:lock:persist` iteratively |
 | iOS signing automation | Manual Xcode Organizer pass for now |
 | Store metadata, screenshots, copy | Pre-launch task |
 
-## Useful Commands for Orientation
+## Useful Commands
 
 ```bash
 git log --oneline -10          # recent commits
 gh pr list                     # open PRs
 pnpm run analysis:benchmark    # check current balance state
-pnpm run test                  # node + DOM (fast)
+pnpm run test:node             # node tests (fast)
+pnpm run test:browser          # browser tests (real Chromium)
+pnpm run test:e2e              # E2E (local only, 4 device viewports)
 pnpm run test:release          # release gate check
 ```

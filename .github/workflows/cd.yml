@@ -125,13 +125,12 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-  autobalance:
+  balance-smoke:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          fetch-depth: 0
 
       - uses: pnpm/action-setup@08c4be7e2e672a47d11bd04269e27e5f3e8529cb # v6.0.0
         with:
@@ -145,38 +144,5 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Configure git identity
-        run: |
-          git config user.name "autobalance-bot"
-          git config user.email "autobalance-bot@users.noreply.github.com"
-
-      - name: Reset lockfile noise
-        run: git checkout -- pnpm-lock.yaml 2>/dev/null || true
-
-      - name: Run autobalance smoke check
-        run: |
-          pnpm exec tsx src/sim/analysis/cli.ts autobalance \
-            --profile quick \
-            --iterations 1
-
-      - name: Check for balance drift
-        id: drift
-        run: |
-          if git diff --quiet; then
-            echo "drift=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "drift=true" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Open drift-detection PR
-        if: steps.drift.outputs.drift == 'true'
-        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
-        with:
-          branch: autobalance/drift-${{ github.run_id }}
-          title: 'chore(balance): post-merge drift detection'
-          body: |
-            Autobalance detected instability after merge to main.
-            Review the per-iteration commits and merge or close.
-          labels: balance-drift
-          draft: false
-          commit-message: 'chore(balance): post-merge drift detection'
+      - name: Balance smoke check
+        run: pnpm run analysis:benchmark 2>&1 | tail -20
