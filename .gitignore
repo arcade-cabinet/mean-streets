@@ -59,3 +59,4 @@ ios/App/App.xcworkspace/xcuserdata/
 .radioactive-ralph/
 .ralph-tui/
 /tasks/
+src/ui/cards/cardArt.generated.ts

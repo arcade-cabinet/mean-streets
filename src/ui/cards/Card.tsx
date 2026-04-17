@@ -3,6 +3,7 @@ import type { Card as CardType, DifficultyTier, Rarity } from '../../sim/turf/ty
 import { AffiliationSymbol } from '../affiliations';
 import { CardFrame } from './CardFrame';
 import { MythicBadge } from '../board/MythicBadge';
+import { CARD_ART } from './cardArt.generated';
 
 type GlowContext = 'none' | 'loyal' | 'rival';
 
@@ -129,12 +130,8 @@ function renderTough(
           </div>
           <span className="card-power-badge">{card.power}</span>
         </div>
-        <div className="card-portrait">
-          <AffiliationSymbol affiliation={card.affiliation} size={40} context={context} className="card-portrait-symbol" />
-          <div className="card-portrait-initials">
-            {card.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
-          </div>
-        </div>
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: build-time generated SVG art */}
+        <div className="card-portrait" dangerouslySetInnerHTML={{ __html: CARD_ART[card.id] ?? '' }} />
         <div className="card-body">
           <div className="card-name-row">
             <span className="card-name">{card.name}</span>
@@ -166,7 +163,6 @@ function renderModifier(
   const mythicClass = extras.isMythic ? 'card-mythic' : '';
   const kindClass = card.kind === 'weapon' ? 'card-weapon' : 'card-drug';
   const portraitClass = card.kind === 'weapon' ? 'card-portrait-weapon' : 'card-portrait-drug';
-  const icon = card.kind === 'weapon' ? '⚔' : '💊';
 
   if (compact) {
     return (
@@ -206,9 +202,8 @@ function renderModifier(
           <span className="card-category-badge">{card.category}</span>
           <span className="card-power-badge">{card.power}</span>
         </div>
-        <div className={`card-portrait ${portraitClass}`}>
-          <span className="card-portrait-icon">{icon}</span>
-        </div>
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: build-time generated SVG art */}
+        <div className={`card-portrait ${portraitClass}`} dangerouslySetInnerHTML={{ __html: CARD_ART[card.id] ?? '' }} />
         <div className="card-body">
           <div className="card-name-row">
             <span className="card-name">{card.name}</span>
