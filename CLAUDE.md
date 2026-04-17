@@ -142,7 +142,7 @@ pnpm run cap:sync           # Build + sync web assets to Capacitor
 - `world.ts` — createGameWorld(config, seed, deck)
 
 ### UI — `src/ui/`
-- `screens/` — MainMenu, Difficulty (5 tiers, NO Sudden Death),
+- `screens/` — MainMenu, Difficulty (6 tiers incl. Sudden Death),
   Game (single-lane 1v1 + reserves indicator), CardGarage (merge UI
   + priority sliders + auto-toggles), Collection, PackOpening (rolled
   rarity reveal), GameOver

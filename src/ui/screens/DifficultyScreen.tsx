@@ -1,6 +1,7 @@
 import {
   AlertTriangle,
   ArrowLeft,
+  Crosshair,
   Flame,
   Shield,
   Skull,
@@ -62,6 +63,15 @@ const TIERS: TierDef[] = [
     actions: simConfig.difficulty.nightmare.actionsPerTurn,
     forcedSuddenDeath: false,
     tagline: 'You lose 1 action',
+  },
+  {
+    id: 'sudden-death',
+    label: 'Sudden Death',
+    icon: Crosshair,
+    turfs: simConfig.difficulty['sudden-death'].turfCount,
+    actions: simConfig.difficulty['sudden-death'].actionsPerTurn,
+    forcedSuddenDeath: true,
+    tagline: 'One turf, one chance',
   },
   {
     id: 'ultra-nightmare',

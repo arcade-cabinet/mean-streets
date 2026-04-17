@@ -6358,7 +6358,7 @@ select {
 /* ---- Simplified Main Menu (v0.3) ---- */
 .menu-shell-hero .menu-backdrop {
   background-size: cover;
-  background-position: top center;
+  background-position: center center;
 }
 .menu-shell-solid {
   background: linear-gradient(180deg, #0e0c0a 0%, #1a1410 100%);
