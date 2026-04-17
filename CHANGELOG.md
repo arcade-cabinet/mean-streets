@@ -9,6 +9,13 @@ status: current
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.0](https://github.com/arcade-cabinet/mean-streets/compare/v0.4.0...v0.5.0) (2026-04-17)
+
+
+### Features
+
+* **sim:** wire 5 mythic signature abilities + promote integration tests ([#9](https://github.com/arcade-cabinet/mean-streets/issues/9)) ([ad4cd0d](https://github.com/arcade-cabinet/mean-streets/commit/ad4cd0d38c2e535fb5524d42128d00e4efc68a8b))
+
 ## [0.4.0](https://github.com/arcade-cabinet/mean-streets/compare/v0.3.0...v0.4.0) (2026-04-17)
 
 
