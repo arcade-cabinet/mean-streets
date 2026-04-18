@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAppShell } from '../../platform';
 import { ArrowLeft } from 'lucide-react';
+import { loadCollection } from '../../platform/persistence/collection';
 import { loadToughCards } from '../../sim/cards/catalog';
 import { generateWeapons, generateDrugs, generateCurrency } from '../../sim/turf/generators';
 import type { Card as CardType, CardCategory, Rarity } from '../../sim/turf/types';
@@ -27,14 +28,11 @@ const RARITY_FILTERS: { id: Rarity | 'all'; label: string }[] = [
 
 interface CollectionScreenProps {
   onBack: () => void;
+  onPlay?: () => void;
 }
 
-function loadAllCards(): CardType[] {
-  const toughs = loadToughCards();
-  const weapons = generateWeapons();
-  const drugs = generateDrugs();
-  const currency = generateCurrency();
-  return [...toughs, ...weapons, ...drugs, ...currency];
+function loadFullCatalog(): CardType[] {
+  return [...loadToughCards(), ...generateWeapons(), ...generateDrugs(), ...generateCurrency()];
 }
 
 function countByCategory(cards: CardType[]): Record<CardCategory, number> {
@@ -51,24 +49,33 @@ function countByRarity(cards: CardType[]): Record<Rarity, number> {
   return counts;
 }
 
-export function CollectionScreen({ onBack }: CollectionScreenProps) {
+export function CollectionScreen({ onBack, onPlay }: CollectionScreenProps) {
   const { layout } = useAppShell();
   const compact = layout.id === 'phone-portrait' || layout.id === 'folded';
 
-  const allCards = useMemo(loadAllCards, []);
+  const catalog = useMemo(loadFullCatalog, []);
+  const catalogIds = useMemo(() => new Set(catalog.map(c => c.id)), [catalog]);
+  const [ownedIds, setOwnedIds] = useState<Set<string> | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
   const [rarityFilter, setRarityFilter] = useState<Rarity | 'all'>('all');
 
+  useEffect(() => {
+    loadCollection().then(cards => {
+      setOwnedIds(new Set(cards.map(c => c.id)));
+    });
+  }, []);
+
   const filtered = useMemo(() => {
-    return allCards.filter(c => {
+    return catalog.filter(c => {
       if (categoryFilter !== 'all' && c.kind !== categoryFilter) return false;
       if (rarityFilter !== 'all' && c.rarity !== rarityFilter) return false;
       return true;
     });
-  }, [allCards, categoryFilter, rarityFilter]);
+  }, [catalog, categoryFilter, rarityFilter]);
 
-  const categoryCounts = useMemo(() => countByCategory(allCards), [allCards]);
-  const rarityCounts = useMemo(() => countByRarity(allCards), [allCards]);
+  const ownedCount = ownedIds ? [...catalogIds].filter(id => ownedIds.has(id)).length : 0;
+  const categoryCounts = useMemo(() => countByCategory(catalog), [catalog]);
+  const rarityCounts = useMemo(() => countByRarity(catalog), [catalog]);
 
   return (
     <main className="coll-screen" data-testid="collection-screen" aria-label="Card Collection">
@@ -83,9 +90,14 @@ export function CollectionScreen({ onBack }: CollectionScreenProps) {
         </button>
         <h1 className="coll-title">Collection</h1>
         <div className="coll-progress" data-testid="collection-progress">
-          <span className="coll-progress-count">{allCards.length}</span>
-          <span className="coll-progress-label">cards</span>
+          <span className="coll-progress-count">{ownedCount} / {catalog.length}</span>
+          <span className="coll-progress-label">unlocked</span>
         </div>
+        {onPlay && (
+          <button className="coll-play-btn" onClick={onPlay} data-testid="collection-play">
+            Play
+          </button>
+        )}
       </header>
 
       <div className="coll-summary" data-testid="collection-summary">
@@ -133,11 +145,15 @@ export function CollectionScreen({ onBack }: CollectionScreenProps) {
       </div>
 
       <section className="coll-grid" aria-label="Card grid">
-        {filtered.map(card => (
-          <div key={card.id} className="coll-grid-cell">
-            <CardComponent card={card} compact={compact} />
-          </div>
-        ))}
+        {filtered.map(card => {
+          const owned = ownedIds?.has(card.id) ?? false;
+          return (
+            <div key={card.id} className={`coll-grid-cell ${owned ? '' : 'coll-grid-cell-locked'}`}>
+              <CardComponent card={card} compact={compact} />
+              {!owned && <div className="coll-locked-overlay" />}
+            </div>
+          );
+        })}
         {filtered.length === 0 && (
           <div className="coll-empty" data-testid="collection-empty">
             No cards match the current filters.

@@ -233,8 +233,14 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
       <div className="board-grid">
         {/* Row 1: Opponent Draw | Opponent Turf | Opponent Reserves */}
         <div className="board-slot board-slot-draw board-slot-opponent-draw" data-testid="slot-opp-draw">
-          <span className="board-slot-label">Opp</span>
-          <span className="board-slot-count">{opponentReserves.length} res</span>
+          <div className="draw-pile">
+            <div className="draw-pile-card draw-pile-card-3" />
+            <div className="draw-pile-card draw-pile-card-2" />
+            <div className="draw-pile-card draw-pile-card-1">
+              <span className="draw-pile-mark">MS</span>
+            </div>
+            <span className="draw-pile-count">{opponentReserves.length} res</span>
+          </div>
         </div>
 
         <div
@@ -251,7 +257,10 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
 
         <div className="board-slot board-slot-reserves board-slot-opponent-reserves">
           {opponentReserves.length > 0 && (
-            <span className="board-slot-count">{opponentReserves.length}</span>
+            <div className="draw-pile">
+              <div className="draw-pile-card draw-pile-card-1" />
+              <span className="draw-pile-count">{opponentReserves.length}</span>
+            </div>
           )}
         </div>
 
@@ -261,9 +270,18 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
           onClick={() => canDraw && actions.onModeSelect('draw')}
           data-testid="slot-player-draw"
         >
-          {deckCount > 0
-            ? <span className="board-slot-count">{deckCount}</span>
-            : <span className="board-slot-label">Empty</span>}
+          {deckCount > 0 ? (
+            <div className="draw-pile">
+              {deckCount > 2 && <div className="draw-pile-card draw-pile-card-3" />}
+              {deckCount > 1 && <div className="draw-pile-card draw-pile-card-2" />}
+              <div className="draw-pile-card draw-pile-card-1">
+                <span className="draw-pile-mark">MS</span>
+              </div>
+              <span className="draw-pile-count">{deckCount}</span>
+            </div>
+          ) : (
+            <span className="board-slot-label">Empty</span>
+          )}
         </div>
 
         <div
@@ -285,7 +303,10 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
 
         <div className="board-slot board-slot-reserves board-slot-player-reserves">
           {playerReserves.length > 0 && (
-            <span className="board-slot-count">{playerReserves.length}</span>
+            <div className="draw-pile">
+              <div className="draw-pile-card draw-pile-card-1" />
+              <span className="draw-pile-count">{playerReserves.length}</span>
+            </div>
           )}
         </div>
       </div>
@@ -301,7 +322,6 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
           onClose={() => { setModal({ kind: 'none' }); if (mode === 'play_card') setMode(null); }}
           showHp showOwnerLines={mode === 'modifier_swap'}
           onPlaceAt={mode === 'play_card' && pending ? actions.placePendingAt : undefined}
-          placingCard={mode === 'play_card' ? pending : undefined}
         />
       )}
 

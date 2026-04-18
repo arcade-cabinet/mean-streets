@@ -1,8 +1,10 @@
-import type { TurfMetrics } from '../../sim/turf/types';
+import type { Card, TurfMetrics } from '../../sim/turf/types';
+import { Card as CardComponent } from '../cards';
 
 interface GameOverScreenProps {
   winner: 'A' | 'B';
   metrics: TurfMetrics;
+  rewardCards?: Card[];
   onPlayAgain: () => void;
 }
 
@@ -20,7 +22,7 @@ function StatRow({ label, value }: StatRowProps) {
   );
 }
 
-export function GameOverScreen({ winner, metrics, onPlayAgain }: GameOverScreenProps) {
+export function GameOverScreen({ winner, metrics, rewardCards = [], onPlayAgain }: GameOverScreenProps) {
   const isVictory = winner === 'A';
 
   return (
@@ -49,6 +51,19 @@ export function GameOverScreen({ winner, metrics, onPlayAgain }: GameOverScreenP
         <StatRow label="Raids" value={metrics.raids} />
         <StatRow label="Cards Played" value={metrics.cardsPlayed} />
       </div>
+
+      {rewardCards.length > 0 && (
+        <div className="gameover-rewards" data-testid="gameover-rewards">
+          <h2 className="gameover-rewards-title">Spoils of War</h2>
+          <div className="gameover-rewards-grid">
+            {rewardCards.map(card => (
+              <div key={card.id} className="gameover-reward-cell">
+                <CardComponent card={card} compact />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <button
         onClick={onPlayAgain}

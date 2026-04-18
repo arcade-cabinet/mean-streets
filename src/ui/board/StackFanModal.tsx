@@ -20,8 +20,6 @@ interface StackFanModalProps {
   /** Placement mode: when set, shows insertion-point slots between cards.
    * Tapping an insertion slot calls this with the target stack index. */
   onPlaceAt?: (stackIdx: number) => void;
-  /** The card being placed — shown as a ghost preview in the insertion slots. */
-  placingCard?: import('../../sim/turf/types').Card | null;
 }
 
 /** Face-down back tile. Simple CSS-driven placeholder — no asset art. */
@@ -64,7 +62,6 @@ export function StackFanModal({
   showHp = false,
   showOwnerLines = false,
   onPlaceAt,
-  placingCard,
 }: StackFanModalProps) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const touchStartX = useRef(0);

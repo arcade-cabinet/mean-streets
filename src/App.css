@@ -2818,6 +2818,32 @@ select {
 .coll-grid-cell {
   display: flex;
   justify-content: center;
+  position: relative;
+}
+
+.coll-grid-cell-locked {
+  opacity: 0.35;
+  filter: grayscale(0.7);
+}
+
+.coll-locked-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.coll-play-btn {
+  margin-left: auto;
+  padding: 0.4rem 1rem;
+  border-radius: 4px;
+  border: 1px solid var(--border-hot);
+  background: rgba(180, 80, 50, 0.5);
+  color: var(--accent-paper);
+  font-weight: 700;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  cursor: pointer;
 }
 
 .coll-empty {
@@ -3125,6 +3151,34 @@ select {
 
 .gameover-button {
   width: min(24rem, 100%);
+}
+
+.gameover-rewards {
+  width: min(36rem, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.gameover-rewards-title {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--accent-paper);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  text-align: center;
+}
+
+.gameover-rewards-grid {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.gameover-reward-cell {
+  transform: scale(0.8);
+  transform-origin: center;
 }
 
 .board-layout {
@@ -6238,6 +6292,67 @@ select {
   height: 7rem;
   flex-direction: column;
   gap: 0.25rem;
+}
+
+/* ── Draw Pile Visual ──────────────────────────── */
+
+.draw-pile {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.draw-pile-card {
+  position: absolute;
+  width: 70%;
+  height: 80%;
+  border-radius: 4px;
+  border: 1px solid rgba(220, 200, 120, 0.25);
+  background: linear-gradient(135deg, #1a1f2c 0%, #2d1a1f 60%, #0f1118 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.draw-pile-card-3 {
+  transform: translate(-3px, -3px);
+  opacity: 0.35;
+}
+
+.draw-pile-card-2 {
+  transform: translate(-1.5px, -1.5px);
+  opacity: 0.55;
+}
+
+.draw-pile-card-1 {
+  transform: translate(0, 0);
+  opacity: 1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.draw-pile-mark {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: rgba(220, 200, 120, 0.5);
+  letter-spacing: 0.12rem;
+}
+
+.draw-pile-count {
+  position: absolute;
+  bottom: 2px;
+  right: 4px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--accent-paper);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  z-index: 5;
+}
+
+.board-slot-tappable .draw-pile-card-1 {
+  border-color: rgba(228, 169, 69, 0.5);
 }
 
 .board-slot-turf {
