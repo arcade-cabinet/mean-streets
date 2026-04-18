@@ -24,13 +24,6 @@ export function useGamePhase(): GamePhase | undefined {
 }
 
 // ── Single-lane turf hooks (v0.3) ───────────────────────────────────
-//
-// In v0.3 combat happens on one active turf at a time; the remaining
-// turfs sit in a reserve queue. Noa (Epic G) is expected to migrate
-// every UI consumer to the explicit `useTurfActive` / `useTurfReserves`
-// split. `usePlayerTurfs` is kept as a backward-compat alias — it
-// returns the whole array (active + reserves) — so existing tests and
-// partially-migrated screens keep rendering until Epic G retires it.
 
 /** The active engagement turf for `side` (turfs[0]). */
 export function useTurfActive(side: 'A' | 'B'): Turf | null {
@@ -46,17 +39,6 @@ export function useTurfReserves(side: 'A' | 'B'): Turf[] {
   const entity = useQueryFirst(Trait);
   const state = useTrait(entity, Trait);
   return state?.turfs.slice(1) ?? [];
-}
-
-/**
- * Backward-compat alias. Returns the full turf array (active first,
- * reserves after). Retire once Noa finishes the Epic G migration.
- */
-export function usePlayerTurfs(side: 'A' | 'B'): Turf[] {
-  const Trait = side === 'A' ? PlayerA : PlayerB;
-  const entity = useQueryFirst(Trait);
-  const state = useTrait(entity, Trait);
-  return state?.turfs ?? [];
 }
 
 /** The single drawn-but-unplaced card for `side`, or null. Replaces `useHand`. */
@@ -165,11 +147,13 @@ export interface TurfStackComposite {
 /**
  * Derived read for each turf — toughs, modifiers, power, resistance.
  * `turfToughs` / `turfModifiers` already unwrap `StackedCard.card`, so
- * consumers receive plain card objects. Returns all turfs (active +
- * reserves) for backward compatibility; migrate to split hooks in G.
+ * consumers receive plain card objects. Returns all turfs (active first,
+ * reserves after).
  */
 export function useTurfStackComposite(side: 'A' | 'B'): TurfStackComposite[] {
-  const turfs = usePlayerTurfs(side);
+  const active = useTurfActive(side);
+  const reserves = useTurfReserves(side);
+  const turfs = active ? [active, ...reserves] : reserves;
   return turfs.map((turf) => ({
     turf,
     toughs: turfToughs(turf),

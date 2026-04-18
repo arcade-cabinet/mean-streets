@@ -173,7 +173,11 @@ export function handleEndTurn(player: PlayerState, state: TurfGameState): void {
         state.metrics.cardsDiscarded++;
       }
     }
-    if (!hasToughOnTurf(turf)) {
+    // RULES §8.5: Closed Ranks posture is set when the top of the stack is a tough.
+    // An empty or modifier-topped turf is exposed — do NOT auto-close.
+    const topEntry = turf.stack.length > 0 ? turf.stack[turf.stack.length - 1] : null;
+    const topIsTough = topEntry != null && topEntry.card.kind === 'tough';
+    if (topIsTough) {
       if (!turf.closedRanks) state.metrics.closedRanksEnds++;
       turf.closedRanks = true;
     } else {

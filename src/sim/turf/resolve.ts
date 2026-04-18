@@ -68,25 +68,45 @@ function dominanceForQueued(state: TurfGameState, q: QueuedAction): RankedAction
 }
 
 /**
- * Try a currency bribe to cancel a strike. Defender spends the largest
- * single currency denomination that is ≤ turf cash; success probability
- * looked up on the tiered table. Returns true if strike canceled.
+ * Try a currency bribe to cancel a strike. Sums all currency on the
+ * defender's active turf (turf-wide pool per RULES §10.3 + playtest-2
+ * line 188-194); probability from turf-sim.json thresholds. On success,
+ * consumes cheapest bills to cover the reached threshold; consumed cards
+ * route to the Black Market. Returns true if strike canceled.
  */
 function maybeCombatBribe(state: TurfGameState, q: QueuedAction): boolean {
   const def = state.players[opponent(q.side)].turfs[q.targetTurfIdx];
   if (!def) return false;
-  const cash = turfCurrency(def);
-  if (cash.length === 0) return false;
-  // Pick the highest-denomination currency card as bribe (greedy).
-  const denom = Math.max(...cash.map((c) => c.denomination));
-  const p = combatBribeProbability(denom);
+  const currencyEntries: Array<{ idx: number; denom: number }> = [];
+  for (let i = 0; i < def.stack.length; i++) {
+    const sc = def.stack[i];
+    if (sc.card.kind === 'currency') currencyEntries.push({ idx: i, denom: sc.card.denomination });
+  }
+  if (currencyEntries.length === 0) return false;
+  const totalCash = currencyEntries.reduce((s, e) => s + e.denom, 0);
+  const p = combatBribeProbability(totalCash);
   if (p <= 0) return false;
   if (state.rng.next() >= p) return false;
-  // Success: consume one card of that denomination.
-  const idx = def.stack.findIndex(
-    (sc) => sc.card.kind === 'currency' && sc.card.denomination === denom,
-  );
-  if (idx >= 0) def.stack.splice(idx, 1);
+
+  // Success: consume cheapest bills until the reached threshold is covered.
+  currencyEntries.sort((a, b) => a.denom - b.denom);
+  let thresholdAmount = 0;
+  for (const tier of TURF_SIM_CONFIG.bribe.thresholds) {
+    if (totalCash >= tier.amount) thresholdAmount = tier.amount;
+  }
+  let spent = 0;
+  const toRemove: number[] = [];
+  for (const e of currencyEntries) {
+    if (spent >= thresholdAmount) break;
+    spent += e.denom;
+    toRemove.push(e.idx);
+  }
+  toRemove.sort((a, b) => b - a);
+  for (const idx of toRemove) {
+    const card = def.stack[idx].card;
+    def.stack.splice(idx, 1);
+    if (card.kind !== 'tough') state.blackMarket.push(card);
+  }
   state.metrics.bribesAccepted++;
   return true;
 }
@@ -115,12 +135,30 @@ function raidPhase(state: TurfGameState): boolean {
     if (!top.faceUp) continue;
     if (top.card.kind !== 'tough') continue;
 
-    // Bail? If turf cash includes a $500+ denomination, burn it to cancel.
-    const cashIdx = active.stack.findIndex(
-      (sc) => sc.card.kind === 'currency' && sc.card.denomination >= 500,
-    );
-    if (cashIdx >= 0) {
-      active.stack.splice(cashIdx, 1);
+    // Bail? If total turf cash ≥ bailAmount, consume cheapest bills to cover.
+    const bailAmount = TURF_SIM_CONFIG.bribe.bailAmount;
+    const currencyIndices: Array<{ idx: number; denom: number }> = [];
+    for (let ci = 0; ci < active.stack.length; ci++) {
+      const sc = active.stack[ci];
+      if (sc.card.kind === 'currency') currencyIndices.push({ idx: ci, denom: sc.card.denomination });
+    }
+    const totalBailCash = currencyIndices.reduce((s, e) => s + e.denom, 0);
+    if (totalBailCash >= bailAmount) {
+      // Consume cheapest bills first until bailAmount is covered.
+      currencyIndices.sort((a, b) => a.denom - b.denom);
+      let bailed = 0;
+      const bailRemove: number[] = [];
+      for (const e of currencyIndices) {
+        if (bailed >= bailAmount) break;
+        bailed += e.denom;
+        bailRemove.push(e.idx);
+      }
+      bailRemove.sort((a, b) => b - a);
+      for (const idx of bailRemove) {
+        const card = active.stack[idx].card;
+        active.stack.splice(idx, 1);
+        if (card.kind !== 'tough') state.blackMarket.push(card);
+      }
       continue;
     }
 
