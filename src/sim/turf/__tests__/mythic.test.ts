@@ -7,6 +7,8 @@ import {
   initMythicPool,
   mythicsOwnedBy,
 } from '../../packs/mythic-pool';
+import { resolvePhase } from '../resolve';
+import { mkState, mkTough, mkTurf, sc } from './state-builder';
 
 describe('initMythicPool', () => {
   it('returns an unassigned pool with no assignments', () => {
@@ -87,6 +89,86 @@ describe('drawMythicFromPool', () => {
     expect(drawMythicFromPool(poolA, 'A', rng1)).toBe(
       drawMythicFromPool(poolB, 'A', rng2),
     );
+  });
+});
+
+describe('combat-path mythic flip', () => {
+  it('flips mythic ownership to killer side when a mythic tough is killed in combat', () => {
+    const mythicId = 'mythic-01';
+    const mythicTough = mkTough({
+      id: mythicId,
+      rarity: 'mythic',
+      power: 3,
+      resistance: 1,
+      maxHp: 1,
+      hp: 1,
+    });
+    // B has the mythic assigned to them already.
+    const A = [mkTurf('a1', [sc(mkTough({ id: 'aT', power: 50 }))])];
+    const B = [mkTurf('b1', [sc(mythicTough)])];
+    const state = mkState(A, B);
+    state.mythicAssignments[mythicId] = 'B';
+    // mythicPool represents unassigned; since already assigned, exclude it.
+
+    state.players.A.queued.push({
+      kind: 'direct_strike',
+      side: 'A',
+      turfIdx: 0,
+      targetTurfIdx: 0,
+    });
+
+    resolvePhase(state);
+
+    // The mythic should now belong to A (the killer).
+    expect(state.mythicAssignments[mythicId]).toBe('A');
+    expect(state.metrics.mythicsFlipped).toBe(1);
+  });
+
+  it('does not increment mythicsFlipped for non-mythic kills', () => {
+    const A = [mkTurf('a1', [sc(mkTough({ id: 'aT', power: 50 }))])];
+    const B = [mkTurf('b1', [sc(mkTough({ id: 'bT', rarity: 'legendary', resistance: 1, hp: 1, maxHp: 1 }))])];
+    const state = mkState(A, B);
+
+    state.players.A.queued.push({
+      kind: 'direct_strike',
+      side: 'A',
+      turfIdx: 0,
+      targetTurfIdx: 0,
+    });
+
+    resolvePhase(state);
+
+    expect(state.metrics.mythicsFlipped).toBe(0);
+  });
+
+  it('assigns a previously-unassigned mythic to the killer on first kill', () => {
+    const mythicId = 'mythic-02';
+    const mythicTough = mkTough({
+      id: mythicId,
+      rarity: 'mythic',
+      power: 3,
+      resistance: 1,
+      maxHp: 1,
+      hp: 1,
+    });
+    const A = [mkTurf('a1', [sc(mkTough({ id: 'aT', power: 50 }))])];
+    const B = [mkTurf('b1', [sc(mythicTough)])];
+    const state = mkState(A, B);
+    // Mythic is unassigned (in mythicPool as unassigned).
+    state.mythicPool = [mythicId];
+
+    state.players.A.queued.push({
+      kind: 'direct_strike',
+      side: 'A',
+      turfIdx: 0,
+      targetTurfIdx: 0,
+    });
+
+    resolvePhase(state);
+
+    expect(state.mythicAssignments[mythicId]).toBe('A');
+    expect(state.mythicPool).not.toContain(mythicId);
+    expect(state.metrics.mythicsFlipped).toBe(1);
   });
 });
 

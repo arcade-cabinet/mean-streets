@@ -10,6 +10,7 @@ import {
   turfCurrency,
   turfToughs,
 } from './board';
+import { flipMythicOnDefeat } from '../packs/mythic-pool';
 import {
   resolveTargetToughIdx,
   topToughIdx,
@@ -329,6 +330,28 @@ function runChainStrikes(
   }
 }
 
+// ── Mythic flip on kill ────────────────────────────────────
+/**
+ * If the killed tough is a mythic (RULES §11), flip ownership to the
+ * killer's side and increment the mythicsFlipped metric.
+ */
+function maybeFlipMythicOnKill(
+  state: TurfGameState,
+  killed: ToughCard | null,
+  killerSide: 'A' | 'B',
+): void {
+  if (!killed || killed.rarity !== 'mythic') return;
+  // Build a transient pool view over the state's live arrays/objects.
+  // flipMythicOnDefeat mutates both fields in place (splice / property set),
+  // so state stays consistent without a separate sync step.
+  flipMythicOnDefeat(
+    { unassigned: state.mythicPool, assignments: state.mythicAssignments },
+    killed.id,
+    killerSide,
+  );
+  state.metrics.mythicsFlipped++;
+}
+
 // ── resolveStrikeNow ──────────────────────────────────────
 export function resolveStrikeNow(
   state: TurfGameState, queued: QueuedAction,
@@ -365,12 +388,22 @@ export function resolveStrikeNow(
   let result: StrikeResult;
   if (queued.kind === 'direct_strike') result = resolveDirectStrike(aTurf, dTurf);
   else if (queued.kind === 'pushed_strike') result = resolvePushedStrike(aTurf, dTurf);
-  else return resolveFundedRecruit(aTurf, dTurf);
+  else {
+    result = resolveFundedRecruit(aTurf, dTurf);
+    if (result.outcome === 'kill') {
+      maybeFlipMythicOnKill(state, result.killedTough, queued.side);
+    }
+    return result;
+  }
 
   if (chainExtra > 0 && preStrikeDefOrder.length > 1) {
     const chainNotes = result.abilityNotes ? [...result.abilityNotes] : [];
     runChainStrikes(aTurf, dTurf, chainExtra, preStrikeDefOrder, chainNotes);
     result = { ...result, abilityNotes: chainNotes };
+  }
+
+  if (result.outcome === 'kill') {
+    maybeFlipMythicOnKill(state, result.killedTough, queued.side);
   }
   return result;
 }
