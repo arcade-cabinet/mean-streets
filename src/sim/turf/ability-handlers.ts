@@ -2,6 +2,7 @@
 // Each returns an IntangibleOutcome; the dispatcher in abilities.ts
 // walks rarity bands and calls them per-card in priority order.
 import type { IntangibleOutcome } from './abilities';
+import { TURF_SIM_CONFIG } from './ai/config';
 import type { DrugCard, QueuedAction, ToughCard, Turf, TurfGameState } from './types';
 
 export const proceed = (): IntangibleOutcome => ({ kind: 'proceed' });
@@ -39,40 +40,77 @@ export function runCounter(
 }
 
 // ── Probabilistic bribe (§10.3) ─────────────────────────────
-const BRIBE_BANDS: Array<[number, number]> = [
-  [5000, 0.99],
-  [2000, 0.95],
-  [1000, 0.85],
-  [500, 0.7],
-];
-
-function bribeChance(denom: number): number {
-  for (const [d, p] of BRIBE_BANDS) if (denom >= d) return p;
-  return 0;
+/**
+ * Look up bribe probability from turf-sim.json thresholds.
+ * Reads `bribe.thresholds` as the single source of truth — highest
+ * tier whose `amount` ≤ `totalCash` wins.
+ */
+export function bribeProbabilityForAmount(amount: number): number {
+  let best = 0;
+  for (const tier of TURF_SIM_CONFIG.bribe.thresholds) {
+    if (amount >= tier.amount) best = Math.max(best, tier.probability);
+  }
+  return best;
 }
 
+/**
+ * Attempt a turf-wide currency bribe before the strike resolves (§10.3).
+ *
+ * Sums ALL currency cards on the defender's active turf (not just the
+ * largest single denomination). On success, consumes currency starting
+ * with the cheapest denominations until the threshold amount is covered;
+ * consumed cards are routed to the shared Black Market (no discard pile
+ * in v0.3). On failure, currency stays.
+ */
 export function maybeBribe(
   state: TurfGameState,
   defender: Turf,
 ): IntangibleOutcome {
-  let bestIdx = -1;
-  let bestDenom = 0;
+  // Collect currency entries sorted ascending by denomination (cheapest first
+  // for consumption, per §4 affiliation-buffer precedent).
+  const currencyEntries: Array<{ idx: number; denom: number }> = [];
   for (let i = 0; i < defender.stack.length; i++) {
     const c = defender.stack[i].card;
     if (c.kind !== 'currency') continue;
-    if (c.denomination > bestDenom) {
-      bestDenom = c.denomination;
-      bestIdx = i;
-    }
+    currencyEntries.push({ idx: i, denom: c.denomination });
   }
-  if (bestIdx < 0 || bestDenom < 500) return proceed();
-  const p = bribeChance(bestDenom);
+  if (currencyEntries.length === 0) return proceed();
+
+  const totalCash = currencyEntries.reduce((s, e) => s + e.denom, 0);
+  const p = bribeProbabilityForAmount(totalCash);
+  if (p <= 0) return proceed();
+
   if (state.rng.next() >= p) {
-    // Failed bribe — currency stays (vanishes on cancel only, §10.3).
+    // Failed — currency stays (§10.3: vanishes only on success).
     state.metrics.bribesFailed = (state.metrics.bribesFailed ?? 0) + 1;
     return proceed();
   }
-  removeFromStack(defender, bestIdx);
+
+  // Success: consume cheapest denominations until we've covered the best
+  // reached threshold. Sort ascending so we spend the smallest bills first.
+  currencyEntries.sort((a, b) => a.denom - b.denom);
+  // Find which threshold amount we reached (the highest tier whose amount
+  // ≤ totalCash) — consume exactly that much.
+  let thresholdAmount = 0;
+  for (const tier of TURF_SIM_CONFIG.bribe.thresholds) {
+    if (totalCash >= tier.amount) thresholdAmount = tier.amount;
+  }
+
+  let spent = 0;
+  const toRemove: number[] = [];
+  for (const e of currencyEntries) {
+    if (spent >= thresholdAmount) break;
+    spent += e.denom;
+    toRemove.push(e.idx);
+  }
+  // Remove in reverse-index order to preserve earlier indices.
+  toRemove.sort((a, b) => b - a);
+  for (const idx of toRemove) {
+    const card = defender.stack[idx].card;
+    defender.stack.splice(idx, 1);
+    if (card.kind !== 'tough') state.blackMarket.push(card);
+  }
+
   state.metrics.bribesAccepted = (state.metrics.bribesAccepted ?? 0) + 1;
   return { kind: 'canceled', reason: 'bribed' };
 }
