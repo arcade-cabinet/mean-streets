@@ -1,0 +1,20 @@
+---
+# collection-browse.yaml — Mean Streets v1.0
+#
+# Navigate to collection, browse filters, verify cards render
+- launchApp
+- assertVisible:
+    id: "main-menu-screen"
+- tapOn:
+    id: "cards-button"
+# Cards gallery should load
+- assertVisible:
+    id: "cards-screen"
+# Scroll through cards
+- scroll
+- scroll
+# Go back to menu
+- tapOn:
+    id: "cards-back"
+- assertVisible:
+    id: "main-menu-screen"

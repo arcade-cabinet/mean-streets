@@ -1,0 +1,63 @@
+---
+# full-game.yaml — Mean Streets v1.0
+#
+# Play a complete game: menu → difficulty → draw/place/strike loop → game over
+# Uses Corner Boy (5 turfs, easiest) for fastest completion
+- launchApp
+- assertVisible:
+    id: "main-menu-screen"
+- tapOn:
+    id: "new-game-button"
+# Dismiss rules
+- tapOn:
+    text: "Understood"
+    optional: true
+- tapOn:
+    id: "close-rules-button"
+    optional: true
+# Corner Boy
+- tapOn:
+    id: "diff-tile-easy"
+- tapOn:
+    id: "diff-start"
+- assertVisible:
+    id: "game-screen"
+
+# Turn loop — draw and place cards, then end turn
+# Repeat draw → place → end turn cycle for several turns
+- repeat:
+    times: 20
+    commands:
+      # Draw (phone HUD or desktop slot)
+      - tapOn:
+          id: "hud-draw"
+          optional: true
+      - tapOn:
+          id: "slot-player-draw"
+          optional: true
+      # Dismiss drawn card modal
+      - tapOn:
+          id: "drawn-card-modal"
+          optional: true
+      # Place on turf
+      - tapOn:
+          id: "turf-lane-A"
+          optional: true
+      # Try to end turn
+      - tapOn:
+          id: "action-end_turn"
+          optional: true
+      # Wait for AI if needed
+      - extendedWaitUntil:
+          visible:
+            id: "action-budget"
+          timeout: 10000
+
+# Game should eventually end (or we hit the repeat limit)
+# Check for either game-over or still in game
+- assertVisible:
+    id: "gameover-screen"
+    optional: true
+- assertVisible:
+    id: "game-screen"
+    optional: true

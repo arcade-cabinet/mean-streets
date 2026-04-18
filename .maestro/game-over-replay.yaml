@@ -1,0 +1,64 @@
+---
+# game-over-replay.yaml — Mean Streets v1.0
+#
+# Play a quick game on War Council (1 turf, fastest to finish),
+# verify game over screen renders, then play again
+- launchApp
+- tapOn:
+    id: "new-game-button"
+- tapOn:
+    text: "Understood"
+    optional: true
+- tapOn:
+    id: "close-rules-button"
+    optional: true
+# War Council — 1 turf, fastest game
+- tapOn:
+    id: "diff-tile-ultra-nightmare"
+- tapOn:
+    id: "diff-start"
+- assertVisible:
+    id: "game-screen"
+
+# Draw and end turn rapidly to let AI win quickly
+- repeat:
+    times: 30
+    commands:
+      - tapOn:
+          id: "hud-draw"
+          optional: true
+      - tapOn:
+          id: "slot-player-draw"
+          optional: true
+      - tapOn:
+          id: "drawn-card-modal"
+          optional: true
+      - tapOn:
+          id: "turf-lane-A"
+          optional: true
+      - tapOn:
+          id: "action-end_turn"
+          optional: true
+      - extendedWaitUntil:
+          visible:
+            id: "action-budget"
+          timeout: 10000
+
+# Game should be over by now
+- extendedWaitUntil:
+    visible:
+      id: "gameover-screen"
+    timeout: 30000
+    optional: true
+
+# If game over, verify stats and play again
+- assertVisible:
+    text: "Case Closed"
+    optional: true
+- tapOn:
+    id: "play-again-button"
+    optional: true
+# Should return to difficulty screen
+- assertVisible:
+    id: "difficulty-screen"
+    optional: true

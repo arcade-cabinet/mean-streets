@@ -1,0 +1,40 @@
+---
+# difficulty-selection.yaml — Mean Streets v1.0
+#
+# Verify all 6 difficulty tiers render and are selectable
+- launchApp
+- assertVisible:
+    id: "main-menu-screen"
+- tapOn:
+    id: "new-game-button"
+# Dismiss rules
+- tapOn:
+    text: "Understood"
+    optional: true
+- tapOn:
+    id: "close-rules-button"
+    optional: true
+# All 6 tiers should be visible
+- assertVisible:
+    id: "difficulty-screen"
+- assertVisible: "Corner Boy"
+- assertVisible: "Soldier"
+- assertVisible: "Lieutenant"
+- assertVisible: "Kingpin"
+- assertVisible: "Last Stand"
+- assertVisible: "War Council"
+# Select each tier and verify subtitle changes
+- tapOn:
+    id: "diff-tile-easy"
+- assertVisible: "Start Match"
+- tapOn:
+    id: "diff-tile-medium"
+- assertVisible: "Start Match"
+- tapOn:
+    id: "diff-tile-hard"
+- assertVisible: "Start Match"
+# Go back to menu
+- tapOn:
+    text: "←"
+    optional: true
+- back

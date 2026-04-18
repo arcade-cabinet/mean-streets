@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAppShell } from '../../platform';
 import { ArrowLeft, ChevronRight, Sparkles } from 'lucide-react';
-import { loadToughCards } from '../../sim/cards/catalog';
-import { generateWeapons, generateDrugs, generateCurrency } from '../../sim/turf/generators';
+import { generatePack } from '../../sim/packs/generator';
+import { createRng, randomSeed } from '../../sim/cards/rng';
 import { addCardsToCollection, loadCollection } from '../../platform/persistence/collection';
 import type { Card as CardType, Rarity } from '../../sim/turf/types';
 import { Card as CardComponent } from '../cards';
 
-const PACK_SIZE = 5;
+const STANDARD_PACK_SIZE = 5;
 
 interface PackOpeningScreenProps {
   onBack: () => void;
@@ -15,42 +15,26 @@ interface PackOpeningScreenProps {
 
 type Phase = 'sealed' | 'revealing' | 'summary';
 
-const RARITY_ORDER: Record<Rarity, number> = {
-  common: 0, uncommon: 1, rare: 2, legendary: 3, mythic: 4,
-};
-
-function buildPackCards(allCards: CardType[]): CardType[] {
-  const shuffled = [...allCards].sort(() => Math.random() - 0.5);
-  const guaranteed = shuffled.find(c => c.rarity !== 'common');
-  const rest = shuffled.filter(c => c !== guaranteed).slice(0, PACK_SIZE - 1);
-  const pack = guaranteed ? [guaranteed, ...rest] : shuffled.slice(0, PACK_SIZE);
-  return pack.sort((a, b) => RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity]);
-}
-
-function loadAllCards(): CardType[] {
-  return [
-    ...loadToughCards(),
-    ...generateWeapons(),
-    ...generateDrugs(),
-    ...generateCurrency(),
-  ];
-}
-
 export function PackOpeningScreen({ onBack }: PackOpeningScreenProps) {
   const { layout } = useAppShell();
   const compact = layout.id === 'phone-portrait' || layout.id === 'folded';
 
-  const allCards = useMemo(loadAllCards, []);
   const [ownedIds, setOwnedIds] = useState<Set<string>>(new Set());
-  const packCards = useMemo(() => buildPackCards(allCards), [allCards]);
+  // packCards is null until the collection loads and the pack is generated.
+  const [packCards, setPackCards] = useState<CardType[]>([]);
 
   useEffect(() => {
-    loadCollection().then(cards => setOwnedIds(new Set(cards.map(c => c.id))));
+    loadCollection().then(collection => {
+      setOwnedIds(new Set(collection.map(c => c.id)));
+      const rng = createRng(randomSeed());
+      const cards = generatePack('standard', collection, rng);
+      setPackCards(cards);
+    });
   }, []);
 
   const [phase, setPhase] = useState<Phase>('sealed');
   const [revealIdx, setRevealIdx] = useState(-1);
-  const [revealed, setRevealed] = useState<boolean[]>(() => new Array(PACK_SIZE).fill(false));
+  const [revealed, setRevealed] = useState<boolean[]>(() => new Array(STANDARD_PACK_SIZE).fill(false));
 
   const currentCard = revealIdx >= 0 && revealIdx < packCards.length ? packCards[revealIdx] : null;
   const allRevealed = revealed.every(Boolean);
