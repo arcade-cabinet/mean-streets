@@ -91,10 +91,11 @@ describe('Turf structure', () => {
 });
 
 describe('PlayerState structure', () => {
-  it('has flat turfs/hand/deck/discard arrays', () => {
+  it('has flat turfs/deck arrays (v0.3 — no hand, no discard)', () => {
     const player: PlayerState = {
-      turfs: [], hand: [], deck: [], discard: [],
+      turfs: [], deck: [],
       toughsInPlay: 0, actionsRemaining: 3,
+      pending: null, queued: [], turnEnded: false,
     };
     expect(player.turfs).toEqual([]);
     expect(player.actionsRemaining).toBe(3);

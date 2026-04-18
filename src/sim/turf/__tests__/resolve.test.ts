@@ -100,7 +100,7 @@ describe('resolvePhase — dominance ordering', () => {
     expect(state.phase).toBe('action');
   });
 
-  it('pending cards are discarded when resolve fires', () => {
+  it('pending modifier at resolve goes to Black Market', () => {
     const A = [mkTurf('a1', [sc(mkTough({ id: 'aT' }))])];
     const B = [mkTurf('b1', [sc(mkTough({ id: 'bT' }))])];
     const state = mkState(A, B);
@@ -110,7 +110,7 @@ describe('resolvePhase — dominance ordering', () => {
     resolvePhase(state);
 
     expect(state.players.A.pending).toBeNull();
-    expect(state.players.A.discard.some((c) => c.id === 'stuck')).toBe(true);
+    expect(state.blackMarket.some((m) => m.id === 'stuck')).toBe(true);
     expect(state.metrics.cardsDiscarded).toBeGreaterThanOrEqual(1);
   });
 

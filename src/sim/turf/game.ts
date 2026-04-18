@@ -37,7 +37,6 @@ function createPlayer(config: GameConfig, deck: Card[], rng: Rng): PlayerState {
   return {
     turfs,
     deck: shuffled,
-    discard: [],
     toughsInPlay: 0,
     actionsRemaining: config.firstTurnActions,
     pending: null,

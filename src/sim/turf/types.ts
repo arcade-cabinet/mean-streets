@@ -50,7 +50,7 @@ export interface QueuedAction {
 }
 export interface PlayerState {
   turfs: Turf[]; // index 0 = active, 1+ = reserves in queue order
-  deck: Card[]; discard: Card[];
+  deck: Card[];
   toughsInPlay: number; actionsRemaining: number;
   pending: Card | null; queued: QueuedAction[]; turnEnded: boolean;
 }

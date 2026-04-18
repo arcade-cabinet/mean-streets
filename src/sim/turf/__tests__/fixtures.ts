@@ -93,7 +93,6 @@ function emptyPlayer(turfs: Turf[]): PlayerState {
   return {
     turfs,
     deck: [],
-    discard: [],
     toughsInPlay: turfs.length,
     actionsRemaining: 3,
     pending: null,

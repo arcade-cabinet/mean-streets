@@ -5,7 +5,6 @@ import type {
   ModifierCard,
   PlayerState,
   Rarity,
-  ToughCard,
   TurfGameState,
 } from './types';
 
@@ -29,7 +28,8 @@ function findTough(
   return null;
 }
 
-/** Send a tough + its modifiers from the active turf to the Black Market. */
+/** Send a tough + its modifiers from the active turf to the Black Market.
+ *  The tough itself leaves play (no graveyard routing); its modifiers join the pool. */
 export function sendToMarket(
   state: TurfGameState, side: 'A' | 'B', toughId: string,
 ): void {
@@ -37,11 +37,10 @@ export function sendToMarket(
   const located = findTough(player, toughId);
   if (!located) return;
   const turf = player.turfs[located.turfIdx];
-  const { tough, mods } = killToughAtIdx(turf, located.stackIdx);
+  const { mods } = killToughAtIdx(turf, located.stackIdx);
   for (const mod of mods) {
     if (mod.kind !== 'tough') state.blackMarket.push(mod as ModifierCard);
   }
-  player.discard.push(tough as ToughCard);
   if (player.toughsInPlay > 0) player.toughsInPlay--;
 }
 

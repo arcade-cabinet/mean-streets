@@ -61,7 +61,6 @@ function initPlayerState(
   return {
     turfs,
     deck: shuffled,
-    discard: [],
     toughsInPlay: 0,
     actionsRemaining: actionsForTurn(config, 1, side),
     pending: null,

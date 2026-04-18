@@ -84,7 +84,6 @@ function makePlayer(turfs: Turf[]): PlayerState {
   return {
     turfs,
     deck: [],
-    discard: [],
     toughsInPlay: 0,
     actionsRemaining: 3,
     pending: null,

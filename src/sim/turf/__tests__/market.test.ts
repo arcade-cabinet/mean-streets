@@ -18,7 +18,7 @@ import {
 } from './state-builder';
 
 describe('sendToMarket', () => {
-  it('sends a tough to discard and its modifiers to the Black Market', () => {
+  it('removes tough from the turf and sends its modifiers to the Black Market', () => {
     const state = mkState(
       [
         mkTurf('a1', [
@@ -34,7 +34,7 @@ describe('sendToMarket', () => {
     sendToMarket(state, 'A', 'aT');
 
     expect(state.players.A.turfs[0].stack).toHaveLength(0);
-    expect(state.players.A.discard.some((c) => c.id === 'aT')).toBe(true);
+    // Tough leaves play entirely — not routed to any pile.
     expect(state.blackMarket.map((m) => m.id).sort()).toEqual(['d1', 'w1']);
     expect(state.players.A.toughsInPlay).toBe(0);
   });

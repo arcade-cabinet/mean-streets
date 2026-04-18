@@ -51,7 +51,6 @@ function makePlayer(
   return {
     turfs,
     deck: [],
-    discard: [],
     toughsInPlay: 0,
     actionsRemaining: 5,
     pending,
@@ -105,7 +104,7 @@ describe('closed ranks — end-of-turn flipping', () => {
     expect(state.players.A.turfs[1].closedRanks).toBe(true);
   });
 
-  it('modifier-on-top at end-of-turn is popped into discard', () => {
+  it('modifier-on-top at end-of-turn is popped into the Black Market', () => {
     const state = mkState();
     addToStack(state.players.A.turfs[0], tough('anchor'));
     addToStack(state.players.A.turfs[0], weapon('stranded'));
@@ -116,7 +115,7 @@ describe('closed ranks — end-of-turn flipping', () => {
     // The modifier popped; only the tough remains on top.
     expect(state.players.A.turfs[0].stack).toHaveLength(1);
     expect(state.players.A.turfs[0].stack[0].card.id).toBe('anchor');
-    expect(state.players.A.discard.some((c) => c.id === 'stranded')).toBe(true);
+    expect(state.blackMarket.some((m) => m.id === 'stranded')).toBe(true);
   });
 
   it('closedRanksEnds metric increments per transition into closed ranks', () => {

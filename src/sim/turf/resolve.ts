@@ -230,7 +230,10 @@ export function resolvePhase(state: TurfGameState): void {
     p.queued.length = 0;
     p.turnEnded = false;
     if (p.pending) {
-      p.discard.push(p.pending);
+      // Modifiers route to the shared Black Market; toughs simply leave play.
+      if (p.pending.kind !== 'tough') {
+        state.blackMarket.push(p.pending as ModifierCard);
+      }
       state.metrics.cardsDiscarded++;
       p.pending = null;
     }

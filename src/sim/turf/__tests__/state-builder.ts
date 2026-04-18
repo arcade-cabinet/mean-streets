@@ -125,7 +125,6 @@ export function mkPlayer(turfs: Turf[]): PlayerState {
   return {
     turfs,
     deck: [],
-    discard: [],
     toughsInPlay,
     actionsRemaining: 3,
     pending: null,

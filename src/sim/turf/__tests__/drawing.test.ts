@@ -51,7 +51,6 @@ function makePlayer(
   return {
     turfs,
     deck: [],
-    discard: [],
     toughsInPlay: 0,
     actionsRemaining: 5,
     pending,
@@ -150,7 +149,7 @@ describe('pending-slot placement lifecycle', () => {
     expect(state.players.A.turfs[0].stack).toHaveLength(1);
   });
 
-  it('discarding the pending slot clears it without cost', () => {
+  it('discarding a pending modifier routes it to the Black Market', () => {
     const state = mkState();
     state.players.A.pending = weapon('burn');
     const before = state.players.A.actionsRemaining;
@@ -159,10 +158,10 @@ describe('pending-slot placement lifecycle', () => {
 
     expect(state.players.A.pending).toBeNull();
     expect(state.players.A.actionsRemaining).toBe(before);
-    expect(state.players.A.discard.some((c) => c.id === 'burn')).toBe(true);
+    expect(state.blackMarket.some((m) => m.id === 'burn')).toBe(true);
   });
 
-  it('a stuck modifier in pending at resolve time is discarded — not returned', () => {
+  it('a stuck modifier in pending at resolve time goes to Black Market — not returned to deck', () => {
     const state = mkState();
     // No toughs anywhere → modifier cannot be placed legally.
     state.players.A.pending = weapon('orphan');
@@ -172,12 +171,12 @@ describe('pending-slot placement lifecycle', () => {
     resolvePhase(state);
 
     expect(state.players.A.pending).toBeNull();
-    expect(state.players.A.discard.some((c) => c.id === 'orphan')).toBe(true);
+    expect(state.blackMarket.some((m) => m.id === 'orphan')).toBe(true);
     // Critically: the card is NOT back on the deck.
     expect(state.players.A.deck.some((c) => c.id === 'orphan')).toBe(false);
   });
 
-  it("a tough in pending at resolve is also discarded (can't be held)", () => {
+  it("a tough in pending at resolve leaves play entirely (not routed anywhere)", () => {
     const state = mkState();
     state.players.A.pending = tough('held-over');
     state.players.A.turnEnded = true;
@@ -186,8 +185,8 @@ describe('pending-slot placement lifecycle', () => {
     resolvePhase(state);
 
     expect(state.players.A.pending).toBeNull();
-    expect(state.players.A.discard.some((c) => c.id === 'held-over')).toBe(
-      true,
-    );
+    // Toughs leave play — no routing to Black Market.
+    expect(state.blackMarket.some((m) => m.id === 'held-over')).toBe(false);
+    expect(state.players.A.deck.some((c) => c.id === 'held-over')).toBe(false);
   });
 });

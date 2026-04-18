@@ -62,7 +62,6 @@ function collectDeckIds(match: MatchState, side: 'A' | 'B'): string[] {
   const ids: string[] = [];
   for (const c of p.deck) ids.push(c.id);
   if (p.pending) ids.push(p.pending.id);
-  for (const c of p.discard) ids.push(c.id);
   for (const t of p.turfs) for (const sc of t.stack) ids.push(sc.card.id);
   return ids;
 }
