@@ -6673,8 +6673,7 @@ select {
 }
 
 /* Phone portrait: stack vertically, no hero */
-@media (max-width: 480px) {
-  .menu-nav { flex-direction: column; }
+@media (max-width: 640px) {
   .menu-shell .menu-logo {
     position: static;
     display: block;
