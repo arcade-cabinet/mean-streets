@@ -33,3 +33,13 @@ Each item closed in this PR with the commit that addressed it.
 - Silhouette missing in prod when served via SPA-fallthrough web servers
   (Cloudflare/Netlify) returns HTML not 404; fallback fires correctly but
   wastes a fetch. Consider returning 404 for /assets/* in production deploy.
+- **AI earns no packs on AI wins** (App.tsx:216). DESIGN.md says "AI
+  earns identical rewards when it wins" but only the player branch opens
+  packs. AI catalog growth is slower than player's. Follow-up PR.
+- **Perfect War escalating currency fallback is flat $500 forever**
+  (rewards.ts:163). RULES §13.4 says $500 → $1000 → $1500 → … but the
+  escalation state was deferred to "persistence layer" that doesn't
+  implement it. Only affects players who win 11+ Perfect Wars.
+- **AI planner doesn't see justPromoted**. It's passive (extra budget at
+  turn start) so it works, but the planner doesn't pre-bias toward
+  promoted-turf aggression. Medium follow-up.
