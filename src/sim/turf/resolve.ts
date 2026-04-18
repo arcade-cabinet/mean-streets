@@ -8,7 +8,6 @@ import {
   positionPower,
   positionResistance,
   promoteReserveTurf,
-  turfCurrency,
   turfModifiers,
 } from './board';
 import { computeHeat, lockupDuration, raidProbability } from './heat';
