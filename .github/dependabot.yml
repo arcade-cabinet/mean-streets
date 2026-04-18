@@ -19,3 +19,13 @@ updates:
       actions:
         patterns:
           - "*"
+
+  - package-ecosystem: pip
+    directory: /workspaces/image-extraction
+    schedule:
+      interval: weekly
+    groups:
+      image-extraction:
+        update-types:
+          - minor
+          - patch
