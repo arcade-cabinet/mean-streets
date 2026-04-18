@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import type { Card, TurfMetrics } from '../../sim/turf/types';
 import { Card as CardComponent } from '../cards';
+import { playVictory, playDefeat } from '../audio/sfx';
 
 interface GameOverScreenProps {
   winner: 'A' | 'B';
@@ -24,6 +26,10 @@ function StatRow({ label, value }: StatRowProps) {
 
 export function GameOverScreen({ winner, metrics, rewardCards = [], onPlayAgain }: GameOverScreenProps) {
   const isVictory = winner === 'A';
+
+  useEffect(() => {
+    void (isVictory ? playVictory() : playDefeat());
+  }, [isVictory]);
 
   return (
     <div
