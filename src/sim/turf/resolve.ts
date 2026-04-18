@@ -293,6 +293,14 @@ export function resolvePhase(state: TurfGameState): void {
       ? state.config.firstTurnActions
       : actionsForTurn(state.config, state.turnNumber, side);
     // justPromoted is cleared by environment.ts on first action consumed.
+    // Reset closedRanks at the start of the new action phase. Closed Ranks is
+    // an end-of-turn POSTURE (RULES §8.5) that grants defensive bonus during
+    // resolution only — it does not carry into the next turn's action window.
+    // Without this reset, closedRanks=true set at handleEndTurn permanently
+    // blocks all strike actions (enumerateLegalActions requires !closedRanks).
+    for (const turf of player.turfs) {
+      turf.closedRanks = false;
+    }
   }
   state.phase = 'action';
 
