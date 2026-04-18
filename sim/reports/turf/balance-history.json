@@ -106,19 +106,19 @@
       "locked": true
     },
     "weap-02": {
-      "consecutiveStableRuns": 0,
+      "consecutiveStableRuns": 1,
       "locked": false
     },
     "weap-03": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 0,
       "locked": true
     },
     "weap-04": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 2,
       "locked": true
     },
     "weap-05": {
-      "consecutiveStableRuns": 0,
+      "consecutiveStableRuns": 1,
       "locked": false
     },
     "weap-06": {
@@ -134,7 +134,7 @@
       "locked": true
     },
     "weap-09": {
-      "consecutiveStableRuns": 0,
+      "consecutiveStableRuns": 1,
       "locked": true
     },
     "weap-10": {
@@ -154,7 +154,7 @@
       "locked": true
     },
     "weap-14": {
-      "consecutiveStableRuns": 0,
+      "consecutiveStableRuns": 1,
       "locked": false
     },
     "weap-15": {
@@ -162,7 +162,7 @@
       "locked": true
     },
     "weap-16": {
-      "consecutiveStableRuns": 0,
+      "consecutiveStableRuns": 1,
       "locked": false
     },
     "weap-17": {
@@ -202,11 +202,11 @@
       "locked": false
     },
     "weap-26": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 0,
       "locked": true
     },
     "weap-27": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 0,
       "locked": true
     },
     "weap-28": {
@@ -214,7 +214,7 @@
       "locked": false
     },
     "weap-29": {
-      "consecutiveStableRuns": 0,
+      "consecutiveStableRuns": 1,
       "locked": true
     },
     "weap-30": {
@@ -226,7 +226,7 @@
       "locked": true
     },
     "weap-32": {
-      "consecutiveStableRuns": 0,
+      "consecutiveStableRuns": 1,
       "locked": true
     },
     "weap-33": {
@@ -238,7 +238,7 @@
       "locked": true
     },
     "weap-35": {
-      "consecutiveStableRuns": 3,
+      "consecutiveStableRuns": 0,
       "locked": true
     },
     "weap-36": {
@@ -254,7 +254,7 @@
       "locked": false
     },
     "weap-39": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 0,
       "locked": true
     },
     "weap-40": {
@@ -266,7 +266,7 @@
       "locked": false
     },
     "weap-42": {
-      "consecutiveStableRuns": 3,
+      "consecutiveStableRuns": 0,
       "locked": true
     },
     "weap-43": {
@@ -286,7 +286,7 @@
       "locked": true
     },
     "weap-47": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 0,
       "locked": true
     },
     "weap-48": {
@@ -346,11 +346,11 @@
       "locked": true
     },
     "drug-12": {
-      "consecutiveStableRuns": 3,
+      "consecutiveStableRuns": 0,
       "locked": true
     },
     "drug-13": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 0,
       "locked": true
     },
     "drug-14": {
@@ -362,7 +362,7 @@
       "locked": true
     },
     "drug-16": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 0,
       "locked": false
     },
     "drug-17": {
@@ -394,7 +394,7 @@
       "locked": true
     },
     "drug-24": {
-      "consecutiveStableRuns": 0,
+      "consecutiveStableRuns": 1,
       "locked": true
     },
     "drug-25": {
@@ -426,7 +426,7 @@
       "locked": true
     },
     "drug-32": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 0,
       "locked": true
     },
     "drug-33": {
@@ -434,7 +434,7 @@
       "locked": false
     },
     "drug-34": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 0,
       "locked": false
     },
     "drug-35": {
@@ -454,7 +454,7 @@
       "locked": false
     },
     "drug-39": {
-      "consecutiveStableRuns": 0,
+      "consecutiveStableRuns": 1,
       "locked": true
     },
     "drug-40": {
@@ -490,7 +490,7 @@
       "locked": true
     },
     "drug-48": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 0,
       "locked": true
     },
     "drug-49": {
@@ -498,7 +498,7 @@
       "locked": true
     },
     "drug-50": {
-      "consecutiveStableRuns": 1,
+      "consecutiveStableRuns": 2,
       "locked": false
     }
   }
