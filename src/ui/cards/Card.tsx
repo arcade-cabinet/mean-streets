@@ -3,6 +3,9 @@ import type { Card as CardType, DifficultyTier, Rarity } from '../../sim/turf/ty
 import { AffiliationSymbol } from '../affiliations';
 import { CardFrame } from './CardFrame';
 import { MythicBadge } from '../board/MythicBadge';
+import flavorTextData from '../../../config/raw/cards/flavor-text.json';
+
+const FLAVOR_TEXT: Record<string, string> = flavorTextData;
 
 type GlowContext = 'none' | 'loyal' | 'rival';
 
@@ -130,10 +133,7 @@ function renderTough(
           <span className="card-power-badge">{card.power}</span>
         </div>
         <div className="card-portrait">
-          <AffiliationSymbol affiliation={card.affiliation} size={40} context={context} className="card-portrait-symbol" />
-          <div className="card-portrait-initials">
-            {card.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
-          </div>
+          <img src={`${import.meta.env.BASE_URL}assets/card-art/${card.id}.png`} alt="" className="card-portrait-img" draggable={false} />
         </div>
         <div className="card-body">
           <div className="card-name-row">
@@ -147,6 +147,9 @@ function renderTough(
             <div className="card-abilities">
               {card.abilities[0]}
             </div>
+          )}
+          {(FLAVOR_TEXT[card.id] || card.tagline) && (
+            <div className="card-flavor">{FLAVOR_TEXT[card.id] ?? card.tagline}</div>
           )}
         </div>
         <div className="card-footer">
@@ -166,7 +169,6 @@ function renderModifier(
   const mythicClass = extras.isMythic ? 'card-mythic' : '';
   const kindClass = card.kind === 'weapon' ? 'card-weapon' : 'card-drug';
   const portraitClass = card.kind === 'weapon' ? 'card-portrait-weapon' : 'card-portrait-drug';
-  const icon = card.kind === 'weapon' ? '⚔' : '💊';
 
   if (compact) {
     return (
@@ -207,7 +209,7 @@ function renderModifier(
           <span className="card-power-badge">{card.power}</span>
         </div>
         <div className={`card-portrait ${portraitClass}`}>
-          <span className="card-portrait-icon">{icon}</span>
+          <img src={`${import.meta.env.BASE_URL}assets/card-art/${card.id}.png`} alt="" className="card-portrait-img" draggable={false} />
         </div>
         <div className="card-body">
           <div className="card-name-row">
@@ -218,6 +220,9 @@ function renderModifier(
             <div className="card-abilities">
               {card.abilities[0]}
             </div>
+          )}
+          {FLAVOR_TEXT[card.id] && (
+            <div className="card-flavor">{FLAVOR_TEXT[card.id]}</div>
           )}
         </div>
         <div className="card-footer">

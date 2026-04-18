@@ -3,6 +3,7 @@ import { useAppShell } from '../../platform';
 import { ArrowLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { loadToughCards } from '../../sim/cards/catalog';
 import { generateWeapons, generateDrugs, generateCurrency } from '../../sim/turf/generators';
+import { addCardsToCollection, loadCollection } from '../../platform/persistence/collection';
 import type { Card as CardType, Rarity } from '../../sim/turf/types';
 import { Card as CardComponent } from '../cards';
 
@@ -40,8 +41,12 @@ export function PackOpeningScreen({ onBack }: PackOpeningScreenProps) {
   const compact = layout.id === 'phone-portrait' || layout.id === 'folded';
 
   const allCards = useMemo(loadAllCards, []);
-  const seenIds = useMemo(() => new Set(allCards.slice(0, 30).map(c => c.id)), [allCards]);
+  const [ownedIds, setOwnedIds] = useState<Set<string>>(new Set());
   const packCards = useMemo(() => buildPackCards(allCards), [allCards]);
+
+  useEffect(() => {
+    loadCollection().then(cards => setOwnedIds(new Set(cards.map(c => c.id))));
+  }, []);
 
   const [phase, setPhase] = useState<Phase>('sealed');
   const [revealIdx, setRevealIdx] = useState(-1);
@@ -95,7 +100,14 @@ export function PackOpeningScreen({ onBack }: PackOpeningScreenProps) {
     return () => window.removeEventListener('keydown', onKey);
   }, [phase, handleOpenPack, handleAdvance, onBack]);
 
-  const isNew = useCallback((card: CardType) => !seenIds.has(card.id), [seenIds]);
+  // Save pack cards to collection when fully revealed
+  useEffect(() => {
+    if (phase === 'summary') {
+      addCardsToCollection(packCards).catch(() => {});
+    }
+  }, [phase, packCards]);
+
+  const isNew = useCallback((card: CardType) => !ownedIds.has(card.id), [ownedIds]);
 
   const rarityStats = useMemo(() => {
     const counts: Record<Rarity, number> = {

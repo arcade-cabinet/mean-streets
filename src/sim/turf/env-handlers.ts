@@ -4,17 +4,29 @@ import {
   consumeRivalBufferIfNeeded,
   flipCardFaceUp,
   hasToughOnTurf,
+  insertIntoStack,
   turfAffiliationConflict,
 } from './board';
 import { isModifierCard } from './env-query';
-import type { PlayerState, TurfAction, TurfGameState } from './types';
+import type { ModifierCard, PlayerState, TurfAction, TurfGameState } from './types';
 
 export function handleDraw(player: PlayerState, state: TurfGameState): void {
   if (player.pending !== null) throw new Error('draw: pending slot occupied');
   const card = player.deck.shift();
   if (!card) throw new Error('draw: deck empty');
-  player.pending = card;
   state.metrics.draws++;
+
+  const active = player.turfs[0];
+
+  // Modifier drawn with no tough on turf → auto-route to Black Market
+  // (no player decision — card literally can't be played)
+  if (active && isModifierCard(card) && !hasToughOnTurf(active)) {
+    state.blackMarket.push(card as ModifierCard);
+    return;
+  }
+
+  // Everything else goes to pending — player/AI decides placement
+  player.pending = card;
 }
 
 export function handlePlayCard(
@@ -46,7 +58,20 @@ export function handlePlayCard(
   }
 
   consumeRivalBufferIfNeeded(turf, card);
-  addToStack(turf, card, { faceUp: true });
+
+  if (isModifierCard(card) && turf.stack.length > 0) {
+    // Modifiers always go UNDER the active (top) tough — never on top.
+    const topIdx = turf.stack.length;
+    const maxInsert = topIdx - 1; // just below current top
+    const insertIdx = action.stackIdx !== undefined
+      ? Math.min(action.stackIdx, maxInsert)
+      : maxInsert;
+    insertIntoStack(turf, card, Math.max(0, insertIdx), { faceUp: true });
+  } else if (action.stackIdx !== undefined) {
+    insertIntoStack(turf, card, action.stackIdx, { faceUp: true });
+  } else {
+    addToStack(turf, card, { faceUp: true });
+  }
   player.pending = null;
   state.metrics.cardsPlayed++;
 

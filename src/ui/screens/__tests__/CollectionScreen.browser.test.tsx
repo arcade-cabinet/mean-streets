@@ -19,8 +19,8 @@ describe('CollectionScreen', () => {
     expect(document.querySelector('[data-testid="collection-progress"]')).not.toBeNull();
     expect(document.querySelector('[data-testid="collection-summary"]')).not.toBeNull();
 
-    const count = document.querySelector('.coll-progress-count')?.textContent;
-    expect(Number(count)).toBeGreaterThan(0);
+    const progressText = document.querySelector('[data-testid="collection-progress"]')?.textContent ?? '';
+    expect(progressText).toContain('unlocked');
   });
 
   it('shows all 5 category filter tabs', async () => {

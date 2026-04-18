@@ -392,6 +392,17 @@ describe('stepAction — draw', () => {
     expect(state.metrics.draws).toBe(1);
   });
 
+  it('auto-sends modifier to market when no tough on turf', () => {
+    const state = makeState();
+    state.players.A.deck = [weapon('w1')];
+
+    stepAction(state, { kind: 'draw', side: 'A' });
+
+    expect(state.players.A.pending).toBeNull();
+    expect(state.blackMarket).toHaveLength(1);
+    expect(state.blackMarket[0].id).toBe('w1');
+  });
+
   it('costs an action', () => {
     const state = makeState();
     state.players.A.deck = [tough('d1')];
@@ -404,8 +415,8 @@ describe('stepAction — draw', () => {
 
   it('throws if pending slot already occupied', () => {
     const state = makeState();
-    state.players.A.deck = [tough('d1'), weapon('w1')];
-    stepAction(state, { kind: 'draw', side: 'A' });
+    state.players.A.pending = tough('already');
+    state.players.A.deck = [tough('d1')];
 
     expect(() => stepAction(state, { kind: 'draw', side: 'A' })).toThrow(
       /pending/,

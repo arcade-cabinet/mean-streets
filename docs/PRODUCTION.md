@@ -7,6 +7,37 @@ domain: release
 
 # Production Checklist
 
+## v1.0.0-beta.1 Status (2026-04-17)
+
+**Branch**: `feat/card-art-opponent-replay` → PR #27
+
+### Done
+- [x] Card art pipeline (212 PNG silhouettes, dark red surface, ragged edges)
+- [x] Flavor text (212 unique entries)
+- [x] Draw flow redesign (pending → contextual placement, auto-market for unplayable modifiers)
+- [x] Stack position placement (insertIntoStack, modifier-under-tough enforcement)
+- [x] Draw pile visual (stacked card-backs with MS monogram)
+- [x] Collection screen shows real player collection (owned vs locked)
+- [x] Game over rewards displayed ("Spoils of War")
+- [x] Pack opening saves to persistence + real NEW detection
+- [x] Peek button for reviewing drawn card
+- [x] Drawn card modal overlay with flip animation
+- [x] All tests green (516 node + 108 DOM)
+- [x] Build clean (tsc + vite)
+- [x] AI opponent functional with new draw mechanics
+
+### Remaining for 1.0 RC
+- [ ] Merge PR #27 to main
+- [ ] Phone viewport verification
+- [ ] Card merge persistence (quantity tracking for pyramid merge)
+- [ ] Opponent draw visual feedback (card animating into opponent turf)
+- [ ] Sound integration (ambient + SFX)
+- [ ] Tutorial flow
+- [ ] E2E smoke pass on all 4 device profiles
+- [ ] Release gate convergence (analysis:benchmark + test:release)
+
+---
+
 This document owns **release readiness**. It is the single tracker for
 what blocks the game from shipping, what platforms it targets, and where
 each system sits on the path to launch. Vision lives in

@@ -10,7 +10,7 @@ import type { QueuedAction, Turf } from '../../sim/turf/types';
 import { HeatMeter, StackFanModal, TurfCompositeCard } from '../board';
 import { Card as CardComponent } from '../cards';
 import { QueuedChips, type ActionMode } from './GameScreenActionBar';
-import { buildPrompt, type StrikePhase } from './gameScreenHelpers';
+import type { StrikePhase } from './gameScreenHelpers';
 import {
   GameMobileCustodyModal, GameMobileMarketModal,
 } from './GameScreenSidebars';
@@ -33,7 +33,8 @@ export type ModalView =
   | { kind: 'market' }
   | { kind: 'holding' }
   | { kind: 'drawer-market' }
-  | { kind: 'drawer-holding' };
+  | { kind: 'drawer-holding' }
+  | { kind: 'drawn-card' };
 
 export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
   const { layout } = useAppShell();
@@ -86,7 +87,7 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
     return false;
   }, [totalPlayerTurfs, totalOpponentTurfs, onGameOver]);
 
-  const { aiThinking } = useOpponentTurn({ world, turnEndedA, turnEndedB, onFinish: checkWin });
+  const { aiThinking, aiAction } = useOpponentTurn({ world, turnEndedA, turnEndedB, onFinish: checkWin });
 
   const metricsSnapshotRef = useRef({ raids: 0, mythicsFlipped: 0 });
 
@@ -122,13 +123,19 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
   });
 
   const exhausted = budget.remaining <= 0;
-  const promptText = buildPrompt(mode, strikePhase, pending !== null, null);
 
   useEffect(() => {
     if (exhausted && !turnEndedA && !pending) {
       actions.onEndTurn();
     }
   }, [exhausted, turnEndedA, pending, actions]);
+
+  // On phone: auto-show drawn card modal when a new card enters pending
+  useEffect(() => {
+    if (compact && pending && modal.kind === 'none') {
+      setModal({ kind: 'drawn-card' });
+    }
+  }, [compact, pending, modal.kind]);
 
   const canDraw = !exhausted && !turnEndedA && !pending && deckCount > 0;
   const holdingAll = [...holdingA, ...holdingB, ...lockupA, ...lockupB];
@@ -188,13 +195,7 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
         <button
           type="button"
           className={`game-hud-panel-btn ${market.length > 0 ? 'game-hud-panel-btn-active' : ''}`}
-          onClick={() => {
-            if (pending && (pending.kind === 'weapon' || pending.kind === 'drug' || pending.kind === 'currency')) {
-              actions.onDiscardPending();
-              return;
-            }
-            setModal(modal.kind === 'drawer-market' ? { kind: 'none' } : { kind: 'drawer-market' });
-          }}
+          onClick={() => setModal(modal.kind === 'drawer-market' ? { kind: 'none' } : { kind: 'drawer-market' })}
           data-testid="slot-market"
         >
           Market {market.length > 0 ? `(${market.length})` : ''}
@@ -207,6 +208,16 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
         >
           Custody {holdingAll.length > 0 ? `(${holdingAll.length})` : ''}
         </button>
+        {pending && (
+          <button
+            type="button"
+            className="game-hud-panel-btn game-hud-panel-btn-active"
+            onClick={() => setModal({ kind: 'drawn-card' })}
+            data-testid="btn-peek"
+          >
+            Peek
+          </button>
+        )}
         {onOpenMenu && (
           <button type="button" className="game-hud-bar-menu" onClick={onOpenMenu} aria-label="Open game menu">Menu</button>
         )}
@@ -215,15 +226,21 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
       {flash && <div className="game-flash"><span className="game-flash-pill">{flash}</span></div>}
       {(aiThinking || (turnEndedA && !turnEndedB)) && (
         <div className="game-overlay" data-testid="opponent-turn-overlay">
-          <div className="game-overlay-pill">Waiting for opponent…</div>
+          <div className="game-overlay-pill">{aiAction ?? 'Waiting for opponent…'}</div>
         </div>
       )}
 
       <div className="board-grid">
         {/* Row 1: Opponent Draw | Opponent Turf | Opponent Reserves */}
         <div className="board-slot board-slot-draw board-slot-opponent-draw" data-testid="slot-opp-draw">
-          <span className="board-slot-label">Opp</span>
-          <span className="board-slot-count">{opponentReserves.length} res</span>
+          <div className="draw-pile">
+            <div className="draw-pile-card draw-pile-card-3" />
+            <div className="draw-pile-card draw-pile-card-2" />
+            <div className="draw-pile-card draw-pile-card-1">
+              <span className="draw-pile-mark">MS</span>
+            </div>
+            <span className="draw-pile-count">{opponentReserves.length} res</span>
+          </div>
         </div>
 
         <div
@@ -240,7 +257,10 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
 
         <div className="board-slot board-slot-reserves board-slot-opponent-reserves">
           {opponentReserves.length > 0 && (
-            <span className="board-slot-count">{opponentReserves.length}</span>
+            <div className="draw-pile">
+              <div className="draw-pile-card draw-pile-card-1" />
+              <span className="draw-pile-count">{opponentReserves.length}</span>
+            </div>
           )}
         </div>
 
@@ -250,13 +270,22 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
           onClick={() => canDraw && actions.onModeSelect('draw')}
           data-testid="slot-player-draw"
         >
-          {deckCount > 0
-            ? <span className="board-slot-count">{deckCount}</span>
-            : <span className="board-slot-label">Empty</span>}
+          {deckCount > 0 ? (
+            <div className="draw-pile">
+              {deckCount > 2 && <div className="draw-pile-card draw-pile-card-3" />}
+              {deckCount > 1 && <div className="draw-pile-card draw-pile-card-2" />}
+              <div className="draw-pile-card draw-pile-card-1">
+                <span className="draw-pile-mark">MS</span>
+              </div>
+              <span className="draw-pile-count">{deckCount}</span>
+            </div>
+          ) : (
+            <span className="board-slot-label">Empty</span>
+          )}
         </div>
 
         <div
-          className="board-slot board-slot-turf board-slot-player"
+          className={`board-slot board-slot-turf board-slot-player ${pending ? 'board-slot-pending' : ''}`}
           onClick={() => actions.onLaneClick('A')}
           data-testid="turf-lane-A"
         >
@@ -274,17 +303,14 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
 
         <div className="board-slot board-slot-reserves board-slot-player-reserves">
           {playerReserves.length > 0 && (
-            <span className="board-slot-count">{playerReserves.length}</span>
+            <div className="draw-pile">
+              <div className="draw-pile-card draw-pile-card-1" />
+              <span className="draw-pile-count">{playerReserves.length}</span>
+            </div>
           )}
         </div>
       </div>
 
-      {promptText && (
-        <div className="game-prompt">
-          <span className="game-prompt-text">{promptText}</span>
-          <button type="button" className="game-prompt-cancel" onClick={actions.reset}>Cancel</button>
-        </div>
-      )}
 
       <QueuedChips strikes={queuedA} />
 
@@ -292,9 +318,11 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
       {(modal.kind === 'stack' || modal.kind === 'swap') && (
         <StackFanModal
           turf={modal.turf} open isOwn
-          onCardPick={actions.onStackPick}
-          onClose={() => setModal({ kind: 'none' })}
+          onCardPick={mode !== 'play_card' ? actions.onStackPick : undefined}
+          onClose={() => { setModal({ kind: 'none' }); if (mode === 'play_card') setMode(null); }}
           showHp showOwnerLines={mode === 'modifier_swap'}
+          onPlaceAt={mode === 'play_card' && pending ? actions.placePendingAt : undefined}
+          placingIsModifier={mode === 'play_card' && !!pending && pending.kind !== 'tough'}
         />
       )}
 
@@ -313,6 +341,19 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
           holdingA={holdingA} holdingB={holdingB} lockupA={lockupA} lockupB={lockupB}
           onClose={() => setModal({ kind: 'none' })}
         />
+      )}
+
+      {modal.kind === 'drawn-card' && pending && (
+        <div
+          className="game-drawn-card-overlay"
+          onClick={() => setModal({ kind: 'none' })}
+          data-testid="drawn-card-modal"
+        >
+          <div className="game-drawn-card-content" onClick={(e) => e.stopPropagation()}>
+            <CardComponent card={pending} />
+          </div>
+          <span className="game-drawn-card-hint">Tap your turf to place</span>
+        </div>
       )}
 
       {resolution && (

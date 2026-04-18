@@ -140,14 +140,13 @@ export function CardGarageScreen({ onBack }: CardGarageScreenProps) {
     if (updated.length > 0) savePreferences(updated);
   }, []);
 
-  // Placeholder merge handler — surfaces a toast. Full wire-up needs a
-  // persistence helper that consumes 3 instances and mints the upgraded
-  // copy; persistence/** is outside this UI agent's scope, so we surface
-  // the intent but don't mutate state yet.
+  // Merge requires quantity tracking (2 copies → 1 upgrade) which needs
+  // a persistence schema change (unlockedCardIds Set → quantity map).
+  // Post-beta: add StoredCardInstance.count, wire pyramid merge here.
   const handleMerge = useCallback((cardId: string) => {
     const row = rows.get(cardId);
     if (!row) return;
-    setMergeToast(`Merge queued for ${row.card.name} — persistence hook pending`);
+    setMergeToast(`Merge coming soon — ${row.card.name}`);
     setTimeout(() => setMergeToast(null), 2200);
   }, [rows]);
 

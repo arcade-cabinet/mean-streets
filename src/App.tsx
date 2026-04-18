@@ -74,7 +74,7 @@ export default function App() {
   const [drawerTab, setDrawerTab] = useState<DrawerTab>('settings');
   const [hasActiveRun, setHasActiveRun] = useState(false);
   const [activeConfig, setActiveConfig] = useState<GameConfig | null>(null);
-  const [_lastRewardCards, setLastRewardCards] = useState<Card[]>([]);
+  const [lastRewardCards, setLastRewardCards] = useState<Card[]>([]);
 
   useEffect(() => {
     void Promise.all([
@@ -238,6 +238,7 @@ export default function App() {
         <GameOverScreen
           winner={winner}
           metrics={metrics}
+          rewardCards={lastRewardCards}
           onPlayAgain={handlePlayAgain}
         />
       )}

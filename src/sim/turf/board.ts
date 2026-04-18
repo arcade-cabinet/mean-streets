@@ -67,6 +67,33 @@ export function addToStack(
   turf.stack.push({ card, faceUp, owner });
 }
 
+/** Insert a card at a specific stack position. 0 = bottom, stack.length = top. */
+export function insertIntoStack(
+  turf: Turf, card: Card, insertAt: number, optsOrFaceUp: AddToStackOpts | boolean = true,
+): void {
+  const opts: AddToStackOpts =
+    typeof optsOrFaceUp === 'boolean' ? { faceUp: optsOrFaceUp } : optsOrFaceUp;
+  const faceUp = opts.faceUp ?? true;
+  let owner = opts.owner;
+  if (!owner) {
+    if (card.kind === 'tough') owner = card.id;
+    else {
+      // Find nearest tough above insertion point, else below, else self
+      for (let i = insertAt; i < turf.stack.length; i++) {
+        if (turf.stack[i].card.kind === 'tough') { owner = turf.stack[i].card.id; break; }
+      }
+      if (!owner) {
+        for (let i = insertAt - 1; i >= 0; i--) {
+          if (turf.stack[i].card.kind === 'tough') { owner = turf.stack[i].card.id; break; }
+        }
+      }
+      if (!owner) owner = card.id;
+    }
+  }
+  const idx = Math.max(0, Math.min(insertAt, turf.stack.length));
+  turf.stack.splice(idx, 0, { card, faceUp, owner });
+}
+
 export function removeFromStack(turf: Turf, idx: number): Card | null {
   if (idx < 0 || idx >= turf.stack.length) return null;
   const [removed] = turf.stack.splice(idx, 1);

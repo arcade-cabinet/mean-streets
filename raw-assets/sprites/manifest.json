@@ -1,0 +1,727 @@
+{
+  "silhouettes02_000": {
+    "category": "bodies",
+    "label": "lean",
+    "file": "bodies/lean.png"
+  },
+  "silhouettes02_001": {
+    "category": "bodies",
+    "label": "average",
+    "file": "bodies/average.png"
+  },
+  "silhouettes02_002": {
+    "category": "bodies",
+    "label": "heavy",
+    "file": "bodies/heavy.png"
+  },
+  "silhouettes02_003": {
+    "category": "bodies",
+    "label": "tall-longcoat",
+    "file": "bodies/tall-longcoat.png"
+  },
+  "silhouettes02_004": {
+    "category": "bodies",
+    "label": "tall-longcoat",
+    "file": "bodies/tall-longcoat-2.png"
+  },
+  "silhouettes02_005": {
+    "category": "bodies",
+    "label": "hood",
+    "file": "bodies/hood.png"
+  },
+  "silhouettes02_006": {
+    "category": "bodies",
+    "label": "cap",
+    "file": "bodies/cap.png"
+  },
+  "silhouettes02_007": {
+    "category": "bodies",
+    "label": "shaved",
+    "file": "bodies/shaved.png"
+  },
+  "silhouettes02_008": {
+    "category": "bodies",
+    "label": "fedora",
+    "file": "bodies/fedora.png"
+  },
+  "silhouettes02_009": {
+    "category": "bodies",
+    "label": "bandana",
+    "file": "bodies/bandana.png"
+  },
+  "silhouettes02_010": {
+    "category": "bodies",
+    "label": "ski-mask",
+    "file": "bodies/ski-mask.png"
+  },
+  "silhouettes02_011": {
+    "category": "bodies",
+    "label": "ski-mask",
+    "file": "bodies/ski-mask-2.png"
+  },
+  "silhouettes02_012": {
+    "category": "bodies",
+    "label": "ski-mask",
+    "file": "bodies/ski-mask-3.png"
+  },
+  "silhouettes02_013": {
+    "category": "bodies",
+    "label": "mohawk",
+    "file": "bodies/mohawk.png"
+  },
+  "silhouettes02_014": {
+    "category": "bodies",
+    "label": "slick-femme",
+    "file": "bodies/slick-femme.png"
+  },
+  "silhouettes02_015": {
+    "category": "bodies",
+    "label": "slick-femme",
+    "file": "bodies/slick-femme-2.png"
+  },
+  "silhouettes02_016": {
+    "category": "bodies",
+    "label": "short-femme",
+    "file": "bodies/short-femme.png"
+  },
+  "silhouettes02_017": {
+    "category": "torsos",
+    "label": "hood",
+    "file": "torsos/hood.png"
+  },
+  "silhouettes02_018": {
+    "category": "torsos",
+    "label": "cap",
+    "file": "torsos/cap.png"
+  },
+  "silhouettes02_019": {
+    "category": "torsos",
+    "label": "shaved",
+    "file": "torsos/shaved.png"
+  },
+  "silhouettes02_020": {
+    "category": "torsos",
+    "label": "fedora",
+    "file": "torsos/fedora.png"
+  },
+  "silhouettes02_022": {
+    "category": "torsos",
+    "label": "hood",
+    "file": "torsos/hood-2.png"
+  },
+  "silhouettes02_023": {
+    "category": "torsos",
+    "label": "hoodie",
+    "file": "torsos/hoodie.png"
+  },
+  "silhouettes02_024": {
+    "category": "torsos",
+    "label": "bomber",
+    "file": "torsos/bomber.png"
+  },
+  "silhouettes02_025": {
+    "category": "torsos",
+    "label": "cap",
+    "file": "torsos/cap-2.png"
+  },
+  "silhouettes02_027": {
+    "category": "torsos",
+    "label": "bat",
+    "file": "torsos/bat.png"
+  },
+  "silhouettes02_028": {
+    "category": "torsos",
+    "label": "knife",
+    "file": "torsos/knife.png"
+  },
+  "silhouettes02_029": {
+    "category": "torsos",
+    "label": "runner",
+    "file": "torsos/runner.png"
+  },
+  "silhouettes02_030": {
+    "category": "torsos",
+    "label": "wide-braced",
+    "file": "torsos/wide-braced.png"
+  },
+  "silhouettes02_032": {
+    "category": "torsos",
+    "label": "hunched",
+    "file": "torsos/hunched.png"
+  },
+  "silhouettes02_033": {
+    "category": "torsos",
+    "label": "hunched",
+    "file": "torsos/hunched-2.png"
+  },
+  "silhouettes02_034": {
+    "category": "torsos",
+    "label": "hoodie",
+    "file": "torsos/hoodie-2.png"
+  },
+  "silhouettes02_035": {
+    "category": "torsos",
+    "label": "bomber",
+    "file": "torsos/bomber-2.png"
+  },
+  "silhouettes02_038": {
+    "category": "torsos",
+    "label": "apron",
+    "file": "torsos/apron.png"
+  },
+  "silhouettes02_043": {
+    "category": "torsos",
+    "label": "plant-tank",
+    "file": "torsos/plant-tank.png"
+  },
+  "silhouettes02_044": {
+    "category": "torsos",
+    "label": "stalk-lunge",
+    "file": "torsos/stalk-lunge.png"
+  },
+  "silhouettes02_045": {
+    "category": "torsos",
+    "label": "reapers",
+    "file": "torsos/reapers.png"
+  },
+  "silhouettes02_046": {
+    "category": "torsos",
+    "label": "run",
+    "file": "torsos/run.png"
+  },
+  "silhouettes02_047": {
+    "category": "torsos",
+    "label": "bomber",
+    "file": "torsos/bomber-3.png"
+  },
+  "silhouettes02_048": {
+    "category": "torsos",
+    "label": "flank-lean",
+    "file": "torsos/flank-lean.png"
+  },
+  "silhouettes02_049": {
+    "category": "torsos",
+    "label": "casual-slouch",
+    "file": "torsos/casual-slouch.png"
+  },
+  "silhouettes02_051": {
+    "category": "torsos",
+    "label": "fists",
+    "file": "torsos/fists.png"
+  },
+  "silhouettes02_052": {
+    "category": "torsos",
+    "label": "pistol",
+    "file": "torsos/pistol.png"
+  },
+  "silhouettes02_053": {
+    "category": "torsos",
+    "label": "knife",
+    "file": "torsos/knife-2.png"
+  },
+  "silhouettes02_055": {
+    "category": "arms",
+    "label": "mohawk",
+    "file": "arms/mohawk.png"
+  },
+  "silhouettes02_056": {
+    "category": "legs",
+    "label": "lean",
+    "file": "legs/lean.png"
+  },
+  "silhouettes02_057": {
+    "category": "legs",
+    "label": "stalk-lunge",
+    "file": "legs/stalk-lunge.png"
+  },
+  "silhouettes02_058": {
+    "category": "legs",
+    "label": "lean",
+    "file": "legs/lean-2.png"
+  },
+  "silhouettes02_059": {
+    "category": "legs",
+    "label": "kneel-recover",
+    "file": "legs/kneel-recover.png"
+  },
+  "silhouettes02_060": {
+    "category": "legs",
+    "label": "run",
+    "file": "legs/run.png"
+  },
+  "silhouettes02_061": {
+    "category": "legs",
+    "label": "backpack",
+    "file": "legs/backpack.png"
+  },
+  "silhouettes02_062": {
+    "category": "legs",
+    "label": "medbag",
+    "file": "legs/medbag.png"
+  },
+  "silhouettes02_063": {
+    "category": "legs",
+    "label": "shotgun",
+    "file": "legs/shotgun.png"
+  },
+  "silhouettes02_065": {
+    "category": "legs",
+    "label": "hood",
+    "file": "legs/hood.png"
+  },
+  "silhouettes02_066": {
+    "category": "crew-marks",
+    "label": "crowbar",
+    "file": "crew-marks/crowbar.png"
+  },
+  "silhouettes02_067": {
+    "category": "crew-marks",
+    "label": "jade_dragon",
+    "file": "crew-marks/jade_dragon.png"
+  },
+  "silhouettes02_070": {
+    "category": "crew-marks",
+    "label": "southside_saints",
+    "file": "crew-marks/southside_saints.png"
+  },
+  "silhouettes02_071": {
+    "category": "crew-marks",
+    "label": "reapers",
+    "file": "crew-marks/reapers.png"
+  },
+  "silhouettes02_072": {
+    "category": "crew-marks",
+    "label": "reapers",
+    "file": "crew-marks/reapers-2.png"
+  },
+  "silhouettes02_073": {
+    "category": "crew-marks",
+    "label": "lean",
+    "file": "crew-marks/lean.png"
+  },
+  "silhouettes03_000": {
+    "category": "headers",
+    "label": "contraband-street-economy",
+    "file": "headers/contraband-street-economy.png"
+  },
+  "silhouettes03_001": {
+    "category": "contraband",
+    "label": "drug-bag",
+    "file": "contraband/drug-bag.png"
+  },
+  "silhouettes03_002": {
+    "category": "contraband",
+    "label": "pill-bottle",
+    "file": "contraband/pill-bottle.png"
+  },
+  "silhouettes03_003": {
+    "category": "contraband",
+    "label": "herb-bag",
+    "file": "contraband/herb-bag.png"
+  },
+  "silhouettes03_004": {
+    "category": "contraband",
+    "label": "prescription-bottle",
+    "file": "contraband/prescription-bottle.png"
+  },
+  "silhouettes03_005": {
+    "category": "contraband",
+    "label": "brick-kilo",
+    "file": "contraband/brick-kilo.png"
+  },
+  "silhouettes03_006": {
+    "category": "contraband",
+    "label": "syringe",
+    "file": "contraband/syringe.png"
+  },
+  "silhouettes03_007": {
+    "category": "contraband",
+    "label": "brass-knuckles",
+    "file": "contraband/brass-knuckles.png"
+  },
+  "silhouettes03_008": {
+    "category": "contraband",
+    "label": "duffel-bag",
+    "file": "contraband/duffel-bag.png"
+  },
+  "silhouettes03_009": {
+    "category": "contraband",
+    "label": "burner-phone",
+    "file": "contraband/burner-phone.png"
+  },
+  "silhouettes03_010": {
+    "category": "contraband",
+    "label": "paper-bag",
+    "file": "contraband/paper-bag.png"
+  },
+  "silhouettes03_011": {
+    "category": "contraband",
+    "label": "cash-stack",
+    "file": "contraband/cash-stack.png"
+  },
+  "silhouettes03_012": {
+    "category": "contraband",
+    "label": "wrapped-bricks",
+    "file": "contraband/wrapped-bricks.png"
+  },
+  "silhouettes03_013": {
+    "category": "contraband",
+    "label": "fist-front",
+    "file": "contraband/fist-front.png"
+  },
+  "silhouettes03_014": {
+    "category": "contraband",
+    "label": "wallet",
+    "file": "contraband/wallet.png"
+  },
+  "silhouettes03_015": {
+    "category": "contraband",
+    "label": "fist-raised",
+    "file": "contraband/fist-raised.png"
+  },
+  "silhouettes03_016": {
+    "category": "contraband",
+    "label": "fist-alt",
+    "file": "contraband/fist-alt.png"
+  },
+  "silhouettes03_017": {
+    "category": "contraband",
+    "label": "money-clip",
+    "file": "contraband/money-clip.png"
+  },
+  "silhouettes03_018": {
+    "category": "headers",
+    "label": "weapons-tools",
+    "file": "headers/weapons-tools.png"
+  },
+  "silhouettes03_019": {
+    "category": "weapons",
+    "label": "fist-small",
+    "file": "weapons/fist-small.png"
+  },
+  "silhouettes03_020": {
+    "category": "weapons",
+    "label": "fist-punch",
+    "file": "weapons/fist-punch.png"
+  },
+  "silhouettes03_021": {
+    "category": "weapons",
+    "label": "crowbar",
+    "file": "weapons/crowbar.png"
+  },
+  "silhouettes03_022": {
+    "category": "weapons",
+    "label": "chain",
+    "file": "weapons/chain.png"
+  },
+  "silhouettes03_023": {
+    "category": "weapons",
+    "label": "holster-pistol",
+    "file": "weapons/holster-pistol.png"
+  },
+  "silhouettes03_024": {
+    "category": "weapons",
+    "label": "hook-blade",
+    "file": "weapons/hook-blade.png"
+  },
+  "silhouettes03_025": {
+    "category": "weapons",
+    "label": "grenade",
+    "file": "weapons/grenade.png"
+  },
+  "silhouettes03_026": {
+    "category": "weapons",
+    "label": "pistol-compact",
+    "file": "weapons/pistol-compact.png"
+  },
+  "silhouettes03_027": {
+    "category": "weapons",
+    "label": "pistol-full",
+    "file": "weapons/pistol-full.png"
+  },
+  "silhouettes03_028": {
+    "category": "weapons",
+    "label": "ammo-box",
+    "file": "weapons/ammo-box.png"
+  },
+  "silhouettes03_029": {
+    "category": "headers",
+    "label": "footer",
+    "file": "headers/footer.png"
+  },
+  "silhouettes01_000": {
+    "category": "bodies",
+    "label": "lean",
+    "file": "bodies/lean-2.png"
+  },
+  "silhouettes01_001": {
+    "category": "bodies",
+    "label": "average",
+    "file": "bodies/average-2.png"
+  },
+  "silhouettes01_002": {
+    "category": "bodies",
+    "label": "heavy",
+    "file": "bodies/heavy-2.png"
+  },
+  "silhouettes01_003": {
+    "category": "bodies",
+    "label": "fedora",
+    "file": "bodies/fedora-2.png"
+  },
+  "silhouettes01_004": {
+    "category": "bodies",
+    "label": "tall-longcoat",
+    "file": "bodies/tall-longcoat-3.png"
+  },
+  "silhouettes01_012": {
+    "category": "bodies",
+    "label": "hood",
+    "file": "bodies/hood-2.png"
+  },
+  "silhouettes01_013": {
+    "category": "bodies",
+    "label": "cap",
+    "file": "bodies/cap-2.png"
+  },
+  "silhouettes01_014": {
+    "category": "bodies",
+    "label": "shaved",
+    "file": "bodies/shaved-2.png"
+  },
+  "silhouettes01_015": {
+    "category": "bodies",
+    "label": "fedora",
+    "file": "bodies/fedora-3.png"
+  },
+  "silhouettes01_016": {
+    "category": "bodies",
+    "label": "bandana",
+    "file": "bodies/bandana-2.png"
+  },
+  "silhouettes01_017": {
+    "category": "bodies",
+    "label": "pompadour",
+    "file": "bodies/pompadour.png"
+  },
+  "silhouettes01_018": {
+    "category": "bodies",
+    "label": "hood-mask",
+    "file": "bodies/hood-mask.png"
+  },
+  "silhouettes01_019": {
+    "category": "torsos",
+    "label": "monocle",
+    "file": "torsos/monocle.png"
+  },
+  "silhouettes01_020": {
+    "category": "torsos",
+    "label": "cap",
+    "file": "torsos/cap-3.png"
+  },
+  "silhouettes01_021": {
+    "category": "torsos",
+    "label": "shaved",
+    "file": "torsos/shaved-2.png"
+  },
+  "silhouettes01_022": {
+    "category": "torsos",
+    "label": "fedora",
+    "file": "torsos/fedora-2.png"
+  },
+  "silhouettes01_023": {
+    "category": "torsos",
+    "label": "bandana",
+    "file": "torsos/bandana.png"
+  },
+  "silhouettes01_024": {
+    "category": "torsos",
+    "label": "pompadour",
+    "file": "torsos/pompadour.png"
+  },
+  "silhouettes01_025": {
+    "category": "torsos",
+    "label": "hood-mask",
+    "file": "torsos/hood-mask.png"
+  },
+  "silhouettes01_026": {
+    "category": "torsos",
+    "label": "hoodie",
+    "file": "torsos/hoodie-3.png"
+  },
+  "silhouettes01_027": {
+    "category": "torsos",
+    "label": "bomber",
+    "file": "torsos/bomber-4.png"
+  },
+  "silhouettes01_028": {
+    "category": "torsos",
+    "label": "tactical-vest",
+    "file": "torsos/tactical-vest.png"
+  },
+  "silhouettes01_029": {
+    "category": "torsos",
+    "label": "hoodie",
+    "file": "torsos/hoodie-4.png"
+  },
+  "silhouettes01_030": {
+    "category": "torsos",
+    "label": "bat",
+    "file": "torsos/bat-2.png"
+  },
+  "silhouettes01_032": {
+    "category": "torsos",
+    "label": "runner",
+    "file": "torsos/runner-2.png"
+  },
+  "silhouettes01_033": {
+    "category": "torsos",
+    "label": "wide-braced",
+    "file": "torsos/wide-braced-2.png"
+  },
+  "silhouettes01_034": {
+    "category": "torsos",
+    "label": "runner",
+    "file": "torsos/runner-3.png"
+  },
+  "silhouettes01_035": {
+    "category": "torsos",
+    "label": "runner",
+    "file": "torsos/runner-4.png"
+  },
+  "silhouettes01_037": {
+    "category": "torsos",
+    "label": "puffer-jacket",
+    "file": "torsos/puffer-jacket.png"
+  },
+  "silhouettes01_038": {
+    "category": "torsos",
+    "label": "bat",
+    "file": "torsos/bat-3.png"
+  },
+  "silhouettes01_039": {
+    "category": "torsos",
+    "label": "apron",
+    "file": "torsos/apron-2.png"
+  },
+  "silhouettes01_040": {
+    "category": "torsos",
+    "label": "overcoat",
+    "file": "torsos/overcoat.png"
+  },
+  "silhouettes01_041": {
+    "category": "torsos",
+    "label": "cap",
+    "file": "torsos/cap-4.png"
+  },
+  "silhouettes01_047": {
+    "category": "torsos",
+    "label": "stalk-lunge",
+    "file": "torsos/stalk-lunge-2.png"
+  },
+  "silhouettes01_048": {
+    "category": "torsos",
+    "label": "lean",
+    "file": "torsos/lean.png"
+  },
+  "silhouettes01_050": {
+    "category": "torsos",
+    "label": "runner",
+    "file": "torsos/runner-5.png"
+  },
+  "silhouettes01_051": {
+    "category": "torsos",
+    "label": "casual-slouch",
+    "file": "torsos/casual-slouch-2.png"
+  },
+  "silhouettes01_056": {
+    "category": "torsos",
+    "label": "shaved",
+    "file": "torsos/shaved-3.png"
+  },
+  "silhouettes01_058": {
+    "category": "arms",
+    "label": "pistol",
+    "file": "arms/pistol.png"
+  },
+  "silhouettes01_059": {
+    "category": "arms",
+    "label": "chain",
+    "file": "arms/chain.png"
+  },
+  "silhouettes01_060": {
+    "category": "arms",
+    "label": "fists",
+    "file": "arms/fists.png"
+  },
+  "silhouettes01_061": {
+    "category": "arms",
+    "label": "kings_row",
+    "file": "arms/kings_row.png"
+  },
+  "silhouettes01_062": {
+    "category": "back",
+    "label": "lean",
+    "file": "back/lean.png"
+  },
+  "silhouettes01_063": {
+    "category": "back",
+    "label": "stalk-lunge",
+    "file": "back/stalk-lunge.png"
+  },
+  "silhouettes01_064": {
+    "category": "back",
+    "label": "flank-lean",
+    "file": "back/flank-lean.png"
+  },
+  "silhouettes01_065": {
+    "category": "back",
+    "label": "kneel-recover",
+    "file": "back/kneel-recover.png"
+  },
+  "silhouettes01_066": {
+    "category": "back",
+    "label": "casual-slouch",
+    "file": "back/casual-slouch.png"
+  },
+  "silhouettes01_067": {
+    "category": "back",
+    "label": "backpack",
+    "file": "back/backpack.png"
+  },
+  "silhouettes01_068": {
+    "category": "back",
+    "label": "shaved",
+    "file": "back/shaved.png"
+  },
+  "silhouettes01_069": {
+    "category": "back",
+    "label": "shotgun",
+    "file": "back/shotgun.png"
+  },
+  "silhouettes01_071": {
+    "category": "back",
+    "label": "phone-holster",
+    "file": "back/phone-holster.png"
+  },
+  "silhouettes01_073": {
+    "category": "crew-marks",
+    "label": "kings_row",
+    "file": "crew-marks/kings_row.png"
+  },
+  "silhouettes01_074": {
+    "category": "crew-marks",
+    "label": "apron",
+    "file": "crew-marks/apron.png"
+  },
+  "silhouettes01_075": {
+    "category": "crew-marks",
+    "label": "jade_dragon",
+    "file": "crew-marks/jade_dragon-2.png"
+  },
+  "silhouettes01_077": {
+    "category": "crew-marks",
+    "label": "southside_saints",
+    "file": "crew-marks/southside_saints-2.png"
+  }
+}

@@ -10,7 +10,7 @@ import type { World } from 'koota';
 import type { Card, Rarity, Turf } from '../../sim/turf/types';
 import {
   blackMarketHealAction, blackMarketTradeAction,
-  discardPendingAction, drawAction, endTurnAction,
+  drawAction, endTurnAction,
   modifierSwapAction, playCardAction, queueStrikeAction,
   retreatAction, sendToHoldingAction, sendToMarketAction,
 } from '../../ecs/actions';
@@ -44,17 +44,17 @@ export function buildGameActions(a: BuildArgs) {
     a.setHealTarget(null);
   };
 
-  const placePending = () => {
+  const placePendingAt = (stackIdx?: number) => {
     if (!a.pending || !a.playerActive) return;
-    const r = playCardAction(a.world, 'A', 0, a.pending.id);
+    const r = playCardAction(a.world, 'A', 0, a.pending.id, stackIdx);
     reset();
     if (r?.reason === 'play_card_discarded_rival')
-      a.flash('RIVAL DISCARDED — no buffer', 1800);
+      a.flash('RIVAL DISCARDED', 1200);
     a.checkWin();
   };
 
   const onModeSelect = (kind: 'draw' | NonNullable<ActionMode>) => {
-    if (kind === 'draw') { drawAction(a.world, 'A'); a.flash('Drew', 700); return; }
+    if (kind === 'draw') { drawAction(a.world, 'A'); a.checkWin(); return; }
     if (kind === a.mode) { reset(); return; }
     reset();
     a.setMode(kind);
@@ -65,8 +65,24 @@ export function buildGameActions(a: BuildArgs) {
   const onLaneClick = (side: 'A' | 'B') => {
     const m = a.mode;
     const stackModes: ActionMode[] = ['retreat', 'modifier_swap', 'send_to_market', 'send_to_holding'];
+    // Pending card → tapping own turf
     if (a.pending && side === 'A' && !isStrikeMode(m) && !stackModes.includes(m)) {
-      placePending(); return;
+      if (!a.playerActive || a.playerActive.stack.length === 0) {
+        placePendingAt(); return;
+      }
+      // Modifier with only 1 card on stack → auto-place under the tough
+      const isMod = a.pending.kind !== 'tough';
+      if (isMod && a.playerActive.stack.length === 1) {
+        placePendingAt(0); return;
+      }
+      // Tough on a 1-card stack → place on top (no choice needed)
+      if (!isMod && a.playerActive.stack.length === 1) {
+        placePendingAt(); return;
+      }
+      // Multi-card stack → open fan for position pick
+      a.setModal({ kind: 'stack', turf: a.playerActive, isOwn: true });
+      a.setMode('play_card');
+      return;
     }
     if (!m && side === 'A' && a.playerActive && a.playerActive.stack.length > 0 && !a.pending) {
       a.setModal({ kind: 'stack', turf: a.playerActive, isOwn: true });
@@ -77,7 +93,6 @@ export function buildGameActions(a: BuildArgs) {
       return;
     }
     if (!m) return;
-    if (m === 'play_card' && side === 'A') { placePending(); return; }
     if (stackModes.includes(m) && side === 'A' && a.playerActive) {
       a.setModal({ kind: 'stack', turf: a.playerActive, isOwn: true }); return;
     }
@@ -135,9 +150,6 @@ export function buildGameActions(a: BuildArgs) {
   };
 
   const onEndTurn = () => { endTurnAction(a.world, 'A'); reset(); };
-  const onDiscardPending = () => {
-    discardPendingAction(a.world, 'A'); reset(); a.flash('DISCARDED', 700);
-  };
 
   const onMarketTrade = (ids: string[], rarity: Rarity) => {
     blackMarketTradeAction(a.world, 'A', ids, rarity);
@@ -151,7 +163,7 @@ export function buildGameActions(a: BuildArgs) {
   };
 
   return {
-    reset, onModeSelect, onLaneClick, onStackPick,
-    onEndTurn, onDiscardPending, onMarketTrade, onMarketHeal,
+    reset, onModeSelect, onLaneClick, onStackPick, placePendingAt,
+    onEndTurn, onMarketTrade, onMarketHeal,
   };
 }

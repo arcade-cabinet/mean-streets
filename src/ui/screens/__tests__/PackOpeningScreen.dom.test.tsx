@@ -3,6 +3,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { AppShellProvider } from '../../../platform';
 import { PackOpeningScreen } from '../PackOpeningScreen';
 
+vi.mock('../../../platform/persistence/collection', () => ({
+  loadCollection: () => Promise.resolve([]),
+  addCardsToCollection: () => Promise.resolve([]),
+}));
+
 function wrap(ui: React.ReactElement) {
   return <AppShellProvider>{ui}</AppShellProvider>;
 }
