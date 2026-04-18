@@ -6,10 +6,9 @@ on:
       - main
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
-  pull-requests: write
 
 concurrency:
   group: cd-deploy
@@ -115,15 +114,6 @@ jobs:
           name: mean-streets-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
-
-  release-please:
-    needs: [deploy-pages, deploy-android-debug]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4.1.3
-        with:
-          config-file: release-please-config.json
-          manifest-file: .release-please-manifest.json
 
   balance-smoke:
     if: github.event_name == 'push'
