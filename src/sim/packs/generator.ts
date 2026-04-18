@@ -12,34 +12,28 @@ import { PACK_SIZE } from './types';
 //     base per a per-base distribution.
 //   - Mythic cards never appear in packs (0% pull rate).
 //   - Sudden Death is GONE — any `suddenDeathWin: true` arg is ignored.
+// Tunables live in src/data/ai/turf-sim.json under packEconomy.*
 
-const BASE_RARITY_WEIGHTS: Record<Rarity, number> = {
-  common: 55,
-  uncommon: 28,
-  rare: 14,
-  legendary: 3,
-  mythic: 0,
-};
+// Load tunables from JSON (src/data/ai/turf-sim.json packEconomy.*).
+const _pe = TURF_SIM_CONFIG.packEconomy;
+
+const BASE_RARITY_WEIGHTS: Record<Rarity, number> = _pe.baseRarityWeights as Record<Rarity, number>;
 
 // Per-base roll distributions (probability that a card picked at BASE
 // rarity rolls UP to a specific tier). Numbers sum to 1.0 per base.
-const ROLL_DISTRIBUTIONS: Record<Rarity, Partial<Record<Rarity, number>>> = {
-  common: { common: 0.70, uncommon: 0.22, rare: 0.07, legendary: 0.01 },
-  uncommon: { uncommon: 0.60, rare: 0.25, legendary: 0.15 },
-  rare: { rare: 0.70, legendary: 0.30 },
-  legendary: { legendary: 1.0 },
-  mythic: { mythic: 1.0 },
-};
+const ROLL_DISTRIBUTIONS: Record<Rarity, Partial<Record<Rarity, number>>> =
+  _pe.rollDistributions as Record<Rarity, Partial<Record<Rarity, number>>>;
 
+// Sudden-death tier remains in the DifficultyTier union for back-compat
+// but v0.3 deprecates it — fall back to medium multiplier (1.2).
+const _diffMult = _pe.difficultyRewardMult as Partial<Record<DifficultyTier, number>>;
 const DIFFICULTY_REWARD_MULT: Record<DifficultyTier, number> = {
-  easy: 1.0,
-  medium: 1.2,
-  hard: 1.4,
-  nightmare: 1.6,
-  // Sudden-death tier remains in the type for back-compat but v0.3
-  // deprecates it — treat as medium for reward purposes.
-  'sudden-death': 1.2,
-  'ultra-nightmare': 2.0,
+  easy:            _diffMult['easy']            ?? 1.0,
+  medium:          _diffMult['medium']          ?? 1.2,
+  hard:            _diffMult['hard']            ?? 1.4,
+  nightmare:       _diffMult['nightmare']       ?? 1.6,
+  'sudden-death':  _diffMult['sudden-death']    ?? 1.2,
+  'ultra-nightmare': _diffMult['ultra-nightmare'] ?? 2.0,
 };
 
 const VALID_PACK_KINDS: ReadonlySet<string> = new Set([
