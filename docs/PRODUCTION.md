@@ -7,9 +7,9 @@ domain: release
 
 # Production Checklist
 
-## v1.0.0-beta.1 Status (2026-04-17)
+## v1.0.0 Released (2026-04-18)
 
-**Branch**: `feat/card-art-opponent-replay` → PR #27
+**PRs**: #27 (beta.1), #28 (rc.1), #29 (mythic art), #30 (phone fix), #31 (1.0.0), #32 (changelog)
 
 ### Done
 - [x] Card art pipeline (212 PNG silhouettes, dark red surface, ragged edges)
