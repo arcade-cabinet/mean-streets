@@ -280,6 +280,82 @@ describe('turfAffiliationConflict', () => {
   });
 });
 
+describe('dominantAffiliation / loyal stack threshold (RULES §4)', () => {
+  it('2 toughs of same affiliation → NO loyal bonus (below 3 threshold)', () => {
+    const turf = createTurf();
+    // kings_row has atkBonus:1, defBonus:0
+    addToStack(turf, tough('k1', 5, 5, 'kings_row'));
+    addToStack(turf, tough('k2', 5, 5, 'kings_row'));
+    // loyal bonus requires 3+; power should NOT include +1 atkBonus
+    expect(positionPower(turf)).toBe(10); // 5+5, no bonus
+    expect(positionResistance(turf)).toBe(10); // 5+5, no bonus
+  });
+
+  it('3 toughs of same affiliation → loyal bonus applies', () => {
+    const turf = createTurf();
+    // kings_row: atkBonus:1, defBonus:0
+    addToStack(turf, tough('k1', 5, 5, 'kings_row'));
+    addToStack(turf, tough('k2', 5, 5, 'kings_row'));
+    addToStack(turf, tough('k3', 5, 5, 'kings_row'));
+    // 3 kings_row toughs → loyal atkBonus +1
+    expect(positionPower(turf)).toBe(16); // 15 + 1
+    expect(positionResistance(turf)).toBe(15); // 15, defBonus=0
+  });
+
+  it('4 toughs of same affiliation → loyal bonus still applies', () => {
+    const turf = createTurf();
+    // iron_devils: atkBonus:0, defBonus:1
+    addToStack(turf, tough('id1', 5, 5, 'iron_devils'));
+    addToStack(turf, tough('id2', 5, 5, 'iron_devils'));
+    addToStack(turf, tough('id3', 5, 5, 'iron_devils'));
+    addToStack(turf, tough('id4', 5, 5, 'iron_devils'));
+    expect(positionPower(turf)).toBe(20); // no atkBonus
+    expect(positionResistance(turf)).toBe(21); // 20 + 1 defBonus
+  });
+});
+
+describe('mediator graph unblocks rival placement (RULES §4)', () => {
+  it('mediator in stack → rival placement free (no currency buffer consumed)', () => {
+    // kings_row and iron_devils are rivals.
+    // jade_dragon.mediator = ["kings_row", "iron_devils"] → mediates the conflict.
+    const turf = createTurf();
+    addToStack(turf, tough('kr1', 5, 5, 'kings_row'));
+    addToStack(turf, tough('jd1', 5, 5, 'jade_dragon')); // mediator
+    const incoming = tough('id1', 5, 5, 'iron_devils');
+    // With jade_dragon on turf, no conflict should be raised.
+    expect(turfAffiliationConflict(turf, incoming)).toBe(false);
+  });
+
+  it('no mediator, no currency → rival placement raises conflict', () => {
+    const turf = createTurf();
+    addToStack(turf, tough('kr1', 5, 5, 'kings_row'));
+    const incoming = tough('id1', 5, 5, 'iron_devils');
+    expect(turfAffiliationConflict(turf, incoming)).toBe(true);
+  });
+
+  it('currency buffer consumed when no mediator present', () => {
+    const turf = createTurf();
+    addToStack(turf, tough('kr1', 5, 5, 'kings_row'));
+    addToStack(turf, currency('c1'));
+    const incoming = tough('id1', 5, 5, 'iron_devils');
+    // Currency acts as buffer → no conflict.
+    expect(turfAffiliationConflict(turf, incoming)).toBe(false);
+    // After consuming buffer, placing a second rival should raise conflict.
+    turf.rivalBufferSpent = true;
+    expect(turfAffiliationConflict(turf, incoming)).toBe(true);
+  });
+
+  it('unrelated tough (not a mediator) does not bypass conflict', () => {
+    // southside_saints.mediator = ["kings_row", "los_diablos"] — no iron_devils edge
+    const turf = createTurf();
+    addToStack(turf, tough('kr1', 5, 5, 'kings_row'));
+    addToStack(turf, tough('ss1', 5, 5, 'southside_saints')); // not a mediator for iron_devils
+    const incoming = tough('id1', 5, 5, 'iron_devils');
+    // southside_saints doesn't mediate kings_row↔iron_devils → conflict still raised
+    expect(turfAffiliationConflict(turf, incoming)).toBe(true);
+  });
+});
+
 describe('seizeTurf', () => {
   beforeEach(() => resetTurfIdCounter());
 
