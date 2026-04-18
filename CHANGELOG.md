@@ -9,6 +9,35 @@ status: current
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.0](https://github.com/arcade-cabinet/mean-streets/compare/v0.7.1...v1.0.0) (2026-04-18)
+
+### Features
+
+* **art:** 212 card art PNGs with silhouette factory pipeline on dark red surfaces with ragged-edge SVG filters
+* **art:** 10 purpose-built mythic silhouettes curated from dedicated sprite sheets
+* **art:** 212 unique flavor text entries wired into all card types
+* **ui:** draw flow redesign — pending cards with contextual placement, modifiers enforced under toughs
+* **ui:** stack position insertion via fan modal with insertion point slots
+* **ui:** draw pile visual with stacked card-backs and MS monogram
+* **ui:** collection screen shows real player collection (owned vs locked)
+* **ui:** game over reward display ("Spoils of War")
+* **ui:** pack opening saves to persistent collection with real NEW detection
+* **ui:** phone layout with vertical menu and HUD draw button
+* **ui:** drawn card modal overlay with flip animation and one-shot behavior
+* **ui:** Peek button for reviewing drawn cards
+* **audio:** procedural SFX via Tone.js (draw, place, strike, market, victory/defeat)
+* **sim:** insertIntoStack() for positional card placement
+* **sim:** modifier placement enforcement (always under active tough)
+* **sim:** draw auto-routes unplayable modifiers to Black Market
+* **balance:** medium firstTurnActions 5 to 6, winrate converged at 0.5049
+
+### Bug Fixes
+
+* **ui:** phone menu breakpoint corrected from 480px to 640px
+* **ui:** drawn card modal shows once per draw, not on every modal dismiss
+* **e2e:** handle phone draw slot visibility across device profiles
+* **art:** SHA-256 for card ID seeding, typo fix in manifest, Python >=3.12
+
 ## [0.7.1](https://github.com/arcade-cabinet/mean-streets/compare/v0.7.0...v0.7.1) (2026-04-17)
 
 
