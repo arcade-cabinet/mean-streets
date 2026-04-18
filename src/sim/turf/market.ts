@@ -94,6 +94,9 @@ export function tradeAtMarket(
     id: `${consumed[0].id}-traded`,
     rarity: targetRarity,
   } as ModifierCard;
+  // Promoted card lands in the shared Black Market pool so the player can
+  // retrieve it via a normal return action. There is no hand in v0.3.
+  state.blackMarket.push(promoted);
   return promoted;
 }
 
