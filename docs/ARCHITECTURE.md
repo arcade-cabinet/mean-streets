@@ -59,6 +59,7 @@ src/
                                   # affiliation conflict, seizure, promoteReserveTurf,
                                   # modifiersByOwner
     stack-ops.ts                  # Reusable stack navigation: topToughIdx, killToughAtIdx, transferMods
+    attack-helpers.ts             # Shared attack computation helpers
     attacks.ts                    # resolveStrikeNow with tiered damage (glance/wound/serious/crushing)
     abilities.ts                  # applyTangibles (rarity-scaled) + runIntangiblesPhase
                                   # (probabilistic bribes + counter/redirect)
@@ -73,14 +74,17 @@ src/
     holding.ts                    # sendToHolding/holdingCheck/bribeSuccess/returnFromHolding/lockupProcess
     resolve.ts                    # resolvePhase: raid → combat pass 1 dominance → pass 2 priority chain
                                   # → seize reconciliation → promoteReserveTurf
+    env-handlers.ts               # Action handler implementations (extracted from environment.ts)
     environment.ts                # stepAction: draw, play_card, retreat, modifier_swap,
                                   # send_to_market, send_to_holding, black_market_trade,
                                   # black_market_heal, queued strikes, discard, end_turn
     env-query.ts                  # createObservation (with heat/market/holding/lockup/pending),
                                   # enumerateLegalActions, policy keys
     game.ts                       # createMatch, runTurn, isGameOver (A/B/draw/timeout)
+    catalog.ts                    # Card catalog access helpers (co-located with engine)
     generators.ts                 # generateCurrency, generateWeapons, generateDrugs
     deck-builder.ts               # buildAutoDeck → flat Card[] (with CardInstance priority shuffle)
+    run.ts                        # Single-game runner entry point
     benchmark.ts                  # playSimulatedGame: seeded AI-vs-AI loop
     balance.ts                    # Per-card performance, lock lifecycle, v2 history
     sweep.ts                      # Forced-inclusion permutation sweeps
@@ -92,6 +96,10 @@ src/
       scoring.ts                  # Score all v0.3 actions: draw/play/retreat/swap/market/holding/queued
       policy.ts                   # selectAction: difficulty-gated top-K + noise
       curator.ts                  # Pre-war collection curation for AI (merge + priority + enable/disable)
+      config.ts                   # AI configuration constants
+      index.ts                    # AI module public exports
+      learning.ts                 # Learning/adaptation utilities
+      runner.ts                   # AI game runner
   sim/analysis/                   # Dev-only analysis tooling
     cli.ts                        # `analysis:*` npm scripts entry point
     benchmarks.ts                 # checkConvergence (48-52% winrate band)
@@ -103,7 +111,7 @@ src/
     catalog.ts                    # loadToughCards(), loadStarterToughCards(n)
     schemas.ts                    # Zod schemas: Authored* (stat arrays), Compiled* (flat)
     compile.ts                    # authored → compiled transform (latestStat)
-    rng.ts                        # Seeded Mulberry32 PRNG: createRng, next, shuffle
+    rng.ts                        # Seeded PRNG via `seedrandom`: createRng, next, shuffle
   sim/packs/
     generator.ts                  # generatePack, starterGrant (rolled rarity), matchRewardPacks
     rewards.ts                    # computePerTurfRewards + computeWarOutcomeReward
@@ -120,7 +128,7 @@ src/
                                   # blackMarketHealAction, queueStrikeAction, endTurnAction
     hooks.ts                      # useTurfActive, useTurfReserves, useDeckPending, useTurnEnded,
                                   # useQueuedStrikes, useHeat, useBlackMarket, useHolding,
-                                  # useLockup, useMythicPool, useActionBudget
+                                  # useLockup, useMythicPool, useActionBudget, useTurfStackComposite
 
   platform/                       # Capacitor shell, device, persistence
     AppShell.tsx                  # Device/layout provider + safe-area shell
@@ -145,7 +153,10 @@ src/
                                   # getAffiliationRelation
     hud/                          # GameHUD (turn counter, action budget, queued-strikes row,
                                   # heat meter, reserve count)
-    dnd/                          # DraggableCard, DragContext, DropTarget, OrientationOverlay
+    overlays/                     # Modal overlays and contextual UI layers
+    animations/                   # Card movement + resolution animation utilities
+    audio/                        # Tone.js SFX integration
+    deckbuilder/                  # Deck/collection curation UI (CardGarage sub-components)
     filters/                      # GrittyFilters (SVG noir glow defs)
     hooks/                        # useCollection
     theme/                        # Color tokens, CSS variable wrappers
@@ -324,7 +335,7 @@ without re-setting trait values.
 Fuzzy logic produces continuous-valued context. Yuka's GOAP goal
 arbitration and planner memory turn that context into explainable
 tactical choices. Difficulty-gated policy selection (top-K + noise)
-produces believable play across 6 difficulty tiers.
+produces believable play across 5 difficulty tiers.
 
 ### Why Deterministic (No Dice)?
 
