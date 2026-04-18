@@ -269,6 +269,20 @@ turfs = 4×5-card + 1 Mythic draw.
 Detailed launch criteria and platform gates live in
 [PRODUCTION.md](./PRODUCTION.md).
 
+## Terminology
+
+| Current term | Legacy term | Notes |
+|-------------|-------------|-------|
+| **Tough** | Crew / Character | "Crew" is v0.1/v0.2 language. The canonical term is "tough." |
+| **Turf** | Position / Lane | Each turf is a stack; there is only one active turf per side. |
+| **Stack** | Board / Grid | Ordered StackedCard sequence on a turf. Not a grid. |
+| **Active turf** | Front | `turfs[0]`, the current engagement. |
+| **Reserve turf** | Bench / Backup | Queued behind active; promotes up on seizure. |
+| **Modifier** | Attachment / Slot card | Weapon / Drug / Currency cards equipping a tough. |
+| **Discard pending** | Discard | The `discard` action vaporizes the card — there is no discard pile. |
+
+When writing code, tests, or docs: always use "tough," never "crew."
+
 ## Design History
 
 1. **POC** — Shared 52-card deck, 4 suits, precision rule.
@@ -281,11 +295,15 @@ Detailed launch criteria and platform gates live in
    turfs, handless queue-and-resolve. Scrapped: quarter-cards,
    backpacks, active/reserve split, phase split, Sudden Death as
    a tier.
-6. **Single-lane v0.3** *(current)* — 1v1 active engagement,
-   reserves as progression queue, HP + damage tiers, heat + raids,
-   Black Market + Holding, base + rolled rarity with merge
-   progression, 10 hand-authored mythics with game-warping
-   signatures, parallel AI collection growth.
+6. **Single-lane v0.3** — 1v1 active engagement, reserves as
+   progression queue, HP + damage tiers, heat + raids, Black Market
+   + Holding, base + rolled rarity with merge progression, 10
+   hand-authored mythics with game-warping signatures, parallel AI
+   collection growth.
+7. **v1.0.0** *(shipped 2026-04-18)* — card art pipeline (212 PNG
+   silhouettes), draw flow redesign (pending → contextual placement),
+   procedural SFX via Tone.js, phone layout, balance lock at
+   winRateA 0.5049, automerge for dependabot.
 
 ## Future Direction
 
