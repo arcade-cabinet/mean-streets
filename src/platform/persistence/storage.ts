@@ -133,14 +133,22 @@ export async function saveDeckLoadout(loadout: DeckLoadout): Promise<DeckLoadout
   return loadDeckLoadouts();
 }
 
+// DO NOT REMOVE — migrates saves written before 1.0.0 when sudden-death
+// was a valid difficulty tier. StoredCardInstance.unlockDifficulty no
+// longer includes sudden-death, so TypeScript considers the literal
+// unreachable. A type-sweep that "simplifies" this check would silently
+// drop the migration and leak invalid enum values into the live catalog.
+// The raw `unknown` read is intentional belt-and-braces.
+const LEGACY_SUDDEN_DEATH = 'sudden-death';
+
 export async function loadProfile(): Promise<PlayerProfile> {
   await initializePersistence();
   const profile = (await getItem<PlayerProfile>(PROFILE_NAMESPACE, 'current')) ?? DEFAULT_PROFILE;
-  // v1.0.0 migration: sudden-death was removed in favor of ultra-nightmare.
   if (profile.cardInstances) {
     let migrated = false;
     for (const instance of Object.values(profile.cardInstances)) {
-      if ((instance.unlockDifficulty as string) === 'sudden-death') {
+      const raw = instance.unlockDifficulty as unknown;
+      if (raw === LEGACY_SUDDEN_DEATH) {
         instance.unlockDifficulty = 'ultra-nightmare';
         migrated = true;
       }

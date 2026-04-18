@@ -56,7 +56,7 @@ type Modal = 'rules-onboarding' | 'game-menu' | null;
 // seed-based resume reconstruct a different game state than the user saw
 // before closing the app. Any PR that touches resolve.ts, attacks.ts, or
 // the tunables in turf-sim.json that affect gameplay must bump this.
-const SIM_VERSION = 'v0.3-1.0.0-beta.1';
+const SIM_VERSION = 'v0.3-1.1.0-beta.1';
 
 interface ActiveRunState {
   phase: 'combat';
