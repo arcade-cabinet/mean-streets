@@ -187,6 +187,16 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
             </button>
           )}
         </span>
+        {compact && canDraw && (
+          <button
+            type="button"
+            className="game-hud-panel-btn game-hud-panel-btn-active"
+            onClick={() => actions.onModeSelect('draw')}
+            data-testid="hud-draw"
+          >
+            Draw ({deckCount})
+          </button>
+        )}
         <span className="game-hud-bar-turfs">Turfs {totalPlayerTurfs} vs {totalOpponentTurfs}</span>
         <HeatMeter value={heat} compact={compact} />
         <span className="game-hud-bar-mythic" data-testid="mythic-pool-indicator">

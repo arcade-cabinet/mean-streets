@@ -1,7 +1,7 @@
 {
   "name": "mean-streets",
   "private": true,
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-rc.1",
   "description": "Mean Streets: Precision Starvation — A gritty tactical 1v1 card brawler",
   "type": "module",
   "packageManager": "pnpm@10.33.0",
