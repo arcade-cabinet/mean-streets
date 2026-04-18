@@ -65,12 +65,21 @@ export function buildGameActions(a: BuildArgs) {
   const onLaneClick = (side: 'A' | 'B') => {
     const m = a.mode;
     const stackModes: ActionMode[] = ['retreat', 'modifier_swap', 'send_to_market', 'send_to_holding'];
-    // Pending card → tapping own turf: empty stack = place directly, otherwise open fan for position pick
+    // Pending card → tapping own turf
     if (a.pending && side === 'A' && !isStrikeMode(m) && !stackModes.includes(m)) {
       if (!a.playerActive || a.playerActive.stack.length === 0) {
         placePendingAt(); return;
       }
-      // Open fan in placement mode — player picks where in the stack to insert
+      // Modifier with only 1 card on stack → auto-place under the tough
+      const isMod = a.pending.kind !== 'tough';
+      if (isMod && a.playerActive.stack.length === 1) {
+        placePendingAt(0); return;
+      }
+      // Tough on a 1-card stack → place on top (no choice needed)
+      if (!isMod && a.playerActive.stack.length === 1) {
+        placePendingAt(); return;
+      }
+      // Multi-card stack → open fan for position pick
       a.setModal({ kind: 'stack', turf: a.playerActive, isOwn: true });
       a.setMode('play_card');
       return;

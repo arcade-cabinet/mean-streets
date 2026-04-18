@@ -322,6 +322,7 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
           onClose={() => { setModal({ kind: 'none' }); if (mode === 'play_card') setMode(null); }}
           showHp showOwnerLines={mode === 'modifier_swap'}
           onPlaceAt={mode === 'play_card' && pending ? actions.placePendingAt : undefined}
+          placingIsModifier={mode === 'play_card' && !!pending && pending.kind !== 'tough'}
         />
       )}
 

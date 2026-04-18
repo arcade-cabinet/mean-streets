@@ -58,7 +58,16 @@ export function handlePlayCard(
   }
 
   consumeRivalBufferIfNeeded(turf, card);
-  if (action.stackIdx !== undefined) {
+
+  if (isModifierCard(card) && turf.stack.length > 0) {
+    // Modifiers always go UNDER the active (top) tough — never on top.
+    const topIdx = turf.stack.length;
+    const maxInsert = topIdx - 1; // just below current top
+    const insertIdx = action.stackIdx !== undefined
+      ? Math.min(action.stackIdx, maxInsert)
+      : maxInsert;
+    insertIntoStack(turf, card, Math.max(0, insertIdx), { faceUp: true });
+  } else if (action.stackIdx !== undefined) {
     insertIntoStack(turf, card, action.stackIdx, { faceUp: true });
   } else {
     addToStack(turf, card, { faceUp: true });

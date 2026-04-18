@@ -20,6 +20,9 @@ interface StackFanModalProps {
   /** Placement mode: when set, shows insertion-point slots between cards.
    * Tapping an insertion slot calls this with the target stack index. */
   onPlaceAt?: (stackIdx: number) => void;
+  /** When true, restricts insertion slots to positions below the top tough
+   * (modifiers can never be placed on top of the stack). */
+  placingIsModifier?: boolean;
 }
 
 /** Face-down back tile. Simple CSS-driven placeholder — no asset art. */
@@ -62,6 +65,7 @@ export function StackFanModal({
   showHp = false,
   showOwnerLines = false,
   onPlaceAt,
+  placingIsModifier = false,
 }: StackFanModalProps) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const touchStartX = useRef(0);
@@ -200,7 +204,7 @@ export function StackFanModal({
             return (
               <div key={`slot-${sc.card.id}-${i}`} className="stack-fan-slot-group">
                 {renderStacked(sc, i, positionLabel)}
-                {onPlaceAt && (
+                {onPlaceAt && !(placingIsModifier && i === stackLen - 1) && (
                   <button
                     type="button"
                     className="stack-fan-insert-slot"
