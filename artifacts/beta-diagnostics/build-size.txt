@@ -1,0 +1,18 @@
+# 1.1.0-beta.1 build inventory (pnpm run build)
+# Captured 2026-04-18
+
+## Bundle totals
+dist/                                         9.6M (all assets + JS + PNG card art)
+dist/assets/card-art/                         2.3M (214 PNG silhouettes)
+
+## JS bundles (gzip figures from vite build output)
+index-Dd_e4nb7.js                             870 KB  (235 KB gzip) — main app bundle
+jeep-sqlite.entry-iCHh9UI3.js                 292 KB  (79 KB gzip)  — SQLite wasm loader
+index-68ac790b-40GFaG6c.js                    16 KB   (7 KB gzip)
+web-lZguXWdU.js                               9 KB    (1 KB gzip)
+dist-CQS6rvaI.js                              8 KB    (3 KB gzip)
+(+ other small web shims)
+
+## Notes
+- Main bundle exceeds vite's 500KB warn threshold (known; accept for v1 web build).
+- Mobile APK inherits same assets via Capacitor sync; 2.3MB silhouettes ship offline.
