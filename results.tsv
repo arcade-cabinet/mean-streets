@@ -1,0 +1,5 @@
+iter	commit	winRateA	timeoutRate	avgTurns	medianTurns	delta	status	description
+0	756ec2e	0.378	0.990	198.1	200	0	baseline	baseline — closedRanks 0.50/0.35/0.20/0.10/0.05, bribe $5000/0.99
+1	df252f5	0.378	0.990	198.1	200	0	discard	halve closedRanks defenseBonus — zero effect (strikes already blocked by bug)
+2	5034ee4	0.356	0.983	196.7	200	-0.014	discard	raise woundBonus/seriousBonus/crushingBonus — broke tests, reverted
+3	7daa95f	0.512	0.000	16.3	14	+0.134	keep	fix(sim): reset closedRanks at start of action phase — ROOT CAUSE FIX
