@@ -19,7 +19,7 @@ import hashlib
 
 
 def seed_from_id(card_id: str) -> int:
-    return int(hashlib.md5(card_id.encode()).hexdigest()[:8], 16)
+    return int(hashlib.sha256(card_id.encode()).hexdigest()[:8], 16)
 
 
 def pick(pool: list, seed: int):

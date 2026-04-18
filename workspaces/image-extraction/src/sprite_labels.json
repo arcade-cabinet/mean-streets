@@ -1,91 +1,91 @@
 {
-  "sillhouettes01": {
+  "silhouettes01": {
     "bodies": {
-      "sillhouettes01_000": "lean",
-      "sillhouettes01_001": "average",
-      "sillhouettes01_002": "heavy",
-      "sillhouettes01_003": "fedora",
-      "sillhouettes01_004": "tall-longcoat"
+      "silhouettes01_000": "lean",
+      "silhouettes01_001": "average",
+      "silhouettes01_002": "heavy",
+      "silhouettes01_003": "fedora",
+      "silhouettes01_004": "tall-longcoat"
     },
     "heads": {
-      "sillhouettes01_005": "hood",
-      "sillhouettes01_006": "cap",
-      "sillhouettes01_007": "shaved",
-      "sillhouettes01_008": "fedora",
-      "sillhouettes01_009": "bandana",
-      "sillhouettes01_010": "pompadour",
-      "sillhouettes01_011": "hood-mask"
+      "silhouettes01_005": "hood",
+      "silhouettes01_006": "cap",
+      "silhouettes01_007": "shaved",
+      "silhouettes01_008": "fedora",
+      "silhouettes01_009": "bandana",
+      "silhouettes01_010": "pompadour",
+      "silhouettes01_011": "hood-mask"
     },
     "torsos_head": {
-      "sillhouettes01_012": "hood",
-      "sillhouettes01_013": "cap",
-      "sillhouettes01_014": "shaved",
-      "sillhouettes01_015": "fedora",
-      "sillhouettes01_016": "bandana",
-      "sillhouettes01_017": "pompadour",
-      "sillhouettes01_018": "hood-mask"
+      "silhouettes01_012": "hood",
+      "silhouettes01_013": "cap",
+      "silhouettes01_014": "shaved",
+      "silhouettes01_015": "fedora",
+      "silhouettes01_016": "bandana",
+      "silhouettes01_017": "pompadour",
+      "silhouettes01_018": "hood-mask"
     },
     "torsos_body": {
-      "sillhouettes01_019": "hoodie",
-      "sillhouettes01_020": "bomber",
-      "sillhouettes01_021": "tactical-vest",
-      "sillhouettes01_022": "denim-jacket",
-      "sillhouettes01_023": "leather-jacket",
-      "sillhouettes01_024": "biker-cut"
+      "silhouettes01_019": "hoodie",
+      "silhouettes01_020": "bomber",
+      "silhouettes01_021": "tactical-vest",
+      "silhouettes01_022": "denim-jacket",
+      "silhouettes01_023": "leather-jacket",
+      "silhouettes01_024": "biker-cut"
     },
     "torsos_lower": {
-      "sillhouettes01_025": "runner",
-      "sillhouettes01_026": "wide-braced",
-      "sillhouettes01_027": "runner-alt",
-      "sillhouettes01_028": "hunched"
+      "silhouettes01_025": "runner",
+      "silhouettes01_026": "wide-braced",
+      "silhouettes01_027": "runner-alt",
+      "silhouettes01_028": "hunched"
     },
     "torsos_body2": {
-      "sillhouettes01_029": "hoodie",
-      "sillhouettes01_030": "bomber",
-      "sillhouettes01_031": "tactical-vest",
-      "sillhouettes01_032": "biker-cut",
-      "sillhouettes01_033": "puffer-jacket",
-      "sillhouettes01_034": "suit-coat",
-      "sillhouettes01_035": "apron",
-      "sillhouettes01_036": "overcoat"
+      "silhouettes01_029": "hoodie",
+      "silhouettes01_030": "bomber",
+      "silhouettes01_031": "tactical-vest",
+      "silhouettes01_032": "biker-cut",
+      "silhouettes01_033": "puffer-jacket",
+      "silhouettes01_034": "suit-coat",
+      "silhouettes01_035": "apron",
+      "silhouettes01_036": "overcoat"
     },
     "arms_items": {
-      "sillhouettes01_037": "fists",
-      "sillhouettes01_038": "pistol",
-      "sillhouettes01_039": "pistol-aim",
-      "sillhouettes01_040": "knife",
-      "sillhouettes01_041": "crowbar",
-      "sillhouettes01_042": "chain",
-      "sillhouettes01_043": "bat"
+      "silhouettes01_037": "fists",
+      "silhouettes01_038": "pistol",
+      "silhouettes01_039": "pistol-aim",
+      "silhouettes01_040": "knife",
+      "silhouettes01_041": "crowbar",
+      "silhouettes01_042": "chain",
+      "silhouettes01_043": "bat"
     },
     "legs_stances": {
-      "sillhouettes01_044": "plant-tank",
-      "sillhouettes01_045": "stalk-lunge",
-      "sillhouettes01_046": "flank-lean",
-      "sillhouettes01_047": "kneel-recover",
-      "sillhouettes01_048": "run",
-      "sillhouettes01_049": "casual-slouch"
+      "silhouettes01_044": "plant-tank",
+      "silhouettes01_045": "stalk-lunge",
+      "silhouettes01_046": "flank-lean",
+      "silhouettes01_047": "kneel-recover",
+      "silhouettes01_048": "run",
+      "silhouettes01_049": "casual-slouch"
     },
     "back_accessories_stance": {
-      "sillhouettes01_050": "plant-tank",
-      "sillhouettes01_051": "stalk-lunge",
-      "sillhouettes01_052": "flank-lean",
-      "sillhouettes01_053": "kneel-recover",
-      "sillhouettes01_054": "casual-slouch"
+      "silhouettes01_050": "plant-tank",
+      "silhouettes01_051": "stalk-lunge",
+      "silhouettes01_052": "flank-lean",
+      "silhouettes01_053": "kneel-recover",
+      "silhouettes01_054": "casual-slouch"
     },
     "back_accessories_item": {
-      "sillhouettes01_055": "backpack",
-      "sillhouettes01_056": "medbag",
-      "sillhouettes01_057": "shotgun",
-      "sillhouettes01_058": "gym-bag",
-      "sillhouettes01_059": "phone-holster"
+      "silhouettes01_055": "backpack",
+      "silhouettes01_056": "medbag",
+      "silhouettes01_057": "shotgun",
+      "silhouettes01_058": "gym-bag",
+      "silhouettes01_059": "phone-holster"
     },
     "crew_marks": {
-      "sillhouettes01_060": "kings_row",
-      "sillhouettes01_061": "iron_devils",
-      "sillhouettes01_062": "jade_dragon",
-      "sillhouettes01_063": "los_diablos",
-      "sillhouettes01_064": "southside_saints"
+      "silhouettes01_060": "kings_row",
+      "silhouettes01_061": "iron_devils",
+      "silhouettes01_062": "jade_dragon",
+      "silhouettes01_063": "los_diablos",
+      "silhouettes01_064": "southside_saints"
     }
   },
   "silhouettes02": {

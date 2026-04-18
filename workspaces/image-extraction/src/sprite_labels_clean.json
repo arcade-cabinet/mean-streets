@@ -633,476 +633,476 @@
       "y": 1389
     }
   },
-  "sillhouettes01": {
-    "sillhouettes01_000": {
+  "silhouettes01": {
+    "silhouettes01_000": {
       "ocr": "ean",
       "corrected": "lean",
       "section": "bodies",
       "y": 86
     },
-    "sillhouettes01_001": {
+    "silhouettes01_001": {
       "ocr": "Average",
       "corrected": "average",
       "section": "bodies",
       "y": 86
     },
-    "sillhouettes01_002": {
+    "silhouettes01_002": {
       "ocr": "jeavy",
       "corrected": "heavy",
       "section": "bodies",
       "y": 87
     },
-    "sillhouettes01_003": {
+    "silhouettes01_003": {
       "ocr": "Fedc",
       "corrected": "fedora",
       "section": "bodies",
       "y": 85
     },
-    "sillhouettes01_004": {
+    "silhouettes01_004": {
       "ocr": "-ongcoat",
       "corrected": "tall-longcoat",
       "section": "bodies",
       "y": 96
     },
-    "sillhouettes01_005": {
+    "silhouettes01_005": {
       "ocr": "",
       "corrected": null,
       "section": "bodies",
       "y": 84
     },
-    "sillhouettes01_006": {
+    "silhouettes01_006": {
       "ocr": "",
       "corrected": null,
       "section": "bodies",
       "y": 88
     },
-    "sillhouettes01_007": {
+    "silhouettes01_007": {
       "ocr": "",
       "corrected": null,
       "section": "bodies",
       "y": 87
     },
-    "sillhouettes01_008": {
+    "silhouettes01_008": {
       "ocr": "",
       "corrected": null,
       "section": "bodies",
       "y": 86
     },
-    "sillhouettes01_009": {
+    "silhouettes01_009": {
       "ocr": "",
       "corrected": null,
       "section": "bodies",
       "y": 87
     },
-    "sillhouettes01_010": {
+    "silhouettes01_010": {
       "ocr": "",
       "corrected": null,
       "section": "bodies",
       "y": 86
     },
-    "sillhouettes01_011": {
+    "silhouettes01_011": {
       "ocr": "",
       "corrected": null,
       "section": "bodies",
       "y": 88
     },
-    "sillhouettes01_012": {
+    "silhouettes01_012": {
       "ocr": "Hood",
       "corrected": "hood",
       "section": "bodies",
       "y": 171
     },
-    "sillhouettes01_013": {
+    "silhouettes01_013": {
       "ocr": "Car",
       "corrected": "cap",
       "section": "bodies",
       "y": 169
     },
-    "sillhouettes01_014": {
+    "silhouettes01_014": {
       "ocr": "laVe",
       "corrected": "shaved",
       "section": "bodies",
       "y": 173
     },
-    "sillhouettes01_015": {
+    "silhouettes01_015": {
       "ocr": "dora",
       "corrected": "fedora",
       "section": "bodies",
       "y": 168
     },
-    "sillhouettes01_016": {
+    "silhouettes01_016": {
       "ocr": "jJandana",
       "corrected": "bandana",
       "section": "bodies",
       "y": 172
     },
-    "sillhouettes01_017": {
+    "silhouettes01_017": {
       "ocr": "-ompac",
       "corrected": "pompadour",
       "section": "bodies",
       "y": 173
     },
-    "sillhouettes01_018": {
+    "silhouettes01_018": {
       "ocr": "Hood-Mask",
       "corrected": "hood-mask",
       "section": "bodies",
       "y": 173
     },
-    "sillhouettes01_019": {
+    "silhouettes01_019": {
       "ocr": "Jooc",
       "corrected": "monocle",
       "section": "torsos_head",
       "y": 388
     },
-    "sillhouettes01_020": {
+    "silhouettes01_020": {
       "ocr": "Car",
       "corrected": "cap",
       "section": "torsos_head",
       "y": 391
     },
-    "sillhouettes01_021": {
+    "silhouettes01_021": {
       "ocr": "1ave",
       "corrected": "shaved",
       "section": "torsos_head",
       "y": 388
     },
-    "sillhouettes01_022": {
+    "silhouettes01_022": {
       "ocr": "Fedc",
       "corrected": "fedora",
       "section": "torsos_head",
       "y": 391
     },
-    "sillhouettes01_023": {
+    "silhouettes01_023": {
       "ocr": "3andanaPome",
       "corrected": "bandana",
       "section": "torsos_head",
       "y": 393
     },
-    "sillhouettes01_024": {
+    "silhouettes01_024": {
       "ocr": "npadou",
       "corrected": "pompadour",
       "section": "torsos_head",
       "y": 392
     },
-    "sillhouettes01_025": {
+    "silhouettes01_025": {
       "ocr": "HodMask",
       "corrected": "hood-mask",
       "section": "torsos_head",
       "y": 392
     },
-    "sillhouettes01_026": {
+    "silhouettes01_026": {
       "ocr": "Hoodie",
       "corrected": "hoodie",
       "section": "torsos_head",
       "y": 389
     },
-    "sillhouettes01_027": {
+    "silhouettes01_027": {
       "ocr": "jomber",
       "corrected": "bomber",
       "section": "torsos_head",
       "y": 391
     },
-    "sillhouettes01_028": {
+    "silhouettes01_028": {
       "ocr": "Tactical",
       "corrected": "tactical-vest",
       "section": "torsos_head",
       "y": 390
     },
-    "sillhouettes01_029": {
+    "silhouettes01_029": {
       "ocr": "De",
       "corrected": "hoodie",
       "section": "torsos_head",
       "y": 390
     },
-    "sillhouettes01_030": {
+    "silhouettes01_030": {
       "ocr": "eat",
       "corrected": "bat",
       "section": "torsos_head",
       "y": 389
     },
-    "sillhouettes01_031": {
+    "silhouettes01_031": {
       "ocr": "cu",
       "corrected": null,
       "section": "torsos_head",
       "y": 391
     },
-    "sillhouettes01_032": {
+    "silhouettes01_032": {
       "ocr": "tunner",
       "corrected": "runner",
       "section": "torsos_body",
       "y": 501
     },
-    "sillhouettes01_033": {
+    "silhouettes01_033": {
       "ocr": "-Br",
       "corrected": "wide-braced",
       "section": "torsos_body",
       "y": 503
     },
-    "sillhouettes01_034": {
+    "silhouettes01_034": {
       "ocr": "2unner",
       "corrected": "runner",
       "section": "torsos_body",
       "y": 505
     },
-    "sillhouettes01_035": {
+    "silhouettes01_035": {
       "ocr": "duneck",
       "corrected": "runner",
       "section": "torsos_body",
       "y": 504
     },
-    "sillhouettes01_036": {
+    "silhouettes01_036": {
       "ocr": "Cc",
       "corrected": null,
       "section": "torsos_body",
       "y": 539
     },
-    "sillhouettes01_037": {
+    "silhouettes01_037": {
       "ocr": "Puffer",
       "corrected": "puffer-jacket",
       "section": "torsos_body",
       "y": 539
     },
-    "sillhouettes01_038": {
+    "silhouettes01_038": {
       "ocr": "oat",
       "corrected": "bat",
       "section": "torsos_body",
       "y": 539
     },
-    "sillhouettes01_039": {
+    "silhouettes01_039": {
       "ocr": "pron",
       "corrected": "apron",
       "section": "torsos_body",
       "y": 546
     },
-    "sillhouettes01_040": {
+    "silhouettes01_040": {
       "ocr": "vercoat",
       "corrected": "overcoat",
       "section": "torsos_body",
       "y": 539
     },
-    "sillhouettes01_041": {
+    "silhouettes01_041": {
       "ocr": "Ca",
       "corrected": "cap",
       "section": "torsos_body2",
       "y": 791
     },
-    "sillhouettes01_042": {
+    "silhouettes01_042": {
       "ocr": "",
       "corrected": null,
       "section": "torsos_body2",
       "y": 778
     },
-    "sillhouettes01_043": {
+    "silhouettes01_043": {
       "ocr": "",
       "corrected": null,
       "section": "torsos_body2",
       "y": 784
     },
-    "sillhouettes01_044": {
+    "silhouettes01_044": {
       "ocr": "",
       "corrected": null,
       "section": "torsos_body2",
       "y": 783
     },
-    "sillhouettes01_045": {
+    "silhouettes01_045": {
       "ocr": "",
       "corrected": null,
       "section": "torsos_body2",
       "y": 796
     },
-    "sillhouettes01_046": {
+    "silhouettes01_046": {
       "ocr": "Ta",
       "corrected": null,
       "section": "torsos_body2",
       "y": 783
     },
-    "sillhouettes01_047": {
+    "silhouettes01_047": {
       "ocr": "Stalk-Lt",
       "corrected": "stalk-lunge",
       "section": "torsos_body2",
       "y": 783
     },
-    "sillhouettes01_048": {
+    "silhouettes01_048": {
       "ocr": "lank",
       "corrected": "lean",
       "section": "torsos_body2",
       "y": 783
     },
-    "sillhouettes01_049": {
+    "silhouettes01_049": {
       "ocr": "1eel",
       "corrected": null,
       "section": "torsos_body2",
       "y": 783
     },
-    "sillhouettes01_050": {
+    "silhouettes01_050": {
       "ocr": "Re",
       "corrected": "runner",
       "section": "torsos_body2",
       "y": 784
     },
-    "sillhouettes01_051": {
+    "silhouettes01_051": {
       "ocr": "Zasual",
       "corrected": "casual-slouch",
       "section": "torsos_body2",
       "y": 796
     },
-    "sillhouettes01_052": {
+    "silhouettes01_052": {
       "ocr": "",
       "corrected": null,
       "section": "torsos_body2",
       "y": 824
     },
-    "sillhouettes01_053": {
+    "silhouettes01_053": {
       "ocr": "",
       "corrected": null,
       "section": "torsos_body2",
       "y": 838
     },
-    "sillhouettes01_054": {
+    "silhouettes01_054": {
       "ocr": "",
       "corrected": null,
       "section": "torsos_body2",
       "y": 842
     },
-    "sillhouettes01_055": {
+    "silhouettes01_055": {
       "ocr": "",
       "corrected": null,
       "section": "torsos_body2",
       "y": 881
     },
-    "sillhouettes01_056": {
+    "silhouettes01_056": {
       "ocr": "Se",
       "corrected": "shaved",
       "section": "torsos_body2",
       "y": 889
     },
-    "sillhouettes01_057": {
+    "silhouettes01_057": {
       "ocr": "",
       "corrected": null,
       "section": "torsos_body2",
       "y": 886
     },
-    "sillhouettes01_058": {
+    "silhouettes01_058": {
       "ocr": "tol",
       "corrected": "pistol",
       "section": "arms_items",
       "y": 923
     },
-    "sillhouettes01_059": {
+    "silhouettes01_059": {
       "ocr": "vain",
       "corrected": "chain",
       "section": "arms_items",
       "y": 915
     },
-    "sillhouettes01_060": {
+    "silhouettes01_060": {
       "ocr": "sts",
       "corrected": "fists",
       "section": "arms_items",
       "y": 930
     },
-    "sillhouettes01_061": {
+    "silhouettes01_061": {
       "ocr": "Srowt",
       "corrected": "kings_row",
       "section": "arms_items",
       "y": 925
     },
-    "sillhouettes01_062": {
+    "silhouettes01_062": {
       "ocr": "lant",
       "corrected": "lean",
       "section": "back_accessories",
       "y": 1119
     },
-    "sillhouettes01_063": {
+    "silhouettes01_063": {
       "ocr": "Stak-Lu",
       "corrected": "stalk-lunge",
       "section": "back_accessories",
       "y": 1119
     },
-    "sillhouettes01_064": {
+    "silhouettes01_064": {
       "ocr": "1k-Le",
       "corrected": "flank-lean",
       "section": "back_accessories",
       "y": 1119
     },
-    "sillhouettes01_065": {
+    "silhouettes01_065": {
       "ocr": "neel-",
       "corrected": "kneel-recover",
       "section": "back_accessories",
       "y": 1119
     },
-    "sillhouettes01_066": {
+    "silhouettes01_066": {
       "ocr": "al-Sic",
       "corrected": "casual-slouch",
       "section": "back_accessories",
       "y": 1118
     },
-    "sillhouettes01_067": {
+    "silhouettes01_067": {
       "ocr": "ackpack",
       "corrected": "backpack",
       "section": "back_accessories",
       "y": 1118
     },
-    "sillhouettes01_068": {
+    "silhouettes01_068": {
       "ocr": "Aedbe",
       "corrected": "shaved",
       "section": "back_accessories",
       "y": 1120
     },
-    "sillhouettes01_069": {
+    "silhouettes01_069": {
       "ocr": "Shote",
       "corrected": "shotgun",
       "section": "back_accessories",
       "y": 1119
     },
-    "sillhouettes01_070": {
+    "silhouettes01_070": {
       "ocr": "sym",
       "corrected": null,
       "section": "back_accessories",
       "y": 1119
     },
-    "sillhouettes01_071": {
+    "silhouettes01_071": {
       "ocr": "Holste",
       "corrected": "phone-holster",
       "section": "back_accessories",
       "y": 1120
     },
-    "sillhouettes01_072": {
+    "silhouettes01_072": {
       "ocr": "",
       "corrected": null,
       "section": "crew_marks",
       "y": 1343
     },
-    "sillhouettes01_073": {
+    "silhouettes01_073": {
       "ocr": "ing",
       "corrected": "kings_row",
       "section": "crew_marks",
       "y": 1384
     },
-    "sillhouettes01_074": {
+    "silhouettes01_074": {
       "ocr": "Iron",
       "corrected": "apron",
       "section": "crew_marks",
       "y": 1383
     },
-    "sillhouettes01_075": {
+    "silhouettes01_075": {
       "ocr": "ade",
       "corrected": "jade_dragon",
       "section": "crew_marks",
       "y": 1376
     },
-    "sillhouettes01_076": {
+    "silhouettes01_076": {
       "ocr": "",
       "corrected": null,
       "section": "crew_marks",
       "y": 1385
     },
-    "sillhouettes01_077": {
+    "silhouettes01_077": {
       "ocr": "thside",
       "corrected": "southside_saints",
       "section": "crew_marks",
       "y": 1390
     },
-    "sillhouettes01_078": {
+    "silhouettes01_078": {
       "ocr": "",
       "corrected": null,
       "section": "crew_marks",
