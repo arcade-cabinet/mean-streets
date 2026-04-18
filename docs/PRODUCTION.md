@@ -26,15 +26,20 @@ domain: release
 - [x] Build clean (tsc + vite)
 - [x] AI opponent functional with new draw mechanics
 
-### Remaining for 1.0 RC
-- [ ] Merge PR #27 to main
-- [ ] Phone viewport verification
-- [ ] Card merge persistence (quantity tracking for pyramid merge)
-- [ ] Opponent draw visual feedback (card animating into opponent turf)
-- [ ] Sound integration (ambient + SFX)
+### Done since beta.1 (RC work)
+- [x] Merge PR #27 to main
+- [x] Phone layout — vertical menu, HUD draw button
+- [x] Sound integration — procedural SFX via Tone.js
+- [x] E2E smoke pass on all 4 device profiles (12/12 green)
+- [x] Balance gate convergence — winRateA 0.5049 for 3 runs
+- [x] Medium firstTurnActions 5→6 (first-mover balance)
+
+### Remaining for 1.0 Production
+- [ ] Card merge persistence (post-1.0)
+- [ ] Opponent draw visual animation
 - [ ] Tutorial flow
-- [ ] E2E smoke pass on all 4 device profiles
-- [ ] Release gate convergence (analysis:benchmark + test:release)
+- [ ] Mythic art editorial pass
+- [ ] Store metadata + signing keys
 
 ---
 
