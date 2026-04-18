@@ -113,7 +113,7 @@ function makeState(overrides: Partial<TurfGameState> = {}): TurfGameState {
 
 describe('actionsForTurn', () => {
   it('returns firstTurnActions for turn 1', () => {
-    expect(actionsForTurn(DEFAULT_GAME_CONFIG, 1)).toBe(5);
+    expect(actionsForTurn(DEFAULT_GAME_CONFIG, 1)).toBe(DEFAULT_GAME_CONFIG.firstTurnActions);
   });
 
   it('returns actionsPerTurn for turn 2+', () => {

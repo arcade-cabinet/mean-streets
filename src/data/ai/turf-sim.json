@@ -190,7 +190,7 @@
     "medium": {
       "turfCount": 4,
       "actionsPerTurn": 3,
-      "firstTurnActions": 5,
+      "firstTurnActions": 6,
       "aiNoise": 0.15,
       "aiTopK": 3,
       "actionBonus": 0,
