@@ -8,6 +8,7 @@
  */
 import type { World } from 'koota';
 import type { Card, Rarity, Turf } from '../../sim/turf/types';
+import { playDraw, playPlace, playStrike, playEndTurn, playMarket } from '../audio/sfx';
 import {
   blackMarketHealAction, blackMarketTradeAction,
   drawAction, endTurnAction,
@@ -50,11 +51,12 @@ export function buildGameActions(a: BuildArgs) {
     reset();
     if (r?.reason === 'play_card_discarded_rival')
       a.flash('RIVAL DISCARDED', 1200);
+    else void playPlace();
     a.checkWin();
   };
 
   const onModeSelect = (kind: 'draw' | NonNullable<ActionMode>) => {
-    if (kind === 'draw') { drawAction(a.world, 'A'); a.checkWin(); return; }
+    if (kind === 'draw') { drawAction(a.world, 'A'); void playDraw(); a.checkWin(); return; }
     if (kind === a.mode) { reset(); return; }
     reset();
     a.setMode(kind);
@@ -105,7 +107,7 @@ export function buildGameActions(a: BuildArgs) {
       const kind = m as StrikeKind;
       const r = queueStrikeAction(a.world, 'A', kind, 0, 0);
       reset();
-      if (r) a.flash(`${kind.replace('_', ' ').toUpperCase()} QUEUED`, 1200);
+      if (r) { a.flash(`${kind.replace('_', ' ').toUpperCase()} QUEUED`, 1200); void playStrike(); }
     }
   };
 
@@ -149,11 +151,12 @@ export function buildGameActions(a: BuildArgs) {
     }
   };
 
-  const onEndTurn = () => { endTurnAction(a.world, 'A'); reset(); };
+  const onEndTurn = () => { endTurnAction(a.world, 'A'); reset(); void playEndTurn(); };
 
   const onMarketTrade = (ids: string[], rarity: Rarity) => {
     blackMarketTradeAction(a.world, 'A', ids, rarity);
     a.flash(`TRADED ${ids.length} → ${rarity}`, 1000);
+    void playMarket();
   };
   const onMarketHeal = (ids: string[]) => {
     if (!a.healTarget) return;
