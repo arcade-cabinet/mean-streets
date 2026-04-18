@@ -10,19 +10,17 @@ import type {
 } from '../types';
 import { TURF_SIM_CONFIG } from './config';
 import {
-  goal,
-  type PlannerOwner,
-  scoreAll,
-  TurfGoalEvaluator,
-} from './planner-goals';
-import {
   buildHeatMgmt,
   buildMythicHunt,
   buildStackRebuild,
   desireHeatMgmt,
   desireMythicHunt,
   desireStackRebuild,
-} from './planner-goals-v03';
+  goal,
+  type PlannerOwner,
+  scoreAll,
+  TurfGoalEvaluator,
+} from './planner-goals';
 import { selectAction } from './policy';
 
 // Does the player own at least one turf where a retreat would shield a

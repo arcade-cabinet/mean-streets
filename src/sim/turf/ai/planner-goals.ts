@@ -1,5 +1,5 @@
-// Yuka GOAP plumbing for the v0.2 planner. Holds the generic Goal /
-// CompositeGoal / GoalEvaluator subclasses plus a shared `scoreAll`.
+// GOAP plumbing — Goal / CompositeGoal / GoalEvaluator subclasses,
+// shared `scoreAll`, and evaluator desirability + factory helpers.
 //
 // Yuka ships JSDoc types that treat `owner` as a strict `GameEntity`
 // with ~40 fields we don't use. The imports are re-typed via local
@@ -244,4 +244,78 @@ export function goal(
   prio: Array<TurfActionKind | TurfActionKind[]>,
 ): OrderedActionGoal {
   return new OrderedActionGoal(owner, name, prio);
+}
+
+// ─── Evaluator desirability + factory helpers ─────────────────────────────────
+
+function activeToughCount(state: TurfGameState, side: 'A' | 'B'): number {
+  const active = state.players[side].turfs[0];
+  if (!active) return 0;
+  let n = 0;
+  for (const sc of active.stack) if (sc.card.kind === 'tough') n++;
+  return n;
+}
+
+function opponentMythicOnActive(
+  state: TurfGameState,
+  side: 'A' | 'B',
+): boolean {
+  const oppSide = side === 'A' ? 'B' : 'A';
+  const oppActive = state.players[oppSide].turfs[0];
+  if (!oppActive) return false;
+  for (const sc of oppActive.stack) {
+    if (sc.card.kind === 'tough' && sc.card.rarity === 'mythic') {
+      const assigned = state.mythicAssignments[sc.card.id];
+      if (!assigned || assigned === oppSide) return true;
+    }
+  }
+  return false;
+}
+
+// heat_management — fires when shared heat > 0.4.
+export function desireHeatMgmt(owner: PlannerOwner): number {
+  const h = owner.state.heat;
+  if (h <= 0.4) return 0;
+  return Math.min(1.2, (h - 0.4) * 2.0);
+}
+
+export function buildHeatMgmt(owner: PlannerOwner) {
+  return goal(owner, 'heat_management', [
+    'send_to_holding',
+    'play_card',
+    'send_to_market',
+    'draw',
+    'end_turn',
+  ]);
+}
+
+// mythic_hunt — fires when opponent's active turf hosts a mythic tough.
+export function desireMythicHunt(owner: PlannerOwner): number {
+  if (!opponentMythicOnActive(owner.state, owner.side)) return 0;
+  return 1.0;
+}
+
+export function buildMythicHunt(owner: PlannerOwner) {
+  return goal(owner, 'mythic_hunt', [
+    ['direct_strike', 'pushed_strike', 'funded_recruit'],
+    'play_card',
+    'draw',
+    'end_turn',
+  ]);
+}
+
+// stack_rebuild — fires when the active turf's tough count is <= 1.
+export function desireStackRebuild(owner: PlannerOwner): number {
+  const n = activeToughCount(owner.state, owner.side);
+  if (n > 1) return 0;
+  return n === 0 ? 1.4 : 0.9;
+}
+
+export function buildStackRebuild(owner: PlannerOwner) {
+  return goal(owner, 'stack_rebuild', [
+    'play_card',
+    'draw',
+    'discard',
+    'end_turn',
+  ]);
 }
