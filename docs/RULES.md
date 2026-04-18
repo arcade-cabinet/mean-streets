@@ -58,7 +58,7 @@ Every card shares the same full-sized MTG-style frame:
 | Tough    | power, resistance, HP, archetype, affiliation | Defends a turf; carries modifiers |
 | Weapon   | power or resistance, category              | Offensive or defensive modifier   |
 | Drug     | power or resistance, category              | Same as weapon, different role    |
-| Currency | denomination ($100 / $1000)                | Bribes, buffers, heat pressure    |
+| Currency | denomination ($100 / $1000)                | Bribes, buffers, heat pressure. **Only two authored denominations exist: $100 and $1000.** All amounts ≥$500 (bribes, bail) are sums of these denominations. |
 
 ### Rarity: Base + Rolled
 
@@ -108,14 +108,20 @@ wars.
 ### First-run starter grant
 
 On profile creation, both player and AI receive matched starter
-collections:
+collections delivered as 8 mixed packs (card type rolled per slot):
 
-- **4 × Tough Pack (5 cards)** — 20 toughs
-- **1 × Weapon Pack (5 cards)**
-- **1 × Drug Pack (5 cards)**
-- **1 × Currency Pack (5 cards)**
+- **4 × 5-card pack** — 20 cards (predominantly toughs at 50% type weight)
+- **1 × 5-card pack** — 5 cards (weapon-weighted)
+- **1 × 5-card pack** — 5 cards (drug-weighted)
+- **1 × 5-card pack** — 5 cards (currency-weighted)
 
 Total starter: 35 cards each side.
+
+> Note: v0.3 uses a single mixed-type pack model (type rolled per slot
+> from weighted probabilities in `turf-sim.json`). There are no
+> type-locked pack kinds. "Weapon Pack" and "Drug Pack" here are
+> shorthand for packs with elevated type weights, not separate pack
+> types.
 
 ### Pack awards
 
@@ -123,6 +129,12 @@ Both sides earn packs from war outcomes (§13). AI's collection
 grows in parallel with player's — invisibly tracked in SQLite.
 AI earns the same bundles that the player earns, representing
 the AI "learning" across sessions.
+
+All packs in v0.3 are **mixed-type**: each slot independently rolls
+a card type from weighted probabilities (tough 50% / weapon 20% /
+drug 20% / currency 10%, configurable in `turf-sim.json`). Pack size
+(1, 3, or 5 cards) varies by reward tier (§13.1–13.2). There are no
+type-locked packs.
 
 ### Pack drop rates
 
@@ -171,7 +183,7 @@ curation**:
 Each player has N turfs. Only one turf per player is **active** —
 the current engagement. Reserves queue behind.
 
-- Each turf is a **stack** (ordered ordered sequence of StackedCards).
+- Each turf is a **stack** (ordered sequence of StackedCards).
 - A StackedCard is `{ card, faceUp }`. Face state determines what
   the opponent sees.
 - The top of the stack is the current **active tough**.
@@ -227,12 +239,17 @@ affiliations and don't break loyalty.
 
 Action budget:
 
-| Turn                             | Actions |
-|----------------------------------|---------|
-| First turn of a new active turf  | 5       |
-| Normal (Easy–Medium)             | 3       |
-| Normal (Hard)                    | 4       |
-| Normal (Nightmare+)              | 3       |
+| Turn                                    | Actions |
+|-----------------------------------------|---------|
+| First turn of a new active turf (Easy)  | 5       |
+| First turn of a new active turf (Medium)| 6       |
+| First turn of a new active turf (Hard+) | 5       |
+| Normal (Easy–Medium)                    | 3       |
+| Normal (Hard)                           | 4       |
+| Normal (Nightmare+)                     | 3       |
+
+> Medium gets 6 actions on the first turn of each new active turf
+> (post-1.0 balance decision: first-mover advantage compensation).
 
 Drawing is an action.
 
@@ -249,7 +266,7 @@ Drawing is an action.
 | Queue: Direct Strike    | 1    | Queue a direct strike at opponent's active turf | End-of-turn     |
 | Queue: Pushed Strike    | 1    | Spend 1 currency; splash strike                 | End-of-turn     |
 | Queue: Funded Recruit   | 1    | Spend currency to flip opponent's tough         | End-of-turn     |
-| Discard pending         | 0    | Discard the currently-drawn pending card (free) | —               |
+| Discard pending         | 0    | Discard the currently-drawn pending card (free). Note: discarded pending **vaporizes** — there is no per-player discard pile in v0.3. | —               |
 | End turn                | 0    | Declare done; forfeits remaining actions (free) | —               |
 
 ### Turn flow
@@ -313,7 +330,7 @@ apply their full bonuses on top of the clamped stats.
 
 ### Healing chain
 
-Three layers, cheapest to most expensive:
+Five layers, cheapest to most expensive:
 
 1. **PATCHUP** (common drug) — heals +1 HP to owner tough at end of
    each turn.
@@ -389,17 +406,26 @@ Holding.
 Each turn toughs are in Holding, a **holding check** fires:
 
 - **Heat-weighted check probability**: `p = min(1, heat × 0.5)`.
-- If triggered, outcome per-tough weighted by rarity and heat:
-  - **Bribe**: cops take some modifiers (their pick — highest rarity
-    mods first), tough returns next end-of-turn.
-  - **Lockup**: tough + all modifiers seized for duration.
-  - **Raid escalation**: full raid triggers (§10.2) before next
-    combat phase.
+- If triggered, outcome determined by continuous heat-weighted probability
+  (code is authoritative — `holding.ts:holdingCheck`):
+  - **Bribe** (more likely at low heat): cops take the highest-rarity
+    attached modifier, tough returns next end-of-turn.
+    `bribeThreshold = bribeSuccess(tough, 0) × (1-heat) + 0.1 × (1-heat)`
+  - **Lockup** (more likely at high heat): tough + all modifiers seized
+    for N turns (duration per difficulty). No raid is triggered from
+    holdingCheck directly.
+  - If no check fires: tough returns free at end-of-turn (no cost
+    beyond the initial action spent to send them).
 
-**Bribe persuasion formula**: base success + rarity multiplier +
-bribe amount (if offered).
+> The outcome is **binary (bribe or lockup)** once the check fires.
+> Raid escalation from Holding is handled separately via the normal
+> raid probability curve (§10.2) — high heat raises raid odds
+> independently.
 
-- `success = 0.5 + (rarity_rank × 0.1) + min(0.3, bribe/$1000 × 0.1)`
+**Bribe persuasion formula** (for reference; exact values in `turf-sim.json`):
+
+- `success = holdingBase + (rarity_rank × holdingRarityWeight) + min(holdingAmountCap, amount / holdingAmountScale)`
+- Baseline (no offered currency): `~0.5 + (rarity_rank × 0.1)`.
 
 A legendary tough offering $500 has higher success chance than a
 common tough offering $2000.
@@ -429,6 +455,9 @@ At end of turn, if your active turf's **top is a tough**:
 
 - **Closed Ranks is unavailable if you have any other face-up tough
   in your stack.** The "close ranks" button is disabled in that case.
+- **Modifiers beneath the closed-ranked top tough retain their prior
+  face-up/face-down state.** Closing Ranks only affects the top tough's
+  visibility, not deeper stack entries.
 
 ## 9. Information Asymmetry
 
@@ -515,8 +544,9 @@ dominance = attacker.cumulative_P + affiliation_loyal_bonus - defender.cumulativ
 Cumulative stats are sum of all toughs + tangible modifiers in the
 stack. **Used for Pass 1 ordering only, not damage calc.**
 
-Sort queued attacks by dominance, highest first. Ties break toward
-defender (highest defender R wins tie).
+Sort queued attacks by dominance, highest first. Primary tiebreaker:
+highest defender R wins. Secondary tiebreaker: alphabetical by side
+(side 'A' resolves first on further ties).
 
 **Pass 2: Priority-Ordered Modifier Chain**
 
@@ -526,7 +556,9 @@ For each queued strike in dominance order:
    check. Freelancers (including mythics) are neutral — don't affect
    loyalty calculations.
 2. **Currency pressure** — defender may **bribe** to cancel the strike.
-   Bribes are probabilistic:
+   Bribes draw from the **turf-wide currency pool** (all currency cards
+   in the defending turf's stack), not from a single tough's attached
+   currency. Bribes are probabilistic:
    - $500 → 70% success
    - $1000 → 85%
    - $2000 → 95%
@@ -539,6 +571,11 @@ For each queued strike in dominance order:
 
 Each priority tier can cancel or redirect the strike. First
 cancellation wins — subsequent tiers skipped for that strike.
+
+**Queued strike dissolution**: if a queued strike's source tough is no
+longer on top of the attacking turf at resolution time — because it was
+killed, held, raided, retreated, or a card was placed on top — the
+strike **dissolves**. No damage is dealt.
 
 If the strike survives all priority checks, **tangible combat**
 resolves per §7 damage calc.
@@ -612,6 +649,10 @@ Each of the 10 mythics has a unique signature ability. The pool
 
 ### Mythic constraints
 
+- **Globally exclusive**: at most one side may hold any given mythic at
+  any time. The pool of 10 is shared between player and AI; flip-on-kill
+  transfers ownership without creating a second copy. No two sides can
+  hold the same mythic simultaneously.
 - At most **one mythic per player's collection** at any time.
 - Cannot be merged (merge ceiling = legendary).
 - Cannot be healed at Black Market.
@@ -631,15 +672,16 @@ integer** (ties round up). So `+1.5` from rolled legendary →
 When a player (or AI) seizes an opponent turf, a reward is computed
 based on how quickly:
 
-| Turns to seize | Rating              | Reward                               |
-|----------------|---------------------|--------------------------------------|
-| 1              | Absolute Victory    | 5-card pack (random type)            |
-| 2              | Overwhelming Victory| 3-card pack                           |
-| ≤ 3            | Decisive Victory    | 1-card pack                           |
-| > 3            | Standard Victory    | (no pack)                             |
+| Turns to seize | Rating              | Reward                                      |
+|----------------|---------------------|---------------------------------------------|
+| 1              | Absolute Victory    | 5-card pack (mixed type, rolled per slot)   |
+| 2              | Overwhelming Victory| 3-card pack (mixed type, rolled per slot)   |
+| ≤ 3            | Decisive Victory    | 1-card pack (mixed type, rolled per slot)   |
+| > 3            | Standard Victory    | (no pack)                                   |
 
-Both sides earn independently — the winner of each turf gets the
-bonus. So a war with many turfs can produce many per-turf packs.
+All reward packs use the same mixed-type model (§3). Both sides earn
+independently — the winner of each turf gets the bonus. So a war
+with many turfs can produce many per-turf packs.
 
 ### 13.2 Rewards — war outcome
 

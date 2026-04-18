@@ -89,6 +89,7 @@ export const AuthoredCurrencySchema = z.object({
   name: z.string(),
   denomination: z.union([z.literal(100), z.literal(1000)]),
   rarity: RarityHistorySchema,
+  abilities: z.array(z.string()).optional(),
   unlocked: z.boolean(),
   locked: z.boolean(),
   draft: z.boolean().optional(),
@@ -146,6 +147,7 @@ export const CompiledCurrencySchema = z.object({
   name: z.string(),
   denomination: z.union([z.literal(100), z.literal(1000)]),
   rarity: RaritySchema,
+  abilities: z.array(z.string()).optional(),
   unlocked: z.boolean(),
   locked: z.boolean(),
 });

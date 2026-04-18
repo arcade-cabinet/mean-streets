@@ -117,6 +117,7 @@ function compileCurrency({ file, data }) {
     name: data.name,
     denomination: data.denomination,
     rarity: latest(data.rarity),
+    ...(Array.isArray(data.abilities) && data.abilities.length > 0 ? { abilities: data.abilities } : {}),
     unlocked: data.unlocked,
     locked: data.locked,
   };

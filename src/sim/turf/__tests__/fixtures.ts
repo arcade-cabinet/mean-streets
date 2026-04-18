@@ -57,13 +57,18 @@ export function mkDrug(overrides: Partial<DrugCard> = {}): DrugCard {
   };
 }
 
-export function mkCurrency(denomination: 100 | 1000, id: string): CurrencyCard {
+export function mkCurrency(
+  denomination: 100 | 1000,
+  id: string,
+  overrides: Partial<CurrencyCard> = {},
+): CurrencyCard {
   return {
     kind: 'currency',
     id,
     name: `$${denomination}`,
     denomination,
     rarity: 'common',
+    ...overrides,
   };
 }
 
