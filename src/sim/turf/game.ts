@@ -100,6 +100,7 @@ function createGameState(
     mythicPool: loadMythicIds(),
     mythicAssignments: {},
     warStats: emptyWarStats(),
+    resuscitateConsumed: new Set(),
   };
 }
 

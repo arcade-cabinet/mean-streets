@@ -25,6 +25,7 @@ export interface DrugCard {
 }
 export interface CurrencyCard {
   kind: 'currency'; id: string; name: string; denomination: 100 | 1000; rarity: Rarity;
+  abilities?: string[];
 }
 export type Card = ToughCard | WeaponCard | DrugCard | CurrencyCard;
 export type ModifierCard = WeaponCard | DrugCard | CurrencyCard;
@@ -166,6 +167,8 @@ export interface TurfGameState {
   mythicPool: string[];                               // unassigned mythic cardIds (10 at start)
   mythicAssignments: Record<string, 'A' | 'B'>;      // cardId → side
   warStats: WarStats;
+  /** Drug card ids that have already fired their one-shot RESUSCITATE heal. */
+  resuscitateConsumed: Set<string>;
 }
 
 // ── Metrics ─────────────────────────────────────────────────

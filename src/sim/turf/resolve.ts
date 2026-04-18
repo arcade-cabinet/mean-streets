@@ -1,4 +1,5 @@
 import { applyTangibles, runIntangiblesPhase } from './abilities';
+import { applyHealTicks } from './ability-handlers';
 import { TURF_SIM_CONFIG } from './ai/config';
 import { resolveStrikeNow, type StrikeOutcome } from './attacks';
 import {
@@ -62,7 +63,7 @@ function dominanceForQueued(state: TurfGameState, q: QueuedAction): RankedAction
   const aPower = positionPower(atk) + bonus.atkPowerDelta;
   const dResist = bonus.ignoreResistance
     ? 0
-    : positionResistance(def) + bonus.defResistDelta;
+    : positionResistance(def, state.config.difficulty) + bonus.defResistDelta;
   return { queued: q, dominance: aPower - dResist, defenderR: dResist };
 }
 
@@ -156,7 +157,7 @@ function raidPhase(state: TurfGameState): boolean {
 
 /**
  * Apply the full resolve phase: raid → combat → seize reconciliation →
- * holding sweep → lockup process → cleanup → action budgets.
+ * heal ticks → holding sweep → lockup process → cleanup → action budgets.
  */
 export function resolvePhase(state: TurfGameState): void {
   state.phase = 'resolve';
@@ -220,11 +221,14 @@ export function resolvePhase(state: TurfGameState): void {
     }
   }
 
-  // 5. Holding & lockup sweeps.
+  // 5. End-of-turn heal ticks: PATCHUP / FIELD_MEDIC / RESUSCITATE.
+  for (const side of ['A', 'B'] as const) applyHealTicks(state, side);
+
+  // 6. Holding & lockup sweeps.
   for (const side of ['A', 'B'] as const) returnFromHolding(state, side);
   lockupProcess(state);
 
-  // 6. Cleanup.
+  // 7. Cleanup.
   for (const side of ['A', 'B'] as const) {
     const p = state.players[side];
     p.queued.length = 0;
@@ -250,7 +254,7 @@ export function resolvePhase(state: TurfGameState): void {
   }
   state.phase = 'action';
 
-  // 7. Winner detection.
+  // 8. Winner detection.
   const aEmpty = state.players.A.turfs.length === 0;
   const bEmpty = state.players.B.turfs.length === 0;
   if (aEmpty && bEmpty) {

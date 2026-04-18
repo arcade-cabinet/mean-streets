@@ -67,6 +67,7 @@ export function mkDrug(overrides: Partial<DrugCard> = {}): DrugCard {
 export function mkCurrency(
   denomination: 100 | 1000 = 100,
   id = `cash-${denomination}`,
+  overrides: Partial<CurrencyCard> = {},
 ): CurrencyCard {
   return {
     kind: 'currency',
@@ -74,6 +75,7 @@ export function mkCurrency(
     name: `$${denomination}`,
     denomination,
     rarity: 'common',
+    ...overrides,
   };
 }
 
@@ -169,5 +171,6 @@ export function mkState(
     mythicPool: [],
     mythicAssignments: {},
     warStats: { seizures: [] },
+    resuscitateConsumed: new Set(),
   };
 }
