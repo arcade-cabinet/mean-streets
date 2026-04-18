@@ -1,9 +1,16 @@
 """
-Card silhouette compositor v3.
+Card art compositor — final version.
 
-Uses the cleaned OCR labels with section awareness.
-Toughs: full-body silhouette from "bodies" section
-Weapons: arm+item silhouette from "arms_items" section
+Uses organized sprite directories under raw-assets/sprites/.
+All 212 cards get real sprite-composed PNGs — no procedural SVG.
+
+Toughs/Mythics: body silhouettes from bodies/
+Weapons: weapon sprites from weapons/
+Drugs: contraband sprites from contraband/
+Currency: cash sprites from contraband/
+
+Output goes to public/assets/card-art/{card-id}.png
+Card.tsx loads these as <img> tags at runtime.
 """
 from pathlib import Path
 from PIL import Image
@@ -15,122 +22,136 @@ def seed_from_id(card_id: str) -> int:
     return int(hashlib.md5(card_id.encode()).hexdigest()[:8], 16)
 
 
-def find_sprites_by_label_and_section(
-    label: str,
-    section_prefix: str,
-    clean_labels: dict,
-    sprites_dir: Path,
-) -> list[Path]:
-    """Find all sprite files matching a corrected label within a section."""
+def pick(pool: list, seed: int):
+    return pool[seed % len(pool)] if pool else None
+
+
+def glob_pngs(d: Path) -> list[Path]:
+    return sorted(d.glob("*.png")) if d.exists() else []
+
+
+def match_sprites(base: Path, subdirs: list[str], patterns: list[str]) -> list[Path]:
     results = []
-    for sheet_data in clean_labels.values():
-        for sprite_id, info in sheet_data.items():
-            if info.get("corrected") != label:
-                continue
-            if section_prefix and not info.get("section", "").startswith(section_prefix):
-                continue
-            path = sprites_dir / f"{sprite_id}.png"
-            if path.exists():
-                results.append(path)
+    for sd in subdirs:
+        for f in glob_pngs(base / sd):
+            for pat in patterns:
+                if f.stem == pat or f.stem.startswith(pat):
+                    results.append(f)
+                    break
     return results
 
 
-ARCHETYPE_BODIES = {
-    "bruiser":   ["heavy", "average"],
-    "enforcer":  ["heavy", "tall-longcoat", "average"],
-    "snitch":    ["lean", "average"],
-    "lookout":   ["lean", "average"],
-    "ghost":     ["lean", "tall-longcoat"],
-    "hustler":   ["average", "lean"],
-    "fixer":     ["average", "lean"],
-    "medic":     ["average", "lean"],
-    "arsonist":  ["average", "heavy"],
-    "shark":     ["average", "lean"],
-    "wheelman":  ["average", "lean"],
-    "fence":     ["average", "heavy"],
-}
-
-WEAPON_ITEMS = {
-    "bladed":    ["knife"],
-    "blunt":     ["bat", "crowbar"],
-    "ranged":    ["pistol", "pistol-aim"],
-    "stealth":   ["knife", "chain"],
-    "explosive": ["crowbar", "fists"],
-}
-
-
-def render_sprite(sprite_path: Path, canvas_w: int = 120, canvas_h: int = 160) -> Image.Image:
-    canvas = Image.new("RGBA", (canvas_w, canvas_h), (0, 0, 0, 0))
-    sprite = Image.open(sprite_path).convert("RGBA")
-    sw, sh = sprite.size
-    max_w = int(canvas_w * 0.9)
-    max_h = int(canvas_h * 0.9)
-    scale = min(max_w / sw, max_h / sh)
-    new_w = max(1, int(sw * scale))
-    new_h = max(1, int(sh * scale))
-    sprite = sprite.resize((new_w, new_h), Image.LANCZOS)
-    x = (canvas_w - new_w) // 2
-    y = canvas_h - new_h - 4
-    canvas.paste(sprite, (x, y), sprite)
+def render(sprite_path: Path, cw: int = 120, ch: int = 160,
+           fill: float = 0.85, anchor: str = "bottom") -> Image.Image:
+    canvas = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
+    spr = Image.open(sprite_path).convert("RGBA")
+    sw, sh = spr.size
+    scale = min(int(cw * fill) / max(sw, 1), int(ch * fill) / max(sh, 1))
+    nw, nh = max(1, int(sw * scale)), max(1, int(sh * scale))
+    spr = spr.resize((nw, nh), Image.LANCZOS)
+    x = (cw - nw) // 2
+    y = ch - nh - 4 if anchor == "bottom" else (ch - nh) // 2
+    canvas.paste(spr, (x, y), spr)
     return canvas
+
+
+BODY_POOLS = {
+    "bruiser":  ["heavy", "average"],
+    "enforcer": ["heavy", "tall-longcoat", "average"],
+    "snitch":   ["lean", "average", "cap"],
+    "lookout":  ["lean", "cap", "hood"],
+    "ghost":    ["lean", "tall-longcoat", "hood-mask"],
+    "hustler":  ["average", "fedora", "pompadour"],
+    "fixer":    ["average", "fedora", "lean"],
+    "medic":    ["average", "lean"],
+    "arsonist": ["average", "heavy", "hood"],
+    "shark":    ["average", "fedora", "slick-femme"],
+    "wheelman": ["average", "lean", "cap"],
+    "fence":    ["average", "heavy", "tall-longcoat"],
+}
+
+WEAPON_POOLS = {
+    "bladed":    ["hook-blade"],
+    "blunt":     ["crowbar", "fist-punch"],
+    "ranged":    ["pistol-compact", "pistol-full", "holster-pistol"],
+    "stealth":   ["chain", "hook-blade"],
+    "explosive": ["grenade"],
+}
+
+DRUG_POOLS = {
+    "stimulant":    ["pill-bottle", "prescription-bottle"],
+    "narcotic":     ["drug-bag", "syringe", "wrapped-bricks"],
+    "sedative":     ["pill-bottle", "herb-bag"],
+    "steroid":      ["syringe", "prescription-bottle"],
+    "hallucinogen": ["herb-bag", "drug-bag"],
+}
+
+CURRENCY_POOLS = {
+    100:  ["wallet", "money-clip"],
+    1000: ["cash-stack", "paper-bag", "duffel-bag"],
+}
 
 
 def main():
     root = Path(__file__).resolve().parents[3]
-    sprites_dir = root / "raw-assets" / "sprites"
-    clean_labels_path = Path(__file__).parent / "sprite_labels_clean.json"
-    catalog_dir = root / "config" / "compiled"
-    out_dir = root / "public" / "assets" / "card-art"
-    out_dir.mkdir(parents=True, exist_ok=True)
+    spr = root / "raw-assets" / "sprites"
+    cat = root / "config" / "compiled"
+    out = root / "public" / "assets" / "card-art"
+    out.mkdir(parents=True, exist_ok=True)
+    for f in out.glob("*.png"):
+        f.unlink()
 
-    clean_labels = json.loads(clean_labels_path.read_text())
-    toughs = json.loads((catalog_dir / "toughs.json").read_text())
-    mythics = json.loads((catalog_dir / "mythics.json").read_text())
-    weapons = json.loads((catalog_dir / "weapons.json").read_text())
+    toughs = json.loads((cat / "toughs.json").read_text())
+    mythics = json.loads((cat / "mythics.json").read_text())
+    weapons = json.loads((cat / "weapons.json").read_text())
+    drugs = json.loads((cat / "drugs.json").read_text())
+    currency = json.loads((cat / "currency.json").read_text())
 
-    composed = 0
-    failed = 0
+    all_bodies = glob_pngs(spr / "bodies")
+    n = {"tough": 0, "weapon": 0, "drug": 0, "currency": 0, "fail": 0}
 
-    # Toughs + Mythics
     for card in toughs + mythics:
-        card_id = card["id"]
-        archetype = card.get("archetype", "bruiser")
-        body_pool = ARCHETYPE_BODIES.get(archetype, ["average"])
-        seed = seed_from_id(card_id)
-        body_label = body_pool[seed % len(body_pool)]
-
-        candidates = find_sprites_by_label_and_section(body_label, "bodies", clean_labels, sprites_dir)
-        if candidates:
-            chosen = candidates[seed % len(candidates)]
-            result = render_sprite(chosen)
-            result.save(out_dir / f"{card_id}.png")
-            composed += 1
+        pats = BODY_POOLS.get(card.get("archetype", "bruiser"), ["average"])
+        cands = match_sprites(spr, ["bodies"], pats) or all_bodies
+        c = pick(cands, seed_from_id(card["id"]))
+        if c:
+            render(c).save(out / f"{card['id']}.png")
+            n["tough"] += 1
         else:
-            failed += 1
-            print(f"  MISS tough {card_id} body={body_label}")
+            n["fail"] += 1
 
-    # Weapons
     for card in weapons:
-        card_id = card["id"]
-        category = card.get("category", "bladed")
-        item_pool = WEAPON_ITEMS.get(category, ["knife"])
-        seed = seed_from_id(card_id)
-        item_label = item_pool[seed % len(item_pool)]
-
-        candidates = find_sprites_by_label_and_section(item_label, "arms", clean_labels, sprites_dir)
-        if candidates:
-            chosen = candidates[seed % len(candidates)]
-            result = render_sprite(chosen, 120, 120)
-            final = Image.new("RGBA", (120, 160), (0, 0, 0, 0))
-            final.paste(result, (0, 20), result)
-            final.save(out_dir / f"{card_id}.png")
-            composed += 1
+        pats = WEAPON_POOLS.get(card.get("category", "bladed"), ["pistol-compact"])
+        cands = match_sprites(spr, ["weapons"], pats) or glob_pngs(spr / "weapons")
+        c = pick(cands, seed_from_id(card["id"]))
+        if c:
+            render(c, anchor="center").save(out / f"{card['id']}.png")
+            n["weapon"] += 1
         else:
-            failed += 1
-            print(f"  MISS weapon {card_id} item={item_label}")
+            n["fail"] += 1
 
-    print(f"\nComposed: {composed}, Failed: {failed}")
-    print(f"Output → {out_dir}")
+    for card in drugs:
+        pats = DRUG_POOLS.get(card.get("category", "stimulant"), ["drug-bag"])
+        cands = match_sprites(spr, ["contraband"], pats) or glob_pngs(spr / "contraband")
+        c = pick(cands, seed_from_id(card["id"]))
+        if c:
+            render(c, anchor="center").save(out / f"{card['id']}.png")
+            n["drug"] += 1
+        else:
+            n["fail"] += 1
+
+    for card in currency:
+        pats = CURRENCY_POOLS.get(card.get("denomination", 100), ["cash-stack"])
+        cands = match_sprites(spr, ["contraband"], pats) or glob_pngs(spr / "contraband")
+        c = pick(cands, seed_from_id(card["id"]))
+        if c:
+            render(c, anchor="center").save(out / f"{card['id']}.png")
+            n["currency"] += 1
+        else:
+            n["fail"] += 1
+
+    total = sum(n.values()) - n["fail"]
+    print(f"Composed {total}: tough={n['tough']} weapon={n['weapon']} drug={n['drug']} currency={n['currency']} fail={n['fail']}")
 
 
 if __name__ == "__main__":

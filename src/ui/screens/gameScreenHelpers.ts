@@ -34,13 +34,8 @@ export function modifierSwapViable(turf: Turf): boolean {
 export function buildPrompt(
   mode: ActionMode,
   strikePhase: StrikePhase,
-  hasPending: boolean,
   retreatTurfIdx: number | null,
 ): string | null {
-  if (hasPending && !isStrikeMode(mode) && mode !== 'retreat' && mode !== 'modifier_swap')
-    return 'Tap your active turf to place the pending card';
-  if (mode === 'play_card' && !hasPending)
-    return 'Draw a card first, then tap a turf';
   if (mode === 'retreat' && retreatTurfIdx === null)
     return 'Tap your active turf to open its stack';
   if (mode === 'retreat')

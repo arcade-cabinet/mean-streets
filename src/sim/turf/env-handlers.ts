@@ -7,14 +7,25 @@ import {
   turfAffiliationConflict,
 } from './board';
 import { isModifierCard } from './env-query';
-import type { PlayerState, TurfAction, TurfGameState } from './types';
+import type { ModifierCard, PlayerState, TurfAction, TurfGameState } from './types';
 
 export function handleDraw(player: PlayerState, state: TurfGameState): void {
   if (player.pending !== null) throw new Error('draw: pending slot occupied');
   const card = player.deck.shift();
   if (!card) throw new Error('draw: deck empty');
-  player.pending = card;
   state.metrics.draws++;
+
+  const active = player.turfs[0];
+
+  // Modifier drawn with no tough on turf → auto-route to Black Market
+  // (no player decision — card literally can't be played)
+  if (active && isModifierCard(card) && !hasToughOnTurf(active)) {
+    state.blackMarket.push(card as ModifierCard);
+    return;
+  }
+
+  // Everything else goes to pending — player/AI decides placement
+  player.pending = card;
 }
 
 export function handlePlayCard(

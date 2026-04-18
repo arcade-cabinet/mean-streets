@@ -10,7 +10,7 @@ import type { World } from 'koota';
 import type { Card, Rarity, Turf } from '../../sim/turf/types';
 import {
   blackMarketHealAction, blackMarketTradeAction,
-  discardPendingAction, drawAction, endTurnAction,
+  drawAction, endTurnAction,
   modifierSwapAction, playCardAction, queueStrikeAction,
   retreatAction, sendToHoldingAction, sendToMarketAction,
 } from '../../ecs/actions';
@@ -49,12 +49,12 @@ export function buildGameActions(a: BuildArgs) {
     const r = playCardAction(a.world, 'A', 0, a.pending.id);
     reset();
     if (r?.reason === 'play_card_discarded_rival')
-      a.flash('RIVAL DISCARDED — no buffer', 1800);
+      a.flash('RIVAL DISCARDED', 1200);
     a.checkWin();
   };
 
   const onModeSelect = (kind: 'draw' | NonNullable<ActionMode>) => {
-    if (kind === 'draw') { drawAction(a.world, 'A'); a.flash('Drew', 700); return; }
+    if (kind === 'draw') { drawAction(a.world, 'A'); a.checkWin(); return; }
     if (kind === a.mode) { reset(); return; }
     reset();
     a.setMode(kind);
@@ -65,6 +65,7 @@ export function buildGameActions(a: BuildArgs) {
   const onLaneClick = (side: 'A' | 'B') => {
     const m = a.mode;
     const stackModes: ActionMode[] = ['retreat', 'modifier_swap', 'send_to_market', 'send_to_holding'];
+    // Pending card → tapping own turf places it
     if (a.pending && side === 'A' && !isStrikeMode(m) && !stackModes.includes(m)) {
       placePending(); return;
     }
@@ -77,7 +78,6 @@ export function buildGameActions(a: BuildArgs) {
       return;
     }
     if (!m) return;
-    if (m === 'play_card' && side === 'A') { placePending(); return; }
     if (stackModes.includes(m) && side === 'A' && a.playerActive) {
       a.setModal({ kind: 'stack', turf: a.playerActive, isOwn: true }); return;
     }
@@ -135,9 +135,6 @@ export function buildGameActions(a: BuildArgs) {
   };
 
   const onEndTurn = () => { endTurnAction(a.world, 'A'); reset(); };
-  const onDiscardPending = () => {
-    discardPendingAction(a.world, 'A'); reset(); a.flash('DISCARDED', 700);
-  };
 
   const onMarketTrade = (ids: string[], rarity: Rarity) => {
     blackMarketTradeAction(a.world, 'A', ids, rarity);
@@ -152,6 +149,6 @@ export function buildGameActions(a: BuildArgs) {
 
   return {
     reset, onModeSelect, onLaneClick, onStackPick,
-    onEndTurn, onDiscardPending, onMarketTrade, onMarketHeal,
+    onEndTurn, onMarketTrade, onMarketHeal,
   };
 }

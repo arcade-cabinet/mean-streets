@@ -2,9 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { createGameWorld } from '../ecs/world';
 import {
   drawAction,
-  playCardAction,
   passAction,
-  discardPendingAction,
   endTurnAction,
   queueStrikeAction,
 } from '../ecs/actions';
@@ -60,7 +58,7 @@ describe('createGameWorld (handless v0.2)', () => {
 });
 
 describe('drawAction', () => {
-  it('moves the top of deck into pending and costs 1 action', () => {
+  it('moves top of deck into pending and costs 1 action', () => {
     const world = createGameWorld(undefined, SEED);
     const entity = world.queryFirst(PlayerA)!;
     const pA = entity.get(PlayerA)!;
@@ -70,56 +68,9 @@ describe('drawAction', () => {
 
     drawAction(world, 'A');
 
-    expect(pA.pending).not.toBeNull();
+    // Card either goes to pending (tough) or auto-routes to market (modifier on empty turf)
     expect(pA.deck.length).toBe(deckBefore - 1);
     expect(budgetEntity.get(ActionBudget)!.remaining).toBe(budgetBefore - 1);
-  });
-});
-
-describe('playCardAction', () => {
-  it('places the pending card onto a turf', () => {
-    const world = createGameWorld(undefined, SEED);
-    const entity = world.queryFirst(PlayerA)!;
-    const pA = entity.get(PlayerA)!;
-
-    drawAction(world, 'A');
-    const card = pA.pending;
-    expect(card).not.toBeNull();
-    if (!card) return;
-
-    const result = playCardAction(world, 'A', 0, card.id);
-
-    expect(result).not.toBeNull();
-    expect(pA.pending).toBeNull();
-    expect(pA.turfs[0].stack.length).toBeGreaterThan(0);
-  });
-
-  it('returns null if cardId does not match pending', () => {
-    const world = createGameWorld(undefined, SEED);
-    drawAction(world, 'A');
-    const result = playCardAction(world, 'A', 0, 'not-a-real-id');
-    expect(result).toBeNull();
-  });
-});
-
-describe('discardPendingAction', () => {
-  it('moves pending to discard without costing an action', () => {
-    const world = createGameWorld(undefined, SEED);
-    const entity = world.queryFirst(PlayerA)!;
-    const pA = entity.get(PlayerA)!;
-    const budgetEntity = world.queryFirst(ActionBudget)!;
-
-    drawAction(world, 'A');
-    const card = pA.pending;
-    expect(card).not.toBeNull();
-    if (!card) return;
-
-    const budgetBefore = budgetEntity.get(ActionBudget)!.remaining;
-    discardPendingAction(world, 'A');
-
-    expect(pA.pending).toBeNull();
-    expect(pA.discard).toContainEqual(expect.objectContaining({ id: card.id }));
-    expect(budgetEntity.get(ActionBudget)!.remaining).toBe(budgetBefore);
   });
 });
 

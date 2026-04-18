@@ -10,7 +10,7 @@ import type { QueuedAction, Turf } from '../../sim/turf/types';
 import { HeatMeter, StackFanModal, TurfCompositeCard } from '../board';
 import { Card as CardComponent } from '../cards';
 import { QueuedChips, type ActionMode } from './GameScreenActionBar';
-import { buildPrompt, type StrikePhase } from './gameScreenHelpers';
+import type { StrikePhase } from './gameScreenHelpers';
 import {
   GameMobileCustodyModal, GameMobileMarketModal,
 } from './GameScreenSidebars';
@@ -122,7 +122,6 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
   });
 
   const exhausted = budget.remaining <= 0;
-  const promptText = buildPrompt(mode, strikePhase, pending !== null, null);
 
   useEffect(() => {
     if (exhausted && !turnEndedA && !pending) {
@@ -188,13 +187,7 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
         <button
           type="button"
           className={`game-hud-panel-btn ${market.length > 0 ? 'game-hud-panel-btn-active' : ''}`}
-          onClick={() => {
-            if (pending && (pending.kind === 'weapon' || pending.kind === 'drug' || pending.kind === 'currency')) {
-              actions.onDiscardPending();
-              return;
-            }
-            setModal(modal.kind === 'drawer-market' ? { kind: 'none' } : { kind: 'drawer-market' });
-          }}
+          onClick={() => setModal(modal.kind === 'drawer-market' ? { kind: 'none' } : { kind: 'drawer-market' })}
           data-testid="slot-market"
         >
           Market {market.length > 0 ? `(${market.length})` : ''}
@@ -256,7 +249,7 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
         </div>
 
         <div
-          className="board-slot board-slot-turf board-slot-player"
+          className={`board-slot board-slot-turf board-slot-player ${pending ? 'board-slot-pending' : ''}`}
           onClick={() => actions.onLaneClick('A')}
           data-testid="turf-lane-A"
         >
@@ -279,12 +272,6 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
         </div>
       </div>
 
-      {promptText && (
-        <div className="game-prompt">
-          <span className="game-prompt-text">{promptText}</span>
-          <button type="button" className="game-prompt-cancel" onClick={actions.reset}>Cancel</button>
-        </div>
-      )}
 
       <QueuedChips strikes={queuedA} />
 
