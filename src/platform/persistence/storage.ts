@@ -34,7 +34,7 @@ export interface AppSettings {
  */
 export interface StoredCardInstance {
   rolledRarity: 'common' | 'uncommon' | 'rare' | 'legendary' | 'mythic';
-  unlockDifficulty: 'easy' | 'medium' | 'hard' | 'nightmare' | 'sudden-death' | 'ultra-nightmare';
+  unlockDifficulty: 'easy' | 'medium' | 'hard' | 'nightmare' | 'ultra-nightmare';
 }
 
 export interface PlayerProfile {
@@ -128,7 +128,19 @@ export async function saveDeckLoadout(loadout: DeckLoadout): Promise<DeckLoadout
 
 export async function loadProfile(): Promise<PlayerProfile> {
   await initializePersistence();
-  return (await getItem<PlayerProfile>(PROFILE_NAMESPACE, 'current')) ?? DEFAULT_PROFILE;
+  const profile = (await getItem<PlayerProfile>(PROFILE_NAMESPACE, 'current')) ?? DEFAULT_PROFILE;
+  // v1.0.0 migration: sudden-death was removed in favor of ultra-nightmare.
+  if (profile.cardInstances) {
+    let migrated = false;
+    for (const instance of Object.values(profile.cardInstances)) {
+      if ((instance.unlockDifficulty as string) === 'sudden-death') {
+        instance.unlockDifficulty = 'ultra-nightmare';
+        migrated = true;
+      }
+    }
+    if (migrated) await saveProfile(profile);
+  }
+  return profile;
 }
 
 export async function saveProfile(profile: PlayerProfile): Promise<PlayerProfile> {

@@ -11,7 +11,6 @@ import { PACK_SIZE } from './types';
 //   - Once the card is picked, its instance rarity rolls up from the
 //     base per a per-base distribution.
 //   - Mythic cards never appear in packs (0% pull rate).
-//   - Sudden Death is GONE — any `suddenDeathWin: true` arg is ignored.
 // Tunables live in src/data/ai/turf-sim.json under packEconomy.*
 
 // Load tunables from JSON (src/data/ai/turf-sim.json packEconomy.*).
@@ -24,16 +23,13 @@ const BASE_RARITY_WEIGHTS: Record<Rarity, number> = _pe.baseRarityWeights as Rec
 const ROLL_DISTRIBUTIONS: Record<Rarity, Partial<Record<Rarity, number>>> =
   _pe.rollDistributions as Record<Rarity, Partial<Record<Rarity, number>>>;
 
-// Sudden-death tier remains in the DifficultyTier union for back-compat
-// but v0.3 deprecates it — fall back to medium multiplier (1.2).
 const _diffMult = _pe.difficultyRewardMult as Partial<Record<DifficultyTier, number>>;
 const DIFFICULTY_REWARD_MULT: Record<DifficultyTier, number> = {
-  easy:            _diffMult['easy']            ?? 1.0,
-  medium:          _diffMult['medium']          ?? 1.2,
-  hard:            _diffMult['hard']            ?? 1.4,
-  nightmare:       _diffMult['nightmare']       ?? 1.6,
-  'sudden-death':  _diffMult['sudden-death']    ?? 1.2,
-  'ultra-nightmare': _diffMult['ultra-nightmare'] ?? 2.0,
+  easy:              _diffMult['easy']              ?? 1.0,
+  medium:            _diffMult['medium']            ?? 1.2,
+  hard:              _diffMult['hard']              ?? 1.4,
+  nightmare:         _diffMult['nightmare']         ?? 1.6,
+  'ultra-nightmare': _diffMult['ultra-nightmare']   ?? 2.0,
 };
 
 const VALID_PACK_KINDS: ReadonlySet<string> = new Set([
@@ -230,9 +226,9 @@ export function starterGrant(rng: Rng): Card[] {
 }
 
 /**
- * Back-compat shim for App.tsx — returns the same per-difficulty pack
- * rewards shape. The `suddenDeath` param is now ignored (v0.3 drops
- * sudden-death) but kept so existing call sites don't break.
+ * Returns per-difficulty pack rewards for a completed match.
+ * The `_suddenDeath` param is kept for call-site back-compat but is
+ * ignored — Sudden Death was removed in v0.3.
  */
 export function matchRewardPacks(
   difficulty: string,

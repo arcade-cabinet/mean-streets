@@ -77,7 +77,6 @@ describe('policy hardening — selectAction edges', () => {
       'medium',
       'hard',
       'nightmare',
-      'sudden-death',
       'ultra-nightmare',
     ];
     for (const tier of tiers) {

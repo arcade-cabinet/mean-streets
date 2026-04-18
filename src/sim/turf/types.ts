@@ -57,7 +57,7 @@ export interface PlayerState {
 }
 
 // ── Difficulty & Game Config ────────────────────────────────
-export type DifficultyTier = 'easy' | 'medium' | 'hard' | 'nightmare' | 'sudden-death' | 'ultra-nightmare';
+export type DifficultyTier = 'easy' | 'medium' | 'hard' | 'nightmare' | 'ultra-nightmare';
 export interface GameConfig {
   difficulty: DifficultyTier; suddenDeath: boolean;
   turfCount: number; actionsPerTurn: number; firstTurnActions: number;

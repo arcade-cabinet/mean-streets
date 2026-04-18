@@ -217,16 +217,6 @@
       "playerActionPenalty": 1,
       "lookahead": false
     },
-    "sudden-death": {
-      "turfCount": 1,
-      "actionsPerTurn": 3,
-      "firstTurnActions": 5,
-      "aiNoise": 0.15,
-      "aiTopK": 3,
-      "actionBonus": 0,
-      "playerActionPenalty": 0,
-      "lookahead": false
-    },
     "ultra-nightmare": {
       "turfCount": 1,
       "actionsPerTurn": 3,
@@ -276,7 +266,6 @@
       "medium":          { "base": [{ "kind": "triple", "count": 1 }] },
       "hard":            { "base": [{ "kind": "standard", "count": 1 }] },
       "nightmare":       { "base": [{ "kind": "standard", "count": 2 }] },
-      "sudden-death":    { "base": [{ "kind": "standard", "count": 1 }] },
       "ultra-nightmare": { "base": [{ "kind": "standard", "count": 3 }] }
     },
     "baseRarityWeights": {
@@ -416,13 +405,6 @@
       "playerActionPenalty": 1,
       "lookahead": false
     },
-    "sudden-death": {
-      "topK": 3,
-      "noise": 0.15,
-      "actionBonus": 0,
-      "playerActionPenalty": 0,
-      "lookahead": false
-    },
     "ultra-nightmare": {
       "topK": 1,
       "noise": 0,
@@ -463,7 +445,6 @@
       "medium": 0.7,
       "hard": 1.0,
       "nightmare": 1.3,
-      "sudden-death": 1.0,
       "ultra-nightmare": 1.5
     },
     "lockupDuration": {
@@ -471,7 +452,6 @@
       "medium": 1,
       "hard": 2,
       "nightmare": 3,
-      "sudden-death": 2,
       "ultra-nightmare": 999
     }
   },
@@ -500,7 +480,6 @@
       "medium": 0.35,
       "hard": 0.20,
       "nightmare": 0.10,
-      "sudden-death": 0.10,
       "ultra-nightmare": 0.05
     }
   }

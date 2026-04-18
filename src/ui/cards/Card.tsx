@@ -35,7 +35,6 @@ const DIFFICULTY_GLYPH: Record<DifficultyTier, string> = {
   'medium': 'M',
   'hard': 'H',
   'nightmare': 'N',
-  'sudden-death': 'SD',
   'ultra-nightmare': 'UN',
 };
 

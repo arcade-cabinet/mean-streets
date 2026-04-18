@@ -8,14 +8,14 @@ function wrap(ui: React.ReactElement) {
 }
 
 describe('DifficultyScreen', () => {
-  it('renders six difficulty tiles including Sudden Death', () => {
+  it('renders five difficulty tiles', () => {
     render(wrap(<DifficultyScreen onSelect={vi.fn()} onBack={vi.fn()} />));
     expect(screen.getByTestId('diff-tile-easy')).not.toBeNull();
     expect(screen.getByTestId('diff-tile-medium')).not.toBeNull();
     expect(screen.getByTestId('diff-tile-hard')).not.toBeNull();
     expect(screen.getByTestId('diff-tile-nightmare')).not.toBeNull();
-    expect(screen.getByTestId('diff-tile-sudden-death')).not.toBeNull();
     expect(screen.getByTestId('diff-tile-ultra-nightmare')).not.toBeNull();
+    expect(screen.queryByTestId('diff-tile-sudden-death')).toBeNull();
   });
 
   it('defaults to medium selected', () => {

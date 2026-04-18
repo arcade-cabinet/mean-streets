@@ -1,7 +1,6 @@
 import {
   AlertTriangle,
   ArrowLeft,
-  Crosshair,
   Flame,
   Shield,
   Skull,
@@ -23,7 +22,6 @@ interface TierDef {
   icon: typeof Shield;
   turfs: number;
   actions: number;
-  forcedSuddenDeath: boolean;
   tagline: string;
 }
 
@@ -34,7 +32,6 @@ const TIERS: TierDef[] = [
     icon: Shield,
     turfs: simConfig.difficulty.easy.turfCount,
     actions: simConfig.difficulty.easy.actionsPerTurn,
-    forcedSuddenDeath: false,
     tagline: 'Loose crew, forgiving block',
   },
   {
@@ -43,7 +40,6 @@ const TIERS: TierDef[] = [
     icon: Swords,
     turfs: simConfig.difficulty.medium.turfCount,
     actions: simConfig.difficulty.medium.actionsPerTurn,
-    forcedSuddenDeath: false,
     tagline: 'Even ground, fair fight',
   },
   {
@@ -52,7 +48,6 @@ const TIERS: TierDef[] = [
     icon: Flame,
     turfs: simConfig.difficulty.hard.turfCount,
     actions: simConfig.difficulty.hard.actionsPerTurn,
-    forcedSuddenDeath: false,
     tagline: 'Rival crew runs tighter',
   },
   {
@@ -61,17 +56,7 @@ const TIERS: TierDef[] = [
     icon: Skull,
     turfs: simConfig.difficulty.nightmare.turfCount,
     actions: simConfig.difficulty.nightmare.actionsPerTurn,
-    forcedSuddenDeath: false,
     tagline: 'You move slower on their block',
-  },
-  {
-    id: 'sudden-death',
-    label: 'Last Stand',
-    icon: Crosshair,
-    turfs: simConfig.difficulty['sudden-death'].turfCount,
-    actions: simConfig.difficulty['sudden-death'].actionsPerTurn,
-    forcedSuddenDeath: true,
-    tagline: 'Better drops, raids auto-kill',
   },
   {
     id: 'ultra-nightmare',
@@ -79,17 +64,15 @@ const TIERS: TierDef[] = [
     icon: AlertTriangle,
     turfs: simConfig.difficulty['ultra-nightmare'].turfCount,
     actions: simConfig.difficulty['ultra-nightmare'].actionsPerTurn,
-    forcedSuddenDeath: false,
     tagline: 'They plan two moves ahead',
   },
 ];
 
-function buildConfig(tier: DifficultyTier, suddenDeath: boolean): GameConfig {
+function buildConfig(tier: DifficultyTier): GameConfig {
   const raw = simConfig.difficulty[tier];
   return {
     difficulty: tier,
-    suddenDeath:
-      tier === 'sudden-death' || tier === 'ultra-nightmare' || suddenDeath,
+    suddenDeath: tier === 'ultra-nightmare',
     turfCount: raw.turfCount,
     actionsPerTurn: raw.actionsPerTurn,
     firstTurnActions: raw.firstTurnActions,
@@ -103,15 +86,12 @@ export function DifficultyScreen({ onSelect, onBack }: DifficultyScreenProps) {
 
   const selectedTier = TIERS.find((t) => t.id === selected)!;
 
-  // v0.3 removes Sudden Death as a game mode. The GameConfig field is
-  // kept wired to `false` for back-compat; builds that still read the
-  // flag now get a pure combat cadence.
   function handleSelect(tier: DifficultyTier) {
     setSelected(tier);
   }
 
   function handleStart() {
-    onSelect(buildConfig(selected, false));
+    onSelect(buildConfig(selected));
   }
 
   return (
