@@ -3,7 +3,7 @@
 // walks rarity bands and calls them per-card in priority order.
 import type { IntangibleOutcome } from './abilities';
 import { TURF_SIM_CONFIG } from './ai/config';
-import type { DrugCard, QueuedAction, ToughCard, Turf, TurfGameState } from './types';
+import type { QueuedAction, ToughCard, Turf, TurfGameState } from './types';
 
 export const proceed = (): IntangibleOutcome => ({ kind: 'proceed' });
 

@@ -152,6 +152,7 @@ export function createGameWorld(
       return assignments;
     })(),
     warStats: { seizures: [] },
+    resuscitateConsumed: new Set<string>(),
   };
 
   world.spawn(
