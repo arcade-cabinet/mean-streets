@@ -71,9 +71,21 @@ function createGameState(
   seed: number,
   deckA: Card[],
   deckB: Card[],
+  ownedMythics: { A: string[]; B: string[] } = { A: [], B: [] },
 ): TurfGameState {
   const rng = createRng(seed);
   resetTurfIdCounter();
+
+  // Enforce RULES §11 global exclusivity: owned mythics are pre-assigned
+  // to their side and excluded from the shared unassigned pool.
+  const allMythicIds = loadMythicIds();
+  const aOwned = new Set(ownedMythics.A);
+  const bOwned = new Set(ownedMythics.B);
+  const mythicPool = allMythicIds.filter((id) => !aOwned.has(id) && !bOwned.has(id));
+  const mythicAssignments: Record<string, 'A' | 'B'> = {};
+  for (const id of ownedMythics.A) mythicAssignments[id] = 'A';
+  for (const id of ownedMythics.B) mythicAssignments[id] = 'B';
+
   return {
     config,
     players: {
@@ -97,8 +109,8 @@ function createGameState(
     blackMarket: [],
     holding: { A: [], B: [] },
     lockup: { A: [], B: [] },
-    mythicPool: loadMythicIds(),
-    mythicAssignments: {},
+    mythicPool,
+    mythicAssignments,
     warStats: emptyWarStats(),
     resuscitateConsumed: new Set(),
   };
@@ -113,12 +125,20 @@ export function createMatch(
     deckA?: Card[];
     deckB?: Card[];
     maxTurns?: number;
+    /**
+     * Mythics already owned by each side from prior wars (RULES §11).
+     * They are excluded from the shared unassigned pool and
+     * pre-seeded into mythicAssignments so the global-exclusivity
+     * invariant holds from turn 1.
+     */
+    ownedMythics?: { A: string[]; B: string[] };
   } = {},
 ): MatchState {
   const seed = options.seed ?? randomSeed();
   const deckA = options.deckA ?? [];
   const deckB = options.deckB ?? [];
-  const game = createGameState(config, seed, deckA, deckB);
+  const ownedMythics = options.ownedMythics ?? { A: [], B: [] };
+  const game = createGameState(config, seed, deckA, deckB, ownedMythics);
   game.players.A.actionsRemaining = actionsForTurn(config, 1, 'A');
   game.players.B.actionsRemaining = actionsForTurn(config, 1, 'B');
   return {

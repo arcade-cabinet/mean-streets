@@ -186,6 +186,38 @@ export async function aiPendingPacksFromRewards(
   return packs;
 }
 
+/**
+ * Return the mythic card ids currently owned by the AI (RULES §11).
+ * Derived from `aiMythicAssignments` entries assigned to side 'B'
+ * (AI always plays as side B in App.tsx matches).
+ */
+export async function loadAIOwedMythicIds(): Promise<string[]> {
+  const profile = await loadAIProfile();
+  return Object.entries(profile.aiMythicAssignments)
+    .filter(([, side]) => side === 'B')
+    .map(([id]) => id);
+}
+
+/**
+ * Persist the AI's mythic assignments after a war.
+ * Only records owned by 'B' are the AI's; 'A' entries are cleared
+ * since the player profile tracks those.
+ */
+export async function saveAIMythicAssignments(
+  assignments: Record<string, 'A' | 'B'>,
+): Promise<void> {
+  return withAIProfileLock(async () => {
+    const profile = (await rawGet()) ?? { ...DEFAULT_AI_PROFILE };
+    // Only preserve AI-owned ('B') mythics; player-owned go into PlayerProfile.
+    const aiAssignments: Record<string, string> = {};
+    for (const [id, side] of Object.entries(assignments)) {
+      if (side === 'B') aiAssignments[id] = 'B';
+    }
+    profile.aiMythicAssignments = aiAssignments;
+    await rawSet(profile);
+  });
+}
+
 /** Reset hook for tests. */
 export async function resetAIProfileForTests(): Promise<void> {
   if (isTestEnv()) {

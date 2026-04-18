@@ -45,6 +45,13 @@ export interface PlayerProfile {
    * entry (baseRarity from catalog, 'easy' difficulty).
    */
   cardInstances?: Record<string, StoredCardInstance>;
+  /**
+   * Mythic card ids currently owned by the player (RULES §11).
+   * Persisted separately so match bootstrap can exclude these from the
+   * shared unassigned pool and pre-seed mythicAssignments for side 'A'.
+   * A mythic id here is always also present in unlockedCardIds.
+   */
+  ownedMythicIds?: string[];
   wins: number;
   lastPlayedAt: string | null;
 }

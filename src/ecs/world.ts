@@ -74,7 +74,7 @@ function initPlayerState(
  * config/raw/cards/mythics/ (mythic-01 … mythic-10). Kept in sync with
  * `sim/turf/game.ts::loadMythicIds`.
  */
-function defaultMythicPool(): string[] {
+function allMythicIds(): string[] {
   return [
     'mythic-01',
     'mythic-02',
@@ -93,6 +93,7 @@ export function createGameWorld(
   config: GameConfig = DEFAULT_GAME_CONFIG,
   seed?: number,
   playerDeck?: Card[],
+  ownedMythics: { A: string[]; B: string[] } = { A: [], B: [] },
 ): World {
   const gameSeed = seed ?? randomSeed();
   const rng = createRng(gameSeed);
@@ -139,8 +140,17 @@ export function createGameWorld(
     blackMarket: [],
     holding: { A: [], B: [] },
     lockup: { A: [], B: [] },
-    mythicPool: defaultMythicPool(),
-    mythicAssignments: {},
+    mythicPool: (() => {
+      const aOwned = new Set(ownedMythics.A);
+      const bOwned = new Set(ownedMythics.B);
+      return allMythicIds().filter((id) => !aOwned.has(id) && !bOwned.has(id));
+    })(),
+    mythicAssignments: (() => {
+      const assignments: Record<string, 'A' | 'B'> = {};
+      for (const id of ownedMythics.A) assignments[id] = 'A';
+      for (const id of ownedMythics.B) assignments[id] = 'B';
+      return assignments;
+    })(),
     warStats: { seizures: [] },
   };
 

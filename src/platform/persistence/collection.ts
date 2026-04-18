@@ -269,6 +269,49 @@ export async function openRewardPacks(
 }
 
 /**
+ * Sync player-owned mythic ids after a war ends (RULES §11).
+ *
+ * Persists the new set of player-owned mythic ids to `PlayerProfile.ownedMythicIds`
+ * and ensures every newly-acquired mythic is also in `unlockedCardIds` with
+ * a default mythic rarity CardInstance (unlockDifficulty comes from the war).
+ *
+ * Does NOT touch AI assignments — those are handled by `saveAIMythicAssignments`.
+ */
+export async function syncPlayerMythicOwnership(
+  playerMythicIds: string[],
+  unlockDifficulty: import('../../sim/turf/types').DifficultyTier = 'easy',
+): Promise<void> {
+  return withProfileLock(async () => {
+    const profile = await loadProfile();
+    profile.ownedMythicIds = [...playerMythicIds];
+    // Ensure any newly-earned mythic is in the card collection too.
+    const existingIds = new Set(profile.unlockedCardIds);
+    const instances: Record<string, StoredCardInstance> = { ...(profile.cardInstances ?? {}) };
+    for (const id of playerMythicIds) {
+      if (!existingIds.has(id)) {
+        existingIds.add(id);
+        instances[id] = { rolledRarity: 'mythic', unlockDifficulty };
+      }
+    }
+    profile.unlockedCardIds = [...existingIds];
+    profile.cardInstances = instances;
+    await saveProfile(profile);
+  });
+}
+
+/**
+ * Return the mythic card ids currently owned by the player.
+ * Uses the explicit `ownedMythicIds` field when present; falls back to
+ * deriving from `unlockedCardIds` (backward-compat with pre-fix saves).
+ */
+export async function loadPlayerOwnedMythicIds(): Promise<string[]> {
+  const profile = await loadProfile();
+  if (profile.ownedMythicIds !== undefined) return profile.ownedMythicIds;
+  // Backward-compat: infer from unlocked ids that look like mythics.
+  return profile.unlockedCardIds.filter((id) => /^mythic-\d+$/.test(id));
+}
+
+/**
  * Internal variant of `addCardsToCollection` that tags new instances with
  * the given unlock difficulty. Extracted so the public `addCardsToCollection`
  * signature stays stable for existing callers (they get 'easy' by default).

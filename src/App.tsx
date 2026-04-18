@@ -6,7 +6,15 @@ import { GameState } from './ecs/traits';
 import { createGameWorld } from './ecs/world';
 import { randomSeed } from './sim/cards/rng';
 import { processGameEnd } from './platform/achievements/achievements';
-import { openRewardPacks } from './platform/persistence/collection';
+import {
+  loadPlayerOwnedMythicIds,
+  openRewardPacks,
+  syncPlayerMythicOwnership,
+} from './platform/persistence/collection';
+import {
+  loadAIOwedMythicIds,
+  saveAIMythicAssignments,
+} from './platform/persistence/ai-profile';
 import { loadCompiledToughs } from './sim/cards/catalog';
 import { loadCompiledWeapons, loadCompiledDrugs } from './sim/turf/generators';
 import { matchRewardPacks } from './sim/packs/generator';
@@ -65,6 +73,14 @@ function getMetricsFromWorld(world: World): TurfMetrics {
     metrics = { ...gs.metrics };
   });
   return metrics;
+}
+
+function getMythicAssignmentsFromWorld(world: World): Record<string, 'A' | 'B'> {
+  let assignments: Record<string, 'A' | 'B'> = {};
+  world.query(GameState).updateEach(([gs]) => {
+    assignments = { ...gs.mythicAssignments };
+  });
+  return assignments;
 }
 
 export default function App() {
@@ -145,16 +161,28 @@ export default function App() {
 
   function handleSelectDifficulty(config: GameConfig) {
     const seed = randomSeed();
-    const newWorld = createGameWorld(config, seed);
-    setWorld(newWorld);
-    setActiveConfig(config);
-    setHasActiveRun(true);
-    void saveActiveRun<ActiveRunState>({ phase: 'combat', config, seed, simVersion: SIM_VERSION });
-    setScreen('combat');
+    void (async () => {
+      // Load owned mythics from both profiles so the new match starts with
+      // the correct global-exclusivity state (RULES §11).
+      const [playerMythicIds, aiMythicIds] = await Promise.all([
+        loadPlayerOwnedMythicIds(),
+        loadAIOwedMythicIds(),
+      ]);
+      const newWorld = createGameWorld(config, seed, undefined, {
+        A: playerMythicIds,
+        B: aiMythicIds,
+      });
+      setWorld(newWorld);
+      setActiveConfig(config);
+      setHasActiveRun(true);
+      void saveActiveRun<ActiveRunState>({ phase: 'combat', config, seed, simVersion: SIM_VERSION });
+      setScreen('combat');
+    })();
   }
 
   function handleGameOver(w: 'A' | 'B') {
     const m = world ? getMetricsFromWorld(world) : EMPTY_METRICS;
+    const mythicAssignments = world ? getMythicAssignmentsFromWorld(world) : {};
     setWinner(w);
     setMetrics(m);
     setHasActiveRun(false);
@@ -174,8 +202,18 @@ export default function App() {
       );
       await saveProfile(result.updatedProfile);
 
-      const playerWon = w === 'A';
+      // Sync mythic ownership to both profiles (RULES §11).
+      // mythicAssignments maps cardId → 'A'|'B'; A = player, B = AI.
+      const playerMythicIds = Object.entries(mythicAssignments)
+        .filter(([, side]) => side === 'A')
+        .map(([id]) => id);
       const config = activeConfig;
+      await Promise.all([
+        syncPlayerMythicOwnership(playerMythicIds, config?.difficulty ?? 'easy'),
+        saveAIMythicAssignments(mythicAssignments),
+      ]);
+
+      const playerWon = w === 'A';
       if (playerWon && config) {
         const rewards = matchRewardPacks(config.difficulty, false, true);
         const newCards = await openRewardPacks(rewards, config.difficulty);
