@@ -114,11 +114,11 @@ describe('TurfCompositeCard', () => {
   });
 
   it('displays power and resistance badges', () => {
-    // kings_row grants +1 atkBonus loyal-stack bonus (affiliations.json), so
-    // a single kings_row tough at power 8 reports 9 on the composite badge.
+    // Loyal-stack bonus requires 3+ toughs of the same affiliation (RULES §4).
+    // A single tough at power 8 reports 8 — no loyal bonus applies.
     const turf = makeTurf([tough({ power: 8, resistance: 6 })]);
     const { container } = render(wrap(<TurfCompositeCard turf={turf} />));
-    expect(container.querySelector('.turf-composite-power-badge')!.textContent).toBe('9');
+    expect(container.querySelector('.turf-composite-power-badge')!.textContent).toBe('8');
     expect(container.querySelector('.turf-composite-resistance-badge')!.textContent).toBe('6');
   });
 
