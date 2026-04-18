@@ -130,12 +130,15 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
     }
   }, [exhausted, turnEndedA, pending, actions]);
 
-  // On phone: auto-show drawn card modal when a new card enters pending
+  // On phone: auto-show drawn card modal once when a new card enters pending
+  const shownDrawnRef = useRef<string | null>(null);
   useEffect(() => {
-    if (compact && pending && modal.kind === 'none') {
+    if (compact && pending && shownDrawnRef.current !== pending.id) {
+      shownDrawnRef.current = pending.id;
       setModal({ kind: 'drawn-card' });
     }
-  }, [compact, pending, modal.kind]);
+    if (!pending) shownDrawnRef.current = null;
+  }, [compact, pending]);
 
   const canDraw = !exhausted && !turnEndedA && !pending && deckCount > 0;
   const holdingAll = [...holdingA, ...holdingB, ...lockupA, ...lockupB];
