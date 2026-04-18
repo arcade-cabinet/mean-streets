@@ -12,8 +12,8 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: cd-${{ github.ref }}
-  cancel-in-progress: true
+  group: cd-deploy
+  cancel-in-progress: false
 
 jobs:
   e2e:
