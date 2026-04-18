@@ -9,6 +9,7 @@ import type {
   WarOutcome,
   WarOutcomeReward,
 } from './types';
+import { TURF_SIM_CONFIG } from '../turf/ai/config';
 
 /**
  * v0.3 progression — war-outcome + per-turf reward math (RULES §13).
@@ -17,11 +18,38 @@ import type {
  * seeded RNG, produces a deterministic RewardBundle. Persistence and
  * pack contents are *not* touched here — the caller (App.tsx / AI
  * profile layer) hands these bundles to the pack opener.
+ *
+ * Tunables live in src/data/ai/turf-sim.json under packEconomy.*.
  */
 
-const PERFECT_WAR_FALLBACK_CURRENCY = 500;
+// Fallback currency for Perfect War when mythic pool is exhausted (RULES §13.4).
+// Sourced from src/data/ai/turf-sim.json packEconomy.perfectWarFallbackCurrency.
+const PERFECT_WAR_FALLBACK_CURRENCY: number =
+  (TURF_SIM_CONFIG.packEconomy as { perfectWarFallbackCurrency?: number })
+    .perfectWarFallbackCurrency ?? 500;
 
-function rollPackCategory(_rng: Rng): PackKind {
+/**
+ * Pick a PackKind for top-tier (Absolute/Flawless) rewards per RULES §13.
+ *
+ * Weights are sourced from turf-sim.json packEconomy.topTierPackKindWeights.
+ * RULES §13.1 specifies a "5-card pack (random type)" for Absolute Victory
+ * and §13.2 specifies a "5-card pack" for Flawless War — both resolve to
+ * `standard` by default. Expose the table in JSON to allow future tuning
+ * without code changes. Uses the provided seeded rng.next(), never Math.random().
+ */
+export function rollPackCategory(rng: Rng): PackKind {
+  const kinds: PackKind[] = ['single', 'triple', 'standard'];
+  const weights =
+    (TURF_SIM_CONFIG.packEconomy as { topTierPackKindWeights?: Record<string, number> })
+      .topTierPackKindWeights ?? { single: 0, triple: 0, standard: 1 };
+  const total = kinds.reduce((s, k) => s + (weights[k] ?? 0), 0);
+  if (total <= 0) return 'standard';
+  const roll = rng.next() * total;
+  let cum = 0;
+  for (const k of kinds) {
+    cum += weights[k] ?? 0;
+    if (roll < cum) return k;
+  }
   return 'standard';
 }
 
