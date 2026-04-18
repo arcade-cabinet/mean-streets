@@ -21,7 +21,11 @@ test('menu → difficulty → game flow works on the live app', async ({ page },
 
   await expect(page.getByTestId('game-screen')).toBeVisible({ timeout: 10_000 });
   await expect(page.getByTestId('action-budget')).toBeVisible();
-  await expect(page.getByTestId('slot-player-draw')).toBeVisible();
+  // Draw pile slot is hidden on phone; HUD draw button shows instead
+  const drawSlot = page.getByTestId('slot-player-draw');
+  const hudDraw = page.getByTestId('hud-draw');
+  const drawVisible = await drawSlot.isVisible().catch(() => false) || await hudDraw.isVisible().catch(() => false);
+  expect(drawVisible).toBe(true);
   await expect(page.getByTestId('turf-lane-A')).toBeVisible();
   await expect(page.getByTestId('action-end_turn')).toBeVisible();
 });
