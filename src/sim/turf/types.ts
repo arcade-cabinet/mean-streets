@@ -43,6 +43,10 @@ export interface Turf {
   closedRanks: boolean; rivalBufferSpent?: boolean;
   isActive: boolean;    // true for the current engagement turf only
   reserveIndex: number; // 0 = active, 1+ = reserve in queue order
+  /** Set to true when a reserve turf is promoted to active mid-game.
+   *  Cleared after the first action is consumed on the new-active turn.
+   *  Causes the player to receive firstTurnActions instead of actionsPerTurn. */
+  justPromoted?: boolean;
 }
 /** Strike/recruit declared this turn; resolves end-of-turn. */
 export interface QueuedAction {

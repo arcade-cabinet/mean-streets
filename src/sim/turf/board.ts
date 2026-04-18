@@ -321,6 +321,7 @@ export function promoteReserveTurf(player: PlayerState): void {
     const t = player.turfs[i];
     t.reserveIndex = Math.max(0, t.reserveIndex - 1);
     t.isActive = i === 0;
+    if (i === 0) t.justPromoted = true;
   }
 }
 

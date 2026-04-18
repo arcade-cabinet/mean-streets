@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { promoteReserveTurf } from '../board';
+import { stepAction } from '../environment';
 import { createMatch, isGameOver } from '../game';
 import { resolvePhase } from '../resolve';
 import { mkState, mkTough, mkTurf, sc } from './state-builder';
@@ -158,5 +159,76 @@ describe('isGameOver — win / loss / draw', () => {
     match.game.players.B.turfs = match.game.players.B.turfs.slice(0, 1);
     expect(isGameOver(match)).toBe('A');
     expect(match.game.endReason).toBe('timeout');
+  });
+});
+
+describe('justPromoted — newly-promoted active turf gets firstTurnActions budget', () => {
+  it('promoteReserveTurf sets justPromoted=true on the new active turf', () => {
+    const state = mkState(
+      [
+        mkTurf('a1', [sc(mkTough({ id: 'aT1' }))], { reserveIndex: 0 }),
+        mkTurf('a2', [sc(mkTough({ id: 'aT2' }))], { reserveIndex: 1 }),
+      ],
+      [mkTurf('b1', [sc(mkTough({ id: 'bT' }))])],
+    );
+
+    promoteReserveTurf(state.players.A);
+
+    expect(state.players.A.turfs[0].id).toBe('a2');
+    expect(state.players.A.turfs[0].justPromoted).toBe(true);
+  });
+
+  it('promoted turf receives firstTurnActions budget on next resolve', () => {
+    // A has 2 turfs; B instantly kills A's active tough → A promotes a2.
+    // Next resolve should assign firstTurnActions to A instead of actionsPerTurn.
+    const aT1 = mkTough({ id: 'aT1', resistance: 1 }); // fragile — dies to power 5
+    const aT2 = mkTough({ id: 'aT2', resistance: 5 });
+    const bT = mkTough({ id: 'bT', power: 50 }); // overwhelming
+    const A = [
+      mkTurf('a1', [sc(aT1)], { reserveIndex: 0 }),
+      mkTurf('a2', [sc(aT2)], { reserveIndex: 1 }),
+    ];
+    const B = [mkTurf('b1', [sc(bT)])];
+    const state = mkState(A, B);
+    // firstTurnActions must differ from actionsPerTurn to distinguish them.
+    state.config.firstTurnActions = 5;
+    state.config.actionsPerTurn = 3;
+    // B's actionsPerTurn/difficulty bonuses could mask things; use 'easy'.
+    state.config.difficulty = 'easy';
+    state.players.B.queued.push({
+      kind: 'direct_strike',
+      side: 'B',
+      turfIdx: 0,
+      targetTurfIdx: 0,
+    });
+
+    resolvePhase(state);
+
+    // A's a1 turf should be gone; a2 promoted.
+    expect(state.players.A.turfs[0].id).toBe('a2');
+    // After promotion, A should have firstTurnActions (5) not actionsPerTurn (3).
+    expect(state.players.A.actionsRemaining).toBe(5);
+  });
+
+  it('justPromoted is cleared after first action consumed', () => {
+    const state = mkState(
+      [
+        mkTurf('a1', [sc(mkTough({ id: 'aT1' }))], { reserveIndex: 0 }),
+        mkTurf('a2', [sc(mkTough({ id: 'aT2' }))], { reserveIndex: 1 }),
+      ],
+      [mkTurf('b1', [sc(mkTough({ id: 'bT' }))])],
+    );
+    promoteReserveTurf(state.players.A);
+    expect(state.players.A.turfs[0].justPromoted).toBe(true);
+
+    // Manually set actionsRemaining high so we can consume one action.
+    state.players.A.actionsRemaining = 5;
+    // Consume one action by doing a draw (simplest action that costs 1).
+    // Put a card in the deck so draw works.
+    state.players.A.deck.push(mkTough({ id: 'drawn' }));
+
+    stepAction(state, { kind: 'draw', side: 'A' });
+
+    expect(state.players.A.turfs[0].justPromoted).toBe(false);
   });
 });

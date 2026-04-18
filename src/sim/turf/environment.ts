@@ -193,6 +193,9 @@ export function stepAction(
   if (costsAction) {
     player.actionsRemaining--;
     state.metrics.totalActions++;
+    // Clear justPromoted after first real action so normal budget resumes.
+    const activeTurf = player.turfs[0];
+    if (activeTurf?.justPromoted) activeTurf.justPromoted = false;
   }
 
   if (player.deck.length === 0 && player.pending === null)

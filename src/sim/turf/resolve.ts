@@ -284,11 +284,15 @@ export function resolvePhase(state: TurfGameState): void {
   state.turnNumber++;
   state.metrics.turns++;
   for (const side of ['A', 'B'] as const) {
-    state.players[side].actionsRemaining = actionsForTurn(
-      state.config,
-      state.turnNumber,
-      side,
-    );
+    const player = state.players[side];
+    const activeTurf = player.turfs[0];
+    // Newly-promoted turf gets firstTurnActions budget (same as turn 1)
+    // regardless of which turn number it is, to give the defender a fair start.
+    const promoted = activeTurf?.justPromoted === true;
+    player.actionsRemaining = promoted
+      ? state.config.firstTurnActions
+      : actionsForTurn(state.config, state.turnNumber, side);
+    // justPromoted is cleared by environment.ts on first action consumed.
   }
   state.phase = 'action';
 
