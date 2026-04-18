@@ -44,10 +44,17 @@ type Screen =
   | 'pack-opening'
   | 'card-garage';
 type Modal = 'rules-onboarding' | 'game-menu' | null;
+// Bumped whenever sim behavior changes in a way that would make a
+// seed-based resume reconstruct a different game state than the user saw
+// before closing the app. Any PR that touches resolve.ts, attacks.ts, or
+// the tunables in turf-sim.json that affect gameplay must bump this.
+const SIM_VERSION = 'v0.3-1.0.0-beta.1';
+
 interface ActiveRunState {
   phase: 'combat';
   config: GameConfig;
   seed: number;
+  simVersion: string;
 }
 
 const EMPTY_METRICS: TurfMetrics = emptyMetrics();
@@ -118,7 +125,14 @@ export default function App() {
         setHasActiveRun(false);
         return;
       }
-
+      // Sim-version check: a save written by a prior sim version would
+      // replay to a different world state than the user left. Discard
+      // rather than silently misrepresent progress.
+      if (activeRun.simVersion !== SIM_VERSION) {
+        await saveActiveRun<ActiveRunState>(null);
+        setHasActiveRun(false);
+        return;
+      }
       // Resume from seed only — the seed-driven shuffle in createGameWorld
       // deterministically reproduces the original deck order without
       // persisting the full card array.
@@ -135,7 +149,7 @@ export default function App() {
     setWorld(newWorld);
     setActiveConfig(config);
     setHasActiveRun(true);
-    void saveActiveRun<ActiveRunState>({ phase: 'combat', config, seed });
+    void saveActiveRun<ActiveRunState>({ phase: 'combat', config, seed, simVersion: SIM_VERSION });
     setScreen('combat');
   }
 

@@ -7,6 +7,6 @@
     "legendary"
   ],
   "abilities": ["LAUNDER"],
-  "unlocked": false,
-  "locked": true
+  "unlocked": true,
+  "locked": false
 }
