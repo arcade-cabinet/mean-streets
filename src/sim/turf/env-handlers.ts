@@ -4,6 +4,7 @@ import {
   consumeRivalBufferIfNeeded,
   flipCardFaceUp,
   hasToughOnTurf,
+  insertIntoStack,
   turfAffiliationConflict,
 } from './board';
 import { isModifierCard } from './env-query';
@@ -57,7 +58,11 @@ export function handlePlayCard(
   }
 
   consumeRivalBufferIfNeeded(turf, card);
-  addToStack(turf, card, { faceUp: true });
+  if (action.stackIdx !== undefined) {
+    insertIntoStack(turf, card, action.stackIdx, { faceUp: true });
+  } else {
+    addToStack(turf, card, { faceUp: true });
+  }
   player.pending = null;
   state.metrics.cardsPlayed++;
 

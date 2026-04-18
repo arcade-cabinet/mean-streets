@@ -33,7 +33,8 @@ export type ModalView =
   | { kind: 'market' }
   | { kind: 'holding' }
   | { kind: 'drawer-market' }
-  | { kind: 'drawer-holding' };
+  | { kind: 'drawer-holding' }
+  | { kind: 'drawn-card' };
 
 export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
   const { layout } = useAppShell();
@@ -129,6 +130,13 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
     }
   }, [exhausted, turnEndedA, pending, actions]);
 
+  // On phone: auto-show drawn card modal when a new card enters pending
+  useEffect(() => {
+    if (compact && pending && modal.kind === 'none') {
+      setModal({ kind: 'drawn-card' });
+    }
+  }, [compact, pending, modal.kind]);
+
   const canDraw = !exhausted && !turnEndedA && !pending && deckCount > 0;
   const holdingAll = [...holdingA, ...holdingB, ...lockupA, ...lockupB];
   const drawerOpen = modal.kind === 'drawer-market' || modal.kind === 'drawer-holding';
@@ -200,6 +208,16 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
         >
           Custody {holdingAll.length > 0 ? `(${holdingAll.length})` : ''}
         </button>
+        {pending && (
+          <button
+            type="button"
+            className="game-hud-panel-btn game-hud-panel-btn-active"
+            onClick={() => setModal({ kind: 'drawn-card' })}
+            data-testid="btn-peek"
+          >
+            Peek
+          </button>
+        )}
         {onOpenMenu && (
           <button type="button" className="game-hud-bar-menu" onClick={onOpenMenu} aria-label="Open game menu">Menu</button>
         )}
@@ -279,9 +297,11 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
       {(modal.kind === 'stack' || modal.kind === 'swap') && (
         <StackFanModal
           turf={modal.turf} open isOwn
-          onCardPick={actions.onStackPick}
-          onClose={() => setModal({ kind: 'none' })}
+          onCardPick={mode !== 'play_card' ? actions.onStackPick : undefined}
+          onClose={() => { setModal({ kind: 'none' }); if (mode === 'play_card') setMode(null); }}
           showHp showOwnerLines={mode === 'modifier_swap'}
+          onPlaceAt={mode === 'play_card' && pending ? actions.placePendingAt : undefined}
+          placingCard={mode === 'play_card' ? pending : undefined}
         />
       )}
 
@@ -300,6 +320,19 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
           holdingA={holdingA} holdingB={holdingB} lockupA={lockupA} lockupB={lockupB}
           onClose={() => setModal({ kind: 'none' })}
         />
+      )}
+
+      {modal.kind === 'drawn-card' && pending && (
+        <div
+          className="game-drawn-card-overlay"
+          onClick={() => setModal({ kind: 'none' })}
+          data-testid="drawn-card-modal"
+        >
+          <div className="game-drawn-card-content" onClick={(e) => e.stopPropagation()}>
+            <CardComponent card={pending} />
+          </div>
+          <span className="game-drawn-card-hint">Tap your turf to place</span>
+        </div>
       )}
 
       {resolution && (

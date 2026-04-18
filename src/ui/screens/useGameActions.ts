@@ -44,9 +44,9 @@ export function buildGameActions(a: BuildArgs) {
     a.setHealTarget(null);
   };
 
-  const placePending = () => {
+  const placePendingAt = (stackIdx?: number) => {
     if (!a.pending || !a.playerActive) return;
-    const r = playCardAction(a.world, 'A', 0, a.pending.id);
+    const r = playCardAction(a.world, 'A', 0, a.pending.id, stackIdx);
     reset();
     if (r?.reason === 'play_card_discarded_rival')
       a.flash('RIVAL DISCARDED', 1200);
@@ -65,9 +65,15 @@ export function buildGameActions(a: BuildArgs) {
   const onLaneClick = (side: 'A' | 'B') => {
     const m = a.mode;
     const stackModes: ActionMode[] = ['retreat', 'modifier_swap', 'send_to_market', 'send_to_holding'];
-    // Pending card → tapping own turf places it
+    // Pending card → tapping own turf: empty stack = place directly, otherwise open fan for position pick
     if (a.pending && side === 'A' && !isStrikeMode(m) && !stackModes.includes(m)) {
-      placePending(); return;
+      if (!a.playerActive || a.playerActive.stack.length === 0) {
+        placePendingAt(); return;
+      }
+      // Open fan in placement mode — player picks where in the stack to insert
+      a.setModal({ kind: 'stack', turf: a.playerActive, isOwn: true });
+      a.setMode('play_card');
+      return;
     }
     if (!m && side === 'A' && a.playerActive && a.playerActive.stack.length > 0 && !a.pending) {
       a.setModal({ kind: 'stack', turf: a.playerActive, isOwn: true });
@@ -148,7 +154,7 @@ export function buildGameActions(a: BuildArgs) {
   };
 
   return {
-    reset, onModeSelect, onLaneClick, onStackPick,
+    reset, onModeSelect, onLaneClick, onStackPick, placePendingAt,
     onEndTurn, onMarketTrade, onMarketHeal,
   };
 }

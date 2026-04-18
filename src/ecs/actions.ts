@@ -58,6 +58,7 @@ export function playCardAction(
   side: 'A' | 'B',
   turfIdx: number,
   cardId: string,
+  stackIdx?: number,
 ) {
   const e = getEntity(world);
   const gs = e?.get(GameState);
@@ -66,7 +67,7 @@ export function playCardAction(
   const pending = gs.players[side].pending;
   if (!pending || pending.id !== cardId) return null;
 
-  const action: TurfAction = { kind: 'play_card', side, turfIdx, cardId };
+  const action: TurfAction = { kind: 'play_card', side, turfIdx, cardId, stackIdx };
   const result = stepAction(gs, action);
   syncAll(e, gs);
   return result;

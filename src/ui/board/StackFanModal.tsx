@@ -17,6 +17,11 @@ interface StackFanModalProps {
   /** When true, render owner-line arrows from each modifier to its parent
    * tough in the stack. Useful during modifier-swap mode. */
   showOwnerLines?: boolean;
+  /** Placement mode: when set, shows insertion-point slots between cards.
+   * Tapping an insertion slot calls this with the target stack index. */
+  onPlaceAt?: (stackIdx: number) => void;
+  /** The card being placed — shown as a ghost preview in the insertion slots. */
+  placingCard?: import('../../sim/turf/types').Card | null;
 }
 
 /** Face-down back tile. Simple CSS-driven placeholder — no asset art. */
@@ -58,6 +63,8 @@ export function StackFanModal({
   onCardPick,
   showHp = false,
   showOwnerLines = false,
+  onPlaceAt,
+  placingCard,
 }: StackFanModalProps) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const touchStartX = useRef(0);
@@ -179,10 +186,38 @@ export function StackFanModal({
         </div>
 
         <div className="stack-fan-cards">
+          {onPlaceAt && (
+            <button
+              type="button"
+              className={`stack-fan-insert-slot ${currentIdx === -1 ? 'stack-fan-insert-slot-active' : ''}`}
+              onClick={(e) => { e.stopPropagation(); onPlaceAt(0); }}
+              data-testid="stack-fan-insert-0"
+              aria-label="Place at bottom"
+            >
+              <span className="stack-fan-insert-label">Place bottom</span>
+            </button>
+          )}
           {turf.stack.map((sc, i) => {
             const positionLabel =
               i === 0 ? 'Bottom' : i === stackLen - 1 ? 'Top' : `#${i + 1}`;
-            return renderStacked(sc, i, positionLabel);
+            return (
+              <div key={`slot-${sc.card.id}-${i}`} className="stack-fan-slot-group">
+                {renderStacked(sc, i, positionLabel)}
+                {onPlaceAt && (
+                  <button
+                    type="button"
+                    className="stack-fan-insert-slot"
+                    onClick={(e) => { e.stopPropagation(); onPlaceAt(i + 1); }}
+                    data-testid={`stack-fan-insert-${i + 1}`}
+                    aria-label={i === stackLen - 1 ? 'Place on top' : `Place after ${positionLabel}`}
+                  >
+                    <span className="stack-fan-insert-label">
+                      {i === stackLen - 1 ? 'Place on top' : `Place here`}
+                    </span>
+                  </button>
+                )}
+              </div>
+            );
           })}
         </div>
 
