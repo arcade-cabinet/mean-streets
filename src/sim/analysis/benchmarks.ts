@@ -83,3 +83,4 @@ export function checkConvergence(
 }
 
 export { runSeededBenchmark };
+export type { BenchmarkRun, BenchmarkSummary };
