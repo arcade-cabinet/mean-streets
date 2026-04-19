@@ -108,12 +108,14 @@ wars.
 ### First-run starter grant
 
 On profile creation, both player and AI receive matched starter
-collections delivered as 8 mixed packs (card type rolled per slot):
+collections delivered as 7 standard (5-card) mixed packs:
 
-- **4 × 5-card pack** — 20 cards (predominantly toughs at 50% type weight)
-- **1 × 5-card pack** — 5 cards (weapon-weighted)
-- **1 × 5-card pack** — 5 cards (drug-weighted)
-- **1 × 5-card pack** — 5 cards (currency-weighted)
+- **7 × 5-card standard pack** — 35 cards total
+
+Each slot independently rolls a card type from the weighted
+probabilities in `turf-sim.json::packEconomy.typeWeights`
+(tough 50% / weapon 20% / drug 20% / currency 10%). Rarity rolls
+use `rarityWeights` (common 70% / rare 25% / legendary 5%).
 
 Total starter: 35 cards each side.
 

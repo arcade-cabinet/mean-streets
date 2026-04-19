@@ -21,7 +21,7 @@ is in `git log`.
 - **Draw flow redesign** — pending → contextual placement, auto-market for unplayable modifiers, peek button, drawn card modal with flip animation.
 - **SFX** — procedural sound via Tone.js, integrated on all game events.
 - **Phone layout** — vertical menu, HUD draw button, safe-area aware.
-- **Balance gate** — Medium AI-vs-AI winrate 0.5049 for 3 consecutive seeded runs. Medium firstTurnActions bumped 5 → 6.
+- **Balance gate** — Medium AI-vs-AI win rate 0.5049 for 3 consecutive seeded runs. Medium firstTurnActions bumped 5 → 6.
 - **Automerge** — Dependabot automerge workflow added.
 - **PRs**: #27 (beta.1), #28 (rc.1), #29 (mythic art), #30 (phone fix), #31 (1.0.0), #32 (changelog)
 
@@ -29,7 +29,7 @@ is in `git log`.
 
 - Board grid layout (PR #15): 3x2 card-slot board, simplified 3-button main menu.
 - Browser test expansion: 95 Vitest browser tests across 15 files.
-- E2E spec alignment: specs updated for v0.3 board layout testids. E2E moved to cd.yml.
+- E2E spec alignment: specs updated for v0.3 board layout test IDs. E2E moved to cd.yml.
 
 ### v0.5.0
 
@@ -45,7 +45,7 @@ is in `git log`.
 
 | Suite | Count | Runner |
 |-------|-------|--------|
-| Node (sim, ECS, pure logic) | 518 | `pnpm run test:node` |
+| Node (sim, ECS, pure logic) | 574 | `pnpm run test:node` |
 | DOM (jsdom presentational) | 108 | `pnpm run test:dom` |
 | Browser (real Chromium) | 95 | `pnpm run test:browser` |
 | E2E (4 device viewports) | 142 pass / 34 skip | `pnpm run test:e2e` (local) |

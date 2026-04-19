@@ -162,11 +162,11 @@ are tracked below.
 
 | System                                | Status         |
 |---------------------------------------|----------------|
-| Node tests (sim engine, pure logic)   | Shipped in v1.0.0 (516 passing) |
+| Node tests (sim engine, pure logic)   | Shipped; 574 passing after 1.1.0-beta.1 rules-alignment |
 | DOM tests (jsdom, presentational)     | Shipped in v1.0.0 (108 passing) |
-| Browser tests (real Chromium)         | Shipped in v1.0.0 |
+| Browser tests (real Chromium)         | Shipped in v1.0.0 (95 passing) |
 | E2E tests (Playwright, 4 profiles)    | Shipped in v1.0.0 (12/12 smoke green) |
-| Release gate (winrate convergence)    | Shipped in v1.0.0 (winRateA 0.5049) |
+| Release gate (winrate convergence)    | Re-locked at winRateA 0.512 after 1.1.0-beta.1 |
 | Integration smoke suite               | Shipped in v1.0.0 (active) |
 
 ### CI / Release Governance

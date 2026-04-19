@@ -234,4 +234,4 @@ pnpm run cap:sync           # Build + sync web assets to Capacitor
 
 v1.0.0 shipped 2026-04-18. See `docs/PRODUCTION.md` for post-1.0 polish
 items. Paper playtests: `docs/plans/v0.3-paper-playtest.md` +
-`v0.3-paper-playtest-2.md`.
+`docs/plans/v0.3-paper-playtest-2.md`.

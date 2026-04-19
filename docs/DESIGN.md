@@ -188,7 +188,7 @@ RESUSCITATE one-shots, or Black Market heals.
 
 Displaced modifiers end up in the shared Black Market pool. Either
 player can spend toughs + currency to trade up or heal wounded
-crew. The pool depletes over time as raids wipe it and players pull
+toughs. The pool depletes over time as raids wipe it and players pull
 from it.
 
 Holding is the deliberate heat-relief mechanic. Send a tough to
