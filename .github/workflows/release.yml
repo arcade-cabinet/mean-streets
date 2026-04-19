@@ -127,18 +127,17 @@ jobs:
       - name: Sync Capacitor
         run: pnpm exec cap sync ios
 
-      - name: Install CocoaPods dependencies
-        working-directory: ios/App
-        run: pod install --repo-update
-
+      # Capacitor 8 uses Swift Package Manager, not CocoaPods.
+      # Build the .xcodeproj directly — no Podfile or xcworkspace.
       - name: Build iOS archive (unsigned)
         working-directory: ios/App
         run: |
-          xcodebuild -workspace App.xcworkspace \
+          xcodebuild -project App.xcodeproj \
             -scheme App \
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath ./build/App.xcarchive \
+            -skipPackagePluginValidation \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             archive
