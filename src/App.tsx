@@ -12,7 +12,10 @@ import {
   syncPlayerMythicOwnership,
 } from './platform/persistence/collection';
 import {
+  addPendingPacksToAI,
+  aiPendingPacksFromRewards,
   loadAIOwedMythicIds,
+  openPendingAIPacks,
   saveAIMythicAssignments,
 } from './platform/persistence/ai-profile';
 import { loadCompiledToughs } from './sim/cards/catalog';
@@ -214,10 +217,20 @@ export default function App() {
       ]);
 
       const playerWon = w === 'A';
-      if (playerWon && config) {
+      if (config) {
+        // Both sides earn packs on their own win (DESIGN.md §Core Loop:
+        // "AI earns identical rewards when it wins"). Packs are always
+        // minted; they flow to the winning side's collection.
         const rewards = matchRewardPacks(config.difficulty, false, true);
-        const newCards = await openRewardPacks(rewards, config.difficulty);
-        setLastRewardCards(newCards);
+        if (playerWon) {
+          const newCards = await openRewardPacks(rewards, config.difficulty);
+          setLastRewardCards(newCards);
+        } else {
+          const pending = await aiPendingPacksFromRewards(rewards);
+          await addPendingPacksToAI(pending);
+          await openPendingAIPacks(config.difficulty);
+          setLastRewardCards([]);
+        }
       } else {
         setLastRewardCards([]);
       }
