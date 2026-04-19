@@ -6,6 +6,7 @@ import {
   computePerTurfRewards,
   computeRewardBundle,
   computeWarOutcomeReward,
+  rollPackCategory,
 } from '../rewards';
 import type { WarStats } from '../../turf/types';
 
@@ -182,5 +183,61 @@ describe('computeRewardBundle', () => {
     const bundle = computeRewardBundle(stats, false, [], createRng(1), 'A');
     expect(bundle.turfRewards).toEqual([]);
     expect(bundle.warOutcomeReward.outcome).toBeNull();
+  });
+});
+
+describe('rollPackCategory', () => {
+  it('returns a valid PackKind', () => {
+    const kind = rollPackCategory(createRng(1));
+    expect(['single', 'triple', 'standard']).toContain(kind);
+  });
+
+  it('is deterministic with the same seed', () => {
+    const a = rollPackCategory(createRng(42));
+    const b = rollPackCategory(createRng(42));
+    expect(a).toBe(b);
+  });
+
+  it('returns standard for every seed (default weights: 100% standard)', () => {
+    // Default topTierPackKindWeights = { single:0, triple:0, standard:1 }
+    // so every call must return 'standard' regardless of rng value.
+    for (let seed = 0; seed < 20; seed++) {
+      expect(rollPackCategory(createRng(seed))).toBe('standard');
+    }
+  });
+
+  it('absolute victory (1 turn) awards a standard pack via rollPackCategory', () => {
+    const stats = mkStats([{ seizedBy: 'A', seizedTurfIdx: 0, turnsOnThatTurf: 1 }]);
+    const rewards = computePerTurfRewards(stats, createRng(7));
+    expect(rewards[0].rating).toBe('absolute');
+    expect(rewards[0].pack?.kind).toBe('standard');
+  });
+
+  it('overwhelming victory (2 turns) awards a triple pack', () => {
+    const stats = mkStats([{ seizedBy: 'A', seizedTurfIdx: 0, turnsOnThatTurf: 2 }]);
+    const rewards = computePerTurfRewards(stats, createRng(7));
+    expect(rewards[0].rating).toBe('overwhelming');
+    expect(rewards[0].pack?.kind).toBe('triple');
+  });
+
+  it('decisive victory (3 turns) awards a single pack', () => {
+    const stats = mkStats([{ seizedBy: 'A', seizedTurfIdx: 0, turnsOnThatTurf: 3 }]);
+    const rewards = computePerTurfRewards(stats, createRng(7));
+    expect(rewards[0].rating).toBe('decisive');
+    expect(rewards[0].pack?.kind).toBe('single');
+  });
+
+  it('standard victory (> 3 turns) awards no pack', () => {
+    const stats = mkStats([{ seizedBy: 'A', seizedTurfIdx: 0, turnsOnThatTurf: 5 }]);
+    const rewards = computePerTurfRewards(stats, createRng(7));
+    expect(rewards[0].rating).toBe('standard');
+    expect(rewards[0].pack).toBeNull();
+  });
+
+  it('flawless war outcome awards a standard pack via rollPackCategory', () => {
+    const stats = mkStats([{ seizedBy: 'A', seizedTurfIdx: 0, turnsOnThatTurf: 3 }]);
+    const reward = computeWarOutcomeReward(stats, true, [], createRng(1), 'A');
+    expect(reward.outcome).toBe('flawless');
+    expect(reward.pack?.kind).toBe('standard');
   });
 });

@@ -1,9 +1,13 @@
 ---
 title: Mean Streets — Production Polish PRD
-updated: 2026-04-14
-status: current
+updated: 2026-04-18
+status: archived
 domain: product
 ---
+
+> **ARCHIVED**: This PRQ described the v0.2 backpack/runner model which
+> was thrown away in the v0.2 stack redesign. Its instructions are
+> actively misleading; see `v0.3-impl.prq.md` instead.
 
 # Mean Streets: Production Polish
 

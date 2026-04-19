@@ -1,6 +1,6 @@
 ---
 title: State
-updated: 2026-04-17
+updated: 2026-04-18
 status: current
 domain: context
 ---
@@ -11,52 +11,48 @@ What is done, what is in flight, and what comes next. Release blockers and
 per-system status live in [PRODUCTION.md](./PRODUCTION.md). Branch history
 is in `git log`.
 
-## Where We Are (2026-04-17)
+## Where We Are (2026-04-18)
 
-### Recently Completed
+## Recent Releases
 
-- **v0.3 single-lane rewrite** — Full stack redesign: HP + damage tiers,
-  heat + raids, Black Market + Holding, handless queue-and-resolve, reserve
-  turf promotion, base + rolled rarity, 10 hand-authored mythics.
+### v1.0.0 — 2026-04-18
 
-- **Board grid layout** — PR #15: 3x2 card-slot board, simplified 3-button
-  main menu (New Game / Load Game / Cards), full-viewport cards screen.
+- **Card art pipeline** — 212 PNG silhouettes, dark red surface, ragged edges, 212 unique flavor text entries.
+- **Draw flow redesign** — pending → contextual placement, auto-market for unplayable modifiers, peek button, drawn card modal with flip animation.
+- **SFX** — procedural sound via Tone.js, integrated on all game events.
+- **Phone layout** — vertical menu, HUD draw button, safe-area aware.
+- **Balance gate** — Medium AI-vs-AI win rate 0.5049 for 3 consecutive seeded runs. Medium firstTurnActions bumped 5 → 6.
+- **Automerge** — Dependabot automerge workflow added.
+- **PRs**: #27 (beta.1), #28 (rc.1), #29 (mythic art), #30 (phone fix), #31 (1.0.0), #32 (changelog)
 
-- **Pack simplification** — PR #16: single draw pile with probabilistic type
-  drops (tough 50% / weapon 20% / drug 20% / currency 10%). Removed typed
-  pack kinds (tough-5, weapon-5, drug-5, currency-5). Config-driven weights
-  from turf-sim.json.
+### v0.6.0
 
-- **Workflow consolidation** — PR #16: 3 workflows per global standards.
-  `ci.yml` (PR gate: lint, test, build, browser tests), `release.yml`
-  (tag → Android AAB + iOS archive), `cd.yml` (push main → E2E gate →
-  Pages deploy + debug APK + release-please + autobalance).
+- Board grid layout (PR #15): 3x2 card-slot board, simplified 3-button main menu.
+- Browser test expansion: 95 Vitest browser tests across 15 files.
+- E2E spec alignment: specs updated for v0.3 board layout test IDs. E2E moved to cd.yml.
 
-- **Browser test expansion** — 95 Vitest browser tests across 15 files:
-  GameOverScreen, CollectionScreen, PackOpeningScreen, CardGarageScreen,
-  BlackMarketPanel, HoldingPanel, plus existing Card, TurfCompositeCard,
-  StackFanModal, DifficultyScreen, GameScreen, MainMenuScreen, CardsScreen,
-  ResponsiveLayouts, App flow.
+### v0.5.0
 
-- **E2E spec alignment** — All E2E specs updated for v0.3 board layout
-  testids. E2E removed from PR CI (runs in cd.yml on push to main). 142
-  passing / 34 skipped across 4 device viewports.
+- Mythic abilities complete.
 
-- **Releases** — v0.4.0 (governance + v0.3), v0.5.0 (mythic abilities),
-  v0.6.0 (board grid + browser tests).
+### v0.4.0
+
+- v0.3 full rewrite merged: HP + damage tiers, heat + raids, Black Market + Holding, handless queue-and-resolve, reserve turf promotion, base + rolled rarity, 10 hand-authored mythics.
+- Pack simplification: single draw pile with probabilistic type drops. Config-driven weights from turf-sim.json.
+- Workflow consolidation: `ci.yml`, `release.yml`, `cd.yml` per global standards.
 
 ### Test Coverage
 
 | Suite | Count | Runner |
 |-------|-------|--------|
-| Node (sim, ECS, pure logic) | 518 | `pnpm run test:node` |
-| DOM (jsdom presentational) | varies | `pnpm run test:dom` |
+| Node (sim, ECS, pure logic) | 574 | `pnpm run test:node` |
+| DOM (jsdom presentational) | 108 | `pnpm run test:dom` |
 | Browser (real Chromium) | 95 | `pnpm run test:browser` |
 | E2E (4 device viewports) | 142 pass / 34 skip | `pnpm run test:e2e` (local) |
 
 ## Current Work
 
-No active feature branches. Main is green.
+No active feature branches. v1.0.0 shipped. Post-1.0 polish in progress.
 
 ## What Comes Next
 

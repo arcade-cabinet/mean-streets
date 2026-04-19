@@ -20,11 +20,11 @@ test.describe('difficulty grid', () => {
     }
   });
 
-  test('Sudden Death tier is present between Nightmare and Ultra-Nightmare', async ({ page }) => {
+  test('Sudden Death tier is absent (removed in v0.3)', async ({ page }) => {
     await page.goto('/?fixture=difficulty');
     await expect(page.getByTestId('difficulty-screen')).toBeVisible();
 
-    await expect(page.getByTestId('diff-tile-sudden-death')).toHaveCount(1);
+    await expect(page.getByTestId('diff-tile-sudden-death')).toHaveCount(0);
   });
 
   test('selecting a tile highlights it and enables start', async ({ page }, testInfo) => {

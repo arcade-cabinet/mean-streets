@@ -1,0 +1,12 @@
+{
+  "id": "currency-launder",
+  "kind": "currency",
+  "name": "Clean Money",
+  "denomination": 1000,
+  "rarity": [
+    "legendary"
+  ],
+  "abilities": ["LAUNDER"],
+  "unlocked": true,
+  "locked": false
+}

@@ -5,7 +5,6 @@ import type {
   ModifierCard,
   PlayerState,
   Rarity,
-  ToughCard,
   TurfGameState,
 } from './types';
 
@@ -15,21 +14,26 @@ const RARITY_RANK: Record<Rarity, number> = {
   common: 1, uncommon: 2, rare: 3, legendary: 4, mythic: 5,
 };
 
+/**
+ * Locate a tough on the player's ACTIVE turf only (turfs[0]).
+ * Per RULES §6, all market operations target the active turf exclusively.
+ */
 function findTough(
   player: PlayerState, toughId: string,
 ): { turfIdx: number; stackIdx: number } | null {
-  for (let ti = 0; ti < player.turfs.length; ti++) {
-    const turf = player.turfs[ti];
-    for (let si = 0; si < turf.stack.length; si++) {
-      const entry = turf.stack[si];
-      if (entry.card.kind === 'tough' && entry.card.id === toughId)
-        return { turfIdx: ti, stackIdx: si };
-    }
+  const activeTurf = player.turfs.find((t) => t.isActive);
+  if (!activeTurf) return null;
+  const turfIdx = player.turfs.indexOf(activeTurf);
+  for (let si = 0; si < activeTurf.stack.length; si++) {
+    const entry = activeTurf.stack[si];
+    if (entry.card.kind === 'tough' && entry.card.id === toughId)
+      return { turfIdx, stackIdx: si };
   }
   return null;
 }
 
-/** Send a tough + its modifiers from the active turf to the Black Market. */
+/** Send a tough + its modifiers from the active turf to the Black Market.
+ *  The tough itself leaves play (no graveyard routing); its modifiers join the pool. */
 export function sendToMarket(
   state: TurfGameState, side: 'A' | 'B', toughId: string,
 ): void {
@@ -37,11 +41,10 @@ export function sendToMarket(
   const located = findTough(player, toughId);
   if (!located) return;
   const turf = player.turfs[located.turfIdx];
-  const { tough, mods } = killToughAtIdx(turf, located.stackIdx);
+  const { mods } = killToughAtIdx(turf, located.stackIdx);
   for (const mod of mods) {
     if (mod.kind !== 'tough') state.blackMarket.push(mod as ModifierCard);
   }
-  player.discard.push(tough as ToughCard);
   if (player.toughsInPlay > 0) player.toughsInPlay--;
 }
 
@@ -95,6 +98,9 @@ export function tradeAtMarket(
     id: `${consumed[0].id}-traded`,
     rarity: targetRarity,
   } as ModifierCard;
+  // Promoted card lands in the shared Black Market pool so the player can
+  // retrieve it via a normal return action. There is no hand in v0.3.
+  state.blackMarket.push(promoted);
   return promoted;
 }
 

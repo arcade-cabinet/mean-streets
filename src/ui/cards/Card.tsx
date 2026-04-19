@@ -35,7 +35,6 @@ const DIFFICULTY_GLYPH: Record<DifficultyTier, string> = {
   'medium': 'M',
   'hard': 'H',
   'nightmare': 'N',
-  'sudden-death': 'SD',
   'ultra-nightmare': 'UN',
 };
 
@@ -133,7 +132,22 @@ function renderTough(
           <span className="card-power-badge">{card.power}</span>
         </div>
         <div className="card-portrait">
-          <img src={`${import.meta.env.BASE_URL}assets/card-art/${card.id}.png`} alt="" className="card-portrait-img" draggable={false} />
+          <img
+            src={`${import.meta.env.BASE_URL}assets/card-art/${card.id}.png`}
+            alt=""
+            className="card-portrait-img"
+            draggable={false}
+            loading="lazy"
+            onError={(e) => {
+              const img = e.currentTarget;
+              img.style.display = 'none';
+              const initials = img.parentElement?.querySelector('.card-portrait-initials');
+              if (initials) (initials as HTMLElement).style.display = 'block';
+            }}
+          />
+          <div className="card-portrait-initials" style={{ display: 'none' }}>
+            {card.name.split(' ').map((w) => w[0]).join('').slice(0, 3).toUpperCase()}
+          </div>
         </div>
         <div className="card-body">
           <div className="card-name-row">
@@ -209,7 +223,22 @@ function renderModifier(
           <span className="card-power-badge">{card.power}</span>
         </div>
         <div className={`card-portrait ${portraitClass}`}>
-          <img src={`${import.meta.env.BASE_URL}assets/card-art/${card.id}.png`} alt="" className="card-portrait-img" draggable={false} />
+          <img
+            src={`${import.meta.env.BASE_URL}assets/card-art/${card.id}.png`}
+            alt=""
+            className="card-portrait-img"
+            draggable={false}
+            loading="lazy"
+            onError={(e) => {
+              const img = e.currentTarget;
+              img.style.display = 'none';
+              const initials = img.parentElement?.querySelector('.card-portrait-initials');
+              if (initials) (initials as HTMLElement).style.display = 'block';
+            }}
+          />
+          <div className="card-portrait-initials" style={{ display: 'none' }}>
+            {card.name.split(' ').map((w) => w[0]).join('').slice(0, 3).toUpperCase()}
+          </div>
         </div>
         <div className="card-body">
           <div className="card-name-row">

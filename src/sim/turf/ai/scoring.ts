@@ -1,13 +1,19 @@
-// v0.3 scoring — draw / play_card(pending) / retreat / queued strike /
+// Scoring — draw / play_card(pending) / retreat / queued strike /
 // modifier_swap / send_to_market / send_to_holding / black_market_*
 // / end_turn. No `hand` anywhere. Queued strikes estimate outcome via
 // applyTangibles + positionPower/Resistance. Heat is a shared cost
 // multiplier on strikes (higher heat → higher raid probability, which
-// punishes the attacker after combat resolves). v0.3 single-lane
-// scorers live in scoring-v03.ts.
-import { applyTangibles, hasTranscend } from '../abilities';
+// punishes the attacker after combat resolves).
+import {
+  applyTangibles,
+  hasImmunity,
+  hasLaunder,
+  hasLowProfile,
+  hasTranscend,
+} from '../abilities';
 import {
   hasToughOnTurf,
+  modifiersByOwner,
   positionPower,
   positionResistance,
   toughCombatPower,
@@ -16,13 +22,18 @@ import {
   turfCurrency,
   turfToughs,
 } from '../board';
+import { combatBribeProbability } from '../holding';
+import { RARITY_RANK } from '../market';
 import { policyActionKey } from '../env-query';
 import { resolveTargetToughIdx } from '../stack-ops';
 import { topToughIdx } from '../stack-ops';
 import type {
   Card,
+  ModifierCard,
   PlannerMemory,
   PlayerState,
+  Rarity,
+  ToughCard,
   Turf,
   TurfAction,
   TurfGameState,
@@ -31,13 +42,6 @@ import type {
 } from '../types';
 import { TURF_AI_CONFIG, TURF_SIM_CONFIG } from './config';
 import { getPolicyValue, isPolicyPreferredAction } from './policy';
-import {
-  scoreBlackMarketHeal,
-  scoreBlackMarketTrade,
-  scoreModifierSwap,
-  scoreSendToHolding,
-  scoreSendToMarket,
-} from './scoring-v03';
 
 export interface ActionScore {
   score: number;
@@ -45,6 +49,115 @@ export interface ActionScore {
 }
 
 const NEG_INF = Number.NEGATIVE_INFINITY;
+
+// ─── Single-lane action scorers (modifier_swap, market, holding) ──────────────
+
+function findToughLocation(
+  player: PlayerState,
+  toughId: string,
+): { turf: Turf; turfIdx: number; tough: ToughCard } | null {
+  for (let ti = 0; ti < player.turfs.length; ti++) {
+    const turf = player.turfs[ti];
+    for (const sc of turf.stack) {
+      if (sc.card.kind === 'tough' && sc.card.id === toughId) {
+        return { turf, turfIdx: ti, tough: sc.card };
+      }
+    }
+  }
+  return null;
+}
+
+function rarityBoost(r: Rarity): number {
+  return RARITY_RANK[r] ?? 1;
+}
+
+function effectiveToughValue(tough: ToughCard): number {
+  return tough.power + tough.resistance;
+}
+
+function scoreSendToMarket(state: TurfGameState, action: TurfAction): number {
+  if (!action.toughId) return NEG_INF;
+  const player = state.players[action.side];
+  const loc = findToughLocation(player, action.toughId);
+  if (!loc) return NEG_INF;
+  if (hasImmunity(loc.tough)) return NEG_INF;
+  const mods = modifiersByOwner(loc.turf, action.toughId);
+  const modRarityScore = mods.reduce<number>(
+    (a, m) => a + rarityBoost(m.rarity),
+    0,
+  );
+  const sacrificeCost =
+    effectiveToughValue(loc.tough) *
+    (loc.tough.hp / Math.max(1, loc.tough.maxHp));
+  return 0.8 * modRarityScore - sacrificeCost;
+}
+
+function scoreSendToHolding(state: TurfGameState, action: TurfAction): number {
+  if (!action.toughId) return NEG_INF;
+  const player = state.players[action.side];
+  const loc = findToughLocation(player, action.toughId);
+  if (!loc) return NEG_INF;
+  if (hasImmunity(loc.tough)) return NEG_INF;
+  const rarityHeat = rarityBoost(loc.tough.rarity) * 0.1;
+  const lowProf = hasLowProfile(loc.tough) || hasLaunder(loc.turf);
+  const heatContribution = lowProf ? rarityHeat * 0.5 : rarityHeat;
+  const cash = turfCurrency(loc.turf).reduce((a, c) => a + c.denomination, 0);
+  const bribeExpected = combatBribeProbability(cash);
+  return heatContribution * 0.6 + bribeExpected * 0.4;
+}
+
+function scoreModifierSwap(state: TurfGameState, action: TurfAction): number {
+  if (!action.toughId || !action.targetToughId) return NEG_INF;
+  const player = state.players[action.side];
+  const fromLoc = findToughLocation(player, action.toughId);
+  const toLoc = findToughLocation(player, action.targetToughId);
+  if (!fromLoc || !toLoc) return NEG_INF;
+  const source = fromLoc.tough;
+  const target = toLoc.tough;
+  const delta =
+    target.power + target.resistance - (source.power + source.resistance);
+  return delta * 0.1;
+}
+
+function findMarketCard(
+  state: TurfGameState,
+  targetRarity: Rarity | undefined,
+): ModifierCard | null {
+  if (!targetRarity) return null;
+  for (const m of state.blackMarket) {
+    if (m.rarity === targetRarity) return m;
+  }
+  return null;
+}
+
+function scoreBlackMarketTrade(
+  state: TurfGameState,
+  action: TurfAction,
+): number {
+  if (!action.offeredMods || action.offeredMods.length === 0) return NEG_INF;
+  if (!action.targetRarity) return NEG_INF;
+  const offeredCount = action.offeredMods.length;
+  const gain = rarityBoost(action.targetRarity);
+  const matchBonus = findMarketCard(state, action.targetRarity) ? 1.5 : 0;
+  return gain - offeredCount * 0.6 + matchBonus;
+}
+
+function scoreBlackMarketHeal(
+  state: TurfGameState,
+  action: TurfAction,
+): number {
+  if (!action.healTarget) return NEG_INF;
+  if (!action.offeredMods || action.offeredMods.length === 0) return NEG_INF;
+  const player = state.players[action.side];
+  const loc = findToughLocation(player, action.healTarget);
+  if (!loc) return NEG_INF;
+  const tough = loc.tough;
+  if (tough.rarity === 'mythic') return NEG_INF;
+  const missing = 1 - tough.hp / Math.max(1, tough.maxHp);
+  return missing * effectiveToughValue(tough) * 0.5;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 function pendingCard(
   p: PlayerState,

@@ -21,12 +21,12 @@ export const hasAbsolute = (t: ToughCard | null | undefined) =>
 export const hasLowProfile = (t: ToughCard | null | undefined) =>
   hasOnTough(t, 'LOW_PROFILE');
 
-/** LAUNDER — legendary currency ability; scan any non-currency card for the tag. */
+/** LAUNDER — legendary currency ability; scan all cards in the stack for the tag. */
 export function hasLaunder(turf: Turf | null | undefined): boolean {
   if (!turf) return false;
   for (const sc of turf.stack) {
-    if (sc.card.kind === 'currency') continue;
-    if (sc.card.abilities.includes('LAUNDER')) return true;
+    const abilities = (sc.card as { abilities?: string[] }).abilities;
+    if (abilities?.includes('LAUNDER')) return true;
   }
   return false;
 }

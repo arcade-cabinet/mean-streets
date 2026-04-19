@@ -1,0 +1,21 @@
+{
+  "timestamp": "2026-04-18T23:08:28.467Z",
+  "profile": "ci",
+  "games": 410,
+  "catalogSeed": 42,
+  "runSeed": 12345,
+  "warmupGames": 102,
+  "winRateA": 0.5121951219512195,
+  "firstMoverWinRate": 0.5121951219512195,
+  "timeoutRate": 0,
+  "avgTurns": 16.31219512195122,
+  "medianTurns": 14,
+  "p10Turns": 8,
+  "p90Turns": 29,
+  "failedPlans": 0,
+  "fundedAttacks": 0.4024390243902439,
+  "pushedAttacks": 1.8804878048780487,
+  "directAttacks": 23.885365853658538,
+  "policyGuidedActions": 0,
+  "passRatePerTurn": 0
+}

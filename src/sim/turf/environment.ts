@@ -167,8 +167,12 @@ export function stepAction(
       if (!action.cardId) throw new Error('discard: missing cardId');
       if (!player.pending || player.pending.id !== action.cardId)
         throw new Error('discard: cardId does not match pending');
-      player.discard.push(player.pending);
+      // Modifiers route to the shared Black Market; toughs simply leave play.
+      const discarded = player.pending;
       player.pending = null;
+      if (discarded.kind !== 'tough') {
+        state.blackMarket.push(discarded as import('./types').ModifierCard);
+      }
       state.metrics.cardsDiscarded++;
       costsAction = false;
       reward += TURF_SIM_CONFIG.rewards.discard;
@@ -189,6 +193,9 @@ export function stepAction(
   if (costsAction) {
     player.actionsRemaining--;
     state.metrics.totalActions++;
+    // Clear justPromoted after first real action so normal budget resumes.
+    const activeTurf = player.turfs[0];
+    if (activeTurf?.justPromoted) activeTurf.justPromoted = false;
   }
 
   if (player.deck.length === 0 && player.pending === null)

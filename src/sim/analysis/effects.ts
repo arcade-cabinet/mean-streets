@@ -42,18 +42,18 @@ export function estimateCardEffects(
   onProgress?: (progress: EffectEstimationProgress) => void,
 ): EffectAnalysisReport {
   const alpha = TURF_SIM_CONFIG.statisticalThresholds.alpha;
-  const baselineWins = baseline.results.map((result) =>
+  const baselineWins: number[] = baseline.results.map((result) =>
     result.winner === 'A' ? 1 : 0,
   );
   const baselineTurns = baseline.results.map((result) => result.turnCount);
   const baselineFunded = baseline.results.map(
-    (result) => result.metrics.fundedAttacks,
+    (result) => result.metrics.fundedRecruits,
   );
   const baselinePushed = baseline.results.map(
-    (result) => result.metrics.pushedAttacks,
+    (result) => result.metrics.pushedStrikes,
   );
   const baselineDirect = baseline.results.map(
-    (result) => result.metrics.directAttacks,
+    (result) => result.metrics.directStrikes,
   );
   const byCard = new Map<string, ForcedPermutationResult[]>();
 

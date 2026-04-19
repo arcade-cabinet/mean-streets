@@ -29,7 +29,7 @@ function makePlayer(turfsCount: number, pending: Card | null = null): PlayerStat
   const turfs = [];
   for (let i = 0; i < turfsCount; i++) turfs.push(createTurf());
   return {
-    turfs, deck: [], discard: [], toughsInPlay: 0,
+    turfs, deck: [], toughsInPlay: 0,
     actionsRemaining: 5, pending, queued: [], turnEnded: false,
   };
 }

@@ -6,7 +6,18 @@ import { GameState } from './ecs/traits';
 import { createGameWorld } from './ecs/world';
 import { randomSeed } from './sim/cards/rng';
 import { processGameEnd } from './platform/achievements/achievements';
-import { openRewardPacks } from './platform/persistence/collection';
+import {
+  loadPlayerOwnedMythicIds,
+  openRewardPacks,
+  syncPlayerMythicOwnership,
+} from './platform/persistence/collection';
+import {
+  addPendingPacksToAI,
+  aiPendingPacksFromRewards,
+  loadAIOwedMythicIds,
+  openPendingAIPacks,
+  saveAIMythicAssignments,
+} from './platform/persistence/ai-profile';
 import { loadCompiledToughs } from './sim/cards/catalog';
 import { loadCompiledWeapons, loadCompiledDrugs } from './sim/turf/generators';
 import { matchRewardPacks } from './sim/packs/generator';
@@ -44,10 +55,17 @@ type Screen =
   | 'pack-opening'
   | 'card-garage';
 type Modal = 'rules-onboarding' | 'game-menu' | null;
+// Bumped whenever sim behavior changes in a way that would make a
+// seed-based resume reconstruct a different game state than the user saw
+// before closing the app. Any PR that touches resolve.ts, attacks.ts, or
+// the tunables in turf-sim.json that affect gameplay must bump this.
+const SIM_VERSION = 'v0.3-1.1.0-beta.1';
+
 interface ActiveRunState {
   phase: 'combat';
   config: GameConfig;
   seed: number;
+  simVersion: string;
 }
 
 const EMPTY_METRICS: TurfMetrics = emptyMetrics();
@@ -58,6 +76,14 @@ function getMetricsFromWorld(world: World): TurfMetrics {
     metrics = { ...gs.metrics };
   });
   return metrics;
+}
+
+function getMythicAssignmentsFromWorld(world: World): Record<string, 'A' | 'B'> {
+  let assignments: Record<string, 'A' | 'B'> = {};
+  world.query(GameState).updateEach(([gs]) => {
+    assignments = { ...gs.mythicAssignments };
+  });
+  return assignments;
 }
 
 export default function App() {
@@ -118,7 +144,14 @@ export default function App() {
         setHasActiveRun(false);
         return;
       }
-
+      // Sim-version check: a save written by a prior sim version would
+      // replay to a different world state than the user left. Discard
+      // rather than silently misrepresent progress.
+      if (activeRun.simVersion !== SIM_VERSION) {
+        await saveActiveRun<ActiveRunState>(null);
+        setHasActiveRun(false);
+        return;
+      }
       // Resume from seed only — the seed-driven shuffle in createGameWorld
       // deterministically reproduces the original deck order without
       // persisting the full card array.
@@ -131,16 +164,28 @@ export default function App() {
 
   function handleSelectDifficulty(config: GameConfig) {
     const seed = randomSeed();
-    const newWorld = createGameWorld(config, seed);
-    setWorld(newWorld);
-    setActiveConfig(config);
-    setHasActiveRun(true);
-    void saveActiveRun<ActiveRunState>({ phase: 'combat', config, seed });
-    setScreen('combat');
+    void (async () => {
+      // Load owned mythics from both profiles so the new match starts with
+      // the correct global-exclusivity state (RULES §11).
+      const [playerMythicIds, aiMythicIds] = await Promise.all([
+        loadPlayerOwnedMythicIds(),
+        loadAIOwedMythicIds(),
+      ]);
+      const newWorld = createGameWorld(config, seed, undefined, {
+        A: playerMythicIds,
+        B: aiMythicIds,
+      });
+      setWorld(newWorld);
+      setActiveConfig(config);
+      setHasActiveRun(true);
+      void saveActiveRun<ActiveRunState>({ phase: 'combat', config, seed, simVersion: SIM_VERSION });
+      setScreen('combat');
+    })();
   }
 
   function handleGameOver(w: 'A' | 'B') {
     const m = world ? getMetricsFromWorld(world) : EMPTY_METRICS;
+    const mythicAssignments = world ? getMythicAssignmentsFromWorld(world) : {};
     setWinner(w);
     setMetrics(m);
     setHasActiveRun(false);
@@ -160,12 +205,32 @@ export default function App() {
       );
       await saveProfile(result.updatedProfile);
 
-      const playerWon = w === 'A';
+      // Sync mythic ownership to both profiles (RULES §11).
+      // mythicAssignments maps cardId → 'A'|'B'; A = player, B = AI.
+      const playerMythicIds = Object.entries(mythicAssignments)
+        .filter(([, side]) => side === 'A')
+        .map(([id]) => id);
       const config = activeConfig;
-      if (playerWon && config) {
+      await Promise.all([
+        syncPlayerMythicOwnership(playerMythicIds, config?.difficulty ?? 'easy'),
+        saveAIMythicAssignments(mythicAssignments),
+      ]);
+
+      const playerWon = w === 'A';
+      if (config) {
+        // Both sides earn packs on their own win (DESIGN.md §Core Loop:
+        // "AI earns identical rewards when it wins"). Packs are always
+        // minted; they flow to the winning side's collection.
         const rewards = matchRewardPacks(config.difficulty, false, true);
-        const newCards = await openRewardPacks(rewards, config.difficulty);
-        setLastRewardCards(newCards);
+        if (playerWon) {
+          const newCards = await openRewardPacks(rewards, config.difficulty);
+          setLastRewardCards(newCards);
+        } else {
+          const pending = await aiPendingPacksFromRewards(rewards);
+          await addPendingPacksToAI(pending);
+          await openPendingAIPacks(config.difficulty);
+          setLastRewardCards([]);
+        }
       } else {
         setLastRewardCards([]);
       }

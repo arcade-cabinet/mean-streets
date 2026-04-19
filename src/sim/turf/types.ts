@@ -25,6 +25,7 @@ export interface DrugCard {
 }
 export interface CurrencyCard {
   kind: 'currency'; id: string; name: string; denomination: 100 | 1000; rarity: Rarity;
+  abilities?: string[];
 }
 export type Card = ToughCard | WeaponCard | DrugCard | CurrencyCard;
 export type ModifierCard = WeaponCard | DrugCard | CurrencyCard;
@@ -42,6 +43,10 @@ export interface Turf {
   closedRanks: boolean; rivalBufferSpent?: boolean;
   isActive: boolean;    // true for the current engagement turf only
   reserveIndex: number; // 0 = active, 1+ = reserve in queue order
+  /** Set to true when a reserve turf is promoted to active mid-game.
+   *  Cleared after the first action is consumed on the new-active turn.
+   *  Causes the player to receive firstTurnActions instead of actionsPerTurn. */
+  justPromoted?: boolean;
 }
 /** Strike/recruit declared this turn; resolves end-of-turn. */
 export interface QueuedAction {
@@ -50,13 +55,13 @@ export interface QueuedAction {
 }
 export interface PlayerState {
   turfs: Turf[]; // index 0 = active, 1+ = reserves in queue order
-  deck: Card[]; discard: Card[];
+  deck: Card[];
   toughsInPlay: number; actionsRemaining: number;
   pending: Card | null; queued: QueuedAction[]; turnEnded: boolean;
 }
 
 // ── Difficulty & Game Config ────────────────────────────────
-export type DifficultyTier = 'easy' | 'medium' | 'hard' | 'nightmare' | 'sudden-death' | 'ultra-nightmare';
+export type DifficultyTier = 'easy' | 'medium' | 'hard' | 'nightmare' | 'ultra-nightmare';
 export interface GameConfig {
   difficulty: DifficultyTier; suddenDeath: boolean;
   turfCount: number; actionsPerTurn: number; firstTurnActions: number;
@@ -166,6 +171,8 @@ export interface TurfGameState {
   mythicPool: string[];                               // unassigned mythic cardIds (10 at start)
   mythicAssignments: Record<string, 'A' | 'B'>;      // cardId → side
   warStats: WarStats;
+  /** Drug card ids that have already fired their one-shot RESUSCITATE heal. */
+  resuscitateConsumed: Set<string>;
 }
 
 // ── Metrics ─────────────────────────────────────────────────

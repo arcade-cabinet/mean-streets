@@ -1,7 +1,7 @@
 {
   "name": "mean-streets",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0-beta.1",
   "description": "Mean Streets: Precision Starvation — A gritty tactical 1v1 card brawler",
   "type": "module",
   "packageManager": "pnpm@10.33.0",
@@ -70,7 +70,7 @@
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "seedrandom": "^3.0.5",
-    "sql.js": "^1.14.1",
+    "sql.js": "1.11.0",
     "tailwindcss": "^4.2.2",
     "tone": "^15.1.22",
     "yuka": "^0.7.8",

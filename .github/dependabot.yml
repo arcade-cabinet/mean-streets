@@ -10,6 +10,10 @@ updates:
           - minor
           - patch
     open-pull-requests-limit: 10
+    # Pin sql.js — 1.14.1 breaks jeep-sqlite@2.8.0 WASM ABI (LinkError).
+    # Revisit when jeep-sqlite publishes a version compatible with a newer sql.js.
+    ignore:
+      - dependency-name: "sql.js"
 
   - package-ecosystem: github-actions
     directory: /
@@ -19,3 +23,13 @@ updates:
       actions:
         patterns:
           - "*"
+
+  - package-ecosystem: pip
+    directory: /workspaces/image-extraction
+    schedule:
+      interval: weekly
+    groups:
+      image-extraction:
+        update-types:
+          - minor
+          - patch

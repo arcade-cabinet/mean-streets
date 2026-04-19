@@ -70,7 +70,6 @@ function makePlayer(turfs: number, pending: Card | null = null): PlayerState {
   return {
     turfs: t,
     deck: [],
-    discard: [],
     toughsInPlay: 0,
     actionsRemaining: 5,
     pending,
@@ -270,7 +269,7 @@ describe('stepAction — play_card', () => {
 });
 
 describe('stepAction — discard', () => {
-  it('discards pending card for free (no action cost)', () => {
+  it('discards pending modifier for free (routes to Black Market, no action cost)', () => {
     const state = makeState();
     state.players.A.pending = weapon('w1');
     const before = state.players.A.actionsRemaining;
@@ -282,11 +281,30 @@ describe('stepAction — discard', () => {
     });
 
     expect(state.players.A.actionsRemaining).toBe(before);
-    expect(state.players.A.discard).toHaveLength(1);
+    expect(state.blackMarket.some((m) => m.id === 'w1')).toBe(true);
     expect(state.players.A.pending).toBeNull();
     expect(state.metrics.cardsDiscarded).toBe(1);
     expect(result.reward).toBeLessThanOrEqual(0);
     expect(state.metrics.totalActions).toBe(0);
+  });
+
+  it('discards pending tough for free (leaves play, no routing)', () => {
+    const state = makeState();
+    state.players.A.pending = tough('t1');
+    const before = state.players.A.actionsRemaining;
+
+    const result = stepAction(state, {
+      kind: 'discard',
+      side: 'A',
+      cardId: 't1',
+    });
+
+    expect(state.players.A.actionsRemaining).toBe(before);
+    expect(state.players.A.pending).toBeNull();
+    // Toughs leave play entirely — not routed to Black Market.
+    expect(state.blackMarket.some((m) => m.id === 't1')).toBe(false);
+    expect(state.metrics.cardsDiscarded).toBe(1);
+    expect(result.reward).toBeLessThanOrEqual(0);
   });
 });
 

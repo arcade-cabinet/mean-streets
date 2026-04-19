@@ -34,7 +34,7 @@ export interface AppSettings {
  */
 export interface StoredCardInstance {
   rolledRarity: 'common' | 'uncommon' | 'rare' | 'legendary' | 'mythic';
-  unlockDifficulty: 'easy' | 'medium' | 'hard' | 'nightmare' | 'sudden-death' | 'ultra-nightmare';
+  unlockDifficulty: 'easy' | 'medium' | 'hard' | 'nightmare' | 'ultra-nightmare';
 }
 
 export interface PlayerProfile {
@@ -45,6 +45,13 @@ export interface PlayerProfile {
    * entry (baseRarity from catalog, 'easy' difficulty).
    */
   cardInstances?: Record<string, StoredCardInstance>;
+  /**
+   * Mythic card ids currently owned by the player (RULES §11).
+   * Persisted separately so match bootstrap can exclude these from the
+   * shared unassigned pool and pre-seed mythicAssignments for side 'A'.
+   * A mythic id here is always also present in unlockedCardIds.
+   */
+  ownedMythicIds?: string[];
   wins: number;
   lastPlayedAt: string | null;
 }
@@ -126,9 +133,29 @@ export async function saveDeckLoadout(loadout: DeckLoadout): Promise<DeckLoadout
   return loadDeckLoadouts();
 }
 
+// DO NOT REMOVE — migrates saves written before 1.0.0 when sudden-death
+// was a valid difficulty tier. StoredCardInstance.unlockDifficulty no
+// longer includes sudden-death, so TypeScript considers the literal
+// unreachable. A type-sweep that "simplifies" this check would silently
+// drop the migration and leak invalid enum values into the live catalog.
+// The raw `unknown` read is intentional belt-and-braces.
+const LEGACY_SUDDEN_DEATH = 'sudden-death';
+
 export async function loadProfile(): Promise<PlayerProfile> {
   await initializePersistence();
-  return (await getItem<PlayerProfile>(PROFILE_NAMESPACE, 'current')) ?? DEFAULT_PROFILE;
+  const profile = (await getItem<PlayerProfile>(PROFILE_NAMESPACE, 'current')) ?? DEFAULT_PROFILE;
+  if (profile.cardInstances) {
+    let migrated = false;
+    for (const instance of Object.values(profile.cardInstances)) {
+      const raw = instance.unlockDifficulty as unknown;
+      if (raw === LEGACY_SUDDEN_DEATH) {
+        instance.unlockDifficulty = 'ultra-nightmare';
+        migrated = true;
+      }
+    }
+    if (migrated) await saveProfile(profile);
+  }
+  return profile;
 }
 
 export async function saveProfile(profile: PlayerProfile): Promise<PlayerProfile> {

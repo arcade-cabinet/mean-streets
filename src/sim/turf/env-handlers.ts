@@ -10,6 +10,7 @@ import {
 import { isModifierCard } from './env-query';
 import type { ModifierCard, PlayerState, TurfAction, TurfGameState } from './types';
 
+
 export function handleDraw(player: PlayerState, state: TurfGameState): void {
   if (player.pending !== null) throw new Error('draw: pending slot occupied');
   const card = player.deck.shift();
@@ -46,9 +47,8 @@ export function handlePlayCard(
   if (isModifierCard(card) && turf.stack.length === 0)
     throw new Error('play_card: cannot play modifier on empty turf');
 
-  // §4 rule 3: rival tough without buffer → discarded on play.
+  // §4 rule 3: rival tough without buffer → leaves play on play (no routing).
   if (turfAffiliationConflict(turf, card)) {
-    player.discard.push(card);
     player.pending = null;
     state.metrics.cardsDiscarded++;
     return {
@@ -162,18 +162,22 @@ export function handleModifierSwap(
 }
 
 export function handleEndTurn(player: PlayerState, state: TurfGameState): void {
-  // §4 rule 2: modifier-on-top at end-of-turn is popped & discarded.
+  // §4 rule 2: modifier-on-top at end-of-turn is popped & sent to Black Market.
   for (const turf of player.turfs) {
     while (turf.stack.length > 0) {
       const top = turf.stack[turf.stack.length - 1];
       if (top.card.kind === 'tough') break;
       const popped = turf.stack.pop();
       if (popped) {
-        player.discard.push(popped.card);
+        state.blackMarket.push(popped.card as ModifierCard);
         state.metrics.cardsDiscarded++;
       }
     }
-    if (!hasToughOnTurf(turf)) {
+    // RULES §8.5: Closed Ranks posture is set when the top of the stack is a tough.
+    // An empty or modifier-topped turf is exposed — do NOT auto-close.
+    const topEntry = turf.stack.length > 0 ? turf.stack[turf.stack.length - 1] : null;
+    const topIsTough = topEntry != null && topEntry.card.kind === 'tough';
+    if (topIsTough) {
       if (!turf.closedRanks) state.metrics.closedRanksEnds++;
       turf.closedRanks = true;
     } else {

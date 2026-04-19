@@ -138,11 +138,10 @@ pnpm run cap:sync           # Build + sync web assets to Capacitor
 - `hooks.ts` — useTurfActive, useTurfReserves, useDeckPending,
   useTurnEnded, useQueuedStrikes, useHeat, useBlackMarket, useHolding,
   useLockup, useMythicPool, useActionBudget, useTurfStackComposite
-  (+ backward-compat usePlayerTurfs alias during v0.2→v0.3 migration)
 - `world.ts` — createGameWorld(config, seed, deck)
 
 ### UI — `src/ui/`
-- `screens/` — MainMenu, Difficulty (6 tiers incl. Sudden Death),
+- `screens/` — MainMenu, Difficulty (5 tiers, Sudden Death removed),
   Game (single-lane 1v1 + reserves indicator), CardGarage (merge UI
   + priority sliders + auto-toggles), Collection, PackOpening (rolled
   rarity reveal), GameOver
@@ -219,9 +218,9 @@ pnpm run cap:sync           # Build + sync web assets to Capacitor
   on-demand locally via `pnpm run test:e2e`. Run locally before
   merging large UI changes.
 - Integration smoke scaffold: `src/sim/turf/__tests__/v03-integration.test.ts`
-  — describe.skip-gated suite to be promoted as modules stabilize.
+  — active test suite.
 
-## Known Gaps (v0.3)
+## Known Gaps (post-v1.0.0)
 
 - AI's pre-war collection curation (`curator.ts`) is active but simple;
   heuristics may benefit from tuning via simulation post-launch.
@@ -229,17 +228,10 @@ pnpm run cap:sync           # Build + sync web assets to Capacitor
   can't tune game-warping signature abilities the same way it tunes
   common stats.
 - Mythic art is geometric SVG placeholders — editorial illustration
-  pass is a post-v0.3 polish task.
-- Release gate (`test:release`) requires Medium AI-vs-AI winrate
-  convergence in [0.48, 0.52] for 3 consecutive seeded runs. Progress
-  by running `pnpm run analysis:autobalance` iteratively.
-- `usePlayerTurfs` ECS hook remains as a backward-compat alias during
-  v0.2→v0.3 UI migration; will be retired in Epic G completion.
+  pass is a post-1.0 polish task.
 
-## Active Branch + Task Batch
+## Release Status
 
-- Branch: `feat/v0.3-full-rewrite` (off `main` which carries v0.2 squash-merge)
-- Task batch: `docs/plans/v0.3-task-batch.md` — 13 epics across 10
-  specialist agents (Rex/Maya/Kira/Iris/Ollie/Dex/Noa/Luna/Vera/Maven)
-- Paper playtests: `docs/plans/v0.3-paper-playtest.md` +
-  `v0.3-paper-playtest-2.md`
+v1.0.0 shipped 2026-04-18. See `docs/PRODUCTION.md` for post-1.0 polish
+items. Paper playtests: `docs/plans/v0.3-paper-playtest.md` +
+`docs/plans/v0.3-paper-playtest-2.md`.

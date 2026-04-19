@@ -1,0 +1,47 @@
+---
+# market-custody.yaml — Mean Streets v1.0
+#
+# Verify Market and Custody drawers open and close
+- launchApp
+- tapOn:
+    id: "new-game-button"
+- tapOn:
+    text: "Understood"
+    optional: true
+- tapOn:
+    id: "close-rules-button"
+    optional: true
+- tapOn:
+    id: "diff-tile-easy"
+- tapOn:
+    id: "diff-start"
+- assertVisible:
+    id: "game-screen"
+
+# Open Market drawer
+- tapOn:
+    id: "slot-market"
+- extendedWaitUntil:
+    visible:
+      text: "Black Market"
+    timeout: 3000
+
+# Close Market
+- tapOn:
+    id: "slot-market"
+
+# Open Custody drawer
+- tapOn:
+    id: "slot-holding"
+- extendedWaitUntil:
+    visible:
+      text: "Custody"
+    timeout: 3000
+
+# Close Custody
+- tapOn:
+    id: "slot-holding"
+
+# Verify game board still functional
+- assertVisible:
+    id: "action-budget"

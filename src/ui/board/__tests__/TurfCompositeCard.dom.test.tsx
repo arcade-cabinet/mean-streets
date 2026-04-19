@@ -114,12 +114,26 @@ describe('TurfCompositeCard', () => {
   });
 
   it('displays power and resistance badges', () => {
-    // kings_row grants +1 atkBonus loyal-stack bonus (affiliations.json), so
-    // a single kings_row tough at power 8 reports 9 on the composite badge.
+    // Loyal-stack bonus requires 3+ toughs of the same affiliation (RULES §4).
+    // A single tough at power 8 reports 8 — no loyal bonus applies.
     const turf = makeTurf([tough({ power: 8, resistance: 6 })]);
     const { container } = render(wrap(<TurfCompositeCard turf={turf} />));
-    expect(container.querySelector('.turf-composite-power-badge')!.textContent).toBe('9');
+    expect(container.querySelector('.turf-composite-power-badge')!.textContent).toBe('8');
     expect(container.querySelector('.turf-composite-resistance-badge')!.textContent).toBe('6');
+  });
+
+  it('3 toughs of the same affiliation DO receive loyal bonus', () => {
+    // kings_row loyal atkBonus = +1 (affiliations.json). Three same-affiliation
+    // toughs each at power 8 → base total 24 + 1 loyal = 25 (RULES §4).
+    // kings_row defBonus = 0, so resistance stays at 6×3 = 18.
+    const turf = makeTurf([
+      tough({ id: 'tough-a', power: 8, resistance: 6, affiliation: 'kings_row' }),
+      tough({ id: 'tough-b', power: 8, resistance: 6, affiliation: 'kings_row' }),
+      tough({ id: 'tough-c', power: 8, resistance: 6, affiliation: 'kings_row' }),
+    ]);
+    const { container } = render(wrap(<TurfCompositeCard turf={turf} />));
+    expect(container.querySelector('.turf-composite-power-badge')!.textContent).toBe('25');
+    expect(container.querySelector('.turf-composite-resistance-badge')!.textContent).toBe('18');
   });
 
   it('shows modifier summary tags', () => {

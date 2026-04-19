@@ -21,10 +21,9 @@ const RARITY_COEF = HEAT_CONFIG.rarity as Record<Rarity, number>;
 const RAID_COEF = HEAT_CONFIG.raidCoefficient as Record<DifficultyTier, number>;
 
 function isLaunderCarrier(card: Card): boolean {
-  if (card.kind !== 'currency' && 'abilities' in card) {
-    return card.abilities.includes('LAUNDER') || card.abilities.includes('launder');
-  }
-  return false;
+  const abilities = (card as { abilities?: string[] }).abilities;
+  if (!abilities) return false;
+  return abilities.includes('LAUNDER') || abilities.includes('launder');
 }
 
 function isLowProfileOwner(tough: ToughCard, allOnTurf: Card[]): boolean {

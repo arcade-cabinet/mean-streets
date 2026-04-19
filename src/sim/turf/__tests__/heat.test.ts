@@ -65,6 +65,20 @@ describe('computeHeat — breakdown fields', () => {
     expect(h.fromLaunder).toBeLessThan(0);
   });
 
+  it('LAUNDER on a legendary currency card produces negative relief', () => {
+    const state = mkState(
+      [
+        mkTurf('a1', [
+          sc(mkTough({ id: 'aT' })),
+          sc(mkCurrency(1000, 'currency-launder', { rarity: 'legendary', abilities: ['LAUNDER'] })),
+        ]),
+      ],
+      [mkTurf('b1', [sc(mkTough({ id: 'bT' }))])],
+    );
+    const h = computeHeat(state);
+    expect(h.fromLaunder).toBeLessThan(0);
+  });
+
   it('LOW_PROFILE drug halves its owner tough heat contribution', () => {
     const without = mkState(
       [mkTurf('a1', [sc(mkTough({ id: 'aT', rarity: 'legendary' }))])],

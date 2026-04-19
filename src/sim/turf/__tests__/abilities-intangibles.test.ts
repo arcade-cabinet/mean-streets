@@ -211,14 +211,21 @@ describe('passive ability hooks', () => {
     expect(hasImmunity(mkTough())).toBe(false);
   });
 
-  it('hasLaunder detects the LAUNDER tag on a non-currency carrier', () => {
-    // Currency has no abilities[] in v0.3 types; test stubs via weapon.
+  it('hasLaunder detects the LAUNDER tag on a weapon carrier', () => {
     const turf = mkTurf('t', [
       up(mkTough()),
       up(mkWeapon({ abilities: ['LAUNDER'] })),
     ]);
     expect(hasLaunder(turf)).toBe(true);
     expect(hasLaunder(mkTurf('empty', [up(mkTough())]))).toBe(false);
+  });
+
+  it('hasLaunder detects the LAUNDER tag on a legendary currency card', () => {
+    const turf = mkTurf('t', [
+      up(mkTough()),
+      up(mkCurrency(1000, 'currency-launder', { rarity: 'legendary', abilities: ['LAUNDER'] })),
+    ]);
+    expect(hasLaunder(turf)).toBe(true);
   });
 
   it('hasLowProfile flag on owning tough', () => {

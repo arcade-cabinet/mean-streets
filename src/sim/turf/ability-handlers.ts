@@ -2,7 +2,8 @@
 // Each returns an IntangibleOutcome; the dispatcher in abilities.ts
 // walks rarity bands and calls them per-card in priority order.
 import type { IntangibleOutcome } from './abilities';
-import type { QueuedAction, Turf, TurfGameState } from './types';
+import { TURF_SIM_CONFIG } from './ai/config';
+import type { QueuedAction, ToughCard, Turf, TurfGameState } from './types';
 
 export const proceed = (): IntangibleOutcome => ({ kind: 'proceed' });
 
@@ -39,40 +40,77 @@ export function runCounter(
 }
 
 // ── Probabilistic bribe (§10.3) ─────────────────────────────
-const BRIBE_BANDS: Array<[number, number]> = [
-  [5000, 0.99],
-  [2000, 0.95],
-  [1000, 0.85],
-  [500, 0.7],
-];
-
-function bribeChance(denom: number): number {
-  for (const [d, p] of BRIBE_BANDS) if (denom >= d) return p;
-  return 0;
+/**
+ * Look up bribe probability from turf-sim.json thresholds.
+ * Reads `bribe.thresholds` as the single source of truth — highest
+ * tier whose `amount` ≤ `totalCash` wins.
+ */
+export function bribeProbabilityForAmount(amount: number): number {
+  let best = 0;
+  for (const tier of TURF_SIM_CONFIG.bribe.thresholds) {
+    if (amount >= tier.amount) best = Math.max(best, tier.probability);
+  }
+  return best;
 }
 
+/**
+ * Attempt a turf-wide currency bribe before the strike resolves (§10.3).
+ *
+ * Sums ALL currency cards on the defender's active turf (not just the
+ * largest single denomination). On success, consumes currency starting
+ * with the cheapest denominations until the threshold amount is covered;
+ * consumed cards are routed to the shared Black Market (no discard pile
+ * in v0.3). On failure, currency stays.
+ */
 export function maybeBribe(
   state: TurfGameState,
   defender: Turf,
 ): IntangibleOutcome {
-  let bestIdx = -1;
-  let bestDenom = 0;
+  // Collect currency entries sorted ascending by denomination (cheapest first
+  // for consumption, per §4 affiliation-buffer precedent).
+  const currencyEntries: Array<{ idx: number; denom: number }> = [];
   for (let i = 0; i < defender.stack.length; i++) {
     const c = defender.stack[i].card;
     if (c.kind !== 'currency') continue;
-    if (c.denomination > bestDenom) {
-      bestDenom = c.denomination;
-      bestIdx = i;
-    }
+    currencyEntries.push({ idx: i, denom: c.denomination });
   }
-  if (bestIdx < 0 || bestDenom < 500) return proceed();
-  const p = bribeChance(bestDenom);
+  if (currencyEntries.length === 0) return proceed();
+
+  const totalCash = currencyEntries.reduce((s, e) => s + e.denom, 0);
+  const p = bribeProbabilityForAmount(totalCash);
+  if (p <= 0) return proceed();
+
   if (state.rng.next() >= p) {
-    // Failed bribe — currency stays (vanishes on cancel only, §10.3).
+    // Failed — currency stays (§10.3: vanishes only on success).
     state.metrics.bribesFailed = (state.metrics.bribesFailed ?? 0) + 1;
     return proceed();
   }
-  removeFromStack(defender, bestIdx);
+
+  // Success: consume cheapest denominations until we've covered the best
+  // reached threshold. Sort ascending so we spend the smallest bills first.
+  currencyEntries.sort((a, b) => a.denom - b.denom);
+  // Find which threshold amount we reached (the highest tier whose amount
+  // ≤ totalCash) — consume exactly that much.
+  let thresholdAmount = 0;
+  for (const tier of TURF_SIM_CONFIG.bribe.thresholds) {
+    if (totalCash >= tier.amount) thresholdAmount = tier.amount;
+  }
+
+  let spent = 0;
+  const toRemove: number[] = [];
+  for (const e of currencyEntries) {
+    if (spent >= thresholdAmount) break;
+    spent += e.denom;
+    toRemove.push(e.idx);
+  }
+  // Remove in reverse-index order to preserve earlier indices.
+  toRemove.sort((a, b) => b - a);
+  for (const idx of toRemove) {
+    const card = defender.stack[idx].card;
+    removeFromStack(defender, idx);
+    if (card.kind !== 'tough') state.blackMarket.push(card);
+  }
+
   state.metrics.bribesAccepted = (state.metrics.bribesAccepted ?? 0) + 1;
   return { kind: 'canceled', reason: 'bribed' };
 }
@@ -151,4 +189,83 @@ export function runStrikeRetreated(
     }
   }
   return proceed();
+}
+
+// ── Healing chain (§7) ──────────────────────────────────────
+/**
+ * Apply end-of-turn heal ticks from PATCHUP / FIELD_MEDIC passives
+ * for a single side's active turf.
+ *
+ * PATCHUP (drug): +1 HP/turn to the tough that owns this drug.
+ * FIELD_MEDIC (tough): +1 HP to every wounded tough on the same turf.
+ * RESUSCITATE (drug): one-shot full heal to the tough that owns this drug;
+ *                     fires once then marks the drug's id as consumed.
+ *
+ * All heals are clamped to maxHp.
+ */
+export function applyHealTicks(state: TurfGameState, side: 'A' | 'B'): void {
+  const player = state.players[side];
+  const active = player.turfs[0];
+  if (!active) return;
+
+  // Collect toughs that are alive but wounded for FIELD_MEDIC targeting.
+  const woundedToughs = (): ToughCard[] => {
+    const out: ToughCard[] = [];
+    for (const entry of active.stack) {
+      const c = entry.card;
+      if (c.kind === 'tough' && c.hp > 0 && c.hp < c.maxHp) out.push(c);
+    }
+    return out;
+  };
+
+  // Priority order per RULES §7: PATCHUP → FIELD_MEDIC → RESUSCITATE.
+  // Iterate the stack three times, one tier per pass, to ensure deterministic
+  // ordering regardless of where abilities appear in the stack.
+
+  // Pass 1 — PATCHUP (drug): +1 HP/turn to the owning tough.
+  for (const entry of active.stack) {
+    const card = entry.card;
+    if (card.kind === 'drug' && card.abilities.includes('PATCHUP')) {
+      const ownerId = entry.owner;
+      if (ownerId) {
+        for (const e2 of active.stack) {
+          if (e2.card.kind === 'tough' && e2.card.id === ownerId) {
+            const t = e2.card;
+            if (t.hp > 0) t.hp = Math.min(t.maxHp, t.hp + 1);
+          }
+        }
+      }
+    }
+  }
+
+  // Pass 2 — FIELD_MEDIC (tough): +1 HP to every wounded tough on this turf.
+  for (const entry of active.stack) {
+    const card = entry.card;
+    if (card.kind === 'tough' && card.abilities.includes('FIELD_MEDIC')) {
+      for (const t of woundedToughs()) {
+        t.hp = Math.min(t.maxHp, t.hp + 1);
+      }
+    }
+  }
+
+  // Pass 3 — RESUSCITATE (drug): one-shot full heal to the owning tough.
+  for (const entry of active.stack) {
+    const card = entry.card;
+    if (card.kind === 'drug' && card.abilities.includes('RESUSCITATE')) {
+      if (!state.resuscitateConsumed.has(card.id)) {
+        const ownerId = entry.owner;
+        if (ownerId) {
+          for (const e2 of active.stack) {
+            if (e2.card.kind === 'tough' && e2.card.id === ownerId) {
+              const t = e2.card;
+              if (t.hp > 0 && t.hp < t.maxHp) {
+                t.hp = t.maxHp;
+                state.resuscitateConsumed.add(card.id);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 }

@@ -1,0 +1,29 @@
+# 1.1.0-beta.1 test battery
+# Captured 2026-04-18
+
+## Unit tests
+pnpm exec tsc --noEmit        → zero errors
+pnpm run lint                 → zero errors, 1 pre-existing warning (_budgetFrac)
+pnpm run test:node            → 574 passed / 6 skipped / 0 failed (+9 vs 1.0 baseline)
+pnpm run test:dom             → 108 passed / 0 failed
+pnpm run build (tsc -b + vite) → success
+
+## Balance benchmark (pnpm run analysis:benchmark, profile=ci)
+winRateA                      → 0.5122  (target [0.48, 0.52]) ✓
+timeoutRate                   → 0.0000  (target <0.20) ✓
+avgTurns                      → 16.3    (p10=8, p90=29)
+directAttacks                 → 23.9 / game
+410 games, 102 warmup, seeds 42 / 12345
+
+## Visual fixtures (pnpm run visual:export:headless)
+18/20 captures succeeded.
+Failed (pre-existing flake, not related to this PR):
+  - combat fixture on iphone-14 (locator.screenshot timeout waiting for stable)
+  - combat fixture on pixel-7 (same)
+Clean captures: menu/difficulty/deck-garage/card on all 4 viewports, plus
+combat on desktop-chromium and ipad-pro-landscape.
+
+## Runtime server sanity
+- Real card art path (card-001.png) → 200 image/png 8950 bytes ✓
+- Bogus fixture path (tough-fixture.png) → Vite SPA fallthrough to index.html;
+  browser fires onError on decode; initials fallback renders correctly ✓

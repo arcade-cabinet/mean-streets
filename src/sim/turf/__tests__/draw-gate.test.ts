@@ -94,7 +94,6 @@ function makeState(
       A: {
         turfs,
         deck: [],
-        discard: [],
         toughsInPlay,
         actionsRemaining: 5,
         pending,
@@ -104,7 +103,6 @@ function makeState(
       B: {
         turfs: [createTurf()],
         deck: [],
-        discard: [],
         toughsInPlay: 0,
         actionsRemaining: 5,
         pending: null,

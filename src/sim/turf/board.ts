@@ -1,7 +1,9 @@
 import affiliationsPool from '../../data/pools/affiliations.json';
+import turfSimConfig from '../../data/ai/turf-sim.json';
 import type {
   Card,
   CurrencyCard,
+  DifficultyTier,
   ModifierCard,
   PlayerState,
   StackedCard,
@@ -120,15 +122,23 @@ function toughs(turf: Turf): ToughCard[] {
   return out;
 }
 
-/** Dominant affiliation for loyal bonus; null if stack spans incompatibles. */
+/**
+ * Dominant affiliation for loyal bonus.
+ * RULES §4: requires 3+ toughs of the same dominant affiliation.
+ * Returns null if the count is below threshold or stack spans incompatibles.
+ */
 function dominantAffiliation(turf: Turf): string | null {
   const affs = toughs(turf).map((t) => t.affiliation).filter((a) => a !== 'freelance');
-  if (affs.length === 0) return null;
+  if (affs.length < 3) return null;
   const distinct = Array.from(new Set(affs));
   if (distinct.length === 1) return distinct[0];
   for (const anchor of distinct) {
     const mediators = MEDIATOR_MAP.get(anchor) ?? new Set<string>();
-    if (distinct.every((a) => a === anchor || mediators.has(a))) return anchor;
+    if (distinct.every((a) => a === anchor || mediators.has(a))) {
+      // Verify the anchor has ≥ 3 toughs (mediator-bridged affiliations don't count toward threshold).
+      const anchorCount = affs.filter((a) => a === anchor).length;
+      if (anchorCount >= 3) return anchor;
+    }
   }
   return null;
 }
@@ -164,7 +174,12 @@ export function positionPower(turf: Turf): number {
   return total + loyalAtkBonus(turf);
 }
 
-export function positionResistance(turf: Turf): number {
+/**
+ * Total resistance for the position. Optionally pass the current difficulty
+ * to apply the Closed Ranks defensive bonus (RULES §8.5): +bonus% resistance
+ * when turf.closedRanks is true AND the top of the stack is a tough.
+ */
+export function positionResistance(turf: Turf, difficulty?: DifficultyTier): number {
   let total = 0;
   for (const e of turf.stack) {
     const card = e.card;
@@ -174,7 +189,21 @@ export function positionResistance(turf: Turf): number {
       total += clampByHp(card.resistance, card);
     } else total += card.resistance;
   }
-  return total + loyalDefBonus(turf);
+  total += loyalDefBonus(turf);
+
+  // Closed Ranks bonus: only when closedRanks is set AND top of stack is a tough.
+  if (
+    difficulty != null &&
+    turf.closedRanks &&
+    turf.stack.length > 0 &&
+    turf.stack[turf.stack.length - 1].card.kind === 'tough'
+  ) {
+    const bonusMap = (turfSimConfig.closedRanks.defenseBonus as Record<string, number>);
+    const bonusFraction = bonusMap[difficulty] ?? 0;
+    total = Math.floor(total * (1 + bonusFraction));
+  }
+
+  return total;
 }
 
 function affiliationsOnTurf(turf: Turf): string[] {
@@ -193,18 +222,15 @@ function hasCurrencyBuffer(turf: Turf): boolean {
   return false;
 }
 
+/**
+ * RULES §4: rival placement is free when a mediating tough is in the stack.
+ * A tough mediates if its affiliation's mediator edges (from MEDIATOR_MAP)
+ * include the incoming affiliation — meaning it can bridge the conflict.
+ */
 function hasNeutralToughBuffer(turf: Turf, incoming: string): boolean {
-  const enemies = AT_WAR_MAP.get(incoming);
-  if (!enemies) return false;
-  const rivalsOnTurf = affiliationsOnTurf(turf).filter((a) => enemies.has(a));
-  if (rivalsOnTurf.length === 0) return false;
   return toughs(turf).some((t) => {
-    if (enemies.has(t.affiliation)) return false;
-    for (const rival of rivalsOnTurf) {
-      const rivalEnemies = AT_WAR_MAP.get(rival);
-      if (rivalEnemies?.has(t.affiliation)) return false;
-    }
-    return true;
+    const mediatees = MEDIATOR_MAP.get(t.affiliation);
+    return mediatees != null && mediatees.has(incoming);
   });
 }
 
@@ -295,6 +321,7 @@ export function promoteReserveTurf(player: PlayerState): void {
     const t = player.turfs[i];
     t.reserveIndex = Math.max(0, t.reserveIndex - 1);
     t.isActive = i === 0;
+    if (i === 0) t.justPromoted = true;
   }
 }
 

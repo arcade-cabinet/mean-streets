@@ -217,16 +217,6 @@
       "playerActionPenalty": 1,
       "lookahead": false
     },
-    "sudden-death": {
-      "turfCount": 1,
-      "actionsPerTurn": 3,
-      "firstTurnActions": 5,
-      "aiNoise": 0.15,
-      "aiTopK": 3,
-      "actionBonus": 0,
-      "playerActionPenalty": 0,
-      "lookahead": false
-    },
     "ultra-nightmare": {
       "turfCount": 1,
       "actionsPerTurn": 3,
@@ -276,8 +266,34 @@
       "medium":          { "base": [{ "kind": "triple", "count": 1 }] },
       "hard":            { "base": [{ "kind": "standard", "count": 1 }] },
       "nightmare":       { "base": [{ "kind": "standard", "count": 2 }] },
-      "sudden-death":    { "base": [{ "kind": "standard", "count": 1 }] },
       "ultra-nightmare": { "base": [{ "kind": "standard", "count": 3 }] }
+    },
+    "baseRarityWeights": {
+      "common": 55,
+      "uncommon": 28,
+      "rare": 14,
+      "legendary": 3,
+      "mythic": 0
+    },
+    "rollDistributions": {
+      "common":    { "common": 0.70, "uncommon": 0.22, "rare": 0.07, "legendary": 0.01 },
+      "uncommon":  { "uncommon": 0.60, "rare": 0.25, "legendary": 0.15 },
+      "rare":      { "rare": 0.70, "legendary": 0.30 },
+      "legendary": { "legendary": 1.0 },
+      "mythic":    { "mythic": 1.0 }
+    },
+    "difficultyRewardMult": {
+      "easy":            1.0,
+      "medium":          1.2,
+      "hard":            1.4,
+      "nightmare":       1.6,
+      "ultra-nightmare": 2.0
+    },
+    "perfectWarFallbackCurrency": 500,
+    "topTierPackKindWeights": {
+      "single":   0,
+      "triple":   0,
+      "standard": 1
     }
   },
   "gameDefaults": {
@@ -389,13 +405,6 @@
       "playerActionPenalty": 1,
       "lookahead": false
     },
-    "sudden-death": {
-      "topK": 3,
-      "noise": 0.15,
-      "actionBonus": 0,
-      "playerActionPenalty": 0,
-      "lookahead": false
-    },
     "ultra-nightmare": {
       "topK": 1,
       "noise": 0,
@@ -436,7 +445,6 @@
       "medium": 0.7,
       "hard": 1.0,
       "nightmare": 1.3,
-      "sudden-death": 1.0,
       "ultra-nightmare": 1.5
     },
     "lockupDuration": {
@@ -444,7 +452,6 @@
       "medium": 1,
       "hard": 2,
       "nightmare": 3,
-      "sudden-death": 2,
       "ultra-nightmare": 999
     }
   },
@@ -466,5 +473,14 @@
     "bribeUpAmount": 1000,
     "healCostSmall": { "tierSacrifice": "common", "sacrificeCount": 1, "hpGain": 2 },
     "healFullSacrifice": 2
+  },
+  "closedRanks": {
+    "defenseBonus": {
+      "easy": 0.50,
+      "medium": 0.35,
+      "hard": 0.20,
+      "nightmare": 0.10,
+      "ultra-nightmare": 0.05
+    }
   }
 }

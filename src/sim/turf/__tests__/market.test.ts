@@ -7,6 +7,7 @@ import {
   turfCashTotal,
   modsBelongingTo,
 } from '../market';
+import { stepAction } from '../environment';
 import {
   mkCurrency,
   mkDrug,
@@ -18,7 +19,7 @@ import {
 } from './state-builder';
 
 describe('sendToMarket', () => {
-  it('sends a tough to discard and its modifiers to the Black Market', () => {
+  it('removes tough from the turf and sends its modifiers to the Black Market', () => {
     const state = mkState(
       [
         mkTurf('a1', [
@@ -34,7 +35,7 @@ describe('sendToMarket', () => {
     sendToMarket(state, 'A', 'aT');
 
     expect(state.players.A.turfs[0].stack).toHaveLength(0);
-    expect(state.players.A.discard.some((c) => c.id === 'aT')).toBe(true);
+    // Tough leaves play entirely — not routed to any pile.
     expect(state.blackMarket.map((m) => m.id).sort()).toEqual(['d1', 'w1']);
     expect(state.players.A.toughsInPlay).toBe(0);
   });
@@ -50,7 +51,7 @@ describe('sendToMarket', () => {
 });
 
 describe('tradeAtMarket', () => {
-  it('trades 2 commons for an uncommon', () => {
+  it('trades 2 commons for an uncommon — promoted card lands in blackMarket', () => {
     const state = mkState([mkTurf('a1', [])], [mkTurf('b1', [])]);
     state.blackMarket.push(
       mkWeapon({ id: 'w1', rarity: 'common' }),
@@ -59,9 +60,16 @@ describe('tradeAtMarket', () => {
 
     const got = tradeAtMarket(state, 'A', ['w1', 'w2'], 'uncommon');
 
+    // Return value is non-null and carries the promoted rarity.
     expect(got).not.toBeNull();
     expect(got?.rarity).toBe('uncommon');
-    expect(state.blackMarket).toHaveLength(0);
+    // Source mods (w1, w2) consumed; promoted card present in pool.
+    expect(state.blackMarket).toHaveLength(1);
+    expect(state.blackMarket[0].rarity).toBe('uncommon');
+    expect(state.blackMarket[0].id).toBe('w1-traded');
+    // Originals are gone.
+    expect(state.blackMarket.some((m) => m.id === 'w1')).toBe(false);
+    expect(state.blackMarket.some((m) => m.id === 'w2')).toBe(false);
   });
 
   it('rejects when offeredMods.length !== tradePairs (2)', () => {
@@ -92,6 +100,54 @@ describe('tradeAtMarket', () => {
 
     // Target "legendary" from commons is invalid.
     expect(tradeAtMarket(state, 'A', ['w1', 'w2'], 'legendary')).toBeNull();
+  });
+
+  it('trades 2 rares for a legendary — promoted card lands in blackMarket', () => {
+    const state = mkState([mkTurf('a1', [])], [mkTurf('b1', [])]);
+    state.blackMarket.push(
+      mkDrug({ id: 'd1', rarity: 'rare' }),
+      mkDrug({ id: 'd2', rarity: 'rare' }),
+    );
+
+    const got = tradeAtMarket(state, 'A', ['d1', 'd2'], 'legendary');
+
+    expect(got).not.toBeNull();
+    expect(got?.rarity).toBe('legendary');
+    // Exactly one card in the pool — the promoted legendary.
+    expect(state.blackMarket).toHaveLength(1);
+    expect(state.blackMarket[0].rarity).toBe('legendary');
+    expect(state.blackMarket[0].id).toBe('d1-traded');
+    // Source rares are gone.
+    expect(state.blackMarket.some((m) => m.id === 'd1')).toBe(false);
+    expect(state.blackMarket.some((m) => m.id === 'd2')).toBe(false);
+  });
+
+  it('black_market_trade via stepAction: promoted card in blackMarket, metrics incremented', () => {
+    const state = mkState(
+      [mkTurf('a1', [sc(mkTough({ id: 'aT' }))])],
+      [mkTurf('b1', [sc(mkTough({ id: 'bT' }))])],
+    );
+    state.players.A.actionsRemaining = 3;
+    state.blackMarket.push(
+      mkWeapon({ id: 'w1', rarity: 'common' }),
+      mkWeapon({ id: 'w2', rarity: 'common' }),
+    );
+
+    stepAction(state, {
+      kind: 'black_market_trade',
+      side: 'A',
+      offeredMods: ['w1', 'w2'],
+      targetRarity: 'uncommon',
+    });
+
+    // Source commons consumed.
+    expect(state.blackMarket.some((m) => m.id === 'w1')).toBe(false);
+    expect(state.blackMarket.some((m) => m.id === 'w2')).toBe(false);
+    // Promoted uncommon is in the Black Market pool.
+    expect(state.blackMarket).toHaveLength(1);
+    expect(state.blackMarket[0].rarity).toBe('uncommon');
+    // Metric incremented.
+    expect(state.metrics.marketTrades).toBe(1);
   });
 });
 
