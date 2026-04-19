@@ -107,7 +107,7 @@ export function maybeBribe(
   toRemove.sort((a, b) => b - a);
   for (const idx of toRemove) {
     const card = defender.stack[idx].card;
-    defender.stack.splice(idx, 1);
+    removeFromStack(defender, idx);
     if (card.kind !== 'tough') state.blackMarket.push(card);
   }
 
@@ -218,46 +218,53 @@ export function applyHealTicks(state: TurfGameState, side: 'A' | 'B'): void {
     return out;
   };
 
+  // Priority order per RULES §7: PATCHUP → FIELD_MEDIC → RESUSCITATE.
+  // Iterate the stack three times, one tier per pass, to ensure deterministic
+  // ordering regardless of where abilities appear in the stack.
+
+  // Pass 1 — PATCHUP (drug): +1 HP/turn to the owning tough.
   for (const entry of active.stack) {
     const card = entry.card;
+    if (card.kind === 'drug' && card.abilities.includes('PATCHUP')) {
+      const ownerId = entry.owner;
+      if (ownerId) {
+        for (const e2 of active.stack) {
+          if (e2.card.kind === 'tough' && e2.card.id === ownerId) {
+            const t = e2.card;
+            if (t.hp > 0) t.hp = Math.min(t.maxHp, t.hp + 1);
+          }
+        }
+      }
+    }
+  }
 
-    if (card.kind === 'drug') {
-      if (card.abilities.includes('PATCHUP')) {
-        // Heal the tough that owns this drug.
+  // Pass 2 — FIELD_MEDIC (tough): +1 HP to every wounded tough on this turf.
+  for (const entry of active.stack) {
+    const card = entry.card;
+    if (card.kind === 'tough' && card.abilities.includes('FIELD_MEDIC')) {
+      for (const t of woundedToughs()) {
+        t.hp = Math.min(t.maxHp, t.hp + 1);
+      }
+    }
+  }
+
+  // Pass 3 — RESUSCITATE (drug): one-shot full heal to the owning tough.
+  for (const entry of active.stack) {
+    const card = entry.card;
+    if (card.kind === 'drug' && card.abilities.includes('RESUSCITATE')) {
+      if (!state.resuscitateConsumed.has(card.id)) {
         const ownerId = entry.owner;
         if (ownerId) {
           for (const e2 of active.stack) {
             if (e2.card.kind === 'tough' && e2.card.id === ownerId) {
               const t = e2.card;
-              if (t.hp > 0) t.hp = Math.min(t.maxHp, t.hp + 1);
-            }
-          }
-        }
-      }
-
-      if (card.abilities.includes('RESUSCITATE')) {
-        // One-shot: fire only if not yet consumed for this drug card instance.
-        if (!state.resuscitateConsumed.has(card.id)) {
-          const ownerId = entry.owner;
-          if (ownerId) {
-            for (const e2 of active.stack) {
-              if (e2.card.kind === 'tough' && e2.card.id === ownerId) {
-                const t = e2.card;
-                if (t.hp > 0 && t.hp < t.maxHp) {
-                  t.hp = t.maxHp;
-                  state.resuscitateConsumed.add(card.id);
-                }
+              if (t.hp > 0 && t.hp < t.maxHp) {
+                t.hp = t.maxHp;
+                state.resuscitateConsumed.add(card.id);
               }
             }
           }
         }
-      }
-    }
-
-    if (card.kind === 'tough' && card.abilities.includes('FIELD_MEDIC')) {
-      // +1 HP to every wounded tough on this turf (including self if wounded).
-      for (const t of woundedToughs()) {
-        t.hp = Math.min(t.maxHp, t.hp + 1);
       }
     }
   }

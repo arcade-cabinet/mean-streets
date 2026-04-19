@@ -1,5 +1,5 @@
 import { applyTangibles, runIntangiblesPhase } from './abilities';
-import { applyHealTicks } from './ability-handlers';
+import { applyHealTicks, removeFromStack } from './ability-handlers';
 import { TURF_SIM_CONFIG } from './ai/config';
 import { resolveStrikeNow, type StrikeOutcome } from './attacks';
 import {
@@ -103,7 +103,7 @@ function maybeCombatBribe(state: TurfGameState, q: QueuedAction): boolean {
   toRemove.sort((a, b) => b - a);
   for (const idx of toRemove) {
     const card = def.stack[idx].card;
-    def.stack.splice(idx, 1);
+    removeFromStack(def, idx);
     if (card.kind !== 'tough') state.blackMarket.push(card);
   }
   state.metrics.bribesAccepted++;
@@ -155,7 +155,7 @@ function raidPhase(state: TurfGameState): boolean {
       bailRemove.sort((a, b) => b - a);
       for (const idx of bailRemove) {
         const card = active.stack[idx].card;
-        active.stack.splice(idx, 1);
+        removeFromStack(active, idx);
         if (card.kind !== 'tough') state.blackMarket.push(card);
       }
       continue;
@@ -164,15 +164,17 @@ function raidPhase(state: TurfGameState): boolean {
     // Lockup the top tough + its modifiers.
     const lockedTough = top.card;
     const lockedMods: ModifierCard[] = modifiersByOwner(active, lockedTough.id);
-    // Remove the tough from the stack.
-    active.stack.splice(topIdx, 1);
-    // Remove every mod bound to that tough.
+    // Remove every mod bound to that tough first (in reverse order to preserve indices).
     for (let i = active.stack.length - 1; i >= 0; i--) {
       const sc = active.stack[i];
       if (sc.card.kind !== 'tough' && sc.owner === lockedTough.id) {
-        active.stack.splice(i, 1);
+        removeFromStack(active, i);
       }
     }
+    // Remove the tough from the stack (index may have shifted if mods were below it,
+    // so re-find it).
+    const newTopIdx = active.stack.findIndex((sc) => sc.card.id === lockedTough.id);
+    if (newTopIdx >= 0) removeFromStack(active, newTopIdx);
     state.lockup[side].push({
       tough: lockedTough,
       attachedModifiers: lockedMods,
