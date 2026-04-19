@@ -24,13 +24,16 @@ const ROLL_DISTRIBUTIONS: Record<Rarity, Partial<Record<Rarity, number>>> =
   _pe.rollDistributions as Record<Rarity, Partial<Record<Rarity, number>>>;
 
 const _diffMult = _pe.difficultyRewardMult as Partial<Record<DifficultyTier, number>>;
-const DIFFICULTY_REWARD_MULT: Record<DifficultyTier, number> = {
-  easy:              _diffMult['easy']              ?? 1.0,
-  medium:            _diffMult['medium']            ?? 1.2,
-  hard:              _diffMult['hard']              ?? 1.4,
-  nightmare:         _diffMult['nightmare']         ?? 1.6,
-  'ultra-nightmare': _diffMult['ultra-nightmare']   ?? 2.0,
-};
+const DIFFICULTY_TIERS: DifficultyTier[] = ['easy', 'medium', 'hard', 'nightmare', 'ultra-nightmare'];
+for (const tier of DIFFICULTY_TIERS) {
+  if (_diffMult[tier] == null) {
+    throw new Error(
+      `turf-sim.json packEconomy.difficultyRewardMult is missing entry for "${tier}". ` +
+      `All difficulty multipliers must be configured explicitly — no silent fallback allowed.`,
+    );
+  }
+}
+const DIFFICULTY_REWARD_MULT = _diffMult as Record<DifficultyTier, number>;
 
 const VALID_PACK_KINDS: ReadonlySet<string> = new Set([
   'single', 'triple', 'standard',
