@@ -111,6 +111,14 @@ function compileDrug({ file, data }) {
 function compileCurrency({ file, data }) {
   requireFields(data, ['id', 'kind', 'name', 'denomination', 'rarity', 'unlocked', 'locked'], `currency/${file}`);
   if (data.kind !== 'currency') throw new Error(`currency/${file}: expected kind=currency, got ${data.kind}`);
+  if (data.abilities !== undefined) {
+    if (!Array.isArray(data.abilities)) {
+      throw new Error(`currency/${file}: "abilities" must be an array, got ${JSON.stringify(data.abilities)}`);
+    }
+    if (!data.abilities.every((a) => typeof a === 'string')) {
+      throw new Error(`currency/${file}: all "abilities" entries must be strings, got ${JSON.stringify(data.abilities)}`);
+    }
+  }
   return {
     kind: 'currency',
     id: data.id,
