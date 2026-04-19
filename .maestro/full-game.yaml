@@ -2,7 +2,8 @@
 # full-game.yaml — Mean Streets v1.0
 #
 # Play a complete game: menu → difficulty → draw/place/strike loop → game over
-# Uses Corner Boy (5 turfs, easiest) for fastest completion
+# Uses Corner Boy (5 turfs, easiest) as the most forgiving AI for flow coverage.
+# (Note: 5-turf wars take longest; War Council's 1-turf is shortest.)
 - launchApp
 - assertVisible:
     id: "main-menu-screen"
@@ -53,11 +54,16 @@
             id: "action-budget"
           timeout: 10000
 
-# Game should eventually end (or we hit the repeat limit)
-# Check for either game-over or still in game
-- assertVisible:
-    id: "gameover-screen"
-    optional: true
+# After the turn loop, the app must still be in either the combat
+# screen (turn loop hit its repeat cap) or the game-over screen (game
+# resolved). Anything else means navigation corrupted mid-run.
 - assertVisible:
     id: "game-screen"
     optional: true
+- runFlow:
+    when:
+      notVisible:
+        id: "game-screen"
+    commands:
+      - assertVisible:
+          id: "gameover-screen"

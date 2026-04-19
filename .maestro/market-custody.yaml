@@ -25,7 +25,6 @@
     visible:
       text: "Black Market"
     timeout: 3000
-    optional: true
 
 # Close Market
 - tapOn:
@@ -38,7 +37,6 @@
     visible:
       text: "Custody"
     timeout: 3000
-    optional: true
 
 # Close Custody
 - tapOn:
