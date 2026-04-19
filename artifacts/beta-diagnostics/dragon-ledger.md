@@ -25,6 +25,17 @@ Each item closed in this PR with the commit that addressed it.
    LEGACY_SUDDEN_DEATH const + DO-NOT-REMOVE comment + unknown cast hardens
    against future type-sweep cleanups silently deleting the migration.
 
+## Build/deploy integrity (caught by CI)
+9. Dependabot auto-bumped sql.js 1.11.0 → 1.14.1, breaking jeep-sqlite
+   WASM ABI (LinkError at runtime in browser tests) → **6d71837 / 68435e1**
+   Pinned to 1.11.0 exactly; added dependabot ignore so the bump can't
+   silently return. 95 browser tests pass.
+10. DifficultyScreen.browser.test.tsx asserted 6 tiles, not 5 → **6d71837**
+    Missed in the Sudden Death removal sweep (DOM variant was updated,
+    browser variant wasn't).
+11. Python workspace (image-extraction) had no dependabot coverage → **ae64508**
+    Added pip ecosystem entry so CVE alerts + weekly bumps fire.
+
 ## Documented as follow-ups (not blocking 1.1-beta.1)
 - LAUNDER currency can be spent as a bribe, destroying heat relief mid-war;
   UX trap deserves a future warning prompt or non-spendable tag.
