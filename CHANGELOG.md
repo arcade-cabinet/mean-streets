@@ -9,6 +9,36 @@ status: current
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.2.0-beta.1](https://github.com/arcade-cabinet/mean-streets/compare/v1.1.0-beta.1...v1.2.0-beta.1) (2026-04-19)
+
+
+### Features
+
+* **art:** mythic card art — purpose-built silhouettes ([#29](https://github.com/arcade-cabinet/mean-streets/issues/29)) ([b6a8839](https://github.com/arcade-cabinet/mean-streets/commit/b6a88395568f123f74df342ec074384907fde086))
+* governor scoring + resolution overlay + phone layout + visual polish ([#24](https://github.com/arcade-cabinet/mean-streets/issues/24)) ([b544091](https://github.com/arcade-cabinet/mean-streets/commit/b54409149bf1666043380310a491bae3bddf1c6e))
+* **packs:** single draw pile with probabilistic type drops ([#16](https://github.com/arcade-cabinet/mean-streets/issues/16)) ([21a3f5d](https://github.com/arcade-cabinet/mean-streets/commit/21a3f5d6684361bdfab7702631817bcb4b688fd6))
+* production polish batch (Epics A–K) ([#2](https://github.com/arcade-cabinet/mean-streets/issues/2)) ([558491f](https://github.com/arcade-cabinet/mean-streets/commit/558491f75ac6f83ba41b068c77ad6acd5a81f560))
+* **sim:** wire 5 mythic signature abilities + promote integration tests ([#9](https://github.com/arcade-cabinet/mean-streets/issues/9)) ([ad4cd0d](https://github.com/arcade-cabinet/mean-streets/commit/ad4cd0d38c2e535fb5524d42128d00e4efc68a8b))
+* **ui:** board grid layout + simplified menu + cards screen + browser tests ([#15](https://github.com/arcade-cabinet/mean-streets/issues/15)) ([831e28c](https://github.com/arcade-cabinet/mean-streets/commit/831e28cb6f33e1b1ff4c131a9d9fdde9800edb99))
+* v0.3 single-lane turf war rewrite ([#4](https://github.com/arcade-cabinet/mean-streets/issues/4)) ([62ab2e8](https://github.com/arcade-cabinet/mean-streets/commit/62ab2e8bb200569059578061cc8f5091462ba52d))
+* v1.0.0-beta.1 — card art, draw flow, collection persistence ([#27](https://github.com/arcade-cabinet/mean-streets/issues/27)) ([231b6a2](https://github.com/arcade-cabinet/mean-streets/commit/231b6a27d864415fb01d4b959408a45480c9fdd5))
+* v1.0.0-rc.1 — phone layout, balance gate, SFX, E2E green ([#28](https://github.com/arcade-cabinet/mean-streets/issues/28)) ([ad2b832](https://github.com/arcade-cabinet/mean-streets/commit/ad2b832736e13a5f8e842b3e07401cda56a02e20))
+
+
+### Bug Fixes
+
+* **ci:** correct setup-java SHA + reset lockfile noise in autobalance ([#17](https://github.com/arcade-cabinet/mean-streets/issues/17)) ([fa52842](https://github.com/arcade-cabinet/mean-streets/commit/fa52842a27c8ccc8f1aee8c3300cc47d0c620c6d))
+* phone menu breakpoint + drawn card modal one-shot ([#30](https://github.com/arcade-cabinet/mean-streets/issues/30)) ([515611d](https://github.com/arcade-cabinet/mean-streets/commit/515611d3ea575f5fc0526aee5b461b38ab06aa9f))
+* **ui:** add Sudden Death tier + fix reapers affiliation + center hero bg ([#23](https://github.com/arcade-cabinet/mean-streets/issues/23)) ([ace75d8](https://github.com/arcade-cabinet/mean-streets/commit/ace75d80ac39736b6c0720bdeeb2154d94ff67b0))
+* **ui:** fix broken card art SVGs + enforce portrait card slot ratio ([#20](https://github.com/arcade-cabinet/mean-streets/issues/20)) ([b580a12](https://github.com/arcade-cabinet/mean-streets/commit/b580a12131c6674f157b633b8bc3ba555663a70a))
+* **ui:** uniform portrait aspect ratio for all board slots ([#21](https://github.com/arcade-cabinet/mean-streets/issues/21)) ([f862170](https://github.com/arcade-cabinet/mean-streets/commit/f862170cbc4caad706750d9380357c70e1cfabe4))
+
+
+### Documentation
+
+* update STATE.md — E2E + mythics + governance done ([#12](https://github.com/arcade-cabinet/mean-streets/issues/12)) ([88798a4](https://github.com/arcade-cabinet/mean-streets/commit/88798a4ce481d6f94d207787bc1245b9453e45a5))
+* update STATE.md ([#18](https://github.com/arcade-cabinet/mean-streets/issues/18)) ([ef50601](https://github.com/arcade-cabinet/mean-streets/commit/ef506016fec0fa6e2413b3d58bd894e745979767))
+
 ## [1.0.0](https://github.com/arcade-cabinet/mean-streets/compare/v0.7.1...v1.0.0) (2026-04-18)
 
 ### Features
