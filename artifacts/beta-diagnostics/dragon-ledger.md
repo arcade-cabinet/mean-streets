@@ -36,6 +36,18 @@ Each item closed in this PR with the commit that addressed it.
 11. Python workspace (image-extraction) had no dependabot coverage → **ae64508**
     Added pip ecosystem entry so CVE alerts + weekly bumps fire.
 
+## Closed in this PR (second-pass fixes)
+12. **AI earns no packs on AI wins** → **519c878**
+    App.tsx handleGameOver now branches on winner: player-win opens
+    packs into player collection (unchanged), AI-win queues pending
+    packs and opens them into aiProfile via the existing helpers.
+    DESIGN.md §Core Loop "AI earns identical rewards when it wins"
+    now holds.
+13. **tsconfig excluded src/sim** → **1191df8**
+    Added tsconfig.sim.json project ref with node types; surfaced 3
+    dead code files (deleted) and 2 real latent bugs (wrong TurfMetrics
+    field names in effects.ts; missing type re-exports in benchmarks.ts).
+
 ## Documented as follow-ups (not blocking 1.1-beta.1)
 - LAUNDER currency can be spent as a bribe, destroying heat relief mid-war;
   UX trap deserves a future warning prompt or non-spendable tag.
@@ -44,9 +56,6 @@ Each item closed in this PR with the commit that addressed it.
 - Silhouette missing in prod when served via SPA-fallthrough web servers
   (Cloudflare/Netlify) returns HTML not 404; fallback fires correctly but
   wastes a fetch. Consider returning 404 for /assets/* in production deploy.
-- **AI earns no packs on AI wins** (App.tsx:216). DESIGN.md says "AI
-  earns identical rewards when it wins" but only the player branch opens
-  packs. AI catalog growth is slower than player's. Follow-up PR.
 - **Perfect War escalating currency fallback is flat $500 forever**
   (rewards.ts:163). RULES §13.4 says $500 → $1000 → $1500 → … but the
   escalation state was deferred to "persistence layer" that doesn't
