@@ -128,25 +128,30 @@ describe('closed ranks — end-of-turn flipping (RULES §8.5)', () => {
     expect(state.players.A.turfs[0].closedRanks).toBe(true);
   });
 
-  it('closedRanksEnds metric increments per transition into closed ranks', () => {
+  it('closedRanksEnds metric increments per transition into closed ranks (active turf only)', () => {
+    // Closed Ranks is an active-turf posture per RULES §8.5. Only turfs[0]
+    // (isActive=true) should produce a transition; turfs[1] is a reserve.
     const state = mkState();
     addToStack(state.players.A.turfs[0], tough('a1'));
-    addToStack(state.players.A.turfs[1], tough('a2'));
-    state.players.A.toughsInPlay = 2;
+    // Do NOT add a tough to turfs[1] — it is a reserve and should not transition.
+    state.players.A.toughsInPlay = 1;
     stepAction(state, { kind: 'end_turn', side: 'A' });
-    expect(state.metrics.closedRanksEnds).toBe(2); // both turfs transitioned
+    // Only the active turf (turfs[0]) transitions.
+    expect(state.metrics.closedRanksEnds).toBe(1);
+    expect(state.players.A.turfs[0].closedRanks).toBe(true);
+    // Reserve turf is unaffected.
+    expect(state.players.A.turfs[1].closedRanks).toBe(false);
   });
 
-  it('re-closing an already-closed-ranks turf does not double-count', () => {
+  it('re-closing an already-closed-ranks active turf does not double-count', () => {
     const state = mkState();
     addToStack(state.players.A.turfs[0], tough('a1'));
-    addToStack(state.players.A.turfs[1], tough('a2'));
-    state.players.A.toughsInPlay = 2;
-    // Force turf 0 to already be in closed ranks.
+    state.players.A.toughsInPlay = 1;
+    // Force the active turf to already be in closed ranks.
     state.players.A.turfs[0].closedRanks = true;
     stepAction(state, { kind: 'end_turn', side: 'A' });
-    // Only turf[1] transitioned (turf[0] was already closed).
-    expect(state.metrics.closedRanksEnds).toBe(1);
+    // Active turf was already closed — no new transition.
+    expect(state.metrics.closedRanksEnds).toBe(0);
   });
 });
 

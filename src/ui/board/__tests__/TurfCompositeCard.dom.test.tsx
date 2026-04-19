@@ -122,6 +122,20 @@ describe('TurfCompositeCard', () => {
     expect(container.querySelector('.turf-composite-resistance-badge')!.textContent).toBe('6');
   });
 
+  it('3 toughs of the same affiliation DO receive loyal bonus', () => {
+    // kings_row loyal atkBonus = +1 (affiliations.json). Three same-affiliation
+    // toughs each at power 8 → base total 24 + 1 loyal = 25 (RULES §4).
+    // kings_row defBonus = 0, so resistance stays at 6×3 = 18.
+    const turf = makeTurf([
+      tough({ id: 'tough-a', power: 8, resistance: 6, affiliation: 'kings_row' }),
+      tough({ id: 'tough-b', power: 8, resistance: 6, affiliation: 'kings_row' }),
+      tough({ id: 'tough-c', power: 8, resistance: 6, affiliation: 'kings_row' }),
+    ]);
+    const { container } = render(wrap(<TurfCompositeCard turf={turf} />));
+    expect(container.querySelector('.turf-composite-power-badge')!.textContent).toBe('25');
+    expect(container.querySelector('.turf-composite-resistance-badge')!.textContent).toBe('18');
+  });
+
   it('shows modifier summary tags', () => {
     const turf = makeTurf([tough(), weapon(), drug(), currency()]);
     const { container } = render(wrap(<TurfCompositeCard turf={turf} />));

@@ -260,11 +260,12 @@ describe('resolvePhase — turf-wide bribe pool', () => {
 
     resolvePhase(state);
 
-    if (state.metrics.bribesAccepted > 0) {
-      // At least one bill went to Black Market on a successful bribe.
-      expect(state.blackMarket.length).toBeGreaterThan(0);
-      expect(state.blackMarket.every((m) => m.kind === 'currency')).toBe(true);
-    }
+    // seed=1 → rng.next() ≈ 0.269 < 0.99 (bribe probability for $5000),
+    // so bribe fires deterministically on every run.
+    expect(state.metrics.bribesAccepted).toBeGreaterThan(0);
+    // Consumed bills route to Black Market.
+    expect(state.blackMarket.length).toBeGreaterThan(0);
+    expect(state.blackMarket.every((m) => m.kind === 'currency')).toBe(true);
   });
 });
 
