@@ -14,16 +14,20 @@ const RARITY_RANK: Record<Rarity, number> = {
   common: 1, uncommon: 2, rare: 3, legendary: 4, mythic: 5,
 };
 
+/**
+ * Locate a tough on the player's ACTIVE turf only (turfs[0]).
+ * Per RULES §6, all market operations target the active turf exclusively.
+ */
 function findTough(
   player: PlayerState, toughId: string,
 ): { turfIdx: number; stackIdx: number } | null {
-  for (let ti = 0; ti < player.turfs.length; ti++) {
-    const turf = player.turfs[ti];
-    for (let si = 0; si < turf.stack.length; si++) {
-      const entry = turf.stack[si];
-      if (entry.card.kind === 'tough' && entry.card.id === toughId)
-        return { turfIdx: ti, stackIdx: si };
-    }
+  const activeTurf = player.turfs.find((t) => t.isActive);
+  if (!activeTurf) return null;
+  const turfIdx = player.turfs.indexOf(activeTurf);
+  for (let si = 0; si < activeTurf.stack.length; si++) {
+    const entry = activeTurf.stack[si];
+    if (entry.card.kind === 'tough' && entry.card.id === toughId)
+      return { turfIdx, stackIdx: si };
   }
   return null;
 }
