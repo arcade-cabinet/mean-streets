@@ -172,12 +172,15 @@ docs/                  # Design, rules, architecture, production, visual review
 ## Source of Truth
 
 - [docs/DESIGN.md](./docs/DESIGN.md) — vision and identity
+- [docs/DESIGN.md](./docs/DESIGN.md) — vision + identity
 - [docs/RULES.md](./docs/RULES.md) — authoritative gameplay mechanics (v0.3)
 - [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) — technical architecture
-- [docs/PRODUCTION.md](./docs/PRODUCTION.md) — release checklist + implementation status
-- [docs/VISUAL_REVIEW.md](./docs/VISUAL_REVIEW.md) — visual review workflow
-- [docs/plans/v0.3-task-batch.md](./docs/plans/v0.3-task-batch.md) — v0.3 epic execution plan
-- [docs/archive/RULES-v0.2.md](./docs/archive/RULES-v0.2.md) — prior design for reference
+- [docs/STATE.md](./docs/STATE.md) — current branch state + release log
+- [docs/PRODUCTION.md](./docs/PRODUCTION.md) — partial systems + post-1.0 polish
+- [docs/RELEASE.md](./docs/RELEASE.md) — release-please tag-and-publish runbook
+- [docs/LAUNCH_READINESS.md](./docs/LAUNCH_READINESS.md) — pre-store-submit manual sweep
+- [docs/TESTING.md](./docs/TESTING.md), [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md), [docs/VISUAL_REVIEW.md](./docs/VISUAL_REVIEW.md) — ops/quality runbooks
+- [docs/LORE.md](./docs/LORE.md), [docs/store-listing.md](./docs/store-listing.md) — narrative + store metadata
 
 ## License
 

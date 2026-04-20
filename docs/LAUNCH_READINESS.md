@@ -1,30 +1,28 @@
 ---
 title: Launch Readiness Checklist
-updated: 2026-04-17
+updated: 2026-04-19
 status: current
 domain: ops
 ---
 
-# Launch Readiness — Pre-Submission Sweep (K2)
+# Launch Readiness — Pre-Submission Sweep
 
 This is the manual QA pass to run before clicking submit on Google
-Play / App Store. It complements the automated CI gate
-(lint + tsc + test + build + cap:sync + release-gate). Every box
-below must be checked OR have an explicit owner + ticket reference
-before the build moves forward.
+Play / App Store. The automated matrix on `main` is assumed green:
+- `ci.yml` (PR + push): lint / tsc / node / DOM / browser /
+  release-gate / build
+- `cd.yml` (push: main): Playwright e2e on 4 device profiles, Pages
+  deploy, debug APK
+This file covers everything that CI/CD cannot: physical-device behavior,
+accessibility on real screen readers, signing keys, store metadata,
+sign-off.
 
-## Automated gate (run via `pnpm`)
+Every box below must be checked OR have an explicit owner + ticket
+reference before the build moves forward.
 
-- [ ] `pnpm run lint` — Biome clean
-- [ ] `pnpm exec tsc --noEmit` — typecheck clean
-- [ ] `pnpm run test` — node + DOM tests
-- [ ] `pnpm run test:browser` — Vitest in real Chromium
-- [ ] `PW_HEADLESS=1 pnpm run test:e2e` — Playwright on all 4 device profiles
-- [ ] `RELEASE_GATING=1 pnpm run test:release` — balance lock coverage ≥ floor
-- [ ] `pnpm run build` — production web bundle
-- [ ] `pnpm run cap:sync` — Capacitor wiring intact
+## Balance sanity (local)
 
-## Cards & balance
+Run before signing off, even though CI gates the same data:
 
 - [ ] `pnpm run analysis:benchmark` — Medium AI-vs-AI winrate in
       [0.48, 0.52] for ≥ 3 consecutive seeded runs
@@ -93,8 +91,11 @@ before the build moves forward.
       `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`,
       `APPLE_APP_STORE_API_KEY_ID`, `APPLE_APP_STORE_API_ISSUER_ID`,
       `APPLE_APP_STORE_API_PRIVATE_KEY`
-- [ ] `gh workflow run mobile-release.yml -f ref=<rc-tag>` produces
-      a signed AAB + iOS archive without errors
+- [ ] Latest release tag's `Release` workflow run produced both
+      `mean-streets-android-vX.Y.Z` (containing the AAB) and
+      `mean-streets-ios-vX.Y.Z` (containing the xcarchive) Actions
+      artifacts. These attach to the workflow run on the **Actions
+      tab**, not to the GitHub Release page.
 
 ## Crash + telemetry
 
@@ -114,11 +115,13 @@ before the build moves forward.
 | Compliance/Legal|           |      |                             |
 
 When all five sign off and every box above is checked, hand off to
-`docs/RELEASE.md` Step 1 to bump version + tag.
+[RELEASE.md](./RELEASE.md) — release-please owns the version bump,
+the human just opens / merges the release PR.
 
 ## Links
 
-- `docs/RELEASE.md` — release runbook
-- `docs/PRODUCTION.md` — release-readiness gating
-- `docs/store-listing.md` — store copy + metadata draft
-- `docs/VISUAL_REVIEW.md` — visual gap-analysis worksheet
+- [RELEASE.md](./RELEASE.md) — what happens after sign-off
+- [PRODUCTION.md](./PRODUCTION.md) — partial / post-1.0 tracker
+- [STATE.md](./STATE.md) — what's on `main` right now
+- [store-listing.md](./store-listing.md) — store copy + metadata draft
+- [VISUAL_REVIEW.md](./VISUAL_REVIEW.md) — visual gap-analysis worksheet

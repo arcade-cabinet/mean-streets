@@ -16,14 +16,22 @@ HP + damage tiers, heat + raids, Black Market + Holding, 10
 hand-authored mythics. No dice.
 
 **Doc pillars** — each file owns exactly one area:
-- `docs/DESIGN.md` — vision, identity, philosophy, pivot history
+- `docs/DESIGN.md` — vision, identity, philosophy, pivot history, future direction
 - `docs/RULES.md` — authoritative gameplay mechanics (single-lane, HP,
   heat, market, holding, mythics, damage tiers, progression)
 - `docs/ARCHITECTURE.md` — technical stack, directory layout, data flow
-- `docs/PRODUCTION.md` — release readiness, platform targets, blockers
+- `docs/STATE.md` — current branch state + recent-release log
+- `docs/PRODUCTION.md` — partial systems + post-1.0 polish runway
+- `docs/LAUNCH_READINESS.md` — pre-store-submit manual QA sweep
+- `docs/RELEASE.md` — release-please / tag-and-publish runbook
+- `docs/TESTING.md` — test matrix + how to run each suite
+- `docs/DEPLOYMENT.md` — Pages + mobile deploy procedures
 - `docs/VISUAL_REVIEW.md` — how to run and review visual fixtures
+- `docs/LORE.md` — narrative + character backstory
+- `docs/store-listing.md` — store copy + metadata draft
 
-Archived: `docs/archive/RULES-v0.2.md` for prior design reference.
+Superseded PRDs and prior rulesets live in git history, not in the
+tree. Use `git log` if you need archaeology.
 
 ## Critical Rules
 
@@ -232,6 +240,4 @@ pnpm run cap:sync           # Build + sync web assets to Capacitor
 
 ## Release Status
 
-v1.0.0 shipped 2026-04-18. See `docs/PRODUCTION.md` for post-1.0 polish
-items. Paper playtests: `docs/plans/v0.3-paper-playtest.md` +
-`docs/plans/v0.3-paper-playtest-2.md`.
+Latest tag: see `docs/STATE.md`. Polish runway: `docs/PRODUCTION.md`.
