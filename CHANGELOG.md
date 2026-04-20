@@ -9,6 +9,13 @@ status: current
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.2.1-beta.1](https://github.com/arcade-cabinet/mean-streets/compare/v1.2.0-beta.1...v1.2.1-beta.1) (2026-04-20)
+
+
+### Documentation
+
+* prune archived plans, align live docs, kill DRY violations ([#37](https://github.com/arcade-cabinet/mean-streets/issues/37)) ([1e3e0c2](https://github.com/arcade-cabinet/mean-streets/commit/1e3e0c23548421799ffe340ad6669a9b289b4cda))
+
 ## [1.2.0-beta.1](https://github.com/arcade-cabinet/mean-streets/compare/v1.1.0-beta.1...v1.2.0-beta.1) (2026-04-19)
 
 
