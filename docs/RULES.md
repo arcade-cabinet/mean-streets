@@ -9,8 +9,7 @@ domain: product
 
 Authoritative, implementation-level rules. Design intent lives in
 [DESIGN.md](./DESIGN.md). When rules disagree with this file, this
-file wins. This supersedes every prior version. v0.2 RULES.md is
-archived at [archive/RULES-v0.2.md](./archive/RULES-v0.2.md).
+file wins. This supersedes every prior version.
 
 The mental model: **War with cumulative effect, but played on a
 single lane.** Each player defends one active turf at a time.
@@ -829,6 +828,7 @@ Re-baseline expected after each major rule change.
   instance was unlocked.
 - **Perfect / Flawless / Dominant / Won War**: war outcome ratings.
 
-See `docs/archive/plans/v0.3-paper-playtest-2.md` for the playtest that
-produced these rules. See `docs/archive/RULES-v0.2.md` for the
-previous version.
+This file is the authoritative spec. The paper-playtest research that
+fed it and the v0.2 ruleset that preceded it both live in git history
+(`git log -- docs/RULES.md` and earlier paths under `docs/plans/` and
+`docs/archive/`).

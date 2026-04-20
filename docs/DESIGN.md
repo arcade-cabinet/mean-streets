@@ -319,6 +319,7 @@ When writing code, tests, or docs: always use "tough," never "crew."
   makes the transition natural: the "opponent's curated collection"
   is already first-class in the data model.
 
-See `docs/archive/plans/v0.3-impl.prq.md` for the v0.3 implementation plan
-and `docs/archive/plans/v0.3-task-batch.md` for the executable breakdown.
-Paper playtests live at `docs/archive/plans/v0.3-paper-playtest*.md`.
+The v0.3 implementation plan, executable epic breakdown, and paper-
+playtest research that fed these designs all shipped and live only in
+git history now. Use `git log` if you need to reconstruct the path that
+got us here.

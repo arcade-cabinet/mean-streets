@@ -30,9 +30,8 @@ hand-authored mythics. No dice.
 - `docs/LORE.md` — narrative + character backstory
 - `docs/store-listing.md` — store copy + metadata draft
 
-Archived: `docs/archive/RULES-v0.2.md` (prior ruleset),
-`docs/archive/plans/` (every PRD from v0.2 + v0.3 + production-polish;
-all shipped or superseded).
+Superseded PRDs and prior rulesets live in git history, not in the
+tree. Use `git log` if you need archaeology.
 
 ## Critical Rules
 
@@ -242,6 +241,3 @@ pnpm run cap:sync           # Build + sync web assets to Capacitor
 ## Release Status
 
 Latest tag: see `docs/STATE.md`. Polish runway: `docs/PRODUCTION.md`.
-Paper playtests (historical, archived):
-`docs/archive/plans/v0.3-paper-playtest.md` +
-`docs/archive/plans/v0.3-paper-playtest-2.md`.
