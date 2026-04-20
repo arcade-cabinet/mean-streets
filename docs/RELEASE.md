@@ -23,55 +23,52 @@ about getting a build onto the stores.
 All three follow the same runbook; only the final store-submit step
 differs.
 
-## Preconditions (verify before tagging)
+## Preconditions
 
-- `git status` clean; on `main`
-- `RELEASE_GATING=1 pnpm run test:release` green (balance lock
-  coverage ≥ `LOCK_COVERAGE_MIN`)
-- `pnpm run test` + `pnpm run test:browser` + `pnpm run test:e2e`
-  green in CI for the HEAD commit
-- `pnpm run build` green
-- `pnpm run cap:sync` completes without errors
-- `android/app/build/` + `ios/App/build/` do not contain stale
-  unsigned artifacts from a previous developer session
-- `docs/PRODUCTION.md` "Launch blockers" section has zero open items
-  for the target channel
-- `docs/store-listing.md` peer-reviewed (titles, descriptions,
-  screenshots, privacy policy, content rating)
-- Signing keys available in repo secrets:
-  - `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`,
-    `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`
-  - `APPLE_APP_STORE_API_KEY_ID`, `APPLE_APP_STORE_API_ISSUER_ID`,
-    `APPLE_APP_STORE_API_PRIVATE_KEY`
+For the **automated channel** (every push to `main`), CI is the only
+gate: `ci.yml` must be green for the HEAD commit. Release-please then
+opens / updates a release PR automatically.
 
-## Step 1 — Bump version
+For a **store-submit channel** (`internal` / `beta` / `production`),
+walk `docs/LAUNCH_READINESS.md` end-to-end. That checklist owns the
+manual QA + signing-key + accessibility + persistence pre-submit sweep.
+This runbook only covers what happens after Launch Readiness is signed
+off.
 
-```bash
-# Sync package.json, android/app/build.gradle, ios/App/App/Info.plist
-pnpm version patch   # or minor / major
-```
+## Step 1 — Let release-please cut the version
 
-Commit separately so the tag message is clean:
+We use **release-please** (see `release-please-config.json` +
+`.release-please-manifest.json`). On every push to `main`, the
+`Release` workflow runs `release-please-action`, which inspects the
+conventional-commits log and either opens / updates a release PR
+("chore(main): release X.Y.Z") or, if such a PR is already merged,
+creates the GitHub Release + tag.
 
-```bash
-git commit -am "chore(release): vX.Y.Z"
-git tag vX.Y.Z
-```
+Do **not** run `pnpm version` or `git tag` by hand. The contract is:
 
-## Step 2 — Push tag, trigger release workflow
+- Land your commits on `main` using Conventional Commits (`feat:`,
+  `fix:`, `chore:`, `docs:` …). The commit verb determines the bump
+  (feat → minor, fix → patch, breaking footer → major).
+- Wait for the release-please PR to update on top of the new commits.
+- Approve + squash-merge the release-please PR (our `automerge.yml`
+  handles release-please PRs automatically — verify it ran; if it
+  didn't, merge manually with `gh pr merge <pr> --squash`).
+- The merge fires another `Release` run; this time `release_created`
+  is `true` and the `android` + `ios` build jobs execute.
 
-```bash
-git push origin main
-git push origin vX.Y.Z
-```
+If you must override the version (rare — e.g. force a beta channel),
+edit `.release-please-manifest.json` directly in a PR and let
+release-please pick it up.
 
-This fires `.github/workflows/release.yml` (or
-`mobile-release.yml` — see Epic I5 in the production-polish plan).
-The workflow builds:
+## Step 2 — Watch the release workflow build artifacts
 
-- Signed Android AAB (`mean-streets-vX.Y.Z.aab`)
-- iOS archive (`mean-streets-vX.Y.Z.ipa`)
-- Desktop web bundle (`dist/` tarball)
+This fires `.github/workflows/release.yml`. The workflow builds:
+
+- Signed Android AAB (`mean-streets-android-vX.Y.Z.aab`)
+- iOS archive (`mean-streets-ios-vX.Y.Z.xcarchive`)
+
+Web bundle deployment is owned by `cd.yml` (push to `main`), not the
+release tag.
 
 Artifacts land on the GitHub Releases page attached to `vX.Y.Z`.
 
@@ -144,7 +141,8 @@ If the release ships with a content bug but no crash:
 
 ## Related
 
-- `docs/PRODUCTION.md` — gating criteria / launch blockers
+- `docs/PRODUCTION.md` — implementation status + post-1.0 polish list
+- `docs/LAUNCH_READINESS.md` — pre-store-submit manual QA sweep
+- `docs/STATE.md` — current branch state + recent releases
 - `docs/ARCHITECTURE.md` — tech stack the release must respect
-- `docs/plans/production-polish.prq.md` — active runway to launch
-- `docs/store-listing.md` — store metadata, screenshots (TBD, Epic I3)
+- `docs/store-listing.md` — store metadata, screenshots (draft)

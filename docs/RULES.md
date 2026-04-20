@@ -829,6 +829,6 @@ Re-baseline expected after each major rule change.
   instance was unlocked.
 - **Perfect / Flawless / Dominant / Won War**: war outcome ratings.
 
-See `docs/plans/v0.3-paper-playtest-2.md` for the playtest that
+See `docs/archive/plans/v0.3-paper-playtest-2.md` for the playtest that
 produced these rules. See `docs/archive/RULES-v0.2.md` for the
 previous version.

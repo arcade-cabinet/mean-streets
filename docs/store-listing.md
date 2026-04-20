@@ -78,13 +78,13 @@ Android phone, Android 7" tablet, Android 10" tablet):
 
 Source fixtures live in `artifacts/visual-review/` (produced by
 `pnpm run visual:export:headless`). Final screenshot set is composed
-from those fixtures + marketing overlay — see Epic I3 in the
-production-polish plan.
+from those fixtures + a marketing overlay — pre-store-submit task,
+tracked in `PRODUCTION.md` "Store metadata finalized".
 
 ## App icon
 
 Single source vector at `branding/icon.svg`. Generated across all
-densities via `@capacitor/assets` — see Epic I3.
+densities via `@capacitor/assets` (`pnpm run assets:generate`).
 
 ## Rating
 
@@ -117,7 +117,8 @@ densities via `@capacitor/assets` — see Epic I3.
 
 ## Privacy policy
 
-Hosted at: `https://[project]/privacy-policy` (Epic I3 TBD).
+Hosted at: `https://[project]/privacy-policy` (TBD — pre-store-submit
+blocker, tracked in `PRODUCTION.md`).
 
 Summary:
 

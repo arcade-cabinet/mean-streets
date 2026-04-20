@@ -176,7 +176,7 @@ docs/                  # Design, rules, architecture, production, visual review
 - [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) — technical architecture
 - [docs/PRODUCTION.md](./docs/PRODUCTION.md) — release checklist + implementation status
 - [docs/VISUAL_REVIEW.md](./docs/VISUAL_REVIEW.md) — visual review workflow
-- [docs/plans/v0.3-task-batch.md](./docs/plans/v0.3-task-batch.md) — v0.3 epic execution plan
+- [docs/archive/plans/v0.3-task-batch.md](./docs/archive/plans/v0.3-task-batch.md) — v0.3 epic execution plan
 - [docs/archive/RULES-v0.2.md](./docs/archive/RULES-v0.2.md) — prior design for reference
 
 ## License
