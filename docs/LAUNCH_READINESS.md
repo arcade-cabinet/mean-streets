@@ -8,11 +8,14 @@ domain: ops
 # Launch Readiness — Pre-Submission Sweep
 
 This is the manual QA pass to run before clicking submit on Google
-Play / App Store. The CI matrix on `main` (lint / tsc / node / DOM /
-browser / e2e / release-gate / build) is assumed green — that's `ci.yml`'s
-job, not this checklist's. This file covers everything CI cannot:
-physical-device behavior, accessibility on real screen readers, signing
-keys, store metadata, sign-off.
+Play / App Store. The automated matrix on `main` is assumed green:
+- `ci.yml` (PR + push): lint / tsc / node / DOM / browser /
+  release-gate / build
+- `cd.yml` (push: main): Playwright e2e on 4 device profiles, Pages
+  deploy, debug APK
+This file covers everything that CI/CD cannot: physical-device behavior,
+accessibility on real screen readers, signing keys, store metadata,
+sign-off.
 
 Every box below must be checked OR have an explicit owner + ticket
 reference before the build moves forward.
@@ -89,9 +92,10 @@ Run before signing off, even though CI gates the same data:
       `APPLE_APP_STORE_API_KEY_ID`, `APPLE_APP_STORE_API_ISSUER_ID`,
       `APPLE_APP_STORE_API_PRIVATE_KEY`
 - [ ] Latest release tag's `Release` workflow run produced both
-      `mean-streets-android-vX.Y.Z.aab` and
-      `mean-streets-ios-vX.Y.Z.xcarchive` artifacts (check the GitHub
-      Releases page)
+      `mean-streets-android-vX.Y.Z` (containing the AAB) and
+      `mean-streets-ios-vX.Y.Z` (containing the xcarchive) Actions
+      artifacts. These attach to the workflow run on the **Actions
+      tab**, not to the GitHub Release page.
 
 ## Crash + telemetry
 

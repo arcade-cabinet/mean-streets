@@ -13,10 +13,11 @@ status lives in [PRODUCTION.md](./PRODUCTION.md). Branch history in
 
 ## Where We Are (2026-04-19)
 
-`main` at `aeb76f8`. Latest release tag: `v1.2.0-beta.1`. Active
-balance gate: `winRateA 0.512` / `timeoutRate 0.000` / `avgTurns 16.3`.
-No active feature branches. Post-1.0 polish runway tracked in
-[PRODUCTION.md](./PRODUCTION.md).
+Latest release tag: `v1.2.0-beta.1`. Most recent balance lock:
+`winRateA 0.512` / `timeoutRate 0.000` / `avgTurns 16.3`. No active
+feature branches. Post-1.0 polish runway tracked in
+[PRODUCTION.md](./PRODUCTION.md). For exact `main` HEAD use
+`git log -1 main`.
 
 ## Recent Releases
 

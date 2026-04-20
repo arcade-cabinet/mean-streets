@@ -62,27 +62,31 @@ release-please pick it up.
 
 ## Step 2 — Watch the release workflow build artifacts
 
-This fires `.github/workflows/release.yml`. The workflow builds:
+This fires `.github/workflows/release.yml`. The `android` and `ios`
+build jobs each upload a GitHub **Actions artifact**:
 
-- Signed Android AAB (`mean-streets-android-vX.Y.Z.aab`)
-- iOS archive (`mean-streets-ios-vX.Y.Z.xcarchive`)
+- `mean-streets-android-vX.Y.Z` — directory containing `app-*.aab`
+- `mean-streets-ios-vX.Y.Z` — directory containing `App.xcarchive`
 
-Web bundle deployment is owned by `cd.yml` (push to `main`), not the
-release tag.
-
-Artifacts land on the GitHub Releases page attached to `vX.Y.Z`.
+These artifacts attach to the workflow run on the **Actions tab**, not
+to the GitHub Release page. Download from `gh run download <run-id>`
+or the workflow run UI. Web bundle deployment is owned by `cd.yml`
+(push to `main`), not the release tag.
 
 ## Step 3 — Validate artifacts
 
-- Download the Android AAB, install on a physical device via
-  `bundletool build-apks` → `adb install`
-- Download the iOS IPA, install via TestFlight or `xcrun
-  simctl install`
+- Download `mean-streets-android-vX.Y.Z`, extract the AAB, install on
+  a physical device via `bundletool build-apks` → `adb install`.
+- Download `mean-streets-ios-vX.Y.Z` — note this is an **unsigned
+  xcarchive**, not an IPA. To install on a real device or submit, open
+  it in Xcode Organizer and re-sign with the App Store distribution
+  certificate (signing automation is a post-1.0 task — see
+  `LAUNCH_READINESS.md`).
 - Smoke-test the golden path: Menu → New Game → Deckbuilder → Start
-  Game → first combat round → quit
+  Game → first combat round → quit.
 - Verify saved-game persistence: close + reopen app from cold, tap
-  "Load Game", arrive at same phase
-- Verify SQLite survives app re-install on at least one platform
+  "Load Game", arrive at same phase.
+- Verify SQLite survives app re-install on at least one platform.
 
 ## Step 4 — Submit to stores
 
