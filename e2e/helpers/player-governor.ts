@@ -281,6 +281,7 @@ async function execute(
   page: Page,
   testInfo: TestInfo,
   action: GovernorAction,
+  verbose = false,
 ): Promise<boolean> {
   switch (action) {
     case 'draw': {
@@ -306,6 +307,9 @@ async function execute(
       } else {
         const close = page.locator('.stack-fan-close');
         if (await close.isVisible({ timeout: 500 }).catch(() => false)) {
+          if (verbose) {
+            console.log('[Gov] closing stack fan: no visible insert slot');
+          }
           await activate(close, testInfo);
         }
       }
@@ -325,7 +329,7 @@ async function execute(
     case 'strike_pick_tough': {
       const activeTough = page
         .locator(
-          '.stack-fan-card-active.stack-fan-card-pickable:has(.card-tough)',
+          '.stack-fan-card-active.stack-fan-card-pickable[data-card-kind="tough"][data-face-up="true"]',
         )
         .first();
       if (await activeTough.isVisible({ timeout: 250 }).catch(() => false)) {
@@ -333,7 +337,9 @@ async function execute(
         return true;
       }
       const visibleTough = page
-        .locator('.stack-fan-card-pickable:has(.card-tough):visible')
+        .locator(
+          '.stack-fan-card-pickable[data-card-kind="tough"][data-face-up="true"]:visible',
+        )
         .first();
       if (await visibleTough.isVisible({ timeout: 750 }).catch(() => false)) {
         await activate(visibleTough, testInfo);
@@ -341,15 +347,31 @@ async function execute(
       } else {
         const close = page.locator('.stack-fan-close');
         if (await close.isVisible({ timeout: 500 }).catch(() => false)) {
+          if (verbose) {
+            console.log('[Gov] closing stack fan: no visible strike tough');
+          }
           await activate(close, testInfo);
         }
       }
       return false;
     }
     case 'strike_target': {
+      const before = await perceive(page);
       const oppTurf = page.getByTestId('turf-lane-B');
       await activate(oppTurf, testInfo);
-      return true;
+      await page.waitForTimeout(100);
+      const after = await perceive(page);
+      const progressed =
+        after.gameOver ||
+        after.turnNumber !== before.turnNumber ||
+        after.actionsRemaining < before.actionsRemaining ||
+        after.queuedStrikeCount > before.queuedStrikeCount ||
+        after.waitingForOpponent !== before.waitingForOpponent ||
+        after.turnEnded !== before.turnEnded;
+      if (!progressed && verbose) {
+        console.log('[Gov] strike target made no visible progress');
+      }
+      return progressed;
     }
     case 'end_turn': {
       const btn = page.getByTestId('action-end_turn');
@@ -382,6 +404,23 @@ export interface GovernorOptions {
   maxActions?: number;
   actionDelayMs?: number;
   verbose?: boolean;
+}
+
+function logGovernorAction(
+  state: PerceivedState,
+  action: GovernorAction,
+  consecutiveWaits: number,
+): void {
+  console.log(
+    `[Gov] T${state.turnNumber} A${state.actionsRemaining}/${state.actionsTotal}` +
+      ` ${action}` +
+      ` | pend=${Number(state.hasPending)}/${Number(state.pendingIsTough)}` +
+      ` draw=${Number(state.canDraw)}` +
+      ` turf=${Number(state.playerTurfEmpty)}/${Number(state.playerTurfHasTough)}` +
+      ` wait=${Number(state.waitingForOpponent)}` +
+      ` end=${Number(state.turnEnded)}` +
+      ` waits=${consecutiveWaits}`,
+  );
 }
 
 export async function runPlayerGovernor(
@@ -479,9 +518,7 @@ export async function runPlayerGovernor(
     if (action !== 'wait') actionsThisTurn++;
 
     if (options.verbose && (action !== 'wait' || consecutiveWaits % 50 === 0)) {
-      console.log(
-        `[Gov] T${state.turnNumber} A${state.actionsRemaining}/${state.actionsTotal} → ${action} | pending=${state.hasPending}(tough=${state.pendingIsTough}) canDraw=${state.canDraw} turfEmpty=${state.playerTurfEmpty} hasTough=${state.playerTurfHasTough} wait=${state.waitingForOpponent} ended=${state.turnEnded} waits=${consecutiveWaits}`,
-      );
+      logGovernorAction(state, action, consecutiveWaits);
     }
     log.push({ turn: state.turnNumber, action, state });
     prevAction = action;
@@ -497,11 +534,13 @@ export async function runPlayerGovernor(
     }
 
     try {
-      const activated = await execute(page, testInfo, action);
+      const activated = await execute(page, testInfo, action, options.verbose);
       if (action === 'strike_pick_tough') {
         expectingStrikeTarget = activated;
+        if (!activated) strikeBlockedThisTurn = true;
       } else if (action === 'strike_target') {
-        strikeBlockedThisTurn = false;
+        expectingStrikeTarget = false;
+        strikeBlockedThisTurn = !activated;
       } else if (action !== 'strike_target' && action !== 'wait') {
         expectingStrikeTarget = false;
       }

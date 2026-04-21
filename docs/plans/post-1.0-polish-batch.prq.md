@@ -461,7 +461,7 @@ asset factory and no outside illustrator is required.
 
 ## Dependencies summary
 
-```
+```text
 T00 (silhouette uniqueness) - independent; should precede T09 baselines
 T00.5 (currency-launder art) - can ship with T00 or independently
 T01 (Node 24) - independent
@@ -516,10 +516,10 @@ now correctly batch-eligible:
   data-file edit task.
 - **Tutorial flow** — UI work, not creative work. Surface market /
   holding / heat / bribes panels with first-war annotations. Copy is
-  short and writeable. (Listed as T13 below.)
+  short and writeable. (Listed as T13 above.)
 - **Splash screen custom art** — `pnpm run assets:generate` runs
   `scripts/generate-mobile-icons.sh` from `branding/icon.svg`. Same
-  factory. (Listed as T14.)
+  factory. (Listed as T14 above.)
 - **Visual polish designer pass** — most of "polish" is data-file
   edits to compose recipes + CSS tokens in
   `src/ui/theme/tokens.css`. Designer judgment is helpful, not
