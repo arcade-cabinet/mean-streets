@@ -111,8 +111,12 @@ async function perceive(page: Page): Promise<PerceivedState> {
     const heat = heatMatch ? `${heatMatch[1]}%` : '0%';
 
     const drawSlot = qs('[data-testid="slot-player-draw"]');
+    const hudDraw = qs('[data-testid="hud-draw"]') as HTMLButtonElement | null;
+    const hudDrawAvailable =
+      !!hudDraw && !hudDraw.disabled && hudDraw.getClientRects().length > 0;
     const canDraw =
-      drawSlot?.classList.contains('board-slot-tappable') ?? false;
+      (drawSlot?.classList.contains('board-slot-tappable') ?? false) ||
+      hudDrawAvailable;
 
     const chips = document.querySelectorAll('[data-testid^="queued-chip-"]');
     const queuedStrikeCount = chips.length;
@@ -359,15 +363,19 @@ async function execute(
       const before = await perceive(page);
       const oppTurf = page.getByTestId('turf-lane-B');
       await activate(oppTurf, testInfo);
-      await page.waitForTimeout(100);
-      const after = await perceive(page);
-      const progressed =
-        after.gameOver ||
-        after.turnNumber !== before.turnNumber ||
-        after.actionsRemaining < before.actionsRemaining ||
-        after.queuedStrikeCount > before.queuedStrikeCount ||
-        after.waitingForOpponent !== before.waitingForOpponent ||
-        after.turnEnded !== before.turnEnded;
+      let progressed = false;
+      for (let i = 0; i < 5; i++) {
+        await page.waitForTimeout(100);
+        const after = await perceive(page);
+        progressed =
+          after.gameOver ||
+          after.turnNumber !== before.turnNumber ||
+          after.actionsRemaining < before.actionsRemaining ||
+          after.queuedStrikeCount > before.queuedStrikeCount ||
+          after.waitingForOpponent !== before.waitingForOpponent ||
+          after.turnEnded !== before.turnEnded;
+        if (progressed) break;
+      }
       if (!progressed && verbose) {
         console.log('[Gov] strike target made no visible progress');
       }
