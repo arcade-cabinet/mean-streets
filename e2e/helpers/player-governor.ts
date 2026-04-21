@@ -126,8 +126,6 @@ type GovernorAction =
   | 'end_turn'
   | 'wait';
 
-let drawsThisTurn = 0;
-let actionsThisTurn = 0;
 const MAX_DRAWS_PER_TURN = 3;
 const MAX_ACTIONS_PER_TURN = 12;
 
@@ -138,7 +136,12 @@ function parseHeat(state: PerceivedState): number {
 
 interface ScoredCandidate { action: GovernorAction; score: number }
 
-function scoreActions(state: PerceivedState, strikeBlockedThisTurn: boolean): ScoredCandidate[] {
+function scoreActions(
+  state: PerceivedState,
+  strikeBlockedThisTurn: boolean,
+  drawsThisTurn: number,
+  actionsThisTurn: number,
+): ScoredCandidate[] {
   const candidates: ScoredCandidate[] = [];
   const heat = parseHeat(state);
   const canStrike = !strikeBlockedThisTurn
@@ -182,6 +185,7 @@ function decide(
   state: PerceivedState,
   expectingStrikeTarget: boolean,
   strikeBlockedThisTurn: boolean,
+  drawsThisTurn: number,
   actionsThisTurn: number,
 ): GovernorAction {
   if (state.gameOver) return 'wait';
@@ -219,7 +223,12 @@ function decide(
   }
 
   // Score remaining actions and pick the best
-  const ranked = scoreActions(state, strikeBlockedThisTurn);
+  const ranked = scoreActions(
+    state,
+    strikeBlockedThisTurn,
+    drawsThisTurn,
+    actionsThisTurn,
+  );
   return ranked.length > 0 ? ranked[0].action : 'wait';
 }
 
@@ -342,6 +351,8 @@ export async function runPlayerGovernor(
   let prevQueuedStrikeCount = 0;
   let expectingStrikeTarget = false;
   let strikeBlockedThisTurn = false;
+  let drawsThisTurn = 0;
+  let actionsThisTurn = 0;
 
   for (let i = 0; i < maxActions; i++) {
     const state = await perceive(page);
@@ -375,6 +386,7 @@ export async function runPlayerGovernor(
       state,
       expectingStrikeTarget,
       strikeBlockedThisTurn,
+      drawsThisTurn,
       actionsThisTurn,
     );
 
