@@ -522,9 +522,6 @@ export async function runPlayerGovernor(
       consecutiveSameAction = 0;
     }
 
-    if (action === 'draw') drawsThisTurn++;
-    if (action !== 'wait') actionsThisTurn++;
-
     if (options.verbose && (action !== 'wait' || consecutiveWaits % 50 === 0)) {
       logGovernorAction(state, action, consecutiveWaits);
     }
@@ -543,6 +540,10 @@ export async function runPlayerGovernor(
 
     try {
       const activated = await execute(page, testInfo, action, options.verbose);
+      if (activated) {
+        if (action === 'draw') drawsThisTurn++;
+        if (action !== 'wait') actionsThisTurn++;
+      }
       if (action === 'strike_pick_tough') {
         expectingStrikeTarget = activated;
         if (!activated) strikeBlockedThisTurn = true;
