@@ -290,7 +290,11 @@ async function execute(
   switch (action) {
     case 'draw': {
       const compactButton = page.getByTestId('hud-draw');
-      if (await compactButton.isVisible({ timeout: 250 }).catch(() => false)) {
+      const compactVisible = await compactButton
+        .isVisible({ timeout: 250 })
+        .catch(() => false);
+      const compactEnabled = await compactButton.isEnabled().catch(() => false);
+      if (compactVisible && compactEnabled) {
         await activate(compactButton, testInfo);
         return true;
       }
@@ -461,7 +465,9 @@ export async function runPlayerGovernor(
         .catch(() => '');
       const winner = winnerText?.includes('Victory')
         ? ('A' as const)
-        : ('B' as const);
+        : winnerText?.includes('Defeat')
+          ? ('B' as const)
+          : ('unknown' as const);
       return {
         turns: state.turnNumber || lastTurn,
         winner,
@@ -505,7 +511,12 @@ export async function runPlayerGovernor(
     ) {
       consecutiveSameAction++;
       if (consecutiveSameAction > 2) {
-        action = state.hasPending ? 'discard' : 'end_turn';
+        action =
+          state.hasPending && action !== 'discard'
+            ? 'discard'
+            : state.endTurnAvailable
+              ? 'end_turn'
+              : 'wait';
         consecutiveSameAction = 0;
       }
     } else if (
