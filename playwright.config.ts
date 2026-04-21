@@ -1,6 +1,18 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const IS_CI = !!process.env.CI;
+const IS_HEADLESS = IS_CI || process.env.PW_HEADLESS === '1';
+const CHROMIUM_CHANNEL = IS_HEADLESS ? undefined : 'chrome';
+const DEFAULT_PLAYWRIGHT_PORT = 41739;
+const configuredPort = Number(
+  process.env.PLAYWRIGHT_PORT ?? process.env.PW_PORT,
+);
+const PLAYWRIGHT_PORT =
+  Number.isInteger(configuredPort) && configuredPort > 0
+    ? configuredPort
+    : DEFAULT_PLAYWRIGHT_PORT;
+const PLAYWRIGHT_BASE_URL = `http://127.0.0.1:${PLAYWRIGHT_PORT}/mean-streets/`;
+const REUSE_SERVER = !IS_CI && process.env.PW_REUSE_SERVER === '1';
 
 const GAME_ARGS = [
   '--no-sandbox',
@@ -20,22 +32,22 @@ export default defineConfig({
   timeout: IS_CI ? 90_000 : 60_000,
 
   use: {
-    baseURL: 'http://127.0.0.1:4173/mean-streets/',
-    headless: IS_CI,
+    baseURL: PLAYWRIGHT_BASE_URL,
+    headless: IS_HEADLESS,
     trace: 'on-first-retry',
     actionTimeout: IS_CI ? 30_000 : 15_000,
     navigationTimeout: IS_CI ? 30_000 : 15_000,
     browserName: 'chromium',
-    channel: 'chrome',
+    channel: CHROMIUM_CHANNEL,
     launchOptions: {
       args: GAME_ARGS,
     },
   },
 
   webServer: {
-    command: 'pnpm exec vite --host 127.0.0.1 --port 4173',
-    url: 'http://127.0.0.1:4173/mean-streets/',
-    reuseExistingServer: !IS_CI,
+    command: `pnpm exec vite --host 127.0.0.1 --port ${PLAYWRIGHT_PORT}`,
+    url: PLAYWRIGHT_BASE_URL,
+    reuseExistingServer: REUSE_SERVER,
   },
 
   projects: [

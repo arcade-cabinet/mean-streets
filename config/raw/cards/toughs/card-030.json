@@ -11,6 +11,8 @@
   "resistance": [
     8
   ],
+  "maxHp": 8,
+  "hp": 8,
   "rarity": [
     "common"
   ],
@@ -20,5 +22,17 @@
   "unlocked": false,
   "unlockCondition": "Win a game on the first night phase",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "wall-lean",
+    "palette": "smoke",
+    "layers": {
+      "back": "medbag",
+      "legs": "kneel-recover",
+      "torso": "tactical-vest",
+      "body": "average",
+      "arms": "fists"
+    }
+  }
 }

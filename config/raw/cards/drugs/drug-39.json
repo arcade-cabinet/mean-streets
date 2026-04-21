@@ -20,5 +20,16 @@
   "unlocked": false,
   "unlockCondition": "Flip 10 enemies total",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "triptych-right",
+    "palette": "toxic",
+    "layers": {
+      "backdrop": "money-clip",
+      "support": "pill-bottle",
+      "primary": "syringe",
+      "badge": "prescription-bottle"
+    }
+  }
 }

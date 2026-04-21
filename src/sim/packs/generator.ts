@@ -1,7 +1,17 @@
 import type { Rng } from '../cards/rng';
-import type { Card, CardCategory, CardInstance, DifficultyTier, Rarity } from '../turf/types';
+import type {
+  Card,
+  CardCategory,
+  CardInstance,
+  DifficultyTier,
+  Rarity,
+} from '../turf/types';
 import { loadToughCards } from '../cards/catalog';
-import { generateWeapons, generateDrugs, generateCurrency } from '../turf/generators';
+import {
+  generateWeapons,
+  generateDrugs,
+  loadCurrencyCatalog,
+} from '../turf/generators';
 import { TURF_SIM_CONFIG } from '../turf/ai/config';
 import type { PackKind, PackReward } from './types';
 import { PACK_SIZE } from './types';
@@ -16,32 +26,46 @@ import { PACK_SIZE } from './types';
 // Load tunables from JSON (src/data/ai/turf-sim.json packEconomy.*).
 const _pe = TURF_SIM_CONFIG.packEconomy;
 
-const BASE_RARITY_WEIGHTS: Record<Rarity, number> = _pe.baseRarityWeights as Record<Rarity, number>;
+const BASE_RARITY_WEIGHTS: Record<Rarity, number> =
+  _pe.baseRarityWeights as Record<Rarity, number>;
 
 // Per-base roll distributions (probability that a card picked at BASE
 // rarity rolls UP to a specific tier). Numbers sum to 1.0 per base.
-const ROLL_DISTRIBUTIONS: Record<Rarity, Partial<Record<Rarity, number>>> =
-  _pe.rollDistributions as Record<Rarity, Partial<Record<Rarity, number>>>;
+const ROLL_DISTRIBUTIONS: Record<
+  Rarity,
+  Partial<Record<Rarity, number>>
+> = _pe.rollDistributions as Record<Rarity, Partial<Record<Rarity, number>>>;
 
-const _diffMult = _pe.difficultyRewardMult as Partial<Record<DifficultyTier, number>>;
-const DIFFICULTY_TIERS: DifficultyTier[] = ['easy', 'medium', 'hard', 'nightmare', 'ultra-nightmare'];
+const _diffMult = _pe.difficultyRewardMult as Partial<
+  Record<DifficultyTier, number>
+>;
+const DIFFICULTY_TIERS: DifficultyTier[] = [
+  'easy',
+  'medium',
+  'hard',
+  'nightmare',
+  'ultra-nightmare',
+];
 for (const tier of DIFFICULTY_TIERS) {
   if (_diffMult[tier] == null) {
     throw new Error(
       `turf-sim.json packEconomy.difficultyRewardMult is missing entry for "${tier}". ` +
-      `All difficulty multipliers must be configured explicitly — no silent fallback allowed.`,
+        `All difficulty multipliers must be configured explicitly — no silent fallback allowed.`,
     );
   }
 }
 const DIFFICULTY_REWARD_MULT = _diffMult as Record<DifficultyTier, number>;
 
 const VALID_PACK_KINDS: ReadonlySet<string> = new Set([
-  'single', 'triple', 'standard',
+  'single',
+  'triple',
+  'standard',
 ]);
 
 function pickCardType(rng: Rng): CardCategory {
   const weights = TURF_SIM_CONFIG.packEconomy.typeWeights;
-  const total = weights.tough + weights.weapon + weights.drug + weights.currency;
+  const total =
+    weights.tough + weights.weapon + weights.drug + weights.currency;
   if (total <= 0) {
     throw new Error('turf-sim.json packEconomy.typeWeights must sum to > 0');
   }
@@ -54,7 +78,13 @@ function pickCardType(rng: Rng): CardCategory {
   return 'tough';
 }
 
-const RARITY_ORDER: Rarity[] = ['common', 'uncommon', 'rare', 'legendary', 'mythic'];
+const RARITY_ORDER: Rarity[] = [
+  'common',
+  'uncommon',
+  'rare',
+  'legendary',
+  'mythic',
+];
 
 function isPackRewardArray(value: unknown): value is PackReward[] {
   if (!Array.isArray(value)) return false;
@@ -123,10 +153,14 @@ function rollInstanceRarity(base: Rarity, rng: Rng, mult: number): Rarity {
 
 function getPool(category: 'tough' | 'weapon' | 'drug' | 'currency'): Card[] {
   switch (category) {
-    case 'tough': return loadToughCards();
-    case 'weapon': return generateWeapons();
-    case 'drug': return generateDrugs();
-    case 'currency': return generateCurrency();
+    case 'tough':
+      return loadToughCards();
+    case 'weapon':
+      return generateWeapons();
+    case 'drug':
+      return generateDrugs();
+    case 'currency':
+      return loadCurrencyCatalog();
   }
 }
 
@@ -222,7 +256,9 @@ export function starterGrant(rng: Rng): Card[] {
   for (const grant of grants) {
     for (let i = 0; i < grant.count; i++) {
       // Starter cards are granted at easy difficulty per §3.3.
-      cards.push(...generatePack(grant.kind, cards, rng, { unlockDifficulty: 'easy' }));
+      cards.push(
+        ...generatePack(grant.kind, cards, rng, { unlockDifficulty: 'easy' }),
+      );
     }
   }
   return cards;

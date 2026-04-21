@@ -2,7 +2,12 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { Card } from '../Card';
 import { renderInBrowser, settleBrowser } from '../../../test/render-browser';
 import { resetTestViewport, setTestViewport } from '../../../test/viewport';
-import type { ToughCard, WeaponCard, DrugCard, CurrencyCard } from '../../../sim/turf/types';
+import type {
+  ToughCard,
+  WeaponCard,
+  DrugCard,
+  CurrencyCard,
+} from '../../../sim/turf/types';
 
 function tough(overrides: Partial<ToughCard> = {}): ToughCard {
   return {
@@ -72,23 +77,48 @@ describe('Card (browser)', () => {
   });
 
   it('renders all four card kinds', async () => {
-    cleanup = (await renderInBrowser(
-      <>
-        <Card card={tough()} />
-        <Card card={weapon()} />
-        <Card card={drug()} />
-        <Card card={currency()} />
-      </>,
-    )).unmount;
+    cleanup = (
+      await renderInBrowser(
+        <>
+          <Card card={tough()} />
+          <Card card={weapon()} />
+          <Card card={drug()} />
+          <Card card={currency()} />
+        </>,
+      )
+    ).unmount;
 
-    expect(document.querySelector('[data-testid="card-tough-brick"]')).not.toBeNull();
-    expect(document.querySelector('[data-testid="card-weapon-knife"]')).not.toBeNull();
-    expect(document.querySelector('[data-testid="card-drug-stim"]')).not.toBeNull();
-    expect(document.querySelector('[data-testid="card-currency-1000"]')).not.toBeNull();
+    expect(
+      document.querySelector('[data-testid="card-tough-brick"]'),
+    ).not.toBeNull();
+    expect(
+      document.querySelector('[data-testid="card-weapon-knife"]'),
+    ).not.toBeNull();
+    expect(
+      document.querySelector('[data-testid="card-drug-stim"]'),
+    ).not.toBeNull();
+    expect(
+      document.querySelector('[data-testid="card-currency-1000"]'),
+    ).not.toBeNull();
+  });
+
+  it('renders currency portrait art in the real DOM', async () => {
+    cleanup = (
+      await renderInBrowser(<Card card={currency()} compact={false} />)
+    ).unmount;
+    const portrait = document.querySelector(
+      '.card-portrait-currency .card-portrait-img',
+    );
+    expect(portrait).not.toBeNull();
+    expect((portrait as HTMLImageElement).getAttribute('src')).toContain(
+      'assets/card-art/currency-1000.png',
+    );
   });
 
   it('applies rarity CSS class in the browser', async () => {
-    cleanup = (await renderInBrowser(<Card card={tough({ rarity: 'legendary' })} />)).unmount;
+    cleanup = (
+      await renderInBrowser(<Card card={tough({ rarity: 'legendary' })} />)
+    ).unmount;
     expect(document.querySelector('.card-rarity-legendary')).not.toBeNull();
   });
 

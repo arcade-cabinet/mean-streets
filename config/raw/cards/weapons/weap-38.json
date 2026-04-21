@@ -19,5 +19,16 @@
   "unlocked": false,
   "unlockCondition": "Win without losing a position",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "fan",
+    "palette": "gunmetal",
+    "layers": {
+      "backdrop": "pistol",
+      "support": "pistol",
+      "primary": "pistol-compact",
+      "badge": "burner-phone"
+    }
+  }
 }

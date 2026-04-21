@@ -13,6 +13,15 @@ Architecture context lives in [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ## Test Suites
 
+### Type Check
+
+```bash
+pnpm run typecheck
+```
+
+Runs the referenced TypeScript projects in build mode (`app`, `node`, and
+`sim`) so CI catches drift in `tsconfig.sim.json` and the other split configs.
+
 ### Node Tests — Pure Sim Logic
 
 ```bash
@@ -70,6 +79,29 @@ pnpm run test:e2e
 Environment: Playwright against the running dev server
 (`playwright.config.ts`). Tests in `e2e/*.spec.ts`.
 
+`pnpm run test:e2e` is intentionally split:
+- `test:e2e:core` runs the normal parallel Playwright batch.
+- `test:e2e:visual` runs the dedicated visual-capture script
+  (`scripts/capture-visual-fixtures.mjs`), which drives Playwright's raw
+  browser API directly against the same fixture routes.
+- `e2e/visual-fixtures.spec.ts` is now opt-in only
+  (`MEAN_STREETS_VISUAL_SPECS=1`) as a fixture-route smoke test; screenshot
+  capture lives in `scripts/capture-visual-fixtures.mjs`.
+- `test:e2e:governor` runs the long-form `@governor` full-game suite
+  separately, headless, on `desktop-chromium` with `--workers=1`.
+
+That separation prevents the long-lived AI-turn timers and the high-memory
+fixture screenshots from being starved by the generic parallel browser batch
+during local runs.
+
+The harness owns its own dedicated Vite port (`41739`) so it does not
+silently attach to another local workspace that happens to already be on
+the default preview/dev ports. If you explicitly want to reuse an already
+running Mean Streets dev server on that port, set `PW_REUSE_SERVER=1`.
+
+`PW_HEADLESS=1` is honored by `playwright.config.ts`, so the `*:headless`
+scripts now genuinely run headless outside CI too.
+
 Four device profiles:
 - `desktop-chromium` — 1280×720
 - `iphone-14` — 390×844
@@ -77,8 +109,8 @@ Four device profiles:
 - `ipad-pro-landscape` — 1366×1024
 
 Current specs: `app-flow`, `accessibility`, `difficulty-grid`, `pack-opening`,
-`responsive-alignment`, `visual-fixtures`, `layout-classification`,
-`fold-posture`.
+`war-outcome`, `responsive-alignment`, `visual-fixtures`,
+`layout-classification`, `fold-posture`.
 
 ### Visual Fixture Capture
 
@@ -88,6 +120,13 @@ pnpm run test:visual
 
 Captures screenshots of UI components for review. Review instructions in
 [VISUAL_REVIEW.md](./VISUAL_REVIEW.md).
+
+This uses `scripts/capture-visual-fixtures.mjs`, which launches a headless
+Playwright Chromium session directly when `PW_HEADLESS=1`. The default
+`pnpm run test:visual` script runs it headed for interactive review; use
+`pnpm run test:visual:headless` or set `PW_HEADLESS=1` to capture without a
+display. The capture script still covers each fixture root across all four
+device profiles.
 
 ### Combined
 
@@ -120,10 +159,21 @@ winrate delta are promoted to `locked`.
 Timeout: the curated sweep suite has a 600s timeout to accommodate CI runner
 pace.
 
+### Slow Analysis Sweep
+
+```bash
+pnpm run test:analysis:slow
+```
+
+Runs the full sim-backed curated sweep in
+`src/sim/analysis/__tests__/analysis.test.ts` with `RUN_SLOW_TESTS=1`.
+This lane is intentionally split out of the default PR test matrix so it can
+run nightly in its own workflow without slowing every pull request.
+
 ## Release Gate
 
 ```bash
-pnpm run test:release    # requires RELEASE_GATING=1 (set automatically)
+pnpm run test:release
 ```
 
 The release gate (`src/sim/turf/__tests__/release-gate.test.ts`) runs three
@@ -140,8 +190,8 @@ checks:
    fall in the [0.45, 0.65] band. Checked with `checkConvergence()` from
    `src/sim/analysis/benchmarks.ts`.
 
-The release gate is skipped unless `RELEASE_GATING=1`. CI's `cd.yml`
-(deploy-to-Pages) runs it unconditionally before building.
+The release gate is skipped unless `RELEASE_GATING=1`. CI's `ci.yml`
+core job runs it on every pull request.
 
 ### Passing the Release Gate
 
@@ -173,15 +223,17 @@ pnpm run analysis:autobalance    # iterative stat tuning loop
 - Sim engine (`src/sim/turf/`): every public function covered by node tests.
 - UI components: DOM tests for render smoke + prop variance; browser tests for
   interaction.
-- E2E: at least one full-flow spec per screen (menu → difficulty → game →
-  gameover → collection → card-garage → pack-opening).
+- E2E: at least one Playwright spec per shipped screen or fixture surface.
+  Live app routes should be covered through real navigation flows; fixture-only
+  surfaces such as `pack-opening` may be covered through explicit `?fixture=`
+  routes instead.
 - Balance: 70% lock coverage before release; 100% post-launch (weekly cron).
 
 ### Integration Smoke
 
 `src/sim/turf/__tests__/v03-integration.test.ts` contains the v0.3 integration
-suite, currently `describe.skip`-gated. Promote to active as modules stabilize
-(tracked in [PRODUCTION.md](./PRODUCTION.md)).
+suite and is active in the node test run. Keep it green when changing
+cross-module sim behavior.
 
 ### Visual Verification
 

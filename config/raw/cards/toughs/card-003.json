@@ -18,6 +18,8 @@
     6,
     7
   ],
+  "maxHp": 7,
+  "hp": 7,
   "rarity": [
     "common"
   ],
@@ -26,5 +28,16 @@
   ],
   "unlocked": true,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "ambush",
+    "palette": "smoke",
+    "layers": {
+      "legs": "casual-slouch-2",
+      "torso": "hoodie-3",
+      "body": "average-2",
+      "arms": "fists"
+    }
+  }
 }

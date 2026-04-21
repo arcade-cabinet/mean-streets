@@ -3,6 +3,9 @@ name: CI
 on:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   core:
     runs-on: ubuntu-latest
@@ -22,7 +25,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Type check
-        run: pnpm exec tsc --noEmit
+        run: pnpm run typecheck
 
       - name: Lint
         run: pnpm run lint

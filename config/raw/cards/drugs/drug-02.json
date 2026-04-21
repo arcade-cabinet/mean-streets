@@ -23,5 +23,16 @@
   ],
   "unlocked": true,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "triptych-left",
+    "palette": "violet",
+    "layers": {
+      "backdrop": "burner-phone",
+      "support": "prescription-bottle",
+      "primary": "syringe",
+      "badge": "pill-bottle"
+    }
+  }
 }

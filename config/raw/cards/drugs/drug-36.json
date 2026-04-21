@@ -19,5 +19,16 @@
   "unlocked": false,
   "unlockCondition": "Win a game using only stimulants",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "totem",
+    "palette": "haze",
+    "layers": {
+      "backdrop": "syringe",
+      "support": "pill-bottle",
+      "primary": "prescription-bottle",
+      "badge": "money-clip"
+    }
+  }
 }

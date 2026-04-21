@@ -11,6 +11,8 @@
   "resistance": [
     3
   ],
+  "maxHp": 3,
+  "hp": 3,
   "rarity": [
     "common"
   ],
@@ -20,5 +22,16 @@
   "unlocked": false,
   "unlockCondition": "Win a game using only cards from 2 affiliations",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "wall-lean",
+    "palette": "ember",
+    "layers": {
+      "legs": "casual-slouch",
+      "torso": "short-femme",
+      "body": "fedora-2",
+      "arms": "fists"
+    }
+  }
 }

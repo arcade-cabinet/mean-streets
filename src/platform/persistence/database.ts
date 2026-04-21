@@ -4,10 +4,17 @@ import { defineCustomElements as defineJeepSqlite } from 'jeep-sqlite/loader';
 
 const DB_NAME = 'mean_streets';
 const DB_VERSION = 1;
+const JEEP_SQLITE_LOG_PREFIXES = [
+  '#### getVersion new res:',
+  'Using the File System Access API.',
+  'Using the fallback implementation.',
+  'jeep-sqlite isStore = false',
+] as const;
 
 const sqlite = new SQLiteConnection(CapacitorSQLite);
 let connectionPromise: Promise<SQLiteDBConnection> | null = null;
 let webReadyPromise: Promise<void> | null = null;
+let writeQueue: Promise<unknown> = Promise.resolve();
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS app_kv (
@@ -21,10 +28,11 @@ CREATE TABLE IF NOT EXISTS app_kv (
 
 export async function getDatabase(): Promise<SQLiteDBConnection> {
   if (!connectionPromise) {
-    connectionPromise = initializeDatabase().catch((error) => {
-      connectionPromise = null; // allow retries instead of returning a permanently-rejected promise
-      throw error;
-    });
+    connectionPromise = withSuppressedJeepSqliteLogs(() => initializeDatabase())
+      .catch((error) => {
+        connectionPromise = null; // allow retries instead of returning a permanently-rejected promise
+        throw error;
+      });
   }
   return connectionPromise;
 }
@@ -68,13 +76,61 @@ async function prepareWebStore(): Promise<void> {
 export async function saveWebStore(database = DB_NAME): Promise<void> {
   if (Capacitor.getPlatform() !== 'web') return;
   await getDatabase();
-  await sqlite.saveToStore(database);
+  await flushWebStore(database);
+}
+
+export async function withDatabaseWriteLock<T>(
+  action: (db: SQLiteDBConnection) => Promise<T>,
+): Promise<T> {
+  const prior = writeQueue.catch(() => undefined);
+  const next = prior.then(async () => {
+    const db = await getDatabase();
+    const result = await action(db);
+    if (Capacitor.getPlatform() === 'web') {
+      await flushWebStore();
+    }
+    return result;
+  });
+  writeQueue = next.catch(() => undefined);
+  return next;
 }
 
 export async function closeDatabase(): Promise<void> {
-  const existing = await sqlite.isConnection(DB_NAME, false);
-  if (existing.result) {
-    await sqlite.closeConnection(DB_NAME, false);
-  }
+  await withSuppressedJeepSqliteLogs(async () => {
+    const existing = await sqlite.isConnection(DB_NAME, false);
+    if (existing.result) {
+      await sqlite.closeConnection(DB_NAME, false);
+    }
+  });
   connectionPromise = null;
+}
+
+async function withSuppressedJeepSqliteLogs<T>(
+  action: () => Promise<T>,
+): Promise<T> {
+  if (Capacitor.getPlatform() !== 'web') {
+    return action();
+  }
+
+  const previousConsoleLog = console.log;
+  console.log = (...args: unknown[]) => {
+    const [first] = args;
+    if (
+      typeof first === 'string' &&
+      JEEP_SQLITE_LOG_PREFIXES.some((prefix) => first.includes(prefix))
+    ) {
+      return;
+    }
+    previousConsoleLog(...args);
+  };
+
+  try {
+    return await action();
+  } finally {
+    console.log = previousConsoleLog;
+  }
+}
+
+async function flushWebStore(database = DB_NAME): Promise<void> {
+  await withSuppressedJeepSqliteLogs(() => sqlite.saveToStore(database));
 }

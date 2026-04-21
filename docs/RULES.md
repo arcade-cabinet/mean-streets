@@ -559,7 +559,8 @@ For each queued strike in dominance order:
 2. **Currency pressure** — defender may **bribe** to cancel the strike.
    Bribes draw from the **turf-wide currency pool** (all currency cards
    in the defending turf's stack), not from a single tough's attached
-   currency. Bribes are probabilistic:
+   currency. **LAUNDER currency is excluded from bribe spend pools.**
+   Bribes are probabilistic:
    - $500 → 70% success
    - $1000 → 85%
    - $2000 → 95%

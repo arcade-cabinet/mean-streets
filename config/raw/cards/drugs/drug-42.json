@@ -25,5 +25,16 @@
   ],
   "unlocked": true,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "triptych-right",
+    "palette": "violet",
+    "layers": {
+      "backdrop": "drug-bag",
+      "support": "paper-bag",
+      "primary": "syringe",
+      "badge": "brick-kilo"
+    }
+  }
 }

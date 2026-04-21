@@ -2,23 +2,41 @@ import { describe, it, expect } from 'vitest';
 import { createGameWorld } from '../ecs/world';
 import { GameState, PlayerA, PlayerB } from '../ecs/traits';
 import { DEFAULT_GAME_CONFIG } from '../sim/turf/types';
-import type { GameConfig } from '../sim/turf/types';
+import type { Card, GameConfig, ToughCard } from '../sim/turf/types';
 
 /**
  * Regression test for Bug J — ActiveRunState must persist enough info to
- * reconstruct the exact same starting world on resume. Saving a `deck:
- * undefined` with no seed caused the default-deck builder to reshuffle with
- * a fresh seed, producing a different game on reload.
+ * reconstruct the exact same starting world on resume. Match bootstrap now
+ * depends on the persisted collection and garage priorities, so seed alone
+ * is no longer enough to recover the original opening decks.
  *
- * This test pins the contract: given the same (config, seed) pair — which
- * is what handleSelectDifficulty now saves to ActiveRunState — the resumed
- * world reproduces the original deck/hand exactly.
+ * This test pins the contract: the active run payload must include the exact
+ * ordered starting decks, and resume must replay them without reshuffling.
  */
 
 interface ActiveRunStateShape {
   phase: 'combat';
   config: GameConfig;
   seed: number;
+  playerDeck: Card[];
+  aiDeck: Card[];
+}
+
+function tough(id: string): ToughCard {
+  return {
+    kind: 'tough',
+    id,
+    name: id,
+    tagline: '',
+    archetype: 'brawler',
+    affiliation: 'freelance',
+    power: 5,
+    resistance: 5,
+    rarity: 'common',
+    abilities: [],
+    maxHp: 5,
+    hp: 5,
+  };
 }
 
 function handsAndDecks(world: ReturnType<typeof createGameWorld>) {
@@ -39,19 +57,39 @@ function gameSeed(world: ReturnType<typeof createGameWorld>): number {
 }
 
 describe('ActiveRunState resume (Bug J regression)', () => {
-  it('persists config + seed so resume reproduces the exact starting deck', () => {
+  it('persists config + ordered decks so resume reproduces the exact starting deck', () => {
     const config: GameConfig = { ...DEFAULT_GAME_CONFIG };
     const seed = 123456;
+    const playerDeck = [tough('p-1'), tough('p-2'), tough('p-3')];
+    const aiDeck = [tough('b-1'), tough('b-2')];
 
-    // Initial difficulty-start path: seed is generated, saved to active run.
-    const original = createGameWorld(config, seed);
-    const activeRun: ActiveRunStateShape = { phase: 'combat', config, seed };
+    const original = createGameWorld(
+      config,
+      seed,
+      playerDeck,
+      { A: [], B: [] },
+      aiDeck,
+      { preserveDeckOrder: true },
+    );
+    const activeRun: ActiveRunStateShape = {
+      phase: 'combat',
+      config,
+      seed,
+      playerDeck,
+      aiDeck,
+    };
 
     // Round-trip as JSON to mimic persistence layer.
     const roundTripped = JSON.parse(JSON.stringify(activeRun)) as ActiveRunStateShape;
 
-    // Resume path: createGameWorld(config, seed) with the restored values.
-    const resumed = createGameWorld(roundTripped.config, roundTripped.seed);
+    const resumed = createGameWorld(
+      roundTripped.config,
+      roundTripped.seed,
+      roundTripped.playerDeck,
+      { A: [], B: [] },
+      roundTripped.aiDeck,
+      { preserveDeckOrder: true },
+    );
 
     const originalSnapshot = handsAndDecks(original);
     const resumedSnapshot = handsAndDecks(resumed);
@@ -61,16 +99,21 @@ describe('ActiveRunState resume (Bug J regression)', () => {
     expect(gameSeed(original)).toBe(seed);
   });
 
-  it('omitting seed produces a non-deterministic world (documents the bug)', () => {
+  it('preserves deck order when explicit ordered decks are provided', () => {
     const config: GameConfig = { ...DEFAULT_GAME_CONFIG };
-    // Without a seed, two worlds will almost certainly differ. This pins the
-    // reason we MUST persist the seed rather than relying on defaults.
-    const worldA = createGameWorld(config);
-    const worldB = createGameWorld(config);
-    const a = handsAndDecks(worldA);
-    const b = handsAndDecks(worldB);
-    // Extremely unlikely to match by chance; if it does the test is a flake,
-    // but across 25+25 cards the odds are negligible.
-    expect(a).not.toEqual(b);
+    const playerDeck = [tough('p-1'), tough('p-2'), tough('p-3')];
+    const aiDeck = [tough('b-1'), tough('b-2')];
+    const world = createGameWorld(
+      config,
+      77,
+      playerDeck,
+      { A: [], B: [] },
+      aiDeck,
+      { preserveDeckOrder: true },
+    );
+    const snapshot = handsAndDecks(world);
+
+    expect(snapshot.aDeck).toEqual(playerDeck.map((card) => card.id));
+    expect(snapshot.bDeck).toEqual(aiDeck.map((card) => card.id));
   });
 });

@@ -19,5 +19,16 @@
   "unlocked": false,
   "unlockCondition": "Win a game in under 13 rounds",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "totem",
+    "palette": "toxic",
+    "layers": {
+      "backdrop": "burner-phone",
+      "support": "money-clip",
+      "primary": "syringe",
+      "badge": "prescription-bottle"
+    }
+  }
 }

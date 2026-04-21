@@ -12,6 +12,30 @@ async function goToGame(page: Page, testInfo: TestInfo) {
   await expect(page.getByTestId('game-screen')).toBeVisible({ timeout: 10_000 });
 }
 
+async function activatePlayerDraw(page: Page, testInfo: TestInfo) {
+  const hudDraw = page.getByTestId('hud-draw');
+  if (await hudDraw.isVisible().catch(() => false)) {
+    await activate(hudDraw, testInfo);
+    return;
+  }
+  await page.getByTestId('slot-player-draw').click({ force: true });
+}
+
+async function expectPlayerDrawVisible(page: Page) {
+  const hudDraw = page.getByTestId('hud-draw');
+  if (await hudDraw.isVisible().catch(() => false)) {
+    await expect(hudDraw).toBeVisible();
+    return;
+  }
+  await expect(page.getByTestId('slot-player-draw')).toBeVisible();
+}
+
+async function marketCount(page: Page) {
+  const text = (await page.getByTestId('slot-market').textContent()) ?? '';
+  const match = text.match(/\((\d+)\)/);
+  return Number(match?.[1] ?? 0);
+}
+
 test.describe('single-lane flow', () => {
   test('game screen renders exactly one active turf lane per side', async ({ page }, testInfo) => {
     await goToGame(page, testInfo);
@@ -21,14 +45,22 @@ test.describe('single-lane flow', () => {
 
   test('draw slot is visible at game start', async ({ page }, testInfo) => {
     await goToGame(page, testInfo);
-    await expect(page.getByTestId('slot-player-draw')).toBeVisible();
+    await expectPlayerDrawVisible(page);
   });
 
-  test('draw populates a pending card slot', async ({ page }, testInfo) => {
+  test('draw creates pending or auto-routes an unplayable modifier to market', async ({ page }, testInfo) => {
     await goToGame(page, testInfo);
+    const initialMarketCount = await marketCount(page);
     await expect(page.getByTestId('pending-card')).toHaveCount(0);
-    await activate(page.getByTestId('slot-player-draw'), testInfo);
-    await expect(page.getByTestId('pending-card')).toBeVisible({ timeout: 5_000 });
+    await activatePlayerDraw(page, testInfo);
+    await expect(page.getByTestId('action-budget')).toContainText('4/5');
+    await expect
+      .poll(async () => {
+        const hasPending = await page.getByTestId('pending-card').isVisible().catch(() => false);
+        const nextMarketCount = await marketCount(page);
+        return hasPending || nextMarketCount > initialMarketCount;
+      }, { timeout: 5_000 })
+      .toBe(true);
   });
 
   test('action budget is displayed and positive at game start', async ({ page }, testInfo) => {

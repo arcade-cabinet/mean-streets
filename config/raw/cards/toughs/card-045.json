@@ -11,6 +11,8 @@
   "resistance": [
     5
   ],
+  "maxHp": 5,
+  "hp": 5,
   "rarity": [
     "common"
   ],
@@ -20,5 +22,17 @@
   "unlocked": false,
   "unlockCondition": "Win a game using only cards from 2 affiliations",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-left",
+    "palette": "ember",
+    "layers": {
+      "back": "phone-holster",
+      "legs": "casual-slouch",
+      "torso": "bomber",
+      "body": "lean-2",
+      "arms": "pistol"
+    }
+  }
 }

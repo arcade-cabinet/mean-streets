@@ -19,5 +19,16 @@
   "unlocked": false,
   "unlockCondition": "Win a game in under 12 rounds",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "fan",
+    "palette": "gunmetal",
+    "layers": {
+      "backdrop": "burner-phone",
+      "support": "ammo-box",
+      "primary": "holster-pistol",
+      "badge": "pistol"
+    }
+  }
 }

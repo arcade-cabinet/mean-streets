@@ -62,7 +62,7 @@ test('main menu structure exposes a main landmark', async ({ page }) => {
 });
 
 test('difficulty screen exposes a main landmark', async ({ page }) => {
-  await page.goto('/?fixture=difficulty');
+  await page.goto('?fixture=difficulty');
   await expect(page.getByTestId('difficulty-screen')).toBeVisible();
 
   const hasLandmark = await page.evaluate(() => {

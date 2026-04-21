@@ -25,5 +25,16 @@
   ],
   "unlocked": true,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "triptych-left",
+    "palette": "slate",
+    "layers": {
+      "backdrop": "fist-small",
+      "support": "chain",
+      "primary": "knife",
+      "badge": "brass-knuckles"
+    }
+  }
 }

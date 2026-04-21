@@ -18,6 +18,8 @@
     6,
     7
   ],
+  "maxHp": 7,
+  "hp": 7,
   "rarity": [
     "common"
   ],
@@ -26,5 +28,17 @@
   ],
   "unlocked": true,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-right",
+    "palette": "smoke",
+    "layers": {
+      "back": "phone-holster",
+      "legs": "casual-slouch-2",
+      "torso": "hoodie-3",
+      "body": "cap-2",
+      "arms": "pistol-full"
+    }
+  }
 }

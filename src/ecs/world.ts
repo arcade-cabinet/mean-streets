@@ -1,10 +1,14 @@
 import type { World } from 'koota';
 import { createWorld } from 'koota';
-import { loadStarterToughCards } from '../sim/cards/catalog';
+import { loadMythicPoolIds, loadStarterToughCards } from '../sim/cards/catalog';
 import { createRng, randomSeed } from '../sim/cards/rng';
 import { createTurf, resetTurfIdCounter } from '../sim/turf/board';
 import { TURF_SIM_CONFIG } from '../sim/turf/ai/config';
-import { actionsForTurn, emptyMetrics, emptyPlannerMemory } from '../sim/turf/environment';
+import {
+  actionsForTurn,
+  emptyMetrics,
+  emptyPlannerMemory,
+} from '../sim/turf/environment';
 import {
   generateCurrency,
   generateDrugs,
@@ -47,8 +51,12 @@ function initPlayerState(
   deck: Card[],
   rng: ReturnType<typeof createRng>,
   side: 'A' | 'B',
+  options: { preserveDeckOrder?: boolean } = {},
 ): PlayerState {
-  const shuffled = rng.shuffle(deck.map((c) => ({ ...c })));
+  const copiedDeck = deck.map((c) => ({ ...c }));
+  const shuffled = options.preserveDeckOrder
+    ? copiedDeck
+    : rng.shuffle(copiedDeck);
   // v0.3 single-lane: turfs[0] is the active engagement; turfs[1..] are
   // reserves in queue order. `createTurf({ isActive, reserveIndex })`
   // stamps those flags so renderers can distinguish without scanning.
@@ -69,44 +77,28 @@ function initPlayerState(
   };
 }
 
-/**
- * Ten canonical mythic card ids matching the authored cards in
- * config/raw/cards/mythics/ (mythic-01 … mythic-10). Kept in sync with
- * `sim/turf/game.ts::loadMythicIds`.
- */
-function allMythicIds(): string[] {
-  return [
-    'mythic-01',
-    'mythic-02',
-    'mythic-03',
-    'mythic-04',
-    'mythic-05',
-    'mythic-06',
-    'mythic-07',
-    'mythic-08',
-    'mythic-09',
-    'mythic-10',
-  ];
-}
-
 export function createGameWorld(
   config: GameConfig = DEFAULT_GAME_CONFIG,
   seed?: number,
   playerDeck?: Card[],
   ownedMythics: { A: string[]; B: string[] } = { A: [], B: [] },
+  aiDeck?: Card[],
+  options: { preserveDeckOrder?: boolean } = {},
 ): World {
   const gameSeed = seed ?? randomSeed();
   const rng = createRng(gameSeed);
   resetTurfIdCounter();
 
-  const crewPool = loadStarterToughCards(TURF_SIM_CONFIG.starterCollection.toughPoolSize);
+  const crewPool = loadStarterToughCards(
+    TURF_SIM_CONFIG.starterCollection.toughPoolSize,
+  );
 
   const defaultDeck = buildDeck(crewPool, rng);
   const playerADeck = playerDeck ?? defaultDeck;
-  const playerBDeck = buildDeck(crewPool, rng);
+  const playerBDeck = aiDeck ?? buildDeck(crewPool, rng);
   const firstPlayer: 'A' | 'B' = 'A';
-  const playerA = initPlayerState(config, playerADeck, rng, 'A');
-  const playerB = initPlayerState(config, playerBDeck, rng, 'B');
+  const playerA = initPlayerState(config, playerADeck, rng, 'A', options);
+  const playerB = initPlayerState(config, playerBDeck, rng, 'B', options);
 
   const world = createWorld();
 
@@ -143,7 +135,9 @@ export function createGameWorld(
     mythicPool: (() => {
       const aOwned = new Set(ownedMythics.A);
       const bOwned = new Set(ownedMythics.B);
-      return allMythicIds().filter((id) => !aOwned.has(id) && !bOwned.has(id));
+      return loadMythicPoolIds().filter(
+        (id) => !aOwned.has(id) && !bOwned.has(id),
+      );
     })(),
     mythicAssignments: (() => {
       const assignments: Record<string, 'A' | 'B'> = {};

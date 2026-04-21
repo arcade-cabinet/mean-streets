@@ -11,6 +11,8 @@
   "resistance": [
     10
   ],
+  "maxHp": 10,
+  "hp": 10,
   "rarity": [
     "common",
     "legendary"
@@ -22,5 +24,17 @@
   "unlocked": false,
   "unlockCondition": "Deal 38 total damage in a single game",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-left",
+    "palette": "ash",
+    "layers": {
+      "back": "stalk-lunge",
+      "legs": "casual-slouch",
+      "torso": "bomber",
+      "body": "lean-2",
+      "arms": "fists"
+    }
+  }
 }

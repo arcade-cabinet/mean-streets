@@ -53,13 +53,29 @@ describe('createMatch', () => {
     expect(a.game.players.A.deck.map(c => c.id)).toEqual(b.game.players.A.deck.map(c => c.id));
   });
 
-  it('produces a different shuffle for different seeds', () => {
+  it('preserves the caller-provided deck order', () => {
     const deck = makeDeck('x', 20);
-    const a = createMatch(DEFAULT_GAME_CONFIG, { deckA: [...deck], deckB: [...deck], seed: 1 });
-    const b = createMatch(DEFAULT_GAME_CONFIG, { deckA: [...deck], deckB: [...deck], seed: 99999 });
-    const orderA = a.game.players.A.deck.map(c => c.id);
-    const orderB = b.game.players.A.deck.map(c => c.id);
-    expect(orderA).not.toEqual(orderB);
+    const match = createMatch(DEFAULT_GAME_CONFIG, {
+      deckA: [...deck],
+      deckB: [...deck],
+      seed: 1,
+    });
+    expect(match.game.players.A.deck.map(c => c.id)).toEqual(
+      deck.map(c => c.id),
+    );
+  });
+
+  it('clones supplied cards so player decks do not share mutable state', () => {
+    const deck = makeDeck('x', 2);
+    const match = createMatch(DEFAULT_GAME_CONFIG, {
+      deckA: deck,
+      deckB: deck,
+      seed: 1,
+    });
+
+    expect(match.game.players.A.deck[0]).not.toBe(deck[0]);
+    expect(match.game.players.B.deck[0]).not.toBe(deck[0]);
+    expect(match.game.players.A.deck[0]).not.toBe(match.game.players.B.deck[0]);
   });
 });
 

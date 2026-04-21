@@ -20,6 +20,8 @@ export function compileTough(authored: AuthoredTough): CompiledTough {
     affiliation: authored.affiliation,
     power: latestStat(authored.power),
     resistance: latestStat(authored.resistance),
+    maxHp: authored.maxHp,
+    hp: authored.hp,
     rarity: latestRarity(authored.rarity),
     abilities: authored.abilities,
     unlocked: authored.unlocked,
@@ -27,6 +29,7 @@ export function compileTough(authored: AuthoredTough): CompiledTough {
       ? { unlockCondition: authored.unlockCondition }
       : {}),
     locked: authored.locked,
+    portrait: authored.portrait,
   };
 }
 
@@ -45,6 +48,7 @@ export function compileWeapon(authored: AuthoredWeapon): CompiledWeapon {
       ? { unlockCondition: authored.unlockCondition }
       : {}),
     locked: authored.locked,
+    portrait: authored.portrait,
   };
 }
 
@@ -63,19 +67,20 @@ export function compileDrug(authored: AuthoredDrug): CompiledDrug {
       ? { unlockCondition: authored.unlockCondition }
       : {}),
     locked: authored.locked,
+    portrait: authored.portrait,
   };
 }
 
-export function compileCurrency(
-  authored: AuthoredCurrency,
-): CompiledCurrency {
+export function compileCurrency(authored: AuthoredCurrency): CompiledCurrency {
   return {
     kind: 'currency',
     id: authored.id,
     name: authored.name,
     denomination: authored.denomination,
     rarity: latestRarity(authored.rarity),
+    ...(authored.abilities ? { abilities: authored.abilities } : {}),
     unlocked: authored.unlocked,
     locked: authored.locked,
+    portrait: authored.portrait,
   };
 }

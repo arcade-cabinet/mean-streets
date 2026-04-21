@@ -11,18 +11,34 @@ describe('MainMenuScreen (browser)', () => {
     resetTestViewport();
   });
 
-  it('renders 3 menu buttons', async () => {
+  it('renders 5 menu buttons', async () => {
     cleanup = (await renderInBrowser(
-      <MainMenuScreen onNewGame={vi.fn()} onLoadGame={vi.fn()} onCards={vi.fn()} canLoadGame={false} />,
+      <MainMenuScreen
+        onNewGame={vi.fn()}
+        onLoadGame={vi.fn()}
+        onCollection={vi.fn()}
+        onGarage={vi.fn()}
+        onCards={vi.fn()}
+        canLoadGame={false}
+      />,
     )).unmount;
     expect(document.querySelector('[data-testid="new-game-button"]')).not.toBeNull();
     expect(document.querySelector('[data-testid="load-game-button"]')).not.toBeNull();
+    expect(document.querySelector('[data-testid="collection-button"]')).not.toBeNull();
+    expect(document.querySelector('[data-testid="garage-button"]')).not.toBeNull();
     expect(document.querySelector('[data-testid="cards-button"]')).not.toBeNull();
   });
 
   it('disables Load Game when canLoadGame is false', async () => {
     cleanup = (await renderInBrowser(
-      <MainMenuScreen onNewGame={vi.fn()} onLoadGame={vi.fn()} onCards={vi.fn()} canLoadGame={false} />,
+      <MainMenuScreen
+        onNewGame={vi.fn()}
+        onLoadGame={vi.fn()}
+        onCollection={vi.fn()}
+        onGarage={vi.fn()}
+        onCards={vi.fn()}
+        canLoadGame={false}
+      />,
     )).unmount;
     const btn = document.querySelector<HTMLButtonElement>('[data-testid="load-game-button"]')!;
     expect(btn.disabled).toBe(true);
@@ -30,7 +46,14 @@ describe('MainMenuScreen (browser)', () => {
 
   it('enables Load Game when canLoadGame is true', async () => {
     cleanup = (await renderInBrowser(
-      <MainMenuScreen onNewGame={vi.fn()} onLoadGame={vi.fn()} onCards={vi.fn()} canLoadGame={true} />,
+      <MainMenuScreen
+        onNewGame={vi.fn()}
+        onLoadGame={vi.fn()}
+        onCollection={vi.fn()}
+        onGarage={vi.fn()}
+        onCards={vi.fn()}
+        canLoadGame={true}
+      />,
     )).unmount;
     const btn = document.querySelector<HTMLButtonElement>('[data-testid="load-game-button"]')!;
     expect(btn.disabled).toBe(false);
@@ -39,16 +62,62 @@ describe('MainMenuScreen (browser)', () => {
   it('calls onNewGame when New Game clicked', async () => {
     const onNewGame = vi.fn();
     cleanup = (await renderInBrowser(
-      <MainMenuScreen onNewGame={onNewGame} onLoadGame={vi.fn()} onCards={vi.fn()} canLoadGame={false} />,
+      <MainMenuScreen
+        onNewGame={onNewGame}
+        onLoadGame={vi.fn()}
+        onCollection={vi.fn()}
+        onGarage={vi.fn()}
+        onCards={vi.fn()}
+        canLoadGame={false}
+      />,
     )).unmount;
     document.querySelector<HTMLElement>('[data-testid="new-game-button"]')!.click();
     expect(onNewGame).toHaveBeenCalledOnce();
   });
 
+  it('calls onCollection when Collection clicked', async () => {
+    const onCollection = vi.fn();
+    cleanup = (await renderInBrowser(
+      <MainMenuScreen
+        onNewGame={vi.fn()}
+        onLoadGame={vi.fn()}
+        onCollection={onCollection}
+        onGarage={vi.fn()}
+        onCards={vi.fn()}
+        canLoadGame={false}
+      />,
+    )).unmount;
+    document.querySelector<HTMLElement>('[data-testid="collection-button"]')!.click();
+    expect(onCollection).toHaveBeenCalledOnce();
+  });
+
+  it('calls onGarage when Garage clicked', async () => {
+    const onGarage = vi.fn();
+    cleanup = (await renderInBrowser(
+      <MainMenuScreen
+        onNewGame={vi.fn()}
+        onLoadGame={vi.fn()}
+        onCollection={vi.fn()}
+        onGarage={onGarage}
+        onCards={vi.fn()}
+        canLoadGame={false}
+      />,
+    )).unmount;
+    document.querySelector<HTMLElement>('[data-testid="garage-button"]')!.click();
+    expect(onGarage).toHaveBeenCalledOnce();
+  });
+
   it('calls onCards when Cards clicked', async () => {
     const onCards = vi.fn();
     cleanup = (await renderInBrowser(
-      <MainMenuScreen onNewGame={vi.fn()} onLoadGame={vi.fn()} onCards={onCards} canLoadGame={false} />,
+      <MainMenuScreen
+        onNewGame={vi.fn()}
+        onLoadGame={vi.fn()}
+        onCollection={vi.fn()}
+        onGarage={vi.fn()}
+        onCards={onCards}
+        canLoadGame={false}
+      />,
     )).unmount;
     document.querySelector<HTMLElement>('[data-testid="cards-button"]')!.click();
     expect(onCards).toHaveBeenCalledOnce();
@@ -56,7 +125,15 @@ describe('MainMenuScreen (browser)', () => {
 
   it('shows pack badge when availablePacks > 0', async () => {
     cleanup = (await renderInBrowser(
-      <MainMenuScreen onNewGame={vi.fn()} onLoadGame={vi.fn()} onCards={vi.fn()} canLoadGame={false} availablePacks={3} />,
+      <MainMenuScreen
+        onNewGame={vi.fn()}
+        onLoadGame={vi.fn()}
+        onCollection={vi.fn()}
+        onGarage={vi.fn()}
+        onCards={vi.fn()}
+        canLoadGame={false}
+        availablePacks={3}
+      />,
     )).unmount;
     const badge = document.querySelector('.menu-btn-badge');
     expect(badge).not.toBeNull();
@@ -65,7 +142,15 @@ describe('MainMenuScreen (browser)', () => {
 
   it('hides pack badge when availablePacks is 0', async () => {
     cleanup = (await renderInBrowser(
-      <MainMenuScreen onNewGame={vi.fn()} onLoadGame={vi.fn()} onCards={vi.fn()} canLoadGame={false} availablePacks={0} />,
+      <MainMenuScreen
+        onNewGame={vi.fn()}
+        onLoadGame={vi.fn()}
+        onCollection={vi.fn()}
+        onGarage={vi.fn()}
+        onCards={vi.fn()}
+        canLoadGame={false}
+        availablePacks={0}
+      />,
     )).unmount;
     expect(document.querySelector('.menu-btn-badge')).toBeNull();
   });
@@ -73,7 +158,14 @@ describe('MainMenuScreen (browser)', () => {
   it('buttons are horizontally aligned on desktop', async () => {
     setTestViewport({ width: 1280, height: 800, orientation: 'landscape' });
     cleanup = (await renderInBrowser(
-      <MainMenuScreen onNewGame={vi.fn()} onLoadGame={vi.fn()} onCards={vi.fn()} canLoadGame={false} />,
+      <MainMenuScreen
+        onNewGame={vi.fn()}
+        onLoadGame={vi.fn()}
+        onCollection={vi.fn()}
+        onGarage={vi.fn()}
+        onCards={vi.fn()}
+        canLoadGame={false}
+      />,
     )).unmount;
     await settleBrowser();
     const nav = document.querySelector('.menu-nav')!;
@@ -81,12 +173,19 @@ describe('MainMenuScreen (browser)', () => {
     expect(style.flexDirection).toBe('row');
   });
 
-  it('renders all 3 buttons on small phone portrait', async () => {
+  it('renders all 5 buttons on small phone portrait', async () => {
     setTestViewport({ width: 375, height: 667, orientation: 'portrait' });
     cleanup = (await renderInBrowser(
-      <MainMenuScreen onNewGame={vi.fn()} onLoadGame={vi.fn()} onCards={vi.fn()} canLoadGame={false} />,
+      <MainMenuScreen
+        onNewGame={vi.fn()}
+        onLoadGame={vi.fn()}
+        onCollection={vi.fn()}
+        onGarage={vi.fn()}
+        onCards={vi.fn()}
+        canLoadGame={false}
+      />,
     )).unmount;
     await settleBrowser();
-    expect(document.querySelectorAll('.menu-btn').length).toBe(3);
+    expect(document.querySelectorAll('.menu-btn').length).toBe(5);
   });
 });

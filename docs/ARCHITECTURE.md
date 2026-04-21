@@ -43,7 +43,7 @@ config/
     toughs/card-*.json            # 100 toughs (55 common / 25 uncommon / 15 rare / 5 legendary)
     weapons/weap-*.json           # 50 weapons (28/12/8/2)
     drugs/drug-*.json             # 50 drugs (28/12/8/2)
-    currency/currency-*.json      # 2 currency cards ($100, $1000)
+    currency/currency-*.json      # 3 currency cards ($100, $1000, Clean Money)
     mythics/mythic-*.json         # 10 hand-authored mythics (never in packs)
   compiled/                       # Build-time outputs (gitignored)
     toughs.json, weapons.json, drugs.json, currency.json, mythics.json
@@ -174,9 +174,10 @@ e2e/                              # Playwright specs (4 device profiles)
   app-flow.spec.ts                # Menu → difficulty → game flow
   accessibility.spec.ts           # Tap-only, landmarks, keyboard navigation
   difficulty-grid.spec.ts         # Difficulty selection (5 tiers, no Sudden Death in v0.3)
-  pack-opening.spec.ts            # Sealed → reveal → summary flow
+  pack-opening.spec.ts            # Pack-opening fixture route (sealed → reveal → summary)
+  war-outcome.spec.ts             # Game-over fixture route (winner + rewards)
   responsive-alignment.spec.ts    # Overflow checks across fixtures
-  visual-fixtures.spec.ts         # Fixture screenshots for review
+  visual-fixtures.spec.ts         # Opt-in fixture route smoke test
   layout-classification.spec.ts   # Device layout detection
   fold-posture.spec.ts            # Fold-aware layout
 
@@ -203,6 +204,45 @@ Raw files carry tuning history (stat arrays like `power: [5,6,7]`).
 Compiled files expose only the latest value (`power: 7`) so the runtime
 and UI never see the trail. Autobalance writes new values to the raw
 files and commits each tuning iteration.
+
+### Card Portrait Language
+
+Each raw card also owns its portrait recipe under `portrait`.
+Non-mythics must use `mode: "stack"`; mythics must use
+`mode: "custom"`.
+
+Non-mythic toughs choose a locked silhouette stack:
+
+```json
+"portrait": {
+  "mode": "stack",
+  "template": "street-left",
+  "palette": "ash",
+  "layers": {
+    "body": "average",
+    "torso": "hoodie",
+    "arms": "fists",
+    "legs": "runner",
+    "back": "lean"
+  }
+}
+```
+
+Tough stack roles are `body`, `torso`, `arms`, `legs`, optional
+`head`, and optional `back`. Weapon/drug/currency stack roles are
+`primary`, `support`, optional `backdrop`, and optional `badge`.
+Layer values can be a string or a non-empty string array; the compositor
+matches exact sprite stems or numbered variants such as `runner-2`.
+
+The build validates template names, palette families, role names, and
+sprite references before compiling. `pnpm run cards:art` then renders
+all non-mythics through the stack compositor and writes the locked
+manifest to `public/assets/card-art/portrait-stacks.json`.
+
+Mythics are not stack composites. Each of the 10 mythics has an assigned
+custom sprite in `config/raw/cards/mythics/*.json`, and the schema plus
+compiler reject cross-assignment so a mythic cannot accidentally inherit
+another mythic's design.
 
 ### Game Simulation
 

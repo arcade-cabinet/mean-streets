@@ -1,12 +1,10 @@
 import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { AppShellProvider } from '../../../platform';
-import { PackOpeningScreen } from '../PackOpeningScreen';
-
-vi.mock('../../../platform/persistence/collection', () => ({
-  loadCollection: () => Promise.resolve([]),
-  addCardsToCollection: () => Promise.resolve([]),
-}));
+import {
+  loadPackOpeningFixtureCards,
+  PackOpeningScreen,
+} from '../PackOpeningScreen';
 
 function wrap(ui: React.ReactElement) {
   return <AppShellProvider>{ui}</AppShellProvider>;
@@ -121,5 +119,22 @@ describe('PackOpeningScreen', () => {
     await renderAndWait(<PackOpeningScreen onBack={onBack} />);
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(onBack).toHaveBeenCalledOnce();
+  });
+
+  it('uses supplied owned card ids instead of reading persistence', async () => {
+    const cards = loadPackOpeningFixtureCards();
+    await renderAndWait(
+      <PackOpeningScreen
+        cards={cards}
+        ownedCardIds={cards.slice(0, 2).map((card) => card.id)}
+        onBack={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('pack-open-btn'));
+    for (let i = 0; i < cards.length; i++) {
+      fireEvent.click(screen.getByTestId('pack-reveal-stage'));
+    }
+    await waitFor(() => expect(screen.getByTestId('pack-summary-grid')).not.toBeNull());
+    expect(screen.getAllByText('NEW')).toHaveLength(cards.length - 2);
   });
 });

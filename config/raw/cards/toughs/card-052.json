@@ -11,6 +11,8 @@
   "resistance": [
     5
   ],
+  "maxHp": 5,
+  "hp": 5,
   "rarity": [
     "common",
     "uncommon"
@@ -21,5 +23,17 @@
   "unlocked": false,
   "unlockCondition": "Win 1 games with a full Freelance deck",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-right",
+    "palette": "ash",
+    "layers": {
+      "back": "shotgun",
+      "legs": "stalk-lunge",
+      "torso": "bomber-2",
+      "body": "tall-longcoat-3",
+      "arms": "pistol"
+    }
+  }
 }

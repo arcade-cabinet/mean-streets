@@ -4,6 +4,8 @@ interface MainMenuScreenProps {
   onNewGame: () => void;
   onLoadGame: () => void;
   onCards: () => void;
+  onCollection: () => void;
+  onGarage: () => void;
   canLoadGame: boolean;
   availablePacks?: number;
 }
@@ -12,6 +14,8 @@ export function MainMenuScreen({
   onNewGame,
   onLoadGame,
   onCards,
+  onCollection,
+  onGarage,
   canLoadGame,
   availablePacks = 0,
 }: MainMenuScreenProps) {
@@ -57,6 +61,22 @@ export function MainMenuScreen({
           data-testid="load-game-button"
         >
           Load Game
+        </button>
+
+        <button
+          className="menu-btn"
+          onClick={onCollection}
+          data-testid="collection-button"
+        >
+          Collection
+        </button>
+
+        <button
+          className="menu-btn"
+          onClick={onGarage}
+          data-testid="garage-button"
+        >
+          Garage
         </button>
 
         <button

@@ -3,6 +3,24 @@ import { userEvent } from 'vitest/browser';
 import { emptyMetrics } from '../../../sim/turf/environment';
 import { renderInBrowser } from '../../../test/render-browser';
 import { GameOverScreen } from '../GameOverScreen';
+import type { ToughCard } from '../../../sim/turf/types';
+
+function rewardCard(): ToughCard {
+  return {
+    kind: 'tough',
+    id: 'reward-tough',
+    name: 'Reward Tough',
+    tagline: '',
+    archetype: 'bruiser',
+    affiliation: 'kings_row',
+    power: 6,
+    resistance: 4,
+    maxHp: 4,
+    hp: 4,
+    rarity: 'legendary',
+    abilities: [],
+  };
+}
 
 describe('GameOverScreen', () => {
   let cleanup: (() => void) | undefined;
@@ -68,5 +86,36 @@ describe('GameOverScreen', () => {
     )).unmount;
     const defeatSub = document.querySelector('.gameover-subtitle')?.textContent ?? '';
     expect(defeatSub).toContain('lost');
+  });
+
+  it('renders reward cards with the war unlock difficulty chip', async () => {
+    cleanup = (await renderInBrowser(
+      <GameOverScreen
+        winner="A"
+        metrics={emptyMetrics()}
+        rewardCards={[rewardCard()]}
+        rewardUnlockDifficulty="nightmare"
+        onPlayAgain={() => {}}
+      />,
+    )).unmount;
+
+    expect(document.querySelector('[data-testid="gameover-rewards"]')).not.toBeNull();
+    expect(document.querySelector('[data-testid="card-unlock-badge"]')?.textContent).toBe('N');
+  });
+
+  it('shows the authored war outcome summary and fallback bounty', async () => {
+    cleanup = (await renderInBrowser(
+      <GameOverScreen
+        winner="A"
+        metrics={emptyMetrics()}
+        rewardOutcome="perfect"
+        rewardCurrencyAmount={1500}
+        onPlayAgain={() => {}}
+      />,
+    )).unmount;
+
+    expect(document.querySelector('[data-testid="gameover-reward-summary"]')).not.toBeNull();
+    expect(document.querySelector('.gameover-reward-summary')?.textContent).toContain('Perfect War');
+    expect(document.querySelector('.gameover-reward-summary')?.textContent).toContain('$1,500');
   });
 });

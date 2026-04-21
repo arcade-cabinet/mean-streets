@@ -2,8 +2,9 @@ import { expect, test } from '@playwright/test';
 import { activate } from './helpers/activate';
 import { runPlayerGovernor } from './helpers/player-governor';
 
-test.describe('Player Governor vs AI', () => {
+test.describe('@governor Player Governor vs AI', () => {
   test('plays a full game to completion on Corner Boy (easy)', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop-chromium', 'Long-form governor runs are desktop-only.');
     test.setTimeout(600_000);
 
     page.on('console', msg => {
@@ -49,6 +50,7 @@ test.describe('Player Governor vs AI', () => {
   });
 
   test('plays a full game on Soldier (medium)', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop-chromium', 'Long-form governor runs are desktop-only.');
     test.setTimeout(600_000);
 
     await page.goto('/');

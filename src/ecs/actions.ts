@@ -12,11 +12,15 @@ const getEntity = (world: World) =>
  * player (side A). The handless model keeps both players' budgets live
  * on the sim simultaneously; UI chrome tracks A via this trait.
  */
-function syncBudget(e: Entity, gs: TurfGameState): void {
+export function syncBudget(e: Entity, gs: TurfGameState): void {
   const a = gs.players.A;
+  const existing = e.get(ActionBudget);
+  const total = existing?.turnNumber === gs.turnNumber
+    ? existing.total
+    : a.actionsRemaining;
   e.set(ActionBudget, {
     remaining: a.actionsRemaining,
-    total: e.get(ActionBudget)?.total ?? a.actionsRemaining,
+    total,
     turnNumber: gs.turnNumber,
   });
 }
@@ -26,7 +30,7 @@ function syncBudget(e: Entity, gs: TurfGameState): void {
  * trait values (not just marking changed) ensures `useTrait` consumers
  * receive the fresh reference and re-render.
  */
-function syncAll(e: Entity, gs: TurfGameState): void {
+export function syncAll(e: Entity, gs: TurfGameState): void {
   syncBudget(e, gs);
   e.set(PlayerA, gs.players.A);
   e.set(PlayerB, gs.players.B);

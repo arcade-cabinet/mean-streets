@@ -11,6 +11,8 @@
   "resistance": [
     6
   ],
+  "maxHp": 6,
+  "hp": 6,
   "rarity": [
     "common"
   ],
@@ -20,5 +22,16 @@
   "unlocked": false,
   "unlockCondition": "Deal 43 total damage in a single game",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "ambush",
+    "palette": "rust",
+    "layers": {
+      "legs": "casual-slouch-2",
+      "torso": "bomber",
+      "body": "bandana",
+      "arms": "fists"
+    }
+  }
 }

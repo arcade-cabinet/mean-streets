@@ -11,6 +11,8 @@
   "resistance": [
     3
   ],
+  "maxHp": 3,
+  "hp": 3,
   "rarity": [
     "common"
   ],
@@ -20,5 +22,16 @@
   "unlocked": false,
   "unlockCondition": "Deal 46 total damage in a single game",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-right",
+    "palette": "ember",
+    "layers": {
+      "legs": "casual-slouch",
+      "torso": "bandana",
+      "body": "fedora-2",
+      "arms": "fists"
+    }
+  }
 }

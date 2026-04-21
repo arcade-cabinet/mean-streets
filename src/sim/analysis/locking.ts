@@ -1,4 +1,5 @@
 import { TURF_SIM_CONFIG } from '../turf/ai';
+import type { BalanceHistory } from '../turf/balance';
 import type { EffectAnalysisReport } from './effects';
 
 export type LockState = 'unmeasured' | 'unstable' | 'provisionally_stable' | 'locked' | 'saturated';
@@ -182,4 +183,41 @@ export function summarizeLockRecommendations(
   }
 
   return summary;
+}
+
+export function buildBalanceHistoryFromLockRecommendations(
+  report: LockAnalysisReport,
+  previousHistory: BalanceHistory,
+  cardIds: string[],
+): BalanceHistory {
+  const nextHistory: BalanceHistory = {
+    version: previousHistory.version,
+    cards: {},
+  };
+  const recommendations = new Map(
+    report.recommendations.map((recommendation) => [recommendation.cardId, recommendation]),
+  );
+
+  for (const cardId of cardIds) {
+    const previous = previousHistory.cards[cardId] ?? {
+      consecutiveStableRuns: 0,
+      locked: false,
+    };
+    const recommendation = recommendations.get(cardId);
+
+    if (previous.locked) {
+      nextHistory.cards[cardId] = previous;
+      continue;
+    }
+
+    const locked = recommendation?.state === 'locked';
+    nextHistory.cards[cardId] = {
+      consecutiveStableRuns: locked
+        ? TURF_SIM_CONFIG.balance.consecutiveStableRunsToLock
+        : 0,
+      locked,
+    };
+  }
+
+  return nextHistory;
 }

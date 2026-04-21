@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { runSeededBenchmark } from '../benchmarks';
 import { estimateCardEffects } from '../effects';
-import { deriveLockRecommendations } from '../locking';
+import {
+  buildBalanceHistoryFromLockRecommendations,
+  deriveLockRecommendations,
+} from '../locking';
 import { buildCuratedSweepPermutations, runCuratedSweep, type ForcedPermutationResult } from '../sweeps';
 import { checkConvergence } from '../benchmarks';
 import { generateTurfCardPools } from '../../turf/catalog';
@@ -85,8 +88,7 @@ describe('analysis layer', () => {
   });
 
   // Slow: full sim-backed sweep — validates the end-to-end pipeline.
-  // Set RUN_SLOW_TESTS=1 to enable locally or in a dedicated CI job.
-  // TODO: promote to a nightly job once we have a dedicated slow-test runner.
+  // Run via `pnpm run test:analysis:slow` locally or the nightly workflow.
   describe.skipIf(!process.env.RUN_SLOW_TESTS)('slow sim sweep (RUN_SLOW_TESTS=1)', () => {
     it('runCuratedSweep weapon_drug quick produces one result per permutation', () => {
       const permutationIds = buildCuratedSweepPermutations('weapon_drug');
@@ -148,4 +150,37 @@ describe('analysis layer', () => {
     const rec = locks.recommendations.find(r => r.cardId === 'card-001');
     expect(rec?.state).toBe('saturated');
   }, 30000);
+
+  it('builds persisted balance history from current lock recommendations', () => {
+    const history = buildBalanceHistoryFromLockRecommendations(
+      {
+        generatedAt: 'now',
+        analysisProfile: 'quick',
+        recommendations: [
+          { cardId: 'card-001', state: 'locked', reasons: ['stable'] },
+          { cardId: 'card-002', state: 'unstable', reasons: ['delta'] },
+        ],
+      },
+      {
+        version: 2,
+        cards: {
+          'card-002': { consecutiveStableRuns: 2, locked: true },
+        },
+      },
+      ['card-001', 'card-002', 'card-003'],
+    );
+
+    expect(history.cards['card-001']).toEqual({
+      consecutiveStableRuns: 3,
+      locked: true,
+    });
+    expect(history.cards['card-002']).toEqual({
+      consecutiveStableRuns: 2,
+      locked: true,
+    });
+    expect(history.cards['card-003']).toEqual({
+      consecutiveStableRuns: 0,
+      locked: false,
+    });
+  });
 });

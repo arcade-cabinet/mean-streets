@@ -20,5 +20,16 @@
   "unlocked": false,
   "unlockCondition": "Win without using steroids",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "triptych-left",
+    "palette": "violet",
+    "layers": {
+      "backdrop": "prescription-bottle",
+      "support": "wallet",
+      "primary": "pill-bottle",
+      "badge": "herb-bag"
+    }
+  }
 }

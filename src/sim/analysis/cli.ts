@@ -1,9 +1,10 @@
 import { basename, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { generateTurfCardPools } from '../turf/catalog';
-import { saveBalanceHistory } from '../turf/balance';
+import { loadBalanceHistory, saveBalanceHistory } from '../turf/balance';
 import type { CardEffectEstimate } from './effects';
 import {
+  buildBalanceHistoryFromLockRecommendations,
   createBenchmarkReport,
   deriveLockRecommendations,
   estimateCardEffects,
@@ -418,7 +419,19 @@ async function main(): Promise<void> {
     printUnstableFamilySummary(unstableFamilySummary);
     printUnstablePairingSummary(unstablePairingSummary, descriptors);
     if (process.argv.includes('--persist') && baseline.balance) {
-      saveBalanceHistory(BALANCE_HISTORY_PATH, baseline.balance.history);
+      const previousHistory = loadBalanceHistory(BALANCE_HISTORY_PATH);
+      const historyCardIds = [
+        ...new Set([
+          ...Object.keys(previousHistory.cards),
+          ...locks.recommendations.map((recommendation) => recommendation.cardId),
+        ]),
+      ];
+      const persistedHistory = buildBalanceHistoryFromLockRecommendations(
+        locks,
+        previousHistory,
+        historyCardIds,
+      );
+      saveBalanceHistory(BALANCE_HISTORY_PATH, persistedHistory);
       console.log(`[analysis] balance-history persisted -> ${BALANCE_HISTORY_PATH}`);
     }
     console.log(path);

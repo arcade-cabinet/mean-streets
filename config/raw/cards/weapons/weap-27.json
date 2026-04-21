@@ -19,5 +19,16 @@
   "unlocked": false,
   "unlockCondition": "Win with all 5 weapon categories in your deck",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "triptych-right",
+    "palette": "slate",
+    "layers": {
+      "backdrop": "paper-bag",
+      "support": "burner-phone",
+      "primary": "ammo-box",
+      "badge": "duffel-bag"
+    }
+  }
 }

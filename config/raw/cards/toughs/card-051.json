@@ -11,6 +11,8 @@
   "resistance": [
     7
   ],
+  "maxHp": 7,
+  "hp": 7,
   "rarity": [
     "common"
   ],
@@ -20,5 +22,16 @@
   "unlocked": false,
   "unlockCondition": "Win 6 games",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-left",
+    "palette": "ash",
+    "layers": {
+      "legs": "run",
+      "torso": "hoodie",
+      "body": "hood-mask",
+      "arms": "fists"
+    }
+  }
 }

@@ -183,6 +183,13 @@ describe('positionPower', () => {
   it('returns 0 for empty turf', () => {
     expect(positionPower(createTurf())).toBe(0);
   });
+
+  it('treats legacy tough fixtures without hp fields as full power', () => {
+    const turf = createTurf();
+    const legacy = { ...tough('t1', 7), hp: undefined, maxHp: undefined } as unknown as ToughCard;
+    addToStack(turf, legacy);
+    expect(positionPower(turf)).toBe(7);
+  });
 });
 
 describe('positionResistance', () => {
@@ -205,6 +212,13 @@ describe('positionResistance', () => {
     const turf = createTurf();
     addToStack(turf, tough('t1', 5, 6));
     turf.sickTopIdx = 0;
+    expect(positionResistance(turf)).toBe(6);
+  });
+
+  it('treats legacy tough fixtures without hp fields as full resistance', () => {
+    const turf = createTurf();
+    const legacy = { ...tough('t1', 5, 6), hp: undefined, maxHp: undefined } as unknown as ToughCard;
+    addToStack(turf, legacy);
     expect(positionResistance(turf)).toBe(6);
   });
 });

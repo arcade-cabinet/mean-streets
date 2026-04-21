@@ -19,5 +19,16 @@
   "unlocked": false,
   "unlockCondition": "Win a game with all 5 drug categories in your deck",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "totem",
+    "palette": "toxic",
+    "layers": {
+      "backdrop": "burner-phone",
+      "support": "prescription-bottle",
+      "primary": "pill-bottle",
+      "badge": "syringe"
+    }
+  }
 }

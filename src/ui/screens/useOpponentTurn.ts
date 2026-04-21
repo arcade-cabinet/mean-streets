@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { World } from 'koota';
-import { ActionBudget, GameState, PlayerA, PlayerB } from '../../ecs/traits';
+import { syncAll } from '../../ecs/actions';
+import { GameState } from '../../ecs/traits';
 import { runOpponentTurn } from '../../sim/turf/ai/runner';
 import type { TurfAction, TurfGameState } from '../../sim/turf/types';
 
@@ -35,6 +36,13 @@ function actionLabel(action: TurfAction): string {
   return ACTION_LABELS[action.kind] ?? `Opp: ${action.kind}`;
 }
 
+function isAutomationEnv(): boolean {
+  return (
+    typeof window !== 'undefined'
+    && (window.__MEAN_STREETS_TEST__ === true || navigator.webdriver === true)
+  );
+}
+
 export function useOpponentTurn({ world, turnEndedA, turnEndedB, onFinish }: Options): {
   aiThinking: boolean;
   aiAction: string | null;
@@ -44,6 +52,7 @@ export function useOpponentTurn({ world, turnEndedA, turnEndedB, onFinish }: Opt
   const onFinishRef = useRef(onFinish);
   onFinishRef.current = onFinish;
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const automation = isAutomationEnv();
 
   useEffect(() => {
     if (!turnEndedA || turnEndedB || aiThinking || timerRef.current) return;
@@ -51,7 +60,7 @@ export function useOpponentTurn({ world, turnEndedA, turnEndedB, onFinish }: Opt
     setAiThinking(true);
     setAiAction('Opp thinking...');
 
-    timerRef.current = setTimeout(() => {
+    const runTurn = () => {
       timerRef.current = null;
       let applied: TurfAction[] = [];
       try {
@@ -59,14 +68,7 @@ export function useOpponentTurn({ world, turnEndedA, turnEndedB, onFinish }: Opt
         const gs = e?.get(GameState) as TurfGameState | undefined;
         if (e && gs && !gs.players.B.turnEnded) {
           applied = runOpponentTurn(gs, 'B');
-          e.changed(GameState);
-          e.set(PlayerA, gs.players.A);
-          e.set(PlayerB, gs.players.B);
-          e.set(ActionBudget, {
-            remaining: gs.players.A.actionsRemaining,
-            total: e.get(ActionBudget)?.total ?? gs.players.A.actionsRemaining,
-            turnNumber: gs.turnNumber,
-          });
+          syncAll(e, gs);
         }
       } catch (err) {
         console.error('[useOpponentTurn] AI crashed:', err);
@@ -75,6 +77,13 @@ export function useOpponentTurn({ world, turnEndedA, turnEndedB, onFinish }: Opt
       // Replay action labels with delays
       const significant = applied.filter(a => a.kind !== 'end_turn' && a.kind !== 'pass');
       if (significant.length === 0) {
+        setAiAction(null);
+        setAiThinking(false);
+        onFinishRef.current?.();
+        return;
+      }
+
+      if (automation) {
         setAiAction(null);
         setAiThinking(false);
         onFinishRef.current?.();
@@ -94,8 +103,15 @@ export function useOpponentTurn({ world, turnEndedA, turnEndedB, onFinish }: Opt
         timerRef.current = setTimeout(showNext, AI_ACTION_STEP_MS);
       }
       showNext();
-    }, AI_INITIAL_DELAY_MS);
-  }, [turnEndedA, turnEndedB, aiThinking, world]);
+    };
+
+    if (automation) {
+      runTurn();
+      return;
+    }
+
+    timerRef.current = setTimeout(runTurn, AI_INITIAL_DELAY_MS);
+  }, [turnEndedA, turnEndedB, aiThinking, automation, world]);
 
   useEffect(() => {
     return () => {

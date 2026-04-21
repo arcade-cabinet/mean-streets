@@ -80,13 +80,14 @@ describe('GameScreen board layout (browser)', () => {
     expect(slots.length).toBe(6);
   });
 
-  it('shows opponent turn overlay when waiting', async () => {
+  it('completes the opponent turn immediately in automation mode', async () => {
     cleanup = (await renderGameScreen()).unmount;
     await settleBrowser();
     const endTurn = document.querySelector<HTMLElement>('[data-testid="action-end_turn"]')!;
     endTurn.click();
     await settleBrowser();
     const overlay = document.querySelector('[data-testid="opponent-turn-overlay"]');
-    expect(overlay).not.toBeNull();
+    expect(overlay).toBeNull();
+    expect(document.querySelector('[data-testid="action-budget"]')?.textContent).toContain('3/3');
   });
 });

@@ -6,7 +6,20 @@
   "rarity": [
     "legendary"
   ],
-  "abilities": ["LAUNDER"],
+  "abilities": [
+    "LAUNDER"
+  ],
   "unlocked": true,
-  "locked": false
+  "locked": false,
+  "portrait": {
+    "mode": "stack",
+    "template": "fan",
+    "palette": "laundered",
+    "layers": {
+      "backdrop": "cash-stack",
+      "support": "burner-phone",
+      "primary": "money-clip",
+      "badge": "paper-bag"
+    }
+  }
 }

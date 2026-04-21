@@ -1,5 +1,9 @@
 import { useAppShell } from '../../platform';
-import type { Card as CardType, DifficultyTier, Rarity } from '../../sim/turf/types';
+import type {
+  Card as CardType,
+  DifficultyTier,
+  Rarity,
+} from '../../sim/turf/types';
 import { AffiliationSymbol } from '../affiliations';
 import { CardFrame } from './CardFrame';
 import { MythicBadge } from '../board/MythicBadge';
@@ -31,10 +35,10 @@ const RARITY_CLASS: Record<Rarity, string> = {
 };
 
 const DIFFICULTY_GLYPH: Record<DifficultyTier, string> = {
-  'easy': 'E',
-  'medium': 'M',
-  'hard': 'H',
-  'nightmare': 'N',
+  easy: 'E',
+  medium: 'M',
+  hard: 'H',
+  nightmare: 'N',
   'ultra-nightmare': 'UN',
 };
 
@@ -83,7 +87,8 @@ function renderTough(
   extras: RenderExtras,
 ) {
   const rarityClass = RARITY_CLASS[extras.effectiveRarity];
-  const affiliationClass = AFFILIATION_COLORS[card.affiliation] ?? 'card-affiliation-freelance';
+  const affiliationClass =
+    AFFILIATION_COLORS[card.affiliation] ?? 'card-affiliation-freelance';
   const mythicClass = extras.isMythic ? 'card-mythic' : '';
 
   if (compact) {
@@ -91,23 +96,37 @@ function renderTough(
       <div
         className={`card-shell card-shell-compact card-tough ${rarityClass} ${mythicClass}`}
         data-testid={`card-${card.id}`}
+        data-kind={card.kind}
+        data-rarity={extras.effectiveRarity}
       >
-        <CardFrame variant="card" rarity={extras.effectiveRarity} className="card-frame-svg card-frame-svg-card" />
+        <CardFrame
+          variant="card"
+          rarity={extras.effectiveRarity}
+          className="card-frame-svg card-frame-svg-card"
+        />
         <div className="card-noise" />
         <div className="card-sheen" />
         {renderUnlockBadge(extras.unlock)}
         {extras.isMythic && <MythicBadge compact />}
         <div className="card-compact-header">
           <span className={`card-affiliation-badge ${affiliationClass}`}>
-            <AffiliationSymbol affiliation={card.affiliation} size={14} context={context} />
+            <AffiliationSymbol
+              affiliation={card.affiliation}
+              size={14}
+              context={context}
+            />
             {affiliationLabel(card.affiliation)}
           </span>
-          <span className="card-rarity-badge">{extras.effectiveRarity[0].toUpperCase()}</span>
+          <span className="card-rarity-badge">
+            {extras.effectiveRarity[0].toUpperCase()}
+          </span>
         </div>
         <div className="card-compact-name">{card.name}</div>
         <div className="card-compact-stats">
           <span className="card-stat card-stat-power">{card.power}</span>
-          <span className="card-stat card-stat-resistance">{card.resistance}</span>
+          <span className="card-stat card-stat-resistance">
+            {card.resistance}
+          </span>
         </div>
       </div>
     );
@@ -117,8 +136,14 @@ function renderTough(
     <div
       className={`card-shell card-tough ${rarityClass} ${mythicClass}`}
       data-testid={`card-${card.id}`}
+      data-kind={card.kind}
+      data-rarity={extras.effectiveRarity}
     >
-      <CardFrame variant="card" rarity={extras.effectiveRarity} className="card-frame-svg card-frame-svg-card" />
+      <CardFrame
+        variant="card"
+        rarity={extras.effectiveRarity}
+        className="card-frame-svg card-frame-svg-card"
+      />
       <div className="card-noise" />
       <div className="card-sheen" />
       {renderUnlockBadge(extras.unlock)}
@@ -126,8 +151,14 @@ function renderTough(
       <div className="card-inner">
         <div className="card-header">
           <div className={`card-affiliation-hero ${affiliationClass}`}>
-            <AffiliationSymbol affiliation={card.affiliation} size={18} context={context} />
-            <span className="card-affiliation-label">{affiliationLabel(card.affiliation)}</span>
+            <AffiliationSymbol
+              affiliation={card.affiliation}
+              size={18}
+              context={context}
+            />
+            <span className="card-affiliation-label">
+              {affiliationLabel(card.affiliation)}
+            </span>
           </div>
           <span className="card-power-badge">{card.power}</span>
         </div>
@@ -141,29 +172,38 @@ function renderTough(
             onError={(e) => {
               const img = e.currentTarget;
               img.style.display = 'none';
-              const initials = img.parentElement?.querySelector('.card-portrait-initials');
+              const initials = img.parentElement?.querySelector(
+                '.card-portrait-initials',
+              );
               if (initials) (initials as HTMLElement).style.display = 'block';
             }}
           />
           <div className="card-portrait-initials" style={{ display: 'none' }}>
-            {card.name.split(' ').map((w) => w[0]).join('').slice(0, 3).toUpperCase()}
+            {card.name
+              .split(' ')
+              .map((w) => w[0])
+              .join('')
+              .slice(0, 3)
+              .toUpperCase()}
           </div>
         </div>
         <div className="card-body">
           <div className="card-name-row">
             <span className="card-name">{card.name}</span>
-            <span className="card-rarity-badge">{extras.effectiveRarity[0].toUpperCase()}</span>
+            <span className="card-rarity-badge">
+              {extras.effectiveRarity[0].toUpperCase()}
+            </span>
           </div>
           <div className="card-meta">
             <span className="card-archetype">{card.archetype}</span>
           </div>
           {card.abilities.length > 0 && (
-            <div className="card-abilities">
-              {card.abilities[0]}
-            </div>
+            <div className="card-abilities">{card.abilities[0]}</div>
           )}
           {(FLAVOR_TEXT[card.id] || card.tagline) && (
-            <div className="card-flavor">{FLAVOR_TEXT[card.id] ?? card.tagline}</div>
+            <div className="card-flavor">
+              {FLAVOR_TEXT[card.id] ?? card.tagline}
+            </div>
           )}
         </div>
         <div className="card-footer">
@@ -182,26 +222,37 @@ function renderModifier(
   const rarityClass = RARITY_CLASS[extras.effectiveRarity];
   const mythicClass = extras.isMythic ? 'card-mythic' : '';
   const kindClass = card.kind === 'weapon' ? 'card-weapon' : 'card-drug';
-  const portraitClass = card.kind === 'weapon' ? 'card-portrait-weapon' : 'card-portrait-drug';
+  const portraitClass =
+    card.kind === 'weapon' ? 'card-portrait-weapon' : 'card-portrait-drug';
 
   if (compact) {
     return (
       <div
         className={`card-shell card-shell-compact ${kindClass} ${rarityClass} ${mythicClass}`}
         data-testid={`card-${card.id}`}
+        data-kind={card.kind}
+        data-rarity={extras.effectiveRarity}
       >
-        <CardFrame variant="card" rarity={extras.effectiveRarity} className="card-frame-svg card-frame-svg-card" />
+        <CardFrame
+          variant="card"
+          rarity={extras.effectiveRarity}
+          className="card-frame-svg card-frame-svg-card"
+        />
         <div className="card-noise" />
         {renderUnlockBadge(extras.unlock)}
         {extras.isMythic && <MythicBadge compact />}
         <div className="card-compact-header">
           <span className="card-category-badge">{card.category}</span>
-          <span className="card-rarity-badge">{extras.effectiveRarity[0].toUpperCase()}</span>
+          <span className="card-rarity-badge">
+            {extras.effectiveRarity[0].toUpperCase()}
+          </span>
         </div>
         <div className="card-compact-name">{card.name}</div>
         <div className="card-compact-stats">
           <span className="card-stat card-stat-power">{card.power}</span>
-          <span className="card-stat card-stat-resistance">{card.resistance}</span>
+          <span className="card-stat card-stat-resistance">
+            {card.resistance}
+          </span>
         </div>
       </div>
     );
@@ -211,8 +262,14 @@ function renderModifier(
     <div
       className={`card-shell ${kindClass} ${rarityClass} ${mythicClass}`}
       data-testid={`card-${card.id}`}
+      data-kind={card.kind}
+      data-rarity={extras.effectiveRarity}
     >
-      <CardFrame variant="card" rarity={extras.effectiveRarity} className="card-frame-svg card-frame-svg-card" />
+      <CardFrame
+        variant="card"
+        rarity={extras.effectiveRarity}
+        className="card-frame-svg card-frame-svg-card"
+      />
       <div className="card-noise" />
       <div className="card-sheen" />
       {renderUnlockBadge(extras.unlock)}
@@ -232,23 +289,30 @@ function renderModifier(
             onError={(e) => {
               const img = e.currentTarget;
               img.style.display = 'none';
-              const initials = img.parentElement?.querySelector('.card-portrait-initials');
+              const initials = img.parentElement?.querySelector(
+                '.card-portrait-initials',
+              );
               if (initials) (initials as HTMLElement).style.display = 'block';
             }}
           />
           <div className="card-portrait-initials" style={{ display: 'none' }}>
-            {card.name.split(' ').map((w) => w[0]).join('').slice(0, 3).toUpperCase()}
+            {card.name
+              .split(' ')
+              .map((w) => w[0])
+              .join('')
+              .slice(0, 3)
+              .toUpperCase()}
           </div>
         </div>
         <div className="card-body">
           <div className="card-name-row">
             <span className="card-name">{card.name}</span>
-            <span className="card-rarity-badge">{extras.effectiveRarity[0].toUpperCase()}</span>
+            <span className="card-rarity-badge">
+              {extras.effectiveRarity[0].toUpperCase()}
+            </span>
           </div>
           {card.abilities.length > 0 && (
-            <div className="card-abilities">
-              {card.abilities[0]}
-            </div>
+            <div className="card-abilities">{card.abilities[0]}</div>
           )}
           {FLAVOR_TEXT[card.id] && (
             <div className="card-flavor">{FLAVOR_TEXT[card.id]}</div>
@@ -276,8 +340,14 @@ function renderCurrency(
       <div
         className={`card-shell card-shell-compact card-currency ${rarityClass} ${mythicClass}`}
         data-testid={`card-${card.id}`}
+        data-kind={card.kind}
+        data-rarity={extras.effectiveRarity}
       >
-        <CardFrame variant="card" rarity={extras.effectiveRarity} className="card-frame-svg card-frame-svg-card" />
+        <CardFrame
+          variant="card"
+          rarity={extras.effectiveRarity}
+          className="card-frame-svg card-frame-svg-card"
+        />
         <div className="card-noise" />
         {renderUnlockBadge(extras.unlock)}
         <div className="card-compact-name card-currency-label">{label}</div>
@@ -289,12 +359,43 @@ function renderCurrency(
     <div
       className={`card-shell card-currency ${rarityClass} ${mythicClass}`}
       data-testid={`card-${card.id}`}
+      data-kind={card.kind}
+      data-rarity={extras.effectiveRarity}
     >
-      <CardFrame variant="card" rarity={extras.effectiveRarity} className="card-frame-svg card-frame-svg-card" />
+      <CardFrame
+        variant="card"
+        rarity={extras.effectiveRarity}
+        className="card-frame-svg card-frame-svg-card"
+      />
       <div className="card-noise" />
       <div className="card-sheen" />
       {renderUnlockBadge(extras.unlock)}
       <div className="card-inner card-inner-currency">
+        <div className="card-portrait card-portrait-currency">
+          <img
+            src={`${import.meta.env.BASE_URL}assets/card-art/${card.id}.png`}
+            alt=""
+            className="card-portrait-img"
+            draggable={false}
+            loading="lazy"
+            onError={(e) => {
+              const img = e.currentTarget;
+              img.style.display = 'none';
+              const initials = img.parentElement?.querySelector(
+                '.card-portrait-initials',
+              );
+              if (initials) (initials as HTMLElement).style.display = 'block';
+            }}
+          />
+          <div className="card-portrait-initials" style={{ display: 'none' }}>
+            {card.name
+              .split(' ')
+              .map((w) => w[0])
+              .join('')
+              .slice(0, 3)
+              .toUpperCase()}
+          </div>
+        </div>
         <div className="card-currency-denomination">{label}</div>
         <div className="card-currency-subtext">{card.name}</div>
       </div>
@@ -303,14 +404,24 @@ function renderCurrency(
 }
 
 export function Card({
-  card, compact: compactOverride, affiliationContext = 'none',
-  rolledRarity, unlockDifficulty, isMythic,
+  card,
+  compact: compactOverride,
+  affiliationContext = 'none',
+  rolledRarity,
+  unlockDifficulty,
+  isMythic,
 }: CardProps) {
   const { layout } = useAppShell();
-  const compact = compactOverride ?? (layout.id === 'phone-portrait' || layout.id === 'folded');
+  const compact =
+    compactOverride ??
+    (layout.id === 'phone-portrait' || layout.id === 'folded');
   const effectiveRarity: Rarity = rolledRarity ?? card.rarity;
   const mythic = isMythic ?? effectiveRarity === 'mythic';
-  const extras: RenderExtras = { effectiveRarity, unlock: unlockDifficulty, isMythic: mythic };
+  const extras: RenderExtras = {
+    effectiveRarity,
+    unlock: unlockDifficulty,
+    isMythic: mythic,
+  };
 
   switch (card.kind) {
     case 'tough':

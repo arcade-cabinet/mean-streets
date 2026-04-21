@@ -82,7 +82,8 @@ export function StackFanModal({
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
       if (e.key === 'ArrowLeft') setCurrentIdx((i) => Math.max(0, i - 1));
-      if (e.key === 'ArrowRight') setCurrentIdx((i) => Math.min(stackLen - 1, i + 1));
+      if (e.key === 'ArrowRight')
+        setCurrentIdx((i) => Math.min(stackLen - 1, i + 1));
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
@@ -92,15 +93,18 @@ export function StackFanModal({
     touchStartX.current = e.touches[0].clientX;
   }, []);
 
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    const dx = e.changedTouches[0].clientX - touchStartX.current;
-    if (Math.abs(dx) < 40) return;
-    if (dx < 0) {
-      setCurrentIdx((i) => Math.min(stackLen - 1, i + 1));
-    } else {
-      setCurrentIdx((i) => Math.max(0, i - 1));
-    }
-  }, [stackLen]);
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      const dx = e.changedTouches[0].clientX - touchStartX.current;
+      if (Math.abs(dx) < 40) return;
+      if (dx < 0) {
+        setCurrentIdx((i) => Math.min(stackLen - 1, i + 1));
+      } else {
+        setCurrentIdx((i) => Math.max(0, i - 1));
+      }
+    },
+    [stackLen],
+  );
 
   // Map tough.id → stackIdx so we can draw owner-line arrows from a
   // modifier's position toward its owning tough. Declared before the
@@ -126,8 +130,16 @@ export function StackFanModal({
         }
       : undefined;
     const isTough = sc.card.kind === 'tough';
-    const ownerIdx = !isTough && sc.owner ? toughIndexById.get(sc.owner) ?? null : null;
-    const arrowDir = ownerIdx == null ? null : ownerIdx < i ? 'left' : ownerIdx > i ? 'right' : null;
+    const ownerIdx =
+      !isTough && sc.owner ? (toughIndexById.get(sc.owner) ?? null) : null;
+    const arrowDir =
+      ownerIdx == null
+        ? null
+        : ownerIdx < i
+          ? 'left'
+          : ownerIdx > i
+            ? 'right'
+            : null;
     return (
       <div
         key={`${sc.card.id}-${i}`}
@@ -135,16 +147,25 @@ export function StackFanModal({
         style={{
           transform: `translateX(${(i - currentIdx) * 110}%) scale(${i === currentIdx ? 1 : 0.85})`,
           zIndex: i === currentIdx ? 10 : stackLen - Math.abs(i - currentIdx),
-          opacity: Math.abs(i - currentIdx) > 2 ? 0 : i === currentIdx ? 1 : 0.6,
+          opacity:
+            Math.abs(i - currentIdx) > 2 ? 0 : i === currentIdx ? 1 : 0.6,
         }}
         onClick={handleClick}
         role={pickable ? 'button' : undefined}
         tabIndex={pickable ? 0 : undefined}
         aria-label={pickable ? `Pick ${sc.card.id}` : undefined}
+        data-card-kind={sc.card.kind}
+        data-face-up={String(sc.faceUp)}
         data-testid={`stack-fan-card-${i}`}
       >
-        {showFace ? <Card card={sc.card} /> : <CardBack position={positionLabel} />}
-        {showHp && showFace && isTough && <ToughHp tough={sc.card as ToughCard} />}
+        {showFace ? (
+          <Card card={sc.card} />
+        ) : (
+          <CardBack position={positionLabel} />
+        )}
+        {showHp && showFace && isTough && (
+          <ToughHp tough={sc.card as ToughCard} />
+        )}
         {showOwnerLines && arrowDir && (
           <span
             className={`stack-fan-owner-arrow stack-fan-owner-arrow-${arrowDir}`}
@@ -191,7 +212,10 @@ export function StackFanModal({
             <button
               type="button"
               className={`stack-fan-insert-slot ${currentIdx === -1 ? 'stack-fan-insert-slot-active' : ''}`}
-              onClick={(e) => { e.stopPropagation(); onPlaceAt(0); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onPlaceAt(0);
+              }}
               data-testid="stack-fan-insert-0"
               aria-label="Place at bottom"
             >
@@ -202,15 +226,25 @@ export function StackFanModal({
             const positionLabel =
               i === 0 ? 'Bottom' : i === stackLen - 1 ? 'Top' : `#${i + 1}`;
             return (
-              <div key={`slot-${sc.card.id}-${i}`} className="stack-fan-slot-group">
+              <div
+                key={`slot-${sc.card.id}-${i}`}
+                className="stack-fan-slot-group"
+              >
                 {renderStacked(sc, i, positionLabel)}
                 {onPlaceAt && !(placingIsModifier && i === stackLen - 1) && (
                   <button
                     type="button"
                     className="stack-fan-insert-slot"
-                    onClick={(e) => { e.stopPropagation(); onPlaceAt(i + 1); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onPlaceAt(i + 1);
+                    }}
                     data-testid={`stack-fan-insert-${i + 1}`}
-                    aria-label={i === stackLen - 1 ? 'Place on top' : `Place after ${positionLabel}`}
+                    aria-label={
+                      i === stackLen - 1
+                        ? 'Place on top'
+                        : `Place after ${positionLabel}`
+                    }
                   >
                     <span className="stack-fan-insert-label">
                       {i === stackLen - 1 ? 'Place on top' : `Place here`}
@@ -242,7 +276,9 @@ export function StackFanModal({
           >
             ◀
           </button>
-          <span className="stack-fan-counter">{currentIdx + 1} / {stackLen}</span>
+          <span className="stack-fan-counter">
+            {currentIdx + 1} / {stackLen}
+          </span>
           <button
             className="stack-fan-nav-btn"
             disabled={currentIdx >= stackLen - 1}

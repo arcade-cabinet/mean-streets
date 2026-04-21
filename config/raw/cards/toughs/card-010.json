@@ -12,6 +12,8 @@
     2,
     3
   ],
+  "maxHp": 3,
+  "hp": 3,
   "rarity": [
     "common"
   ],
@@ -20,5 +22,17 @@
   ],
   "unlocked": true,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-left",
+    "palette": "ember",
+    "layers": {
+      "back": "phone-holster",
+      "legs": "casual-slouch-2",
+      "torso": "bomber",
+      "body": "hood-2",
+      "arms": "fists"
+    }
+  }
 }

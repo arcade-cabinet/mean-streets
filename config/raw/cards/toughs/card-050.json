@@ -11,6 +11,8 @@
   "resistance": [
     7
   ],
+  "maxHp": 7,
+  "hp": 7,
   "rarity": [
     "common"
   ],
@@ -20,5 +22,17 @@
   "unlocked": false,
   "unlockCondition": "Win a game on the first night phase",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "wall-lean",
+    "palette": "ember",
+    "layers": {
+      "back": "phone-holster",
+      "legs": "casual-slouch-2",
+      "torso": "hoodie",
+      "body": "average",
+      "arms": "fists"
+    }
+  }
 }

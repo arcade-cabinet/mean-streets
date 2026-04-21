@@ -113,7 +113,9 @@ pnpm run test                  # Node + DOM unit tests
 pnpm run test:browser          # Real Chromium tests (Vitest + Playwright)
 pnpm run test:e2e              # Playwright across 4 device profiles
 pnpm run test:visual           # Playwright visual fixture capture
-pnpm run test:release          # Release gate (RELEASE_GATING=1 required)
+pnpm run test:visual:fullpage  # Full-page visual fixture capture
+pnpm run test:analysis:slow    # Slow sim-backed curated sweep
+pnpm run test:release          # Release gate
 pnpm run analysis:benchmark    # Balance benchmark
 pnpm run analysis:autobalance  # Iterative stat tuning
 pnpm run analysis:lock:persist # Lock state persistence
@@ -134,7 +136,7 @@ config/
     toughs/            # 100 toughs (55C / 25U / 15R / 5L)
     weapons/           # 50 weapons (28C / 12U / 8R / 2L)
     drugs/             # 50 drugs (28C / 12U / 8R / 2L)
-    currency/          # 2 currency cards ($100, $1000)
+    currency/          # 3 currency cards ($100, $1000, Clean Money)
     mythics/           # 10 hand-authored mythics (not in packs)
   compiled/            # Build-time outputs (gitignored)
 public/

@@ -11,6 +11,8 @@
   "resistance": [
     2
   ],
+  "maxHp": 2,
+  "hp": 2,
   "rarity": [
     "common"
   ],
@@ -19,5 +21,16 @@
   ],
   "unlocked": true,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "ambush",
+    "palette": "ash",
+    "layers": {
+      "legs": "stalk-lunge",
+      "torso": "hoodie",
+      "body": "tall-longcoat",
+      "arms": "knife-2"
+    }
+  }
 }

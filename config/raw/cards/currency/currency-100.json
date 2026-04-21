@@ -7,5 +7,16 @@
     "common"
   ],
   "unlocked": true,
-  "locked": false
+  "locked": false,
+  "portrait": {
+    "mode": "stack",
+    "template": "triptych-left",
+    "palette": "brass",
+    "layers": {
+      "backdrop": "burner-phone",
+      "support": "money-clip",
+      "primary": "wallet",
+      "badge": "paper-bag"
+    }
+  }
 }

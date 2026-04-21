@@ -15,14 +15,14 @@ const EXPECTED: Record<string, string> = {
   'iphone-14': 'phone-portrait',
   'pixel-7': 'phone-portrait',
   'ipad-pro-landscape': 'tablet-landscape',
-  'desktop-chromium': 'tablet-landscape',
+  'desktop-chromium': 'desktop-wide',
 };
 
 test('data-layout matches expectation for this project', async ({ page }, testInfo) => {
   const expected = EXPECTED[testInfo.project.name];
   test.skip(!expected, `no expectation pinned for ${testInfo.project.name}`);
 
-  await page.goto('/?fixture=menu');
+  await page.goto('?fixture=menu');
   await page.waitForLoadState('networkidle');
   const layoutId = await page.evaluate(() => document.documentElement.dataset.layout);
   expect(layoutId, `${testInfo.project.name} should resolve to ${expected}`).toBe(expected);

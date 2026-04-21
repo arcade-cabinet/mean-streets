@@ -20,5 +20,16 @@
   "unlocked": false,
   "unlockCondition": "Win a game using only bladed weapons",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "fan",
+    "palette": "steel",
+    "layers": {
+      "backdrop": "fist-small",
+      "support": "fist-raised",
+      "primary": "fist-punch",
+      "badge": "chain"
+    }
+  }
 }

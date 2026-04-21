@@ -19,5 +19,16 @@
   "unlocked": false,
   "unlockCondition": "Win a game using only bladed weapons",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "triptych-left",
+    "palette": "steel",
+    "layers": {
+      "backdrop": "duffel-bag",
+      "support": "burner-phone",
+      "primary": "grenade",
+      "badge": "paper-bag"
+    }
+  }
 }

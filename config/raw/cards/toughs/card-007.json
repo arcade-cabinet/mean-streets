@@ -18,6 +18,8 @@
     5,
     6
   ],
+  "maxHp": 6,
+  "hp": 6,
   "rarity": [
     "common",
     "uncommon"
@@ -27,5 +29,17 @@
   ],
   "unlocked": true,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-right",
+    "palette": "smoke",
+    "layers": {
+      "back": "backpack",
+      "legs": "run",
+      "torso": "hoodie-4",
+      "body": "bandana",
+      "arms": "chain"
+    }
+  }
 }

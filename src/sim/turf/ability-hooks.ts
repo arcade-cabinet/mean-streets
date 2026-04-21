@@ -1,7 +1,7 @@
 // Passive-ability query hooks — read by scoring, heat, UI layers.
 // Paired with abilities.ts / abilities-effects.ts (Epic D / v0.3).
 // These are pure lookups; mutating handlers live in abilities.ts.
-import type { ToughCard, Turf, TurfGameState } from './types';
+import type { CurrencyCard, ToughCard, Turf, TurfGameState } from './types';
 
 const hasOnTough = (t: ToughCard | null | undefined, a: string): boolean =>
   !!t && t.abilities.includes(a);
@@ -21,12 +21,29 @@ export const hasAbsolute = (t: ToughCard | null | undefined) =>
 export const hasLowProfile = (t: ToughCard | null | undefined) =>
   hasOnTough(t, 'LOW_PROFILE');
 
+export function cardHasLaunder(
+  card: { abilities?: string[] } | null | undefined,
+): boolean {
+  const abilities = card?.abilities;
+  if (!abilities) return false;
+  return abilities.includes('LAUNDER') || abilities.includes('launder');
+}
+
+/**
+ * LAUNDER currency preserves its heat-relief role and is excluded from
+ * turf-wide bribe spend pools so the effect cannot silently delete itself.
+ */
+export function isBribeSpendableCurrency(
+  card: CurrencyCard | null | undefined,
+): boolean {
+  return !!card && !cardHasLaunder(card);
+}
+
 /** LAUNDER — legendary currency ability; scan all cards in the stack for the tag. */
 export function hasLaunder(turf: Turf | null | undefined): boolean {
   if (!turf) return false;
   for (const sc of turf.stack) {
-    const abilities = (sc.card as { abilities?: string[] }).abilities;
-    if (abilities?.includes('LAUNDER')) return true;
+    if (cardHasLaunder(sc.card)) return true;
   }
   return false;
 }

@@ -1,9 +1,9 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAppShell } from '../../platform';
-import { loadToughCards } from '../../sim/cards/catalog';
-import { generateWeapons, generateDrugs, generateCurrency } from '../../sim/turf/generators';
-import { createRng } from '../../sim/cards/rng';
-import type { Card as CardType } from '../../sim/turf/types';
+import { loadCollection } from '../../platform/persistence/collection';
+import { loadProfile } from '../../platform/persistence/storage';
+import { loadCollectibleCards } from '../../sim/cards/catalog';
+import type { Card as CardType, DifficultyTier } from '../../sim/turf/types';
 import { Card as CardComponent } from '../cards';
 
 interface CardsScreenProps {
@@ -14,30 +14,60 @@ interface CardsScreenProps {
 }
 
 function loadAllCards(): CardType[] {
-  const rng = createRng(42);
-  return [
-    ...loadToughCards(),
-    ...generateWeapons(rng),
-    ...generateDrugs(rng),
-    ...generateCurrency(),
-  ];
+  return loadCollectibleCards();
 }
 
 export function CardsScreen({
-  onBack, onStartGame, availableDraws = 0, onDraw,
+  onBack,
+  onStartGame,
+  availableDraws = 0,
+  onDraw,
 }: CardsScreenProps) {
   const { layout } = useAppShell();
   const isPhone = layout.deviceClass === 'phone';
-  const allCards = useMemo(() => loadAllCards(), []);
+  const catalog = useMemo(() => loadAllCards(), []);
+  const [ownedCards, setOwnedCards] = useState<Record<string, CardType>>({});
+  const [unlockMap, setUnlockMap] = useState<Record<string, DifficultyTier>>(
+    {},
+  );
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const galleryRef = useRef<HTMLDivElement>(null);
+  const allCards = useMemo(
+    () => catalog.map((card) => ownedCards[card.id] ?? card),
+    [catalog, ownedCards],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([loadCollection(), loadProfile()]).then(([cards, profile]) => {
+      if (cancelled) return;
+      const nextOwned: Record<string, CardType> = {};
+      for (const card of cards) nextOwned[card.id] = card;
+      const instances = profile.cardInstances ?? {};
+      const nextUnlocks: Record<string, DifficultyTier> = {};
+      for (const card of cards) {
+        nextUnlocks[card.id] = (instances[card.id]?.unlockDifficulty ??
+          'easy') as DifficultyTier;
+      }
+      setOwnedCards(nextOwned);
+      setUnlockMap(nextUnlocks);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const selected = selectedIdx !== null ? allCards[selectedIdx] : null;
 
   return (
     <div className="cards-screen" data-testid="cards-screen">
       <div className="cards-hud">
-        <button type="button" className="cards-hud-btn" onClick={onBack} data-testid="cards-back">
+        <button
+          type="button"
+          className="cards-hud-btn"
+          onClick={onBack}
+          data-testid="cards-back"
+        >
           Back
         </button>
         <span className="cards-hud-title">Collection</span>
@@ -51,7 +81,11 @@ export function CardsScreen({
             Draw ({availableDraws})
           </button>
         )}
-        <button type="button" className="cards-hud-btn cards-hud-play" onClick={onStartGame}>
+        <button
+          type="button"
+          className="cards-hud-btn cards-hud-play"
+          onClick={onStartGame}
+        >
           Play
         </button>
       </div>
@@ -68,7 +102,11 @@ export function CardsScreen({
             onClick={() => setSelectedIdx(selectedIdx === i ? null : i)}
             data-testid={`card-${card.id}`}
           >
-            <CardComponent card={card} compact={isPhone} />
+            <CardComponent
+              card={card}
+              compact={isPhone}
+              unlockDifficulty={unlockMap[card.id]}
+            />
           </button>
         ))}
       </div>
@@ -78,8 +116,12 @@ export function CardsScreen({
           className="cards-detail-backdrop"
           onClick={() => setSelectedIdx(null)}
         >
-          <div className="cards-detail" onClick={e => e.stopPropagation()}>
-            <CardComponent card={selected} compact={false} />
+          <div className="cards-detail" onClick={(e) => e.stopPropagation()}>
+            <CardComponent
+              card={selected}
+              compact={false}
+              unlockDifficulty={unlockMap[selected.id]}
+            />
             <button
               type="button"
               className="cards-detail-close"

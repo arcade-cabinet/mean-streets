@@ -11,6 +11,8 @@
   "resistance": [
     4
   ],
+  "maxHp": 4,
+  "hp": 4,
   "rarity": [
     "common"
   ],
@@ -20,5 +22,17 @@
   "unlocked": false,
   "unlockCondition": "Win a game using only cards from 2 affiliations",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "wall-lean",
+    "palette": "smoke",
+    "layers": {
+      "back": "lean",
+      "legs": "wide-braced-2",
+      "torso": "hoodie-4",
+      "body": "bandana",
+      "arms": "fists"
+    }
+  }
 }

@@ -1,6 +1,6 @@
 ---
 title: Changelog
-updated: 2026-04-17
+updated: 2026-04-20
 status: current
 ---
 
@@ -9,6 +9,11 @@ status: current
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+Historical note: `v1.0.0` and `v1.1.0-beta.1` were internal release
+milestones recorded in project docs and package versioning, but they
+were never published as GitHub tags. The public tag stream jumps from
+`v0.7.1` to `v1.2.0-beta.1`.
+
 ## [1.2.1-beta.1](https://github.com/arcade-cabinet/mean-streets/compare/v1.2.0-beta.1...v1.2.1-beta.1) (2026-04-20)
 
 
@@ -16,7 +21,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 * prune archived plans, align live docs, kill DRY violations ([#37](https://github.com/arcade-cabinet/mean-streets/issues/37)) ([1e3e0c2](https://github.com/arcade-cabinet/mean-streets/commit/1e3e0c23548421799ffe340ad6669a9b289b4cda))
 
-## [1.2.0-beta.1](https://github.com/arcade-cabinet/mean-streets/compare/v1.1.0-beta.1...v1.2.0-beta.1) (2026-04-19)
+## [1.2.0-beta.1](https://github.com/arcade-cabinet/mean-streets/releases/tag/v1.2.0-beta.1) (2026-04-19)
 
 
 ### Features
@@ -46,7 +51,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 * update STATE.md — E2E + mythics + governance done ([#12](https://github.com/arcade-cabinet/mean-streets/issues/12)) ([88798a4](https://github.com/arcade-cabinet/mean-streets/commit/88798a4ce481d6f94d207787bc1245b9453e45a5))
 * update STATE.md ([#18](https://github.com/arcade-cabinet/mean-streets/issues/18)) ([ef50601](https://github.com/arcade-cabinet/mean-streets/commit/ef506016fec0fa6e2413b3d58bd894e745979767))
 
-## [1.0.0](https://github.com/arcade-cabinet/mean-streets/compare/v0.7.1...v1.0.0) (2026-04-18)
+## [1.0.0] (2026-04-18)
+
+Historical note: milestone recorded in the changelog and project state,
+but never published as a GitHub tag.
 
 ### Features
 

@@ -11,6 +11,8 @@
   "resistance": [
     2
   ],
+  "maxHp": 2,
+  "hp": 2,
   "rarity": [
     "common"
   ],
@@ -20,5 +22,17 @@
   "unlocked": false,
   "unlockCondition": "Win 4 games",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-left",
+    "palette": "ash",
+    "layers": {
+      "back": "backpack",
+      "legs": "stalk-lunge",
+      "torso": "hoodie",
+      "body": "ski-mask-2",
+      "arms": "chain"
+    }
+  }
 }

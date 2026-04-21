@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { decideAction } from '../ai';
 import { addToStack, createTurf, resetTurfIdCounter } from '../board';
 import { createMatch } from '../game';
+import { TurfGoalEvaluator } from '../ai/planner-goals';
 import type {
   Card,
   CurrencyCard,
@@ -88,6 +89,21 @@ function setPlayer(player: PlayerState, shape: PlayerShape): void {
 }
 
 describe('turf planner v0.2', () => {
+  it('applies evaluator characterBias to desirability scores', () => {
+    const owner = { consideredGoals: [] as Array<{ goal: string; score: number }> } as any;
+    const evaluator = new TurfGoalEvaluator(
+      'anti_stall',
+      2,
+      () => 0.5,
+      () => ({}) as any,
+    );
+
+    const desirability = evaluator.calculateDesirability(owner);
+
+    expect(desirability).toBe(1);
+    expect(owner.consideredGoals).toContainEqual({ goal: 'anti_stall', score: 1 });
+  });
+
   it('emits a legal action and planner trace', () => {
     const state = makeState();
     setPlayer(state.players.A, {
@@ -223,6 +239,46 @@ describe('turf planner v0.2', () => {
     // is it sitting idle on pass/end_turn with an obvious retreat available.
     expect(['retreat', 'direct_strike', 'pushed_strike']).toContain(
       action.kind,
+    );
+  });
+
+  it('raises aggression goal desirability on just-promoted turns', () => {
+    const makePressureState = (justPromoted: boolean) => {
+      const state = makeState();
+      const turfA = createTurf();
+      addToStack(turfA, tough('atk', 5, 5));
+      addToStack(turfA, currency('banked', 1000));
+      turfA.justPromoted = justPromoted;
+      setPlayer(state.players.A, {
+        turfs: [turfA],
+        pending: null,
+        toughsInPlay: 1,
+        actionsRemaining: 5,
+        deck: [currency('draw-bait')],
+      });
+      const turfB = createTurf();
+      addToStack(turfB, tough('def', 4, 4));
+      setPlayer(state.players.B, {
+        turfs: [turfB],
+        toughsInPlay: 1,
+        actionsRemaining: 3,
+      });
+      return state;
+    };
+
+    const normalTrace = decideAction(makePressureState(false), 'A').trace;
+    const promotedTrace = decideAction(makePressureState(true), 'A').trace;
+    const scoreFor = (goal: string, trace: typeof promotedTrace) =>
+      trace.consideredGoals.find((entry) => entry.goal === goal)?.score ?? Number.NEGATIVE_INFINITY;
+
+    expect(scoreFor('direct_pressure', promotedTrace)).toBeGreaterThan(
+      scoreFor('direct_pressure', normalTrace),
+    );
+    expect(scoreFor('funded_pressure', promotedTrace)).toBeGreaterThan(
+      scoreFor('funded_pressure', normalTrace),
+    );
+    expect(scoreFor('pushed_pressure', promotedTrace)).toBeGreaterThan(
+      scoreFor('pushed_pressure', normalTrace),
     );
   });
 

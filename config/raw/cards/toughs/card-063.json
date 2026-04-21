@@ -11,6 +11,8 @@
   "resistance": [
     9
   ],
+  "maxHp": 9,
+  "hp": 9,
   "rarity": [
     "common",
     "rare"
@@ -21,5 +23,16 @@
   "unlocked": false,
   "unlockCondition": "Kill 14 top toughs total",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-right",
+    "palette": "smoke",
+    "layers": {
+      "legs": "casual-slouch",
+      "torso": "bomber",
+      "body": "hood",
+      "arms": "fists"
+    }
+  }
 }

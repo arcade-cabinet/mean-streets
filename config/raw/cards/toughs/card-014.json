@@ -11,6 +11,8 @@
   "resistance": [
     4
   ],
+  "maxHp": 4,
+  "hp": 4,
   "rarity": [
     "common"
   ],
@@ -19,5 +21,17 @@
   ],
   "unlocked": true,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-right",
+    "palette": "smoke",
+    "layers": {
+      "back": "phone-holster",
+      "legs": "flank-lean",
+      "torso": "hoodie-4",
+      "body": "lean",
+      "arms": "fists"
+    }
+  }
 }

@@ -137,6 +137,7 @@ export function computeWarOutcomeReward(
   mythicPool: string[],
   rng: Rng,
   winnerSide: 'A' | 'B' = 'A',
+  perfectWarFallbackCount = 0,
 ): WarOutcomeReward {
   const outcome = classifyWarOutcome(warStats, won, winnerSide);
   if (!outcome) {
@@ -151,16 +152,12 @@ export function computeWarOutcomeReward(
       mythicPool.splice(idx, 1);
       return { pack: null, outcome, mythicDraw, escalatingCurrency: null };
     }
-    // Pool exhausted — RULES §13.4 says escalating currency ($500 →
-    // $1000 → $1500 → …) but that escalation state lives on the
-    // profile, not in a stateless reward call. We return the floor
-    // bounty; the persistence layer escalates on its own. See TODO
-    // in ai-profile.ts (and the player profile) for follow-up.
     return {
       pack: null,
       outcome,
       mythicDraw: null,
-      escalatingCurrency: PERFECT_WAR_FALLBACK_CURRENCY,
+      escalatingCurrency:
+        PERFECT_WAR_FALLBACK_CURRENCY * (perfectWarFallbackCount + 1),
     };
   }
   const kind: PackKind =
@@ -182,6 +179,7 @@ export function computeRewardBundle(
   mythicPool: string[],
   rng: Rng,
   winnerSide: 'A' | 'B' = 'A',
+  perfectWarFallbackCount = 0,
 ): RewardBundle {
   // Per-turf rewards: filter to seizures BY the winner (the losing
   // side doesn't get rewarded for turfs taken from them).
@@ -189,6 +187,23 @@ export function computeRewardBundle(
     seizures: warStats.seizures.filter((s) => s.seizedBy === winnerSide),
   };
   const turfRewards = won ? computePerTurfRewards(ownWarStats, rng) : [];
-  const warOutcomeReward = computeWarOutcomeReward(warStats, won, mythicPool, rng, winnerSide);
+  const warOutcomeReward = computeWarOutcomeReward(
+    warStats,
+    won,
+    mythicPool,
+    rng,
+    winnerSide,
+    perfectWarFallbackCount,
+  );
   return { turfRewards, warOutcomeReward };
+}
+
+export function flattenRewardBundlePacks(
+  bundle: RewardBundle,
+): PackInstance[] {
+  const turfPacks = bundle.turfRewards
+    .map((reward) => reward.pack)
+    .filter((pack): pack is PackInstance => pack !== null);
+  const outcomePack = bundle.warOutcomeReward.pack;
+  return outcomePack ? [...turfPacks, outcomePack] : turfPacks;
 }

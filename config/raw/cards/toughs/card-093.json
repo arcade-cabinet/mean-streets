@@ -11,6 +11,8 @@
   "resistance": [
     9
   ],
+  "maxHp": 9,
+  "hp": 9,
   "rarity": [
     "common",
     "uncommon"
@@ -21,5 +23,17 @@
   "unlocked": false,
   "unlockCondition": "Kill 5 top toughs total",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "ambush",
+    "palette": "ash",
+    "layers": {
+      "back": "phone-holster",
+      "legs": "casual-slouch",
+      "torso": "bomber-4",
+      "body": "average-2",
+      "arms": "pistol"
+    }
+  }
 }

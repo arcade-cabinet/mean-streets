@@ -11,6 +11,8 @@
   "resistance": [
     11
   ],
+  "maxHp": 11,
+  "hp": 11,
   "rarity": [
     "common",
     "legendary"
@@ -22,5 +24,16 @@
   "unlocked": false,
   "unlockCondition": "Win without discarding any cards",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-right",
+    "palette": "rust",
+    "layers": {
+      "legs": "run",
+      "torso": "hoodie",
+      "body": "average-2",
+      "arms": "fists"
+    }
+  }
 }

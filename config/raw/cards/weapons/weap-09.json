@@ -20,5 +20,16 @@
   "unlocked": false,
   "unlockCondition": "Win without losing a position",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "totem",
+    "palette": "gunmetal",
+    "layers": {
+      "backdrop": "chain",
+      "support": "chain",
+      "primary": "knife",
+      "badge": "knife-2"
+    }
+  }
 }

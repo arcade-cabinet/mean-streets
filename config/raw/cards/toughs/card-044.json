@@ -11,6 +11,8 @@
   "resistance": [
     7
   ],
+  "maxHp": 7,
+  "hp": 7,
   "rarity": [
     "common"
   ],
@@ -20,5 +22,16 @@
   "unlocked": false,
   "unlockCondition": "Win a game in under 14 turns",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-right",
+    "palette": "rust",
+    "layers": {
+      "legs": "casual-slouch",
+      "torso": "hoodie-2",
+      "body": "tall-longcoat-3",
+      "arms": "fists"
+    }
+  }
 }

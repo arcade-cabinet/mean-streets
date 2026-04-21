@@ -1,10 +1,14 @@
 import type { Card, DifficultyTier, Rarity } from '../../sim/turf/types';
-import type { PackReward } from '../../sim/packs/types';
+import type { PackInstance, PackKind, PackReward } from '../../sim/packs/types';
 import { createRng, randomSeed } from '../../sim/cards/rng';
 import { generatePack, starterGrant } from '../../sim/packs/generator';
-import { loadProfile, saveProfile, type StoredCardInstance } from './storage';
-import { loadToughCards } from '../../sim/cards/catalog';
-import { generateWeapons, generateDrugs, generateCurrency } from '../../sim/turf/generators';
+import {
+  loadProfile,
+  saveProfile,
+  type StoredCardInstance,
+  type StoredCardInventoryItem,
+} from './storage';
+import { loadCollectibleCards } from '../../sim/cards/catalog';
 
 // ── v0.3 CardInstance migration ─────────────────────────────
 // Each unlocked card carries (rolledRarity, unlockDifficulty) per §2/§3.
@@ -13,18 +17,133 @@ import { generateWeapons, generateDrugs, generateCurrency } from '../../sim/turf
 // instance metadata in a sidecar `cardInstances` map. When we load, any
 // cardId without an instance record uses (baseRarity, 'easy') defaults.
 const DEFAULT_UNLOCK_DIFFICULTY: DifficultyTier = 'easy';
+const RARITY_ORDER: Rarity[] = [
+  'common',
+  'uncommon',
+  'rare',
+  'legendary',
+  'mythic',
+];
+const DIFFICULTY_ORDER: DifficultyTier[] = [
+  'easy',
+  'medium',
+  'hard',
+  'nightmare',
+  'ultra-nightmare',
+];
 
-function defaultInstanceForCard(card: Card): StoredCardInstance {
-  return { rolledRarity: card.rarity, unlockDifficulty: DEFAULT_UNLOCK_DIFFICULTY };
+export interface CollectionInventoryEntry {
+  card: Card;
+  unlockDifficulty: DifficultyTier;
 }
 
-function applyInstance(card: Card, instance: StoredCardInstance | undefined): Card {
-  if (!instance) return card;
+export interface MergeCollectionResult {
+  cardId: string;
+  fromRarity: Rarity;
+  toRarity: Rarity;
+  unlockDifficulty: DifficultyTier;
+}
+
+function defaultInstanceForCard(card: Card): StoredCardInstance {
+  return {
+    rolledRarity: card.rarity,
+    unlockDifficulty: DEFAULT_UNLOCK_DIFFICULTY,
+  };
+}
+
+function inventoryItemForCard(
+  card: Card,
+  unlockDifficulty: DifficultyTier = DEFAULT_UNLOCK_DIFFICULTY,
+): StoredCardInventoryItem {
+  return {
+    cardId: card.id,
+    rolledRarity: card.rarity,
+    unlockDifficulty,
+  };
+}
+
+function cloneInventoryItem(
+  item: StoredCardInventoryItem,
+): StoredCardInventoryItem {
+  return { ...item };
+}
+
+function cloneCard(card: Card): Card {
+  if (card.kind === 'tough') {
+    return {
+      ...card,
+      abilities: [...card.abilities],
+    };
+  }
+  if (card.kind === 'currency') {
+    return {
+      ...card,
+      abilities: card.abilities ? [...card.abilities] : undefined,
+    };
+  }
+  return {
+    ...card,
+    abilities: [...card.abilities],
+  };
+}
+
+function applyInstance(
+  card: Card,
+  instance: StoredCardInstance | undefined,
+): Card {
+  const cloned = cloneCard(card);
+  if (!instance) return cloned;
   // Rarity on Card is the *rolled* rarity per v0.3 (the authored base
   // rarity lives in the raw catalog; once an instance is minted the
   // runtime card carries the rolled tier). We stamp the stored rarity
   // onto a fresh copy so the catalog snapshot stays pristine.
-  return { ...card, rarity: instance.rolledRarity as Rarity };
+  return { ...cloned, rarity: instance.rolledRarity as Rarity };
+}
+
+function rarityRank(rarity: Rarity): number {
+  return RARITY_ORDER.indexOf(rarity);
+}
+
+function difficultyRank(difficulty: DifficultyTier): number {
+  return DIFFICULTY_ORDER.indexOf(difficulty);
+}
+
+function compareInventoryItems(
+  a: StoredCardInventoryItem,
+  b: StoredCardInventoryItem,
+): number {
+  return (
+    rarityRank(a.rolledRarity as Rarity) - rarityRank(b.rolledRarity as Rarity) ||
+    difficultyRank(a.unlockDifficulty as DifficultyTier) -
+      difficultyRank(b.unlockDifficulty as DifficultyTier)
+  );
+}
+
+function nextMergeRarity(rarity: Rarity): Rarity | null {
+  if (rarity === 'legendary' || rarity === 'mythic') return null;
+  const next = RARITY_ORDER[rarityRank(rarity) + 1];
+  return next ?? null;
+}
+
+function resolveSummaryMap(
+  inventory: StoredCardInventoryItem[],
+): Record<string, StoredCardInstance> {
+  const bestById = new Map<string, StoredCardInventoryItem>();
+  for (const item of inventory) {
+    const current = bestById.get(item.cardId);
+    if (!current || compareInventoryItems(item, current) > 0) {
+      bestById.set(item.cardId, item);
+    }
+  }
+  return Object.fromEntries(
+    [...bestById.entries()].map(([cardId, item]) => [
+      cardId,
+      {
+        rolledRarity: item.rolledRarity,
+        unlockDifficulty: item.unlockDifficulty,
+      },
+    ]),
+  );
 }
 
 // ── Card Preferences ────────────────────────────────────────────────────────
@@ -50,21 +169,29 @@ function defaultPref(cardId: string): CardPreference {
   return { cardId, enabled: true, priority: DEFAULT_PRIORITY };
 }
 
+function legacyPreferenceKey(cardId: string): string | null {
+  const [legacyKey] = cardId.split('::');
+  return legacyKey !== cardId ? legacyKey : null;
+}
+
 // Preferences are stored in the profile under a dedicated key so the existing
 // `unlockedCardIds` shape is never mutated by preference writes.
 const PREFS_PROFILE_KEY = 'cardPreferences';
 
 // Access the raw preferences map from the profile (internally typed extension).
-type ProfileWithPrefs = ReturnType<typeof loadProfile> extends Promise<infer P>
-  ? P & { [PREFS_PROFILE_KEY]?: Record<string, CardPreference> }
-  : never;
+type ProfileWithPrefs =
+  ReturnType<typeof loadProfile> extends Promise<infer P>
+    ? P & { [PREFS_PROFILE_KEY]?: Record<string, CardPreference> }
+    : never;
 
 async function loadRawPrefs(): Promise<Record<string, CardPreference>> {
   const profile = (await loadProfile()) as ProfileWithPrefs;
   return (profile[PREFS_PROFILE_KEY] as Record<string, CardPreference>) ?? {};
 }
 
-async function saveRawPrefs(prefs: Record<string, CardPreference>): Promise<void> {
+async function saveRawPrefs(
+  prefs: Record<string, CardPreference>,
+): Promise<void> {
   const profile = (await loadProfile()) as ProfileWithPrefs;
   (profile as unknown as Record<string, unknown>)[PREFS_PROFILE_KEY] = prefs;
   await saveProfile(profile);
@@ -74,9 +201,18 @@ async function saveRawPrefs(prefs: Record<string, CardPreference>): Promise<void
  * Load preferences for all given card ids, filling in defaults for any
  * card that has no stored preference yet (migration path).
  */
-export async function loadPreferences(cardIds: string[]): Promise<CardPreference[]> {
+export async function loadPreferences(
+  cardIds: string[],
+): Promise<CardPreference[]> {
   const raw = await loadRawPrefs();
-  return cardIds.map((id) => raw[id] ?? defaultPref(id));
+  return cardIds.map((id) => {
+    const direct = raw[id];
+    if (direct) return direct;
+    const legacyKey = legacyPreferenceKey(id);
+    const legacy = legacyKey ? raw[legacyKey] : undefined;
+    if (!legacy) return defaultPref(id);
+    return { ...legacy, cardId: id };
+  });
 }
 
 /**
@@ -110,12 +246,7 @@ let cachedPoolMap: Map<string, Card> | null = null;
 
 function getPoolMap(): Map<string, Card> {
   if (cachedPoolMap !== null) return cachedPoolMap;
-  const pool: Card[] = [
-    ...loadToughCards(),
-    ...generateWeapons(),
-    ...generateDrugs(),
-    ...generateCurrency(),
-  ];
+  const pool = loadCollectibleCards();
   cachedPoolMap = new Map(pool.map((c) => [c.id, c]));
   return cachedPoolMap;
 }
@@ -134,18 +265,74 @@ function resolveCardIds(
   return out;
 }
 
-function buildInstanceMap(cards: Card[]): Record<string, StoredCardInstance> {
-  const map: Record<string, StoredCardInstance> = {};
-  for (const c of cards) {
-    map[c.id] = defaultInstanceForCard(c);
+function hasStoredCollection(
+  profile: Awaited<ReturnType<typeof loadProfile>>,
+): boolean {
+  return (profile.cardInventory?.length ?? 0) > 0 || profile.unlockedCardIds.length > 0;
+}
+
+function loadLegacyInventory(
+  ids: string[],
+  instances: Record<string, StoredCardInstance> | undefined,
+): StoredCardInventoryItem[] {
+  const poolMap = getPoolMap();
+  const inventory: StoredCardInventoryItem[] = [];
+  for (const id of ids) {
+    const base = poolMap.get(id);
+    if (!base) continue;
+    const item = instances?.[id] ?? defaultInstanceForCard(base);
+    inventory.push({
+      cardId: id,
+      rolledRarity: item.rolledRarity,
+      unlockDifficulty: item.unlockDifficulty,
+    });
   }
-  return map;
+  return inventory;
+}
+
+function loadInventoryFromProfile(
+  profile: Awaited<ReturnType<typeof loadProfile>>,
+): StoredCardInventoryItem[] {
+  if (profile.cardInventory && profile.cardInventory.length > 0) {
+    return profile.cardInventory.map(cloneInventoryItem);
+  }
+  return loadLegacyInventory(profile.unlockedCardIds, profile.cardInstances);
+}
+
+function resolveInventoryCards(
+  inventory: StoredCardInventoryItem[],
+): CollectionInventoryEntry[] {
+  const poolMap = getPoolMap();
+  const out: CollectionInventoryEntry[] = [];
+  for (const item of inventory) {
+    const base = poolMap.get(item.cardId);
+    if (!base) continue;
+    out.push({
+      card: applyInstance(base, item),
+      unlockDifficulty: item.unlockDifficulty as DifficultyTier,
+    });
+  }
+  return out;
+}
+
+function resolveSummaryCards(inventory: StoredCardInventoryItem[]): Card[] {
+  const summary = resolveSummaryMap(inventory);
+  return resolveCardIds(Object.keys(summary), summary);
+}
+
+function syncProfileCollectionState(
+  profile: Awaited<ReturnType<typeof loadProfile>>,
+  inventory: StoredCardInventoryItem[],
+): void {
+  profile.cardInventory = inventory.map(cloneInventoryItem);
+  profile.cardInstances = resolveSummaryMap(inventory);
+  profile.unlockedCardIds = Object.keys(profile.cardInstances);
 }
 
 export async function loadCollection(): Promise<Card[]> {
   const profile = await loadProfile();
-  if (profile.unlockedCardIds.length > 0) {
-    return resolveCardIds(profile.unlockedCardIds, profile.cardInstances);
+  if (hasStoredCollection(profile)) {
+    return resolveSummaryCards(loadInventoryFromProfile(profile));
   }
   // First-run starter grant must serialize with other writers. Without
   // the lock, two concurrent `loadCollection` calls on a fresh install
@@ -155,20 +342,73 @@ export async function loadCollection(): Promise<Card[]> {
   // first finishes.
   return withProfileLock(async () => {
     const reread = await loadProfile();
-    if (reread.unlockedCardIds.length > 0) {
-      return resolveCardIds(reread.unlockedCardIds, reread.cardInstances);
+    if (hasStoredCollection(reread)) {
+      return resolveSummaryCards(loadInventoryFromProfile(reread));
     }
     const rng = createRng(randomSeed());
     const cards = starterGrant(rng);
-    reread.unlockedCardIds = cards.map((c) => c.id);
-    // v0.3: every starter instance gets rolled rarity (from the card
-    // returned by the generator) + unlockDifficulty='easy' per §3.3.
-    reread.cardInstances = {
-      ...(reread.cardInstances ?? {}),
-      ...buildInstanceMap(cards),
-    };
+    const inventory = cards.map((card) => inventoryItemForCard(card));
+    syncProfileCollectionState(reread, inventory);
     await saveProfile(reread);
-    return cards;
+    return resolveSummaryCards(inventory);
+  });
+}
+
+export async function loadCollectionInventory(): Promise<CollectionInventoryEntry[]> {
+  const profile = await loadProfile();
+  if (!hasStoredCollection(profile)) {
+    await loadCollection();
+    const refreshed = await loadProfile();
+    return resolveInventoryCards(loadInventoryFromProfile(refreshed));
+  }
+  return resolveInventoryCards(loadInventoryFromProfile(profile));
+}
+
+export async function mergeCollectionBucket(
+  cardId: string,
+  rarity: Rarity,
+): Promise<MergeCollectionResult | null> {
+  return withProfileLock(async () => {
+    const nextRarity = nextMergeRarity(rarity);
+    if (!nextRarity) return null;
+
+    const profile = await loadProfile();
+    const inventory = loadInventoryFromProfile(profile);
+    const matchingIndices: number[] = [];
+    for (let i = 0; i < inventory.length; i++) {
+      const item = inventory[i];
+      if (item.cardId === cardId && item.rolledRarity === rarity) {
+        matchingIndices.push(i);
+        if (matchingIndices.length === 2) break;
+      }
+    }
+    if (matchingIndices.length < 2) return null;
+
+    const [first, second] = matchingIndices;
+    const mergedUnlockDifficulty =
+      difficultyRank(inventory[first].unlockDifficulty as DifficultyTier) >=
+      difficultyRank(inventory[second].unlockDifficulty as DifficultyTier)
+        ? (inventory[first].unlockDifficulty as DifficultyTier)
+        : (inventory[second].unlockDifficulty as DifficultyTier);
+
+    const nextInventory = inventory.filter(
+      (_, index) => index !== first && index !== second,
+    );
+    nextInventory.push({
+      cardId,
+      rolledRarity: nextRarity,
+      unlockDifficulty: mergedUnlockDifficulty,
+    });
+
+    syncProfileCollectionState(profile, nextInventory);
+    await saveProfile(profile);
+
+    return {
+      cardId,
+      fromRarity: rarity,
+      toRarity: nextRarity,
+      unlockDifficulty: mergedUnlockDifficulty,
+    };
   });
 }
 
@@ -197,16 +437,13 @@ async function withProfileLock<T>(fn: () => Promise<T>): Promise<T> {
 export async function saveCollection(cards: Card[]): Promise<void> {
   await withProfileLock(async () => {
     const profile = await loadProfile();
-    profile.unlockedCardIds = cards.map(c => c.id);
-    // Rewrite instance map to exactly match the saved set — drop stale
-    // entries for cards no longer present, preserve instance metadata
-    // for the survivors, and seed fresh defaults for brand-new ids.
-    const prior = profile.cardInstances ?? {};
-    const next: Record<string, StoredCardInstance> = {};
-    for (const c of cards) {
-      next[c.id] = prior[c.id] ?? defaultInstanceForCard(c);
-    }
-    profile.cardInstances = next;
+    const inventory = cards.map((card) => {
+      const unlockDifficulty =
+        (profile.cardInstances?.[card.id]?.unlockDifficulty as DifficultyTier | undefined) ??
+        DEFAULT_UNLOCK_DIFFICULTY;
+      return inventoryItemForCard(card, unlockDifficulty);
+    });
+    syncProfileCollectionState(profile, inventory);
     await saveProfile(profile);
   });
 }
@@ -214,18 +451,11 @@ export async function saveCollection(cards: Card[]): Promise<void> {
 export async function addCardsToCollection(newCards: Card[]): Promise<Card[]> {
   return withProfileLock(async () => {
     const profile = await loadProfile();
-    const existingIds = new Set(profile.unlockedCardIds);
-    const instances: Record<string, StoredCardInstance> = { ...(profile.cardInstances ?? {}) };
-    for (const card of newCards) {
-      existingIds.add(card.id);
-      // Only seed a default instance if this cardId doesn't already
-      // have one — preserves rolled rarity on re-adds (pack dupes).
-      if (!instances[card.id]) instances[card.id] = defaultInstanceForCard(card);
-    }
-    profile.unlockedCardIds = [...existingIds];
-    profile.cardInstances = instances;
+    const inventory = loadInventoryFromProfile(profile);
+    inventory.push(...newCards.map((card) => inventoryItemForCard(card)));
+    syncProfileCollectionState(profile, inventory);
     await saveProfile(profile);
-    return resolveCardIds(profile.unlockedCardIds, profile.cardInstances);
+    return resolveSummaryCards(inventory);
   });
 }
 
@@ -233,30 +463,57 @@ export async function grantStarterCollection(): Promise<Card[]> {
   const rng = createRng(randomSeed());
   const cards = starterGrant(rng);
   await saveCollection(cards);
-  return cards;
+  return resolveSummaryCards(cards.map((card) => inventoryItemForCard(card)));
 }
 
 export async function openRewardPacks(
   rewards: PackReward[],
   unlockDifficulty: DifficultyTier = DEFAULT_UNLOCK_DIFFICULTY,
+  seed?: number,
 ): Promise<Card[]> {
-  const baseCollection = await loadCollection();
-  const rng = createRng(randomSeed());
-  const newCards: Card[] = [];
-  // Running view of unlocked cards so each pack in the batch reflects
-  // unlocks from prior packs in the same call (avoids stale-snapshot dupes).
-  const runningCollection: Card[] = [...baseCollection];
-  const seenIds = new Set(runningCollection.map(c => c.id));
-
+  const packKinds: PackKind[] = [];
   for (const reward of rewards) {
     for (let i = 0; i < reward.count; i++) {
-      const packCards = generatePack(reward.kind, runningCollection, rng);
-      newCards.push(...packCards);
-      for (const card of packCards) {
-        if (!seenIds.has(card.id)) {
-          seenIds.add(card.id);
-          runningCollection.push(card);
-        }
+      packKinds.push(reward.kind);
+    }
+  }
+  return openRewardPackKinds(packKinds, unlockDifficulty, seed);
+}
+
+export async function openRewardPackInstances(
+  packs: PackInstance[],
+  unlockDifficulty: DifficultyTier = DEFAULT_UNLOCK_DIFFICULTY,
+  seed?: number,
+): Promise<Card[]> {
+  return openRewardPackKinds(
+    packs.map((pack) => pack.kind),
+    unlockDifficulty,
+    seed,
+  );
+}
+
+async function openRewardPackKinds(
+  packKinds: PackKind[],
+  unlockDifficulty: DifficultyTier,
+  seed?: number,
+): Promise<Card[]> {
+  const rng = createRng(seed ?? randomSeed());
+  const newCards: Card[] = [];
+  // Reward packs should be allowed to duplicate already-owned cards so
+  // merge progression remains possible. We only exclude cards opened
+  // earlier in the same reward batch to avoid obvious same-bundle repeats.
+  const runningCollection: Card[] = [];
+  const seenIds = new Set<string>();
+
+  for (const kind of packKinds) {
+    const packCards = generatePack(kind, runningCollection, rng, {
+      unlockDifficulty,
+    });
+    newCards.push(...packCards);
+    for (const card of packCards) {
+      if (!seenIds.has(card.id)) {
+        seenIds.add(card.id);
+        runningCollection.push(card);
       }
     }
   }
@@ -284,17 +541,24 @@ export async function syncPlayerMythicOwnership(
   return withProfileLock(async () => {
     const profile = await loadProfile();
     profile.ownedMythicIds = [...playerMythicIds];
-    // Ensure any newly-earned mythic is in the card collection too.
-    const existingIds = new Set(profile.unlockedCardIds);
-    const instances: Record<string, StoredCardInstance> = { ...(profile.cardInstances ?? {}) };
+    const inventory = loadInventoryFromProfile(profile);
+    const existingById = new Map(
+      inventory.map((item) => [item.cardId, item]),
+    );
+    const nextMythics: StoredCardInventoryItem[] = [];
     for (const id of playerMythicIds) {
-      if (!existingIds.has(id)) {
-        existingIds.add(id);
-        instances[id] = { rolledRarity: 'mythic', unlockDifficulty };
-      }
+      nextMythics.push(
+        existingById.get(id) ?? {
+          cardId: id,
+          rolledRarity: 'mythic',
+          unlockDifficulty,
+        },
+      );
     }
-    profile.unlockedCardIds = [...existingIds];
-    profile.cardInstances = instances;
+    syncProfileCollectionState(profile, [
+      ...inventory.filter((item) => !/^mythic-\d+$/.test(item.cardId)),
+      ...nextMythics,
+    ]);
     await saveProfile(profile);
   });
 }
@@ -322,20 +586,12 @@ async function addCardsToCollectionWithDifficulty(
 ): Promise<Card[]> {
   return withProfileLock(async () => {
     const profile = await loadProfile();
-    const existingIds = new Set(profile.unlockedCardIds);
-    const instances: Record<string, StoredCardInstance> = { ...(profile.cardInstances ?? {}) };
-    for (const card of newCards) {
-      existingIds.add(card.id);
-      // Pack-opened cards get the *difficulty of the winning war* per
-      // §3.3. Pre-existing instances are left untouched — re-earning a
-      // card doesn't upgrade its unlock-difficulty tag.
-      if (!instances[card.id]) {
-        instances[card.id] = { rolledRarity: card.rarity, unlockDifficulty };
-      }
-    }
-    profile.unlockedCardIds = [...existingIds];
-    profile.cardInstances = instances;
+    const inventory = loadInventoryFromProfile(profile);
+    inventory.push(
+      ...newCards.map((card) => inventoryItemForCard(card, unlockDifficulty)),
+    );
+    syncProfileCollectionState(profile, inventory);
     await saveProfile(profile);
-    return resolveCardIds(profile.unlockedCardIds, profile.cardInstances);
+    return resolveSummaryCards(inventory);
   });
 }

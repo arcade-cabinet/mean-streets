@@ -20,5 +20,16 @@
   "unlocked": false,
   "unlockCondition": "Flip 5 enemies total",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "totem",
+    "palette": "violet",
+    "layers": {
+      "backdrop": "wallet",
+      "support": "prescription-bottle",
+      "primary": "pill-bottle",
+      "badge": "herb-bag"
+    }
+  }
 }

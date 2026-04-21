@@ -11,6 +11,8 @@
   "resistance": [
     5
   ],
+  "maxHp": 5,
+  "hp": 5,
   "rarity": [
     "common"
   ],
@@ -20,5 +22,16 @@
   "unlocked": false,
   "unlockCondition": "Trigger 6 overdraw penalties on opponents",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-left",
+    "palette": "ash",
+    "layers": {
+      "legs": "stalk-lunge",
+      "torso": "hoodie-3",
+      "body": "hood-mask",
+      "arms": "knife-2"
+    }
+  }
 }

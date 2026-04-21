@@ -18,5 +18,16 @@
   ],
   "unlocked": true,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "totem",
+    "palette": "gunmetal",
+    "layers": {
+      "backdrop": "pistol-compact",
+      "support": "holster-pistol",
+      "primary": "pistol-full",
+      "badge": "burner-phone"
+    }
+  }
 }

@@ -19,5 +19,16 @@
   "unlocked": false,
   "unlockCondition": "Win 7 games",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "triptych-left",
+    "palette": "slate",
+    "layers": {
+      "backdrop": "chain",
+      "support": "chain",
+      "primary": "burner-phone",
+      "badge": "hook-blade"
+    }
+  }
 }

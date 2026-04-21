@@ -20,5 +20,16 @@
   "unlocked": false,
   "unlockCondition": "Win 5 games",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "triptych-left",
+    "palette": "slate",
+    "layers": {
+      "backdrop": "chain",
+      "support": "fist-front",
+      "primary": "brass-knuckles",
+      "badge": "crowbar"
+    }
+  }
 }

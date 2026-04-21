@@ -44,7 +44,6 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
       setViewport(readViewportSnapshot());
     };
 
-    updateViewport();
     window.addEventListener('resize', updateViewport);
     window.addEventListener('orientationchange', updateViewport);
     return () => {

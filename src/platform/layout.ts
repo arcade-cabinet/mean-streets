@@ -38,6 +38,7 @@ declare global {
   interface Window {
     __MEAN_STREETS_VIEWPORT__?: TestViewportOverride;
     __MEAN_STREETS_TEST__?: boolean;
+    TONE_SILENCE_LOGGING?: boolean;
     getWindowSegments?: () => Array<{ left: number; top: number; width: number; height: number }>;
   }
 }

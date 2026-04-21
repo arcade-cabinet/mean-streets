@@ -1,7 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { renderInBrowser, settleBrowser } from '../../../test/render-browser';
-import { resetPersistenceForTests } from '../../../ui/deckbuilder/storage';
+import {
+  loadProfile,
+  resetPersistenceForTests,
+  saveProfile,
+} from '../../../ui/deckbuilder/storage';
 import { grantStarterCollection } from '../../../platform/persistence/collection';
 import { CardGarageScreen } from '../CardGarageScreen';
 
@@ -86,5 +90,61 @@ describe('CardGarageScreen', () => {
 
     const subtitle = document.querySelector('.garage-subtitle')?.textContent ?? '';
     expect(subtitle).toContain('unlocked');
+  });
+
+  it('merges duplicate copies into the next rolled rarity and persists the result', async () => {
+    const profile = await loadProfile();
+    profile.unlockedCardIds = ['card-001'];
+    profile.cardInstances = {
+      'card-001': {
+        rolledRarity: 'common',
+        unlockDifficulty: 'hard',
+      },
+    };
+    profile.cardInventory = [
+      {
+        cardId: 'card-001',
+        rolledRarity: 'common',
+        unlockDifficulty: 'easy',
+      },
+      {
+        cardId: 'card-001',
+        rolledRarity: 'common',
+        unlockDifficulty: 'hard',
+      },
+    ];
+    await saveProfile(profile);
+
+    cleanup = (await renderInBrowser(
+      <CardGarageScreen onBack={() => {}} />,
+    )).unmount;
+
+    await waitForSelector('[data-testid="garage-merge-card-001-common"]');
+    await userEvent.click(
+      document.querySelector<HTMLButtonElement>(
+        '[data-testid="garage-merge-card-001-common"]',
+      )!,
+    );
+    await settleBrowser();
+    await waitForSelector('[data-testid="garage-row-card-001-uncommon"]');
+
+    const updated = await loadProfile();
+    expect(updated.cardInventory).toEqual([
+      {
+        cardId: 'card-001',
+        rolledRarity: 'uncommon',
+        unlockDifficulty: 'hard',
+      },
+    ]);
+    expect(updated.cardInstances?.['card-001']).toEqual({
+      rolledRarity: 'uncommon',
+      unlockDifficulty: 'hard',
+    });
+    expect(
+      document.querySelector('[data-testid="garage-row-card-001-common"]'),
+    ).toBeNull();
+    expect(
+      document.querySelector('[data-testid="garage-row-card-001-uncommon"]'),
+    ).not.toBeNull();
   });
 });

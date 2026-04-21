@@ -5,13 +5,27 @@
   "tagline": "You saw something. You're not sure.",
   "archetype": "ghost",
   "affiliation": "freelance",
-  "power": [7],
-  "resistance": [6],
-  "rarity": ["mythic"],
-  "abilities": ["NO_REVEAL"],
+  "power": [
+    7
+  ],
+  "resistance": [
+    6
+  ],
+  "maxHp": 6,
+  "hp": 6,
+  "rarity": [
+    "mythic"
+  ],
+  "abilities": [
+    "NO_REVEAL"
+  ],
   "mythic_signature": {
     "description": "Never revealed by resolution phase. Attacks that would normally flip The Phantom face-up (becoming the struck top) leave The Phantom face-down to the opponent. Also hides modifiers tucked under The Phantom from forced-reveal events.",
     "balance_note": "Balanced stats; the mechanic is information denial. Playing The Phantom restores the fog of war on your side even after combat cycles through. The opponent has to guess what's attached to The Phantom's stack forever."
+  },
+  "portrait": {
+    "mode": "custom",
+    "sprite": "the-phantom-alt"
   },
   "unlocked": false,
   "locked": true,

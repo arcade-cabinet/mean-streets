@@ -1,9 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import type { CompiledTough, CompiledWeapon, CompiledDrug } from '../../sim/cards/schemas';
-import type { TurfMetrics } from '../../sim/turf/types';
+import type {
+  CompiledTough,
+  CompiledWeapon,
+  CompiledDrug,
+} from '../../sim/cards/schemas';
+import type { TurfMetrics, WarStats } from '../../sim/turf/types';
 import { emptyMetrics } from '../../sim/turf/environment';
 import type { PlayerProfile } from '../persistence/storage';
-import { processGameEnd, type GameEndEvent } from './achievements';
+import {
+  ownPositionsLostFromWarStats,
+  processGameEnd,
+  type GameEndEvent,
+} from './achievements';
 
 function makeCard(id: string, unlockCondition?: string): CompiledTough {
   return {
@@ -71,6 +79,7 @@ function makeEvent(overrides: Partial<GameEndEvent> = {}): GameEndEvent {
     playerSide: 'A',
     turnCount: 20,
     ownPositionsLost: 0,
+    unlockDifficulty: 'easy',
     ...rest,
     metrics,
   };
@@ -87,6 +96,10 @@ describe('processGameEnd', () => {
     expect(result.newlyUnlocked).toEqual(['card-win3']);
     expect(result.updatedProfile.wins).toBe(3);
     expect(result.updatedProfile.unlockedCardIds).toContain('card-win3');
+    expect(result.updatedProfile.cardInstances?.['card-win3']).toEqual({
+      rolledRarity: 'common',
+      unlockDifficulty: 'easy',
+    });
   });
 
   it('does not unlock on a losing game when wins threshold not yet met', () => {
@@ -249,7 +262,10 @@ describe('processGameEnd', () => {
 
     // Win but discarded → no unlock
     const discardWin = processGameEnd(
-      makeEvent({ winner: 'A', metrics: { ...emptyMetrics(), cardsDiscarded: 2 } }),
+      makeEvent({
+        winner: 'A',
+        metrics: { ...emptyMetrics(), cardsDiscarded: 2 },
+      }),
       [card],
       profile,
     );
@@ -257,7 +273,10 @@ describe('processGameEnd', () => {
 
     // Loss with zero discards → no unlock (must win)
     const cleanLoss = processGameEnd(
-      makeEvent({ winner: 'B', metrics: { ...emptyMetrics(), cardsDiscarded: 0 } }),
+      makeEvent({
+        winner: 'B',
+        metrics: { ...emptyMetrics(), cardsDiscarded: 0 },
+      }),
       [card],
       profile,
     );
@@ -265,7 +284,10 @@ describe('processGameEnd', () => {
 
     // Win with zero discards → unlocks
     const cleanWin = processGameEnd(
-      makeEvent({ winner: 'A', metrics: { ...emptyMetrics(), cardsDiscarded: 0 } }),
+      makeEvent({
+        winner: 'A',
+        metrics: { ...emptyMetrics(), cardsDiscarded: 0 },
+      }),
       [card],
       profile,
     );
@@ -294,11 +316,112 @@ describe('processGameEnd', () => {
     const profile = makeProfile();
 
     const result = processGameEnd(
-      makeEvent({ winner: 'A', metrics: { ...emptyMetrics(), cardsDiscarded: 0 } }),
+      makeEvent({
+        winner: 'A',
+        metrics: { ...emptyMetrics(), cardsDiscarded: 0 },
+      }),
       [drug],
       profile,
     );
 
     expect(result.newlyUnlocked).toEqual(['drug-clean']);
+  });
+
+  it('stores achievement unlock instances with the current war difficulty', () => {
+    const card = makeCard('card-hard-win', 'Win 3 games');
+    const profile = makeProfile({ wins: 2 });
+
+    const result = processGameEnd(
+      makeEvent({ winner: 'A', unlockDifficulty: 'nightmare' }),
+      [card],
+      profile,
+    );
+
+    expect(result.updatedProfile.cardInstances?.['card-hard-win']).toEqual({
+      rolledRarity: 'common',
+      unlockDifficulty: 'nightmare',
+    });
+  });
+
+  it('preserves existing cardInstances when adding an achievement unlock', () => {
+    const card = makeCard('card-win3', 'Win 3 games');
+    const profile = makeProfile({
+      wins: 2,
+      unlockedCardIds: ['existing-card'],
+      cardInstances: {
+        'existing-card': {
+          rolledRarity: 'legendary',
+          unlockDifficulty: 'hard',
+        },
+      },
+    });
+
+    const result = processGameEnd(makeEvent({ winner: 'A' }), [card], profile);
+
+    expect(result.updatedProfile.cardInstances).toMatchObject({
+      'existing-card': {
+        rolledRarity: 'legendary',
+        unlockDifficulty: 'hard',
+      },
+      'card-win3': {
+        rolledRarity: 'common',
+        unlockDifficulty: 'easy',
+      },
+    });
+  });
+
+  it('appends achievement unlocks into cardInventory when inventory already exists', () => {
+    const card = makeCard('card-win3', 'Win 3 games');
+    const profile = makeProfile({
+      wins: 2,
+      unlockedCardIds: ['existing-card'],
+      cardInstances: {
+        'existing-card': {
+          rolledRarity: 'legendary',
+          unlockDifficulty: 'hard',
+        },
+      },
+      cardInventory: [
+        {
+          cardId: 'existing-card',
+          rolledRarity: 'legendary',
+          unlockDifficulty: 'hard',
+        },
+      ],
+    });
+
+    const result = processGameEnd(
+      makeEvent({ winner: 'A', unlockDifficulty: 'nightmare' }),
+      [card],
+      profile,
+    );
+
+    expect(result.updatedProfile.cardInventory).toEqual([
+      {
+        cardId: 'existing-card',
+        rolledRarity: 'legendary',
+        unlockDifficulty: 'hard',
+      },
+      {
+        cardId: 'card-win3',
+        rolledRarity: 'common',
+        unlockDifficulty: 'nightmare',
+      },
+    ]);
+  });
+});
+
+describe('ownPositionsLostFromWarStats', () => {
+  it('counts only seizures by the opposing side', () => {
+    const warStats: WarStats = {
+      seizures: [
+        { seizedBy: 'A', seizedTurfIdx: 0, turnsOnThatTurf: 1 },
+        { seizedBy: 'B', seizedTurfIdx: 1, turnsOnThatTurf: 2 },
+        { seizedBy: 'B', seizedTurfIdx: 2, turnsOnThatTurf: 1 },
+      ],
+    };
+
+    expect(ownPositionsLostFromWarStats(warStats, 'A')).toBe(2);
+    expect(ownPositionsLostFromWarStats(warStats, 'B')).toBe(1);
   });
 });

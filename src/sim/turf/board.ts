@@ -154,9 +154,13 @@ function loyalDefBonus(turf: Turf): number {
 
 /** Scale a tough's authored stat by its HP ratio (min 1 while alive). */
 function clampByHp(raw: number, tough: ToughCard): number {
+  // Browser/UI fixtures can omit v0.3 HP fields; treat those as "full HP"
+  // instead of propagating undefined / undefined into NaN.
+  if (typeof tough.hp !== 'number' || typeof tough.maxHp !== 'number') return raw;
   if (tough.hp <= 0) return 0;
   if (tough.maxHp <= 0) return raw;
   const scaled = Math.floor(raw * (tough.hp / tough.maxHp));
+  if (!Number.isFinite(scaled)) return raw;
   return Math.max(1, scaled);
 }
 

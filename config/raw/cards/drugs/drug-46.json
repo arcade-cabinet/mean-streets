@@ -19,5 +19,16 @@
   "unlocked": false,
   "unlockCondition": "Win a game in under 14 rounds",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "triptych-right",
+    "palette": "violet",
+    "layers": {
+      "backdrop": "brick-kilo",
+      "support": "paper-bag",
+      "primary": "wrapped-bricks",
+      "badge": "syringe"
+    }
+  }
 }

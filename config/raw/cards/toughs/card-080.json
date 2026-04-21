@@ -11,6 +11,8 @@
   "resistance": [
     6
   ],
+  "maxHp": 6,
+  "hp": 6,
   "rarity": [
     "common",
     "uncommon"
@@ -21,5 +23,16 @@
   "unlocked": false,
   "unlockCondition": "Win a game on the first night phase",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "ambush",
+    "palette": "rust",
+    "layers": {
+      "legs": "stalk-lunge",
+      "torso": "overcoat",
+      "body": "hood-2",
+      "arms": "fists"
+    }
+  }
 }

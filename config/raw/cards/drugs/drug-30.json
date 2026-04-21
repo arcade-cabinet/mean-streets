@@ -19,5 +19,16 @@
   "unlocked": false,
   "unlockCondition": "Win 6 games",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "triptych-right",
+    "palette": "violet",
+    "layers": {
+      "backdrop": "pill-bottle",
+      "support": "burner-phone",
+      "primary": "herb-bag",
+      "badge": "drug-bag"
+    }
+  }
 }

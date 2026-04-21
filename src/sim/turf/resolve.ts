@@ -1,5 +1,6 @@
 import { applyTangibles, runIntangiblesPhase } from './abilities';
 import { applyHealTicks, removeFromStack } from './ability-handlers';
+import { isBribeSpendableCurrency } from './ability-hooks';
 import { TURF_SIM_CONFIG } from './ai/config';
 import { resolveStrikeNow, type StrikeOutcome } from './attacks';
 import {
@@ -79,7 +80,9 @@ function maybeCombatBribe(state: TurfGameState, q: QueuedAction): boolean {
   const currencyEntries: Array<{ idx: number; denom: number }> = [];
   for (let i = 0; i < def.stack.length; i++) {
     const sc = def.stack[i];
-    if (sc.card.kind === 'currency') currencyEntries.push({ idx: i, denom: sc.card.denomination });
+    if (sc.card.kind !== 'currency') continue;
+    if (!isBribeSpendableCurrency(sc.card)) continue;
+    currencyEntries.push({ idx: i, denom: sc.card.denomination });
   }
   if (currencyEntries.length === 0) return false;
   const totalCash = currencyEntries.reduce((s, e) => s + e.denom, 0);

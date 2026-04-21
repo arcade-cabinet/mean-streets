@@ -11,6 +11,8 @@
   "resistance": [
     7
   ],
+  "maxHp": 7,
+  "hp": 7,
   "rarity": [
     "common",
     "uncommon"
@@ -21,5 +23,17 @@
   "unlocked": false,
   "unlockCondition": "Win 1 games with a full Freelance deck",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-right",
+    "palette": "ember",
+    "layers": {
+      "back": "phone-holster",
+      "legs": "flank-lean",
+      "torso": "hoodie",
+      "body": "average-2",
+      "arms": "pistol-compact"
+    }
+  }
 }

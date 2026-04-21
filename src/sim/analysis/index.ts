@@ -6,6 +6,7 @@ export {
 } from './benchmarks';
 export { type EffectEstimationProgress, estimateCardEffects } from './effects';
 export {
+  buildBalanceHistoryFromLockRecommendations,
   deriveLockRecommendations,
   summarizeLockRecommendations,
 } from './locking';

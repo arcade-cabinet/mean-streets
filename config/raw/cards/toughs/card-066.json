@@ -11,6 +11,8 @@
   "resistance": [
     10
   ],
+  "maxHp": 10,
+  "hp": 10,
   "rarity": [
     "common",
     "rare"
@@ -21,5 +23,17 @@
   "unlocked": false,
   "unlockCondition": "Trigger 6 overdraw penalties on opponents",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "ambush",
+    "palette": "ash",
+    "layers": {
+      "back": "backpack",
+      "legs": "kneel-recover",
+      "torso": "apron",
+      "body": "lean-2",
+      "arms": "fists"
+    }
+  }
 }

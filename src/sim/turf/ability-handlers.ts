@@ -3,6 +3,7 @@
 // walks rarity bands and calls them per-card in priority order.
 import type { IntangibleOutcome } from './abilities';
 import { TURF_SIM_CONFIG } from './ai/config';
+import { isBribeSpendableCurrency } from './ability-hooks';
 import type { QueuedAction, ToughCard, Turf, TurfGameState } from './types';
 
 export const proceed = (): IntangibleOutcome => ({ kind: 'proceed' });
@@ -72,6 +73,7 @@ export function maybeBribe(
   for (let i = 0; i < defender.stack.length; i++) {
     const c = defender.stack[i].card;
     if (c.kind !== 'currency') continue;
+    if (!isBribeSpendableCurrency(c)) continue;
     currencyEntries.push({ idx: i, denom: c.denomination });
   }
   if (currencyEntries.length === 0) return proceed();

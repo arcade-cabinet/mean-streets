@@ -66,9 +66,13 @@ function buildThink(owner: PlannerOwner): Think {
   const obs = owner.observation;
   const pl = TURF_SIM_CONFIG.aiPlanner;
   const player = owner.state.players[owner.side];
+  const activeTurf = player.turfs[0];
   const pendingKind = player.pending?.kind ?? null;
   const hasPending = pendingKind !== null;
   const canDraw = !hasPending && player.deck.length > 0;
+  const promotedAggressionBonus = activeTurf?.justPromoted
+    ? pl.promotedAggressionBonus
+    : 0;
 
   // draw_tempo — refill when the pending slot is open and deck/budget allow.
   brain.addEvaluator(
@@ -128,7 +132,8 @@ function buildThink(owner: PlannerOwner): Think {
         return (
           pl.directPressure.base +
           Math.max(0, margin) * pl.directPressure.marginScale +
-          (obs.opponentTurfCount <= 1 ? pl.directPressure.lastTurfBonus : 0)
+          (obs.opponentTurfCount <= 1 ? pl.directPressure.lastTurfBonus : 0) +
+          promotedAggressionBonus
         );
       },
       () =>
@@ -155,7 +160,8 @@ function buildThink(owner: PlannerOwner): Think {
           cash / TURF_SIM_CONFIG.aiScoring.currencyDenominationScale;
         return (
           pl.fundedPressure.baseWithCurrency +
-          units * pl.fundedPressure.perCurrencyWeight
+          units * pl.fundedPressure.perCurrencyWeight +
+          promotedAggressionBonus
         );
       },
       () =>
@@ -175,7 +181,7 @@ function buildThink(owner: PlannerOwner): Think {
       () => {
         if (obs.ownToughsInPlay === 0 || obs.opponentToughsInPlay === 0)
           return 0;
-        return pl.pushedPressure.base;
+        return pl.pushedPressure.base + promotedAggressionBonus;
       },
       () =>
         goal(owner, 'pushed_pressure', [

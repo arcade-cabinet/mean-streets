@@ -5,13 +5,27 @@
   "tagline": "Glancing blows still leave marks.",
   "archetype": "enforcer",
   "affiliation": "freelance",
-  "power": [8],
-  "resistance": [7],
-  "rarity": ["mythic"],
-  "abilities": ["ABSOLUTE"],
+  "power": [
+    8
+  ],
+  "resistance": [
+    7
+  ],
+  "maxHp": 7,
+  "hp": 7,
+  "rarity": [
+    "mythic"
+  ],
+  "abilities": [
+    "ABSOLUTE"
+  ],
   "mythic_signature": {
     "description": "Strikes never glance. Even when power is below target resistance (P < R tier), The Reaper deals 1 damage minimum instead of zero. The cumulative wear adds up — no attack is wasted.",
     "balance_note": "Solid generalist stats. The signature turns every fractional hit into progress. Over a long engagement, The Reaper's presence means even a heavily armored defender will crack eventually. Particularly strong against tough-stacked turfs with high R across the board."
+  },
+  "portrait": {
+    "mode": "custom",
+    "sprite": "the-reaper"
   },
   "unlocked": false,
   "locked": true,

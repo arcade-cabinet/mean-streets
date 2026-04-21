@@ -1,5 +1,11 @@
 import type { Rng } from '../cards/rng';
-import type { Card, ToughCard, WeaponCard, DrugCard, CurrencyCard } from './types';
+import type {
+  Card,
+  ToughCard,
+  WeaponCard,
+  DrugCard,
+  CurrencyCard,
+} from './types';
 import type { TurfCardPools } from './catalog';
 import { TURF_SIM_CONFIG } from './ai/config';
 
@@ -18,6 +24,14 @@ export interface AutoDeckPolicy {
   forceIncludeIds?: string[];
 }
 
+export interface DeckPreference {
+  // Preference key. For authored base cards this may be the raw card id;
+  // for owned inventory buckets it is `${card.id}::${card.rarity}`.
+  cardId: string;
+  enabled: boolean;
+  priority: number;
+}
+
 function normalizeBias(value: number | undefined, fallback: number): number {
   return Math.max(0, Math.min(1, value ?? fallback));
 }
@@ -25,6 +39,63 @@ function normalizeBias(value: number | undefined, fallback: number): number {
 /** Deep-copy a ToughCard so HP mutations during play don't corrupt the pool. */
 function cloneTough(t: ToughCard): ToughCard {
   return { ...t, abilities: [...t.abilities], hp: t.maxHp };
+}
+
+function clampPriority(priority: number | undefined): number {
+  return Math.max(1, Math.min(10, priority ?? 5));
+}
+
+function preferenceMap(
+  preferences: DeckPreference[],
+): Map<string, DeckPreference> {
+  return new Map(
+    preferences.map((preference) => [preference.cardId, preference]),
+  );
+}
+
+export function collectionPreferenceKey(
+  card: Pick<Card, 'id' | 'rarity'>,
+): string {
+  return `${card.id}::${card.rarity}`;
+}
+
+function preferenceForCard(
+  preferences: Map<string, DeckPreference>,
+  card: Pick<Card, 'id' | 'rarity'>,
+): DeckPreference | undefined {
+  return preferences.get(collectionPreferenceKey(card)) ?? preferences.get(card.id);
+}
+
+function weightedShuffle<T extends Card>(
+  cards: T[],
+  rng: Rng,
+  preferences: Map<string, DeckPreference>,
+): T[] {
+  return cards
+    .map((card, index) => {
+      const priority = clampPriority(preferenceForCard(preferences, card)?.priority);
+      const roll = Math.max(Number.EPSILON, rng.next());
+      return {
+        card,
+        index,
+        score: -Math.log(roll) / priority,
+      };
+    })
+    .sort((a, b) => a.score - b.score || a.index - b.index)
+    .map(({ card }) => card);
+}
+
+export function buildCollectionDeck(
+  collection: Card[],
+  rng: Rng,
+  preferences: DeckPreference[] = [],
+): Card[] {
+  const byCardId = preferenceMap(preferences);
+  const enabledCards = collection.filter(
+    (card) => preferenceForCard(byCardId, card)?.enabled ?? true,
+  );
+  const source = enabledCards.length > 0 ? enabledCards : collection;
+  return weightedShuffle(source, rng, byCardId);
 }
 
 export function buildAutoDeck(

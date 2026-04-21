@@ -11,6 +11,8 @@
   "resistance": [
     4
   ],
+  "maxHp": 4,
+  "hp": 4,
   "rarity": [
     "common",
     "uncommon"
@@ -21,5 +23,17 @@
   "unlocked": false,
   "unlockCondition": "Deal 39 total damage in a single game",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-left",
+    "palette": "ash",
+    "layers": {
+      "back": "backpack",
+      "legs": "stalk-lunge",
+      "torso": "hoodie-4",
+      "body": "heavy-2",
+      "arms": "fists"
+    }
+  }
 }
