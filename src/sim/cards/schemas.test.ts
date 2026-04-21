@@ -1,22 +1,22 @@
-import { describe, it, expect } from 'vitest';
-import { readFileSync, readdirSync, existsSync } from 'node:fs';
-import { join, resolve, dirname } from 'node:path';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { describe, expect, it } from 'vitest';
 import {
+  AuthoredCurrencySchema,
+  AuthoredDrugSchema,
+  AuthoredMythicSchema,
   AuthoredToughSchema,
   AuthoredWeaponSchema,
-  AuthoredDrugSchema,
-  AuthoredCurrencySchema,
-  AuthoredMythicSchema,
+  CompiledCardSchema,
+  CompiledCurrencySchema,
+  CompiledDrugSchema,
+  CompiledMythicSchema,
   CompiledToughSchema,
   CompiledWeaponSchema,
-  CompiledDrugSchema,
-  CompiledCurrencySchema,
-  CompiledMythicSchema,
-  CompiledCardSchema,
-  RaritySchema,
-  latestStat,
   latestRarity,
+  latestStat,
+  RaritySchema,
 } from './schemas';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -150,6 +150,63 @@ describe('authored card schemas', () => {
     expect(result.success).toBe(false);
   });
 
+  it('requires complete tough stack portrait layers', () => {
+    const sample = readJson(
+      join(RAW_DIR, 'toughs', listJson(join(RAW_DIR, 'toughs'))[0]),
+    ) as Record<string, unknown>;
+    const portrait = sample.portrait as {
+      layers: Record<string, unknown>;
+    };
+    const layersWithoutArms = { ...portrait.layers };
+    delete layersWithoutArms.arms;
+    const result = AuthoredToughSchema.safeParse({
+      ...sample,
+      portrait: {
+        ...portrait,
+        layers: layersWithoutArms,
+      },
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects item-only stack layers on tough portraits', () => {
+    const sample = readJson(
+      join(RAW_DIR, 'toughs', listJson(join(RAW_DIR, 'toughs'))[0]),
+    ) as Record<string, unknown>;
+    const portrait = sample.portrait as {
+      layers: Record<string, unknown>;
+    };
+    const result = AuthoredToughSchema.safeParse({
+      ...sample,
+      portrait: {
+        ...portrait,
+        layers: {
+          ...portrait.layers,
+          primary: 'knife',
+        },
+      },
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects palettes from the wrong item portrait family', () => {
+    const sample = readJson(
+      join(RAW_DIR, 'weapons', listJson(join(RAW_DIR, 'weapons'))[0]),
+    ) as Record<string, unknown>;
+    const portrait = sample.portrait as Record<string, unknown>;
+    const result = AuthoredWeaponSchema.safeParse({
+      ...sample,
+      portrait: {
+        ...portrait,
+        palette: 'toxic',
+      },
+    });
+
+    expect(result.success).toBe(false);
+  });
+
   it('rejects stack portraits on mythics', () => {
     const sample = readJson(
       join(RAW_DIR, 'mythics', listJson(join(RAW_DIR, 'mythics'))[0]),
@@ -161,6 +218,21 @@ describe('authored card schemas', () => {
         template: 'street-left',
       },
     });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects mythics using another mythic assigned sprite', () => {
+    const sample = readJson(
+      join(RAW_DIR, 'mythics', 'mythic-10.json'),
+    ) as Record<string, unknown>;
+    const result = AuthoredMythicSchema.safeParse({
+      ...sample,
+      portrait: {
+        mode: 'custom',
+        sprite: 'the-silhouette',
+      },
+    });
+
     expect(result.success).toBe(false);
   });
 });

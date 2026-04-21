@@ -1,18 +1,18 @@
-import compiledToughs from '../../../config/compiled/toughs.json';
 import compiledMythics from '../../../config/compiled/mythics.json';
-import {
-  type CompiledMythic,
-  CompiledMythicSchema,
-  type CompiledTough,
-  CompiledToughSchema,
-} from './schemas';
+import compiledToughs from '../../../config/compiled/toughs.json';
+import simConfig from '../../data/ai/turf-sim.json';
 import {
   generateDrugs,
   generateWeapons,
   loadCurrencyCatalog,
 } from '../turf/generators';
 import type { Card, ToughCard } from '../turf/types';
-import simConfig from '../../data/ai/turf-sim.json';
+import {
+  type CompiledMythic,
+  CompiledMythicSchema,
+  type CompiledTough,
+  CompiledToughSchema,
+} from './schemas';
 
 const parsed = (compiledToughs as unknown[]).map((entry) =>
   CompiledToughSchema.parse(entry),
@@ -95,8 +95,8 @@ export function loadCompiledToughs(): CompiledTough[] {
 /**
  * Load every compiled mythic as a runtime ToughCard (mythics share the
  * tough card shape — §11 says mythics are a subset of toughs with
- * `rarity: 'mythic'`). hp/maxHp are defaulted to resistance, identical
- * to `loadToughCards`.
+ * `rarity: 'mythic'`). hp/maxHp are authored and validated in the
+ * compiled mythic catalog, identical to `loadToughCards`.
  *
  * These are intentionally **not** included in `loadToughCards()` output
  * because mythics never enter the common pack pool (§3.3 drop rate is

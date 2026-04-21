@@ -205,6 +205,45 @@ Compiled files expose only the latest value (`power: 7`) so the runtime
 and UI never see the trail. Autobalance writes new values to the raw
 files and commits each tuning iteration.
 
+### Card Portrait Language
+
+Each raw card also owns its portrait recipe under `portrait`.
+Non-mythics must use `mode: "stack"`; mythics must use
+`mode: "custom"`.
+
+Non-mythic toughs choose a locked silhouette stack:
+
+```json
+"portrait": {
+  "mode": "stack",
+  "template": "street-left",
+  "palette": "ash",
+  "layers": {
+    "body": "average",
+    "torso": "hoodie",
+    "arms": "fists",
+    "legs": "runner",
+    "back": "lean"
+  }
+}
+```
+
+Tough stack roles are `body`, `torso`, `arms`, `legs`, optional
+`head`, and optional `back`. Weapon/drug/currency stack roles are
+`primary`, `support`, optional `backdrop`, and optional `badge`.
+Layer values can be a string or a non-empty string array; the compositor
+matches exact sprite stems or numbered variants such as `runner-2`.
+
+The build validates template names, palette families, role names, and
+sprite references before compiling. `pnpm run cards:art` then renders
+all non-mythics through the stack compositor and writes the locked
+manifest to `public/assets/card-art/portrait-stacks.json`.
+
+Mythics are not stack composites. Each of the 10 mythics has an assigned
+custom sprite in `config/raw/cards/mythics/*.json`, and the schema plus
+compiler reject cross-assignment so a mythic cannot accidentally inherit
+another mythic's design.
+
 ### Game Simulation
 
 ```

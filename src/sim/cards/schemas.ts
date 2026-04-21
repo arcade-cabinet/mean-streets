@@ -32,35 +32,141 @@ export const StatHistorySchema = z
 
 export const RarityHistorySchema = z.array(RaritySchema).min(1);
 
-export const PortraitLayerPoolSchema = z.union([
-  z.string(),
-  z.array(z.string()).min(1),
+export const ToughPortraitTemplateSchema = z.enum([
+  'street-left',
+  'street-right',
+  'ambush',
+  'wall-lean',
 ]);
 
-export const PortraitLayersSchema = z.object({
-  body: PortraitLayerPoolSchema.optional(),
-  head: PortraitLayerPoolSchema.optional(),
-  torso: PortraitLayerPoolSchema.optional(),
-  arms: PortraitLayerPoolSchema.optional(),
-  legs: PortraitLayerPoolSchema.optional(),
-  back: PortraitLayerPoolSchema.optional(),
-  primary: PortraitLayerPoolSchema.optional(),
-  support: PortraitLayerPoolSchema.optional(),
-  backdrop: PortraitLayerPoolSchema.optional(),
-  badge: PortraitLayerPoolSchema.optional(),
-});
+export const ToughPortraitPaletteSchema = z.enum([
+  'ember',
+  'ash',
+  'rust',
+  'smoke',
+]);
 
-export const PortraitStackSchema = z.object({
-  mode: z.literal('stack'),
-  template: z.string().optional(),
-  palette: z.string().optional(),
-  layers: PortraitLayersSchema.optional(),
-});
+export const ItemPortraitTemplateSchema = z.enum([
+  'triptych-left',
+  'triptych-right',
+  'totem',
+  'fan',
+]);
 
-export const PortraitCustomSchema = z.object({
-  mode: z.literal('custom'),
-  sprite: z.string(),
-});
+export const WeaponPortraitPaletteSchema = z.enum([
+  'steel',
+  'gunmetal',
+  'slate',
+]);
+
+export const DrugPortraitPaletteSchema = z.enum(['violet', 'toxic', 'haze']);
+
+export const CurrencyPortraitPaletteSchema = z.enum([
+  'brass',
+  'olive',
+  'laundered',
+]);
+
+export const MythicPortraitSpriteById = {
+  'mythic-01': 'the-silhouette',
+  'mythic-02': 'the-accountant',
+  'mythic-03': 'the-architect',
+  'mythic-04': 'the-informer',
+  'mythic-05': 'the-ghost-alt2',
+  'mythic-06': 'the-warlord',
+  'mythic-07': 'the-fixer-alt',
+  'mythic-08': 'the-magistrate-alt2',
+  'mythic-09': 'the-phantom-alt',
+  'mythic-10': 'the-reaper',
+} as const;
+
+export const MythicPortraitSpriteSchema = z.enum([
+  'the-silhouette',
+  'the-accountant',
+  'the-architect',
+  'the-informer',
+  'the-ghost-alt2',
+  'the-warlord',
+  'the-fixer-alt',
+  'the-magistrate-alt2',
+  'the-phantom-alt',
+  'the-reaper',
+]);
+
+export const PortraitLayerPoolSchema = z.union([
+  z.string().min(1),
+  z.array(z.string().min(1)).min(1),
+]);
+
+export const ToughPortraitLayersSchema = z
+  .object({
+    body: PortraitLayerPoolSchema,
+    head: PortraitLayerPoolSchema.optional(),
+    torso: PortraitLayerPoolSchema,
+    arms: PortraitLayerPoolSchema,
+    legs: PortraitLayerPoolSchema,
+    back: PortraitLayerPoolSchema.optional(),
+  })
+  .strict();
+
+export const ItemPortraitLayersSchema = z
+  .object({
+    primary: PortraitLayerPoolSchema,
+    support: PortraitLayerPoolSchema,
+    backdrop: PortraitLayerPoolSchema.optional(),
+    badge: PortraitLayerPoolSchema.optional(),
+  })
+  .strict();
+
+export const ToughPortraitStackSchema = z
+  .object({
+    mode: z.literal('stack'),
+    template: ToughPortraitTemplateSchema,
+    palette: ToughPortraitPaletteSchema,
+    layers: ToughPortraitLayersSchema,
+  })
+  .strict();
+
+export const WeaponPortraitStackSchema = z
+  .object({
+    mode: z.literal('stack'),
+    template: ItemPortraitTemplateSchema,
+    palette: WeaponPortraitPaletteSchema,
+    layers: ItemPortraitLayersSchema,
+  })
+  .strict();
+
+export const DrugPortraitStackSchema = z
+  .object({
+    mode: z.literal('stack'),
+    template: ItemPortraitTemplateSchema,
+    palette: DrugPortraitPaletteSchema,
+    layers: ItemPortraitLayersSchema,
+  })
+  .strict();
+
+export const CurrencyPortraitStackSchema = z
+  .object({
+    mode: z.literal('stack'),
+    template: ItemPortraitTemplateSchema,
+    palette: CurrencyPortraitPaletteSchema,
+    layers: ItemPortraitLayersSchema,
+  })
+  .strict();
+
+export const PortraitStackSchema = z.union([
+  ToughPortraitStackSchema,
+  WeaponPortraitStackSchema,
+  DrugPortraitStackSchema,
+  CurrencyPortraitStackSchema,
+]);
+
+export const PortraitCustomSchema = z
+  .object({
+    mode: z.literal('custom'),
+    sprite: MythicPortraitSpriteSchema,
+  })
+  .strict();
 
 export const PortraitSchema = z.union([
   PortraitStackSchema,
@@ -69,6 +175,29 @@ export const PortraitSchema = z.union([
 
 export const NonMythicPortraitSchema = PortraitStackSchema;
 export const MythicPortraitSchema = PortraitCustomSchema;
+
+function refineAssignedMythicPortrait(
+  card: { id: string; portrait: { sprite: string } },
+  ctx: z.RefinementCtx,
+): void {
+  const expected =
+    MythicPortraitSpriteById[card.id as keyof typeof MythicPortraitSpriteById];
+  if (expected === undefined) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['id'],
+      message: `unknown mythic id "${card.id}" has no assigned custom portrait`,
+    });
+    return;
+  }
+  if (card.portrait.sprite !== expected) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['portrait', 'sprite'],
+      message: `${card.id} must use assigned custom portrait "${expected}"`,
+    });
+  }
+}
 
 // ── Authored schemas (tuning-history on disk) ──────────────────
 
@@ -88,7 +217,7 @@ export const AuthoredToughSchema = z.object({
   unlocked: z.boolean(),
   unlockCondition: z.string().nullable().optional(),
   locked: z.boolean(),
-  portrait: NonMythicPortraitSchema,
+  portrait: ToughPortraitStackSchema,
   draft: z.boolean().optional(),
 });
 
@@ -104,7 +233,7 @@ export const AuthoredWeaponSchema = z.object({
   unlocked: z.boolean(),
   unlockCondition: z.string().nullable().optional(),
   locked: z.boolean(),
-  portrait: NonMythicPortraitSchema,
+  portrait: WeaponPortraitStackSchema,
   draft: z.boolean().optional(),
 });
 
@@ -120,7 +249,7 @@ export const AuthoredDrugSchema = z.object({
   unlocked: z.boolean(),
   unlockCondition: z.string().nullable().optional(),
   locked: z.boolean(),
-  portrait: NonMythicPortraitSchema,
+  portrait: DrugPortraitStackSchema,
   draft: z.boolean().optional(),
 });
 
@@ -133,7 +262,7 @@ export const AuthoredCurrencySchema = z.object({
   abilities: z.array(z.string()).optional(),
   unlocked: z.boolean(),
   locked: z.boolean(),
-  portrait: NonMythicPortraitSchema,
+  portrait: CurrencyPortraitStackSchema,
   draft: z.boolean().optional(),
 });
 
@@ -155,7 +284,7 @@ export const CompiledToughSchema = z.object({
   unlocked: z.boolean(),
   unlockCondition: z.string().optional(),
   locked: z.boolean(),
-  portrait: NonMythicPortraitSchema,
+  portrait: ToughPortraitStackSchema,
 });
 
 export const CompiledWeaponSchema = z.object({
@@ -170,7 +299,7 @@ export const CompiledWeaponSchema = z.object({
   unlocked: z.boolean(),
   unlockCondition: z.string().optional(),
   locked: z.boolean(),
-  portrait: NonMythicPortraitSchema,
+  portrait: WeaponPortraitStackSchema,
 });
 
 export const CompiledDrugSchema = z.object({
@@ -185,7 +314,7 @@ export const CompiledDrugSchema = z.object({
   unlocked: z.boolean(),
   unlockCondition: z.string().optional(),
   locked: z.boolean(),
-  portrait: NonMythicPortraitSchema,
+  portrait: DrugPortraitStackSchema,
 });
 
 export const CompiledCurrencySchema = z.object({
@@ -197,7 +326,7 @@ export const CompiledCurrencySchema = z.object({
   abilities: z.array(z.string()).optional(),
   unlocked: z.boolean(),
   locked: z.boolean(),
-  portrait: NonMythicPortraitSchema,
+  portrait: CurrencyPortraitStackSchema,
 });
 
 // ── Mythic schemas (§11) ──────────────────────────────────────
@@ -213,46 +342,50 @@ export const MythicSignatureSchema = z.object({
   balance_note: z.string().optional(),
 });
 
-export const AuthoredMythicSchema = z.object({
-  id: z.string(),
-  kind: z.literal('tough'),
-  name: z.string(),
-  tagline: z.string().optional(),
-  archetype: z.string(),
-  affiliation: z.string(),
-  power: StatHistorySchema,
-  resistance: StatHistorySchema,
-  maxHp: z.number().int().min(1).max(12),
-  hp: z.number().int().min(1).max(12),
-  rarity: z.array(z.literal('mythic')).min(1),
-  abilities: z.array(z.string()),
-  mythic_signature: MythicSignatureSchema.optional(),
-  unlocked: z.boolean(),
-  unlockCondition: z.string().nullable().optional(),
-  locked: z.boolean(),
-  portrait: MythicPortraitSchema,
-  draft: z.boolean().optional(),
-});
+export const AuthoredMythicSchema = z
+  .object({
+    id: z.string(),
+    kind: z.literal('tough'),
+    name: z.string(),
+    tagline: z.string().optional(),
+    archetype: z.string(),
+    affiliation: z.string(),
+    power: StatHistorySchema,
+    resistance: StatHistorySchema,
+    maxHp: z.number().int().min(1).max(12),
+    hp: z.number().int().min(1).max(12),
+    rarity: z.array(z.literal('mythic')).min(1),
+    abilities: z.array(z.string()),
+    mythic_signature: MythicSignatureSchema.optional(),
+    unlocked: z.boolean(),
+    unlockCondition: z.string().nullable().optional(),
+    locked: z.boolean(),
+    portrait: MythicPortraitSchema,
+    draft: z.boolean().optional(),
+  })
+  .superRefine(refineAssignedMythicPortrait);
 
-export const CompiledMythicSchema = z.object({
-  kind: z.literal('tough'),
-  id: z.string(),
-  name: z.string(),
-  tagline: z.string().optional(),
-  archetype: z.string(),
-  affiliation: z.string(),
-  power: z.number().int().min(1).max(12),
-  resistance: z.number().int().min(1).max(12),
-  maxHp: z.number().int().min(1).max(12),
-  hp: z.number().int().min(1).max(12),
-  rarity: z.literal('mythic'),
-  abilities: z.array(z.string()),
-  mythic_signature: MythicSignatureSchema.optional(),
-  unlocked: z.boolean(),
-  unlockCondition: z.string().optional(),
-  locked: z.boolean(),
-  portrait: MythicPortraitSchema,
-});
+export const CompiledMythicSchema = z
+  .object({
+    kind: z.literal('tough'),
+    id: z.string(),
+    name: z.string(),
+    tagline: z.string().optional(),
+    archetype: z.string(),
+    affiliation: z.string(),
+    power: z.number().int().min(1).max(12),
+    resistance: z.number().int().min(1).max(12),
+    maxHp: z.number().int().min(1).max(12),
+    hp: z.number().int().min(1).max(12),
+    rarity: z.literal('mythic'),
+    abilities: z.array(z.string()),
+    mythic_signature: MythicSignatureSchema.optional(),
+    unlocked: z.boolean(),
+    unlockCondition: z.string().optional(),
+    locked: z.boolean(),
+    portrait: MythicPortraitSchema,
+  })
+  .superRefine(refineAssignedMythicPortrait);
 
 export const CompiledCardSchema = z.discriminatedUnion('kind', [
   CompiledToughSchema,
