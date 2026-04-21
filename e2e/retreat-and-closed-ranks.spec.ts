@@ -11,6 +11,15 @@ async function goToGame(page: import('@playwright/test').Page, testInfo: import(
   await expect(page.getByTestId('game-screen')).toBeVisible({ timeout: 10_000 });
 }
 
+async function expectPlayerDrawVisible(page: import('@playwright/test').Page) {
+  const hudDraw = page.getByTestId('hud-draw');
+  if (await hudDraw.isVisible().catch(() => false)) {
+    await expect(hudDraw).toBeVisible();
+    return;
+  }
+  await expect(page.getByTestId('slot-player-draw')).toBeVisible();
+}
+
 test('game screen mounts with end-turn button', async ({ page }, testInfo) => {
   await goToGame(page, testInfo);
   await expect(page.getByTestId('action-end_turn')).toBeVisible();
@@ -18,7 +27,7 @@ test('game screen mounts with end-turn button', async ({ page }, testInfo) => {
 
 test('draw slot and turf lanes render at game start', async ({ page }, testInfo) => {
   await goToGame(page, testInfo);
-  await expect(page.getByTestId('slot-player-draw')).toBeVisible();
+  await expectPlayerDrawVisible(page);
   await expect(page.getByTestId('turf-lane-A')).toBeVisible();
   await expect(page.getByTestId('turf-lane-B')).toBeVisible();
 });

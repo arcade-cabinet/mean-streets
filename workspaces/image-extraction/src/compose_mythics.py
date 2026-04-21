@@ -1,24 +1,12 @@
 """
-Compose mythic card art from the best-picked silhouettes.
+Compose mythic card art from authored custom silhouette assignments.
 Reads extracted sprites from raw-assets/sprites/mythics/
 Outputs to public/assets/card-art/mythic-{01..10}.png
 """
 from pathlib import Path
+from collections import Counter
+import json
 from PIL import Image
-
-
-BEST_PICKS = {
-    "mythic-01": "the-silhouette",
-    "mythic-02": "the-accountant",
-    "mythic-03": "the-architect",
-    "mythic-04": "the-informer",
-    "mythic-05": "the-ghost-alt2",
-    "mythic-06": "the-warlord",
-    "mythic-07": "the-fixer-alt",
-    "mythic-08": "the-magistrate-alt2",
-    "mythic-09": "the-phantom-alt",
-    "mythic-10": "unknown-8",
-}
 
 
 def compose(sprite_path: Path, cw: int = 120, ch: int = 160) -> Image.Image:
@@ -34,23 +22,55 @@ def compose(sprite_path: Path, cw: int = 120, ch: int = 160) -> Image.Image:
     return canvas
 
 
+def fail(message: str) -> None:
+    raise SystemExit(f"compose_mythics: {message}")
+
+
+def assigned_sprite(card: dict[str, object]) -> str:
+    portrait = card.get("portrait")
+    if not isinstance(portrait, dict) or portrait.get("mode") != "custom":
+        fail(f"{card['id']}: mythics must use portrait.mode='custom'")
+
+    sprite_name = portrait.get("sprite")
+    if not isinstance(sprite_name, str) or not sprite_name:
+        fail(f"{card['id']}: mythic custom portrait is missing sprite")
+    return sprite_name
+
+
 def main():
     root = Path(__file__).resolve().parents[3]
     sprites_dir = root / "raw-assets" / "sprites" / "mythics"
     card_art_dir = root / "public" / "assets" / "card-art"
+    mythics = json.loads((root / "config" / "compiled" / "mythics.json").read_text())
+    card_art_dir.mkdir(parents=True, exist_ok=True)
 
-    for card_id, sprite_name in BEST_PICKS.items():
+    mythic_ids = {card["id"] for card in mythics}
+    for path in card_art_dir.glob("mythic-*.png"):
+        if path.stem in mythic_ids:
+            path.unlink()
+
+    sprite_names = [assigned_sprite(card) for card in mythics]
+    duplicates = sorted(
+        sprite_name for sprite_name, count in Counter(sprite_names).items() if count > 1
+    )
+    if duplicates:
+        fail(f"duplicate mythic sprite assignments: {', '.join(duplicates)}")
+
+    composed = 0
+    for card in mythics:
+        card_id = card["id"]
+        sprite_name = assigned_sprite(card)
         sprite_path = sprites_dir / f"{sprite_name}.png"
         if not sprite_path.exists():
-            print(f"  SKIP {card_id}: {sprite_name}.png not found")
-            continue
+            fail(f"{card_id}: {sprite_name}.png not found in {sprites_dir}")
 
         art = compose(sprite_path)
         out = card_art_dir / f"{card_id}.png"
         art.save(out)
         print(f"  {card_id} ← {sprite_name}")
+        composed += 1
 
-    print(f"\nDone: {len(BEST_PICKS)} mythic card art PNGs")
+    print(f"\nDone: {composed} mythic card art PNGs")
 
 
 if __name__ == "__main__":

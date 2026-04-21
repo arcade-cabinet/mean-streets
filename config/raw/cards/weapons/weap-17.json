@@ -20,5 +20,16 @@
   "unlocked": false,
   "unlockCondition": "Win a game using only bladed weapons",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "fan",
+    "palette": "slate",
+    "layers": {
+      "backdrop": "fist-small",
+      "support": "chain",
+      "primary": "crowbar",
+      "badge": "brass-knuckles"
+    }
+  }
 }

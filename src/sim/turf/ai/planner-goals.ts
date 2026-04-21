@@ -99,7 +99,7 @@ export class TurfGoalEvaluator extends GoalEvaluator {
   }
 
   calculateDesirability(owner: PlannerOwner): number {
-    const s = this.desirabilityFn(owner);
+    const s = this.desirabilityFn(owner) * this.characterBias;
     owner.consideredGoals.push({ goal: this.goalName, score: s });
     return s;
   }

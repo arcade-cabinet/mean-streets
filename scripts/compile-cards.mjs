@@ -52,9 +52,31 @@ function requireFields(obj, fields, context) {
   }
 }
 
+function requireStackPortrait(portrait, context) {
+  if (!portrait || typeof portrait !== 'object') {
+    throw new Error(`${context}: missing required stack portrait`);
+  }
+  if (portrait.mode !== 'stack') {
+    throw new Error(`${context}: expected portrait.mode=stack, got ${JSON.stringify(portrait.mode)}`);
+  }
+}
+
+function requireCustomPortrait(portrait, context) {
+  if (!portrait || typeof portrait !== 'object') {
+    throw new Error(`${context}: missing required custom portrait`);
+  }
+  if (portrait.mode !== 'custom') {
+    throw new Error(`${context}: expected portrait.mode=custom, got ${JSON.stringify(portrait.mode)}`);
+  }
+  if (typeof portrait.sprite !== 'string' || portrait.sprite.length === 0) {
+    throw new Error(`${context}: custom portrait.sprite must be a non-empty string`);
+  }
+}
+
 function compileTough({ file, data }) {
   requireFields(data, ['id', 'kind', 'name', 'archetype', 'affiliation', 'power', 'resistance', 'rarity', 'abilities', 'unlocked', 'locked'], `toughs/${file}`);
   if (data.kind !== 'tough') throw new Error(`toughs/${file}: expected kind=tough, got ${data.kind}`);
+  requireStackPortrait(data.portrait, `toughs/${file}`);
   return {
     kind: 'tough',
     id: data.id,
@@ -69,12 +91,14 @@ function compileTough({ file, data }) {
     unlocked: data.unlocked,
     ...(data.unlockCondition ? { unlockCondition: data.unlockCondition } : {}),
     locked: data.locked,
+    ...(data.portrait ? { portrait: data.portrait } : {}),
   };
 }
 
 function compileWeapon({ file, data }) {
   requireFields(data, ['id', 'kind', 'name', 'category', 'power', 'resistance', 'rarity', 'abilities', 'unlocked', 'locked'], `weapons/${file}`);
   if (data.kind !== 'weapon') throw new Error(`weapons/${file}: expected kind=weapon, got ${data.kind}`);
+  requireStackPortrait(data.portrait, `weapons/${file}`);
   return {
     kind: 'weapon',
     id: data.id,
@@ -87,12 +111,14 @@ function compileWeapon({ file, data }) {
     unlocked: data.unlocked,
     ...(data.unlockCondition ? { unlockCondition: data.unlockCondition } : {}),
     locked: data.locked,
+    ...(data.portrait ? { portrait: data.portrait } : {}),
   };
 }
 
 function compileDrug({ file, data }) {
   requireFields(data, ['id', 'kind', 'name', 'category', 'power', 'resistance', 'rarity', 'abilities', 'unlocked', 'locked'], `drugs/${file}`);
   if (data.kind !== 'drug') throw new Error(`drugs/${file}: expected kind=drug, got ${data.kind}`);
+  requireStackPortrait(data.portrait, `drugs/${file}`);
   return {
     kind: 'drug',
     id: data.id,
@@ -105,12 +131,14 @@ function compileDrug({ file, data }) {
     unlocked: data.unlocked,
     ...(data.unlockCondition ? { unlockCondition: data.unlockCondition } : {}),
     locked: data.locked,
+    ...(data.portrait ? { portrait: data.portrait } : {}),
   };
 }
 
 function compileCurrency({ file, data }) {
   requireFields(data, ['id', 'kind', 'name', 'denomination', 'rarity', 'unlocked', 'locked'], `currency/${file}`);
   if (data.kind !== 'currency') throw new Error(`currency/${file}: expected kind=currency, got ${data.kind}`);
+  requireStackPortrait(data.portrait, `currency/${file}`);
   if (data.abilities !== undefined) {
     if (!Array.isArray(data.abilities)) {
       throw new Error(`currency/${file}: "abilities" must be an array, got ${JSON.stringify(data.abilities)}`);
@@ -128,6 +156,7 @@ function compileCurrency({ file, data }) {
     ...(Array.isArray(data.abilities) && data.abilities.length > 0 ? { abilities: data.abilities } : {}),
     unlocked: data.unlocked,
     locked: data.locked,
+    ...(data.portrait ? { portrait: data.portrait } : {}),
   };
 }
 
@@ -138,6 +167,7 @@ function compileMythic({ file, data }) {
     `mythics/${file}`,
   );
   if (data.kind !== 'tough') throw new Error(`mythics/${file}: expected kind=tough (mythics are toughs), got ${data.kind}`);
+  requireCustomPortrait(data.portrait, `mythics/${file}`);
   const rarity = latest(data.rarity);
   if (rarity !== 'mythic') throw new Error(`mythics/${file}: expected rarity=mythic, got ${rarity}`);
   return {
@@ -155,6 +185,7 @@ function compileMythic({ file, data }) {
     unlocked: data.unlocked,
     ...(data.unlockCondition ? { unlockCondition: data.unlockCondition } : {}),
     locked: data.locked,
+    ...(data.portrait ? { portrait: data.portrait } : {}),
   };
 }
 

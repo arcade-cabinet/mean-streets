@@ -16,6 +16,7 @@ import {
   AuthoredWeaponSchema,
   AuthoredDrugSchema,
   AuthoredCurrencySchema,
+  AuthoredMythicSchema,
 } from '../src/sim/cards/schemas';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -64,6 +65,7 @@ function main(): void {
     ...validateDir('weapons', join(RAW_DIR, 'weapons'), AuthoredWeaponSchema),
     ...validateDir('drugs', join(RAW_DIR, 'drugs'), AuthoredDrugSchema),
     ...validateDir('currency', join(RAW_DIR, 'currency'), AuthoredCurrencySchema),
+    ...validateDir('mythics', join(RAW_DIR, 'mythics'), AuthoredMythicSchema),
   ];
 
   if (offenders.length === 0) {

@@ -19,5 +19,16 @@
   "unlocked": false,
   "unlockCondition": "Flip 8 enemies total",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "triptych-left",
+    "palette": "haze",
+    "layers": {
+      "backdrop": "money-clip",
+      "support": "burner-phone",
+      "primary": "pill-bottle",
+      "badge": "syringe"
+    }
+  }
 }

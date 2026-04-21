@@ -19,5 +19,16 @@
   "unlocked": false,
   "unlockCondition": "Kill 5 enemies in a single game",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "triptych-right",
+    "palette": "steel",
+    "layers": {
+      "backdrop": "fist-small",
+      "support": "burner-phone",
+      "primary": "chain",
+      "badge": "hook-blade"
+    }
+  }
 }

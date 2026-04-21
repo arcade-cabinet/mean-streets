@@ -15,7 +15,7 @@ const EXPECTED: Record<string, string> = {
   'iphone-14': 'phone-portrait',
   'pixel-7': 'phone-portrait',
   'ipad-pro-landscape': 'tablet-landscape',
-  'desktop-chromium': 'tablet-landscape',
+  'desktop-chromium': 'desktop-wide',
 };
 
 test('data-layout matches expectation for this project', async ({ page }, testInfo) => {

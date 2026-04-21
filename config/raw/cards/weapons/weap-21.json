@@ -25,5 +25,16 @@
   ],
   "unlocked": true,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "triptych-left",
+    "palette": "gunmetal",
+    "layers": {
+      "backdrop": "duffel-bag",
+      "support": "ammo-box",
+      "primary": "paper-bag",
+      "badge": "burner-phone"
+    }
+  }
 }

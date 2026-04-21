@@ -28,6 +28,15 @@ describe('CardsScreen (browser)', () => {
     expect(items.length).toBeGreaterThan(10);
   });
 
+  it('includes mythics in the gallery catalog', async () => {
+    cleanup = (await renderInBrowser(
+      <CardsScreen onBack={vi.fn()} onStartGame={vi.fn()} />,
+    )).unmount;
+    await settleBrowser();
+
+    expect(document.querySelector('[data-testid="card-mythic-01"]')).not.toBeNull();
+  });
+
   it('shows draw button when availableDraws > 0', async () => {
     cleanup = (await renderInBrowser(
       <CardsScreen onBack={vi.fn()} onStartGame={vi.fn()} availableDraws={5} onDraw={vi.fn()} />,

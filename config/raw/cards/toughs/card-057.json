@@ -20,5 +20,17 @@
   "unlocked": false,
   "unlockCondition": "Win without discarding any cards",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-right",
+    "palette": "smoke",
+    "layers": {
+      "back": "phone-holster",
+      "legs": "casual-slouch",
+      "torso": "puffer-jacket",
+      "body": "fedora",
+      "arms": "pistol-full"
+    }
+  }
 }

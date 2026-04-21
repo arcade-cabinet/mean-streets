@@ -27,5 +27,17 @@
   ],
   "unlocked": true,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-left",
+    "palette": "rust",
+    "layers": {
+      "back": "phone-holster",
+      "legs": "casual-slouch-2",
+      "torso": "puffer-jacket",
+      "body": "lean-2",
+      "arms": "pistol"
+    }
+  }
 }

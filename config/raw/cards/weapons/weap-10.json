@@ -19,5 +19,16 @@
   "unlocked": false,
   "unlockCondition": "Win with all 5 weapon categories in your deck",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "totem",
+    "palette": "steel",
+    "layers": {
+      "backdrop": "fist-small",
+      "support": "chain",
+      "primary": "knife",
+      "badge": "chain"
+    }
+  }
 }

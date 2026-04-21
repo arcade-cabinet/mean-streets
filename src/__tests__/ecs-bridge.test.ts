@@ -119,6 +119,7 @@ describe('endTurnAction + resolvePhase', () => {
 
     const budget = world.queryFirst(ActionBudget)!.get(ActionBudget)!;
     expect(budget.remaining).toBe(gs.players.A.actionsRemaining);
+    expect(budget.total).toBe(gs.players.A.actionsRemaining);
     expect(budget.remaining).toBeGreaterThan(0);
   });
 });

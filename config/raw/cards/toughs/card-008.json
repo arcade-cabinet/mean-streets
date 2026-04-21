@@ -25,5 +25,16 @@
   ],
   "unlocked": true,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "ambush",
+    "palette": "smoke",
+    "layers": {
+      "legs": "stalk-lunge-2",
+      "torso": "hoodie-2",
+      "body": "hood",
+      "arms": "fists"
+    }
+  }
 }

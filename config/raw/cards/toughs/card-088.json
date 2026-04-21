@@ -21,5 +21,17 @@
   "unlocked": false,
   "unlockCondition": "Win with a deck containing 3+ affiliations",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-left",
+    "palette": "ash",
+    "layers": {
+      "back": "shotgun",
+      "legs": "plant-tank",
+      "torso": "bomber-4",
+      "body": "tall-longcoat-2",
+      "arms": "pistol"
+    }
+  }
 }

@@ -20,5 +20,16 @@
   "unlocked": false,
   "unlockCondition": "Win with all 5 weapon categories in your deck",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "triptych-right",
+    "palette": "steel",
+    "layers": {
+      "backdrop": "fist-raised",
+      "support": "chain",
+      "primary": "brass-knuckles",
+      "badge": "fist-punch"
+    }
+  }
 }

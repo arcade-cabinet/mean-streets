@@ -19,5 +19,17 @@
   ],
   "unlocked": true,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "wall-lean",
+    "palette": "ash",
+    "layers": {
+      "back": "shotgun",
+      "legs": "stalk-lunge",
+      "torso": "bomber",
+      "body": "heavy-2",
+      "arms": "pistol-compact"
+    }
+  }
 }

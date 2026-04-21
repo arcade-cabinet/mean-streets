@@ -30,9 +30,45 @@ export const StatHistorySchema = z
   .array(z.number().int().min(1).max(12))
   .min(1);
 
-export const RarityHistorySchema = z
-  .array(RaritySchema)
-  .min(1);
+export const RarityHistorySchema = z.array(RaritySchema).min(1);
+
+export const PortraitLayerPoolSchema = z.union([
+  z.string(),
+  z.array(z.string()).min(1),
+]);
+
+export const PortraitLayersSchema = z.object({
+  body: PortraitLayerPoolSchema.optional(),
+  head: PortraitLayerPoolSchema.optional(),
+  torso: PortraitLayerPoolSchema.optional(),
+  arms: PortraitLayerPoolSchema.optional(),
+  legs: PortraitLayerPoolSchema.optional(),
+  back: PortraitLayerPoolSchema.optional(),
+  primary: PortraitLayerPoolSchema.optional(),
+  support: PortraitLayerPoolSchema.optional(),
+  backdrop: PortraitLayerPoolSchema.optional(),
+  badge: PortraitLayerPoolSchema.optional(),
+});
+
+export const PortraitStackSchema = z.object({
+  mode: z.literal('stack'),
+  template: z.string().optional(),
+  palette: z.string().optional(),
+  layers: PortraitLayersSchema.optional(),
+});
+
+export const PortraitCustomSchema = z.object({
+  mode: z.literal('custom'),
+  sprite: z.string(),
+});
+
+export const PortraitSchema = z.union([
+  PortraitStackSchema,
+  PortraitCustomSchema,
+]);
+
+export const NonMythicPortraitSchema = PortraitStackSchema;
+export const MythicPortraitSchema = PortraitCustomSchema;
 
 // ── Authored schemas (tuning-history on disk) ──────────────────
 
@@ -50,6 +86,7 @@ export const AuthoredToughSchema = z.object({
   unlocked: z.boolean(),
   unlockCondition: z.string().nullable().optional(),
   locked: z.boolean(),
+  portrait: NonMythicPortraitSchema,
   draft: z.boolean().optional(),
 });
 
@@ -65,6 +102,7 @@ export const AuthoredWeaponSchema = z.object({
   unlocked: z.boolean(),
   unlockCondition: z.string().nullable().optional(),
   locked: z.boolean(),
+  portrait: NonMythicPortraitSchema,
   draft: z.boolean().optional(),
 });
 
@@ -80,6 +118,7 @@ export const AuthoredDrugSchema = z.object({
   unlocked: z.boolean(),
   unlockCondition: z.string().nullable().optional(),
   locked: z.boolean(),
+  portrait: NonMythicPortraitSchema,
   draft: z.boolean().optional(),
 });
 
@@ -92,6 +131,7 @@ export const AuthoredCurrencySchema = z.object({
   abilities: z.array(z.string()).optional(),
   unlocked: z.boolean(),
   locked: z.boolean(),
+  portrait: NonMythicPortraitSchema,
   draft: z.boolean().optional(),
 });
 
@@ -111,6 +151,7 @@ export const CompiledToughSchema = z.object({
   unlocked: z.boolean(),
   unlockCondition: z.string().optional(),
   locked: z.boolean(),
+  portrait: NonMythicPortraitSchema,
 });
 
 export const CompiledWeaponSchema = z.object({
@@ -125,6 +166,7 @@ export const CompiledWeaponSchema = z.object({
   unlocked: z.boolean(),
   unlockCondition: z.string().optional(),
   locked: z.boolean(),
+  portrait: NonMythicPortraitSchema,
 });
 
 export const CompiledDrugSchema = z.object({
@@ -139,6 +181,7 @@ export const CompiledDrugSchema = z.object({
   unlocked: z.boolean(),
   unlockCondition: z.string().optional(),
   locked: z.boolean(),
+  portrait: NonMythicPortraitSchema,
 });
 
 export const CompiledCurrencySchema = z.object({
@@ -150,6 +193,7 @@ export const CompiledCurrencySchema = z.object({
   abilities: z.array(z.string()).optional(),
   unlocked: z.boolean(),
   locked: z.boolean(),
+  portrait: NonMythicPortraitSchema,
 });
 
 // ── Mythic schemas (§11) ──────────────────────────────────────
@@ -180,6 +224,7 @@ export const AuthoredMythicSchema = z.object({
   unlocked: z.boolean(),
   unlockCondition: z.string().nullable().optional(),
   locked: z.boolean(),
+  portrait: MythicPortraitSchema,
   draft: z.boolean().optional(),
 });
 
@@ -198,6 +243,7 @@ export const CompiledMythicSchema = z.object({
   unlocked: z.boolean(),
   unlockCondition: z.string().optional(),
   locked: z.boolean(),
+  portrait: MythicPortraitSchema,
 });
 
 export const CompiledCardSchema = z.discriminatedUnion('kind', [
@@ -261,6 +307,7 @@ export type AuthoredWeapon = z.infer<typeof AuthoredWeaponSchema>;
 export type AuthoredDrug = z.infer<typeof AuthoredDrugSchema>;
 export type AuthoredCurrency = z.infer<typeof AuthoredCurrencySchema>;
 export type AuthoredMythic = z.infer<typeof AuthoredMythicSchema>;
+export type PortraitConfig = z.infer<typeof PortraitSchema>;
 
 export type CompiledTough = z.infer<typeof CompiledToughSchema>;
 export type CompiledWeapon = z.infer<typeof CompiledWeaponSchema>;

@@ -15,7 +15,14 @@ export async function activate(target: Locator, testInfo: TestInfo): Promise<voi
   await target.waitFor({ state: 'visible' });
   await target.scrollIntoViewIfNeeded().catch(() => undefined);
   if (testInfo.project.use.hasTouch) {
-    await target.tap({ force: true });
+    try {
+      await target.tap({ force: true });
+      return;
+    } catch {
+      // Chromium mobile emulation can reject tap() on transformed / composited
+      // game elements even when the DOM click target is valid.
+      await target.click({ force: true });
+    }
     return;
   }
   await target.click({ force: true });

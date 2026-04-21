@@ -1,6 +1,6 @@
 ---
 title: Deployment
-updated: 2026-04-17
+updated: 2026-04-20
 status: current
 domain: ops
 ---
@@ -34,6 +34,58 @@ prevents stale deploy races.
 
 **No secrets required** for web deployment. GitHub Pages token is injected
 automatically via `id-token: write` + `pages: write` permissions.
+
+### Hosting Requirements
+
+If this app is moved off GitHub Pages onto a host with SPA fallback
+rewrites, `/assets/*` must still return a real 404 for missing files.
+Do not rewrite missing asset requests to `index.html`. Our card and
+hero image surfaces already fall back on `<img onError>`, but serving
+HTML for a missing PNG wastes a request and obscures the real failure.
+
+Required invariant:
+
+- App routes such as `/cards`, `/collection`, and `/` may rewrite to
+  `index.html`.
+- Asset routes such as `/assets/card-art/card-001.png` must not rewrite
+  to `index.html`.
+
+Reference snippets for common hosts:
+
+**Cloudflare Pages**
+
+Use `_redirects` so SPA fallback excludes the asset tree:
+
+```text
+/assets/*  /assets/:splat  200
+/*         /index.html     200
+```
+
+If custom headers are used, `_headers` should target `/assets/*`
+separately from the SPA shell; do not attach HTML-only caching rules to
+that asset path.
+
+**Netlify**
+
+Use `_redirects` with the same exclusion order:
+
+```text
+/assets/*  /assets/:splat  200
+/*         /index.html     200
+```
+
+**Vercel**
+
+Use `vercel.json` rewrites that leave `/assets/*` alone and only rewrite
+app routes:
+
+```json
+{
+  "rewrites": [{ "source": "/((?!assets/).*)", "destination": "/index.html" }]
+}
+```
+
+Any future non-GitHub host config must preserve this rule before launch.
 
 ## Mobile Deployment
 

@@ -1,4 +1,4 @@
-import { loadStarterToughCards } from '../cards/catalog';
+import { loadStarterToughCards, loadToughCards } from '../cards/catalog';
 import { createRng } from '../cards/rng';
 import {
   generateCurrency,
@@ -25,10 +25,12 @@ interface GenerateTurfCardPoolsOptions {
 
 export function generateTurfCardPools(
   seed = 42,
-  _options: GenerateTurfCardPoolsOptions = {},
+  options: GenerateTurfCardPoolsOptions = {},
 ): TurfCardPools {
   const rng = createRng(seed);
-  const crew = loadStarterToughCards(25);
+  const crew = options.allUnlocked
+    ? loadToughCards()
+    : loadStarterToughCards();
   const weapons = generateWeapons(rng);
   const drugs = generateDrugs(rng);
   const cash = generateCurrency();

@@ -21,5 +21,17 @@
   "unlocked": false,
   "unlockCondition": "Trigger 5 overdraw penalties on opponents",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "ambush",
+    "palette": "rust",
+    "layers": {
+      "back": "shotgun",
+      "legs": "stalk-lunge-2",
+      "torso": "bomber-3",
+      "body": "tall-longcoat-3",
+      "arms": "pistol-full"
+    }
+  }
 }

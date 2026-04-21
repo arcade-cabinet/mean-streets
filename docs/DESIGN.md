@@ -300,7 +300,7 @@ When writing code, tests, or docs: always use "tough," never "crew."
    + Holding, base + rolled rarity with merge progression, 10
    hand-authored mythics with game-warping signatures, parallel AI
    collection growth.
-7. **v1.0.0** *(shipped 2026-04-18)* — card art pipeline (212 PNG
+7. **v1.0.0** *(shipped 2026-04-18)* — card art pipeline (213 PNG
    silhouettes), draw flow redesign (pending → contextual placement),
    procedural SFX via Tone.js, phone layout, balance lock at
    winRateA 0.5049, automerge for dependabot.

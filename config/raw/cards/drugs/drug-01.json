@@ -23,5 +23,16 @@
   ],
   "unlocked": true,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "fan",
+    "palette": "toxic",
+    "layers": {
+      "backdrop": "money-clip",
+      "support": "burner-phone",
+      "primary": "prescription-bottle",
+      "badge": "pill-bottle"
+    }
+  }
 }

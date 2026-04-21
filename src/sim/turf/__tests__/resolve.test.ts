@@ -267,6 +267,37 @@ describe('resolvePhase — turf-wide bribe pool', () => {
     expect(state.blackMarket.length).toBeGreaterThan(0);
     expect(state.blackMarket.every((m) => m.kind === 'currency')).toBe(true);
   });
+
+  it('keeps LAUNDER currency on the turf and spends other cash first', () => {
+    const aT = mkTough({ id: 'aT', power: 50 });
+    const bT = mkTough({ id: 'bT', resistance: 3 });
+    const launder = mkCurrency(1000, 'currency-launder', {
+      rarity: 'legendary',
+      abilities: ['LAUNDER'],
+    });
+    const spendable = [0, 1, 2, 3, 4].map((i) => mkCurrency(1000, `c${i}`));
+    const A = [mkTurf('a1', [sc(aT)])];
+    const B = [mkTurf('b1', [
+      sc(bT),
+      sc(launder, true, 'bT'),
+      ...spendable.map((card) => sc(card, true, 'bT')),
+    ])];
+    const state = mkState(A, B, { seed: 1 });
+    state.players.A.queued.push({
+      kind: 'direct_strike',
+      side: 'A',
+      turfIdx: 0,
+      targetTurfIdx: 0,
+    });
+
+    resolvePhase(state);
+
+    expect(state.metrics.bribesAccepted).toBeGreaterThan(0);
+    expect(state.players.B.turfs[0]?.stack.some(
+      (entry) => entry.card.id === 'currency-launder',
+    )).toBe(true);
+    expect(state.blackMarket.some((card) => card.id === 'currency-launder')).toBe(false);
+  });
 });
 
 describe('resolvePhase — seize reconciliation', () => {

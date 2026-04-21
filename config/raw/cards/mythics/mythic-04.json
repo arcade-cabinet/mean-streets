@@ -13,6 +13,10 @@
     "description": "Passive: while in play, you can see the opponent's per-card heat contribution breakdown — normally hidden. You know who's holding what, even face-down.",
     "balance_note": "Low offense, respectable defense (R 8). The power is intelligence. Transforms the opponent's information asymmetry into your advantage — but only while alive, so survivability matters."
   },
+  "portrait": {
+    "mode": "custom",
+    "sprite": "the-informer"
+  },
   "unlocked": false,
   "locked": true,
   "draft": true

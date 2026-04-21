@@ -18,5 +18,16 @@
   ],
   "unlocked": true,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "fan",
+    "palette": "violet",
+    "layers": {
+      "backdrop": "prescription-bottle",
+      "support": "money-clip",
+      "primary": "pill-bottle",
+      "badge": "syringe"
+    }
+  }
 }

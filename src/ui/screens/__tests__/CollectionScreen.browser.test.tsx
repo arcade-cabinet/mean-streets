@@ -1,12 +1,14 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { renderInBrowser, settleBrowser } from '../../../test/render-browser';
+import { resetPersistenceForTests } from '../../../ui/deckbuilder/storage';
 import { CollectionScreen } from '../CollectionScreen';
 
 describe('CollectionScreen', () => {
   let cleanup: (() => void) | undefined;
 
-  afterEach(() => {
+  afterEach(async () => {
+    await resetPersistenceForTests();
     cleanup?.();
   });
 
@@ -74,6 +76,17 @@ describe('CollectionScreen', () => {
     const filteredCount = document.querySelector('[data-testid="collection-filtered-count"]')?.textContent ?? '';
     const num = parseInt(filteredCount);
     expect(num).toBeGreaterThan(0);
+  });
+
+  it('includes authored mythics in the rarity filter catalog', async () => {
+    cleanup = (await renderInBrowser(
+      <CollectionScreen onBack={() => {}} />,
+    )).unmount;
+
+    await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="coll-rarity-mythic"]')!);
+    await settleBrowser();
+
+    expect(document.querySelector('[data-testid="collection-filtered-count"]')?.textContent).toContain('10 cards');
   });
 
   it('shows empty message for impossible filter combo', async () => {

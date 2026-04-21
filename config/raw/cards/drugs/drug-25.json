@@ -19,5 +19,16 @@
   "unlocked": false,
   "unlockCondition": "Use 10 drugs in total across games",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "totem",
+    "palette": "haze",
+    "layers": {
+      "backdrop": "herb-bag",
+      "support": "drug-bag",
+      "primary": "burner-phone",
+      "badge": "pill-bottle"
+    }
+  }
 }

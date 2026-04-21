@@ -20,5 +20,17 @@
   "unlocked": false,
   "unlockCondition": "Win a game in under 13 turns",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-right",
+    "palette": "ash",
+    "layers": {
+      "back": "backpack",
+      "legs": "casual-slouch",
+      "torso": "overcoat",
+      "body": "average",
+      "arms": "fists"
+    }
+  }
 }

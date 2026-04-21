@@ -23,5 +23,17 @@
   ],
   "unlocked": true,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "wall-lean",
+    "palette": "smoke",
+    "layers": {
+      "back": "backpack",
+      "legs": "casual-slouch",
+      "torso": "puffer-jacket",
+      "body": "fedora-2",
+      "arms": "fists"
+    }
+  }
 }

@@ -19,5 +19,16 @@
   "unlocked": false,
   "unlockCondition": "Win a game in under 16 rounds",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "triptych-right",
+    "palette": "slate",
+    "layers": {
+      "backdrop": "fist-small",
+      "support": "brass-knuckles",
+      "primary": "chain",
+      "badge": "knife-2"
+    }
+  }
 }

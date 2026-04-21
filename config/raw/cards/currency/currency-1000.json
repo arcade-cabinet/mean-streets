@@ -7,5 +7,16 @@
     "rare"
   ],
   "unlocked": true,
-  "locked": false
+  "locked": false,
+  "portrait": {
+    "mode": "stack",
+    "template": "triptych-left",
+    "palette": "olive",
+    "layers": {
+      "backdrop": "duffel-bag",
+      "support": "paper-bag",
+      "primary": "cash-stack",
+      "badge": "wallet"
+    }
+  }
 }

@@ -20,5 +20,16 @@
   "unlocked": false,
   "unlockCondition": "Win without losing a position",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "triptych-right",
+    "palette": "gunmetal",
+    "layers": {
+      "backdrop": "paper-bag",
+      "support": "duffel-bag",
+      "primary": "ammo-box",
+      "badge": "grenade"
+    }
+  }
 }

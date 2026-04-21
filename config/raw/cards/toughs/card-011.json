@@ -23,5 +23,16 @@
   ],
   "unlocked": true,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-left",
+    "palette": "ember",
+    "layers": {
+      "legs": "flank-lean",
+      "torso": "fedora",
+      "body": "lean",
+      "arms": "fists"
+    }
+  }
 }

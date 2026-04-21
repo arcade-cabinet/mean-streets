@@ -20,5 +20,17 @@
   "unlocked": false,
   "unlockCondition": "Deal 33 total damage in a single game",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-left",
+    "palette": "smoke",
+    "layers": {
+      "back": "lean",
+      "legs": "flank-lean",
+      "torso": "bomber",
+      "body": "pompadour",
+      "arms": "fists"
+    }
+  }
 }

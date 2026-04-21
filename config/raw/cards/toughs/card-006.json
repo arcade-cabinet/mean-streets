@@ -26,5 +26,17 @@
   ],
   "unlocked": true,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "ambush",
+    "palette": "smoke",
+    "layers": {
+      "back": "backpack",
+      "legs": "plant-tank",
+      "torso": "apron",
+      "body": "shaved-2",
+      "arms": "fists"
+    }
+  }
 }

@@ -363,6 +363,7 @@
       "base": 0.3,
       "bias": 1.1
     },
+    "promotedAggressionBonus": 0.35,
     "stackRebuild": {
       "bias": 1.0
     },

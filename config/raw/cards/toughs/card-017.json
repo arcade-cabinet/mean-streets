@@ -19,5 +19,17 @@
   ],
   "unlocked": true,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-left",
+    "palette": "rust",
+    "layers": {
+      "back": "shaved",
+      "legs": "flank-lean",
+      "torso": "bomber",
+      "body": "average",
+      "arms": "fists"
+    }
+  }
 }

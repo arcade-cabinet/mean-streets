@@ -24,6 +24,7 @@ export {
   computePerTurfRewards,
   computeWarOutcomeReward,
   computeRewardBundle,
+  flattenRewardBundlePacks,
 } from './rewards';
 export {
   initMythicPool,

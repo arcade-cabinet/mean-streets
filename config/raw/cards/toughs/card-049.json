@@ -20,5 +20,16 @@
   "unlocked": false,
   "unlockCondition": "Deal 43 total damage in a single game",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "ambush",
+    "palette": "ember",
+    "layers": {
+      "legs": "wide-braced",
+      "torso": "hoodie",
+      "body": "hood",
+      "arms": "fists"
+    }
+  }
 }

@@ -20,5 +20,17 @@
   "unlocked": false,
   "unlockCondition": "Win a game in under 10 turns",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-right",
+    "palette": "smoke",
+    "layers": {
+      "back": "phone-holster",
+      "legs": "run",
+      "torso": "hoodie-4",
+      "body": "shaved-2",
+      "arms": "fists"
+    }
+  }
 }

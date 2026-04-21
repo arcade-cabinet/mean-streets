@@ -20,5 +20,17 @@
   "unlocked": false,
   "unlockCondition": "Win a game on the first night phase",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-left",
+    "palette": "ash",
+    "layers": {
+      "back": "shotgun",
+      "legs": "stalk-lunge",
+      "torso": "bomber-2",
+      "body": "fedora",
+      "arms": "crowbar"
+    }
+  }
 }

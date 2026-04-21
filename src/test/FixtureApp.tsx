@@ -1,6 +1,7 @@
 import '../App.css';
 import { WorldProvider } from 'koota/react';
 import { createGameWorld } from '../ecs/world';
+import { emptyMetrics } from '../sim/turf/environment';
 import type {
   Card as CardType,
   CurrencyCard,
@@ -15,10 +16,23 @@ import {
   DeckGarageScreen,
   DifficultyScreen,
   GameScreen,
+  GameOverScreen,
   MainMenuScreen,
+  PackOpeningScreen,
 } from '../ui/screens';
+import {
+  loadPackOpeningFixtureCards,
+  PACK_OPENING_FIXTURE_OWNED_IDS,
+} from '../ui/screens/PackOpeningScreen';
 
-type FixtureName = 'menu' | 'difficulty' | 'deck-garage' | 'combat' | 'card';
+type FixtureName =
+  | 'menu'
+  | 'difficulty'
+  | 'deck-garage'
+  | 'combat'
+  | 'card'
+  | 'pack-opening'
+  | 'game-over';
 
 interface FixtureAppProps {
   fixture: string;
@@ -100,6 +114,17 @@ function sampleCards(): CardType[] {
       power: 9,
       resistance: 3,
     }),
+    tough({
+      id: 'mythic-01',
+      name: 'The Silhouette',
+      tagline: 'You never see the second blade.',
+      archetype: 'shark',
+      affiliation: 'freelance',
+      rarity: 'mythic',
+      power: 8,
+      resistance: 6,
+      abilities: ['STRIKE_TWO'],
+    }),
     weaponCard('bladed', 4),
     drugCard('stimulant', 2),
     currencyCard(100),
@@ -126,6 +151,24 @@ function sampleLoadouts(): DeckLoadout[] {
   ];
 }
 
+function sampleGameOverMetrics() {
+  return {
+    ...emptyMetrics(),
+    turns: 14,
+    kills: 4,
+    seizures: 2,
+    directStrikes: 5,
+    pushedStrikes: 2,
+    fundedRecruits: 1,
+    raids: 1,
+    cardsPlayed: 9,
+  };
+}
+
+function sampleRewardCards(): CardType[] {
+  return sampleCards().slice(0, 3);
+}
+
 function renderWorldFixture() {
   const world = createGameWorld(undefined, 42);
   return (
@@ -142,6 +185,8 @@ function renderFixture(fixture: FixtureName) {
         <MainMenuScreen
           onNewGame={() => {}}
           onLoadGame={() => {}}
+          onCollection={() => {}}
+          onGarage={() => {}}
           onCards={() => {}}
           canLoadGame={false}
         />
@@ -169,6 +214,26 @@ function renderFixture(fixture: FixtureName) {
             </div>
           ))}
         </div>
+      );
+    case 'pack-opening':
+      return (
+        <PackOpeningScreen
+          cards={loadPackOpeningFixtureCards()}
+          ownedCardIds={PACK_OPENING_FIXTURE_OWNED_IDS}
+          onBack={() => {}}
+        />
+      );
+    case 'game-over':
+      return (
+        <GameOverScreen
+          winner="A"
+          metrics={sampleGameOverMetrics()}
+          rewardCards={sampleRewardCards()}
+          rewardOutcome="perfect"
+          rewardCurrencyAmount={1500}
+          rewardUnlockDifficulty="hard"
+          onPlayAgain={() => {}}
+        />
       );
     default:
       return (

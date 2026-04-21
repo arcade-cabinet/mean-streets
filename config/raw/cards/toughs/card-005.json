@@ -23,5 +23,17 @@
   ],
   "unlocked": true,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "ambush",
+    "palette": "smoke",
+    "layers": {
+      "back": "medbag",
+      "legs": "flank-lean",
+      "torso": "bomber-3",
+      "body": "lean-2",
+      "arms": "fists"
+    }
+  }
 }

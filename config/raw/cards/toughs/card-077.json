@@ -21,5 +21,17 @@
   "unlocked": false,
   "unlockCondition": "Win without discarding any cards",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-right",
+    "palette": "smoke",
+    "layers": {
+      "back": "shaved",
+      "legs": "flank-lean",
+      "torso": "bomber-4",
+      "body": "lean",
+      "arms": "fists"
+    }
+  }
 }

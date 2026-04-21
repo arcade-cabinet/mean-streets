@@ -25,5 +25,16 @@
   ],
   "unlocked": true,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "totem",
+    "palette": "violet",
+    "layers": {
+      "backdrop": "drug-bag",
+      "support": "pill-bottle",
+      "primary": "herb-bag",
+      "badge": "burner-phone"
+    }
+  }
 }

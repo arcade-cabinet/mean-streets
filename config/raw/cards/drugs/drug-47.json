@@ -19,5 +19,16 @@
   "unlocked": false,
   "unlockCondition": "Win without using steroids",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "triptych-right",
+    "palette": "toxic",
+    "layers": {
+      "backdrop": "brick-kilo",
+      "support": "wrapped-bricks",
+      "primary": "syringe",
+      "badge": "paper-bag"
+    }
+  }
 }

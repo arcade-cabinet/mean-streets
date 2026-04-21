@@ -13,6 +13,10 @@
     "description": "A single strike hits the opponent's top tough AND the one directly beneath it in the same resolution.",
     "balance_note": "High P, moderate R. Trades durability for offensive reach. STRIKE_TWO's second hit deals normal damage against the deeper tough's own R, not the stack's cumulative."
   },
+  "portrait": {
+    "mode": "custom",
+    "sprite": "the-silhouette"
+  },
   "unlocked": false,
   "locked": true,
   "draft": true

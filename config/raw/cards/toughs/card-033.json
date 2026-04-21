@@ -20,5 +20,17 @@
   "unlocked": false,
   "unlockCondition": "Kill 10 top toughs total",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-right",
+    "palette": "rust",
+    "layers": {
+      "back": "phone-holster",
+      "legs": "casual-slouch",
+      "torso": "bomber-2",
+      "body": "fedora-3",
+      "arms": "pistol-full"
+    }
+  }
 }

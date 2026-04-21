@@ -2,7 +2,12 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { AppShellProvider } from '../../../platform';
 import { Card } from '../Card';
-import type { ToughCard, WeaponCard, DrugCard, CurrencyCard } from '../../../sim/turf/types';
+import type {
+  ToughCard,
+  WeaponCard,
+  DrugCard,
+  CurrencyCard,
+} from '../../../sim/turf/types';
 
 function tough(overrides: Partial<ToughCard> = {}): ToughCard {
   return {
@@ -94,13 +99,16 @@ describe('Card', () => {
   });
 
   it('renders a currency card with denomination', () => {
-    render(
+    const { container } = render(
       <AppShellProvider>
         <Card card={currency(1000)} />
       </AppShellProvider>,
     );
     expect(screen.getByTestId('card-currency-1000')).not.toBeNull();
     expect(screen.getByText('$1,000')).not.toBeNull();
+    expect(
+      container.querySelector('.card-portrait-currency .card-portrait-img'),
+    ).not.toBeNull();
   });
 
   it('applies rarity CSS classes', () => {
@@ -151,5 +159,24 @@ describe('Card', () => {
       </AppShellProvider>,
     );
     expect(screen.getByText('$100')).not.toBeNull();
+  });
+
+  it('exposes rarity metadata and MythicBadge for mythic cards', () => {
+    render(
+      <AppShellProvider>
+        <Card
+          card={tough({
+            id: 'mythic-01',
+            name: 'The Silhouette',
+            rarity: 'mythic',
+            affiliation: 'freelance',
+          })}
+        />
+      </AppShellProvider>,
+    );
+    expect(screen.getByTestId('card-mythic-01').getAttribute('data-rarity')).toBe(
+      'mythic',
+    );
+    expect(screen.getByTestId('mythic-badge')).not.toBeNull();
   });
 });

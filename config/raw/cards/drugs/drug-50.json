@@ -19,5 +19,16 @@
   "unlocked": false,
   "unlockCondition": "Flip 10 enemies total",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "totem",
+    "palette": "toxic",
+    "layers": {
+      "backdrop": "drug-bag",
+      "support": "syringe",
+      "primary": "brick-kilo",
+      "badge": "wrapped-bricks"
+    }
+  }
 }

@@ -19,5 +19,16 @@
   "unlocked": false,
   "unlockCondition": "Seize 13 positions total",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "triptych-right",
+    "palette": "slate",
+    "layers": {
+      "backdrop": "holster-pistol",
+      "support": "ammo-box",
+      "primary": "pistol-compact",
+      "badge": "pistol"
+    }
+  }
 }

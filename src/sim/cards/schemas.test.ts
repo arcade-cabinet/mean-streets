@@ -6,9 +6,13 @@ import {
   AuthoredToughSchema,
   AuthoredWeaponSchema,
   AuthoredDrugSchema,
+  AuthoredCurrencySchema,
+  AuthoredMythicSchema,
   CompiledToughSchema,
   CompiledWeaponSchema,
   CompiledDrugSchema,
+  CompiledCurrencySchema,
+  CompiledMythicSchema,
   CompiledCardSchema,
   RaritySchema,
   latestStat,
@@ -26,15 +30,17 @@ function readJson(p: string): unknown {
 
 function listJson(dir: string): string[] {
   if (!existsSync(dir)) return [];
-  return readdirSync(dir)
-    .filter((f: string) => f.endsWith('.json'))
-    // Skip transient test fixtures written by the autobalance test suite
-    // (card-zz*, weap-zz*, drug-zz*). Without this, parallel workers can
-    // race: schemas.test.ts enumerates the dir, then autobalance.test.ts's
-    // afterEach rmSync removes the fixture before schemas.test.ts reads
-    // it — producing a flaky ENOENT.
-    .filter((f: string) => !/^(card-zz|weap-zz|drug-zz)/.test(f))
-    .sort();
+  return (
+    readdirSync(dir)
+      .filter((f: string) => f.endsWith('.json'))
+      // Skip transient test fixtures written by the autobalance test suite
+      // (card-zz*, weap-zz*, drug-zz*). Without this, parallel workers can
+      // race: schemas.test.ts enumerates the dir, then autobalance.test.ts's
+      // afterEach rmSync removes the fixture before schemas.test.ts reads
+      // it — producing a flaky ENOENT.
+      .filter((f: string) => !/^(card-zz|weap-zz|drug-zz)/.test(f))
+      .sort()
+  );
 }
 
 describe('RaritySchema', () => {
@@ -62,6 +68,7 @@ describe('authored card schemas', () => {
           `toughs/${file} failed:\n${JSON.stringify(res.error.issues, null, 2)}`,
         );
       }
+      expect(res.data.portrait.mode).toBe('stack');
     }
   });
 
@@ -77,6 +84,7 @@ describe('authored card schemas', () => {
           `weapons/${file} failed:\n${JSON.stringify(res.error.issues, null, 2)}`,
         );
       }
+      expect(res.data.portrait.mode).toBe('stack');
     }
   });
 
@@ -92,7 +100,68 @@ describe('authored card schemas', () => {
           `drugs/${file} failed:\n${JSON.stringify(res.error.issues, null, 2)}`,
         );
       }
+      expect(res.data.portrait.mode).toBe('stack');
     }
+  });
+
+  it('every currency file parses as AuthoredCurrencySchema', () => {
+    const dir = join(RAW_DIR, 'currency');
+    const files = listJson(dir);
+    expect(files.length).toBeGreaterThan(0);
+    for (const file of files) {
+      const data = readJson(join(dir, file));
+      const res = AuthoredCurrencySchema.safeParse(data);
+      if (!res.success) {
+        throw new Error(
+          `currency/${file} failed:\n${JSON.stringify(res.error.issues, null, 2)}`,
+        );
+      }
+      expect(res.data.portrait.mode).toBe('stack');
+    }
+  });
+
+  it('every mythic file parses as AuthoredMythicSchema', () => {
+    const dir = join(RAW_DIR, 'mythics');
+    const files = listJson(dir);
+    expect(files.length).toBeGreaterThan(0);
+    for (const file of files) {
+      const data = readJson(join(dir, file));
+      const res = AuthoredMythicSchema.safeParse(data);
+      if (!res.success) {
+        throw new Error(
+          `mythics/${file} failed:\n${JSON.stringify(res.error.issues, null, 2)}`,
+        );
+      }
+      expect(res.data.portrait.mode).toBe('custom');
+    }
+  });
+
+  it('rejects custom portraits on non-mythics', () => {
+    const sample = readJson(
+      join(RAW_DIR, 'toughs', listJson(join(RAW_DIR, 'toughs'))[0]),
+    );
+    const result = AuthoredToughSchema.safeParse({
+      ...sample,
+      portrait: {
+        mode: 'custom',
+        sprite: 'the-silhouette',
+      },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects stack portraits on mythics', () => {
+    const sample = readJson(
+      join(RAW_DIR, 'mythics', listJson(join(RAW_DIR, 'mythics'))[0]),
+    );
+    const result = AuthoredMythicSchema.safeParse({
+      ...sample,
+      portrait: {
+        mode: 'stack',
+        template: 'street-left',
+      },
+    });
+    expect(result.success).toBe(false);
   });
 });
 
@@ -101,7 +170,8 @@ describe('compiled card catalog', () => {
     const data = readJson(join(COMPILED_DIR, 'toughs.json')) as unknown[];
     expect(data.length).toBeGreaterThan(0);
     for (const entry of data) {
-      CompiledToughSchema.parse(entry);
+      const parsed = CompiledToughSchema.parse(entry);
+      expect(parsed.portrait.mode).toBe('stack');
     }
   });
 
@@ -109,7 +179,8 @@ describe('compiled card catalog', () => {
     const data = readJson(join(COMPILED_DIR, 'weapons.json')) as unknown[];
     expect(data.length).toBeGreaterThan(0);
     for (const entry of data) {
-      CompiledWeaponSchema.parse(entry);
+      const parsed = CompiledWeaponSchema.parse(entry);
+      expect(parsed.portrait.mode).toBe('stack');
     }
   });
 
@@ -117,7 +188,17 @@ describe('compiled card catalog', () => {
     const data = readJson(join(COMPILED_DIR, 'drugs.json')) as unknown[];
     expect(data.length).toBeGreaterThan(0);
     for (const entry of data) {
-      CompiledDrugSchema.parse(entry);
+      const parsed = CompiledDrugSchema.parse(entry);
+      expect(parsed.portrait.mode).toBe('stack');
+    }
+  });
+
+  it('compiled currency.json entries parse as CompiledCurrencySchema', () => {
+    const data = readJson(join(COMPILED_DIR, 'currency.json')) as unknown[];
+    expect(data.length).toBeGreaterThan(0);
+    for (const entry of data) {
+      const parsed = CompiledCurrencySchema.parse(entry);
+      expect(parsed.portrait.mode).toBe('stack');
     }
   });
 
@@ -134,6 +215,15 @@ describe('compiled card catalog', () => {
     expect(currency.length).toBeGreaterThan(0);
     for (const entry of all) {
       CompiledCardSchema.parse(entry);
+    }
+  });
+
+  it('compiled mythics.json entries parse as CompiledMythicSchema', () => {
+    const data = readJson(join(COMPILED_DIR, 'mythics.json')) as unknown[];
+    expect(data.length).toBeGreaterThan(0);
+    for (const entry of data) {
+      const parsed = CompiledMythicSchema.parse(entry);
+      expect(parsed.portrait.mode).toBe('custom');
     }
   });
 });

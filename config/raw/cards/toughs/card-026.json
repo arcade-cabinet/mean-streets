@@ -20,5 +20,17 @@
   "unlocked": false,
   "unlockCondition": "Trigger 4 overdraw penalties on opponents",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-right",
+    "palette": "ash",
+    "layers": {
+      "back": "phone-holster",
+      "legs": "flank-lean",
+      "torso": "hoodie",
+      "body": "pompadour",
+      "arms": "pistol-full"
+    }
+  }
 }

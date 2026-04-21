@@ -19,5 +19,16 @@
   "unlocked": false,
   "unlockCondition": "Win a game using only stimulants",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "triptych-left",
+    "palette": "toxic",
+    "layers": {
+      "backdrop": "paper-bag",
+      "support": "syringe",
+      "primary": "drug-bag",
+      "badge": "brick-kilo"
+    }
+  }
 }

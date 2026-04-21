@@ -7,6 +7,7 @@ import type { Card as CardType, Rarity } from '../../sim/turf/types';
 import type { CardPreference } from '../../platform/persistence/collection';
 
 export interface CardRow {
+  id: string;
   card: CardType;
   pref: CardPreference;
 }
@@ -53,21 +54,27 @@ export function BulkRarityBar({ rarity, count, onEnableAll, onDisableAll }: Bulk
 interface CardRowItemProps {
   row: CardRow;
   onChange: (pref: CardPreference) => void;
-  /** v0.3 merge: duplicate copy count for this cardId (0 = only the
-   * primary). When ≥ 3 the merge button becomes enabled. */
+  /** Extra copies in this cardId+rarity bucket (0 = only one copy owned). */
   duplicateCount?: number;
-  /** Fired when the user confirms a merge for this card. */
-  onMerge?: (cardId: string) => void;
+  /** Fired when the user confirms a merge for this row bucket. */
+  onMerge?: (row: CardRow) => void;
 }
 
 export function CardRowItem({
-  row: { card, pref }, onChange, duplicateCount = 0, onMerge,
+  row,
+  onChange,
+  duplicateCount = 0,
+  onMerge,
 }: CardRowItemProps) {
-  const canMerge = duplicateCount >= 1;
+  const { id, card, pref } = row;
+  const canMerge =
+    duplicateCount >= 1 &&
+    card.rarity !== 'legendary' &&
+    card.rarity !== 'mythic';
   return (
     <div
       className={`garage-row ${!pref.enabled ? 'garage-row-disabled' : ''}`}
-      data-testid={`garage-row-${card.id}`}
+      data-testid={`garage-row-${id}`}
     >
       <div className={`garage-row-rarity-pip ${RARITY_CLASS[card.rarity]}`} aria-hidden="true" />
       <span className="garage-row-name">{card.name}</span>
@@ -75,8 +82,8 @@ export function CardRowItem({
       {duplicateCount > 0 && (
         <span
           className={`garage-row-dupes ${canMerge ? 'garage-row-dupes-mergeable' : ''}`}
-          data-testid={`garage-dupes-${card.id}`}
-          title={canMerge ? 'Merge 2 copies to roll one tier higher' : 'Need 2 copies to merge'}
+          data-testid={`garage-dupes-${id}`}
+          title={canMerge ? 'Merge 2 copies to roll one tier higher' : 'Legendary and mythic cannot merge'}
         >
           ×{duplicateCount + 1}
         </span>
@@ -84,10 +91,10 @@ export function CardRowItem({
       <button
         type="button"
         className={`garage-row-merge ${canMerge ? '' : 'garage-row-merge-disabled'}`}
-        onClick={() => canMerge && onMerge?.(card.id)}
+        onClick={() => canMerge && onMerge?.(row)}
         disabled={!canMerge}
         aria-label={canMerge ? `Merge two copies of ${card.name}` : 'Merge locked'}
-        data-testid={`garage-merge-${card.id}`}
+        data-testid={`garage-merge-${id}`}
       >
         <Shuffle size={14} />
         <span>Merge</span>

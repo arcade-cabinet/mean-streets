@@ -7,6 +7,7 @@ import type {
   ToughCard,
   TurfGameState,
 } from './types';
+import { cardHasLaunder } from './ability-hooks';
 
 export interface HeatBreakdown {
   fromRarity: number;
@@ -19,12 +20,6 @@ export interface HeatBreakdown {
 const HEAT_CONFIG = TURF_SIM_CONFIG.heat;
 const RARITY_COEF = HEAT_CONFIG.rarity as Record<Rarity, number>;
 const RAID_COEF = HEAT_CONFIG.raidCoefficient as Record<DifficultyTier, number>;
-
-function isLaunderCarrier(card: Card): boolean {
-  const abilities = (card as { abilities?: string[] }).abilities;
-  if (!abilities) return false;
-  return abilities.includes('LAUNDER') || abilities.includes('launder');
-}
 
 function isLowProfileOwner(tough: ToughCard, allOnTurf: Card[]): boolean {
   // A tough's heat contribution is halved if the tough itself or any
@@ -81,7 +76,7 @@ function playerLaunderRelief(player: PlayerState): number {
   let relief = 0;
   for (const turf of player.turfs) {
     for (const sc of turf.stack) {
-      if (isLaunderCarrier(sc.card)) relief += unit;
+      if (cardHasLaunder(sc.card)) relief += unit;
     }
   }
   return relief;

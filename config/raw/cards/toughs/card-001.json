@@ -23,5 +23,16 @@
   ],
   "unlocked": true,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "wall-lean",
+    "palette": "rust",
+    "layers": {
+      "legs": "wide-braced-2",
+      "torso": "hoodie-2",
+      "body": "shaved",
+      "arms": "fists"
+    }
+  }
 }

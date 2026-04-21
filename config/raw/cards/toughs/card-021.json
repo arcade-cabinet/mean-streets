@@ -20,5 +20,17 @@
   "unlocked": false,
   "unlockCondition": "Win 3 games",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-left",
+    "palette": "ash",
+    "layers": {
+      "back": "phone-holster",
+      "legs": "casual-slouch",
+      "torso": "puffer-jacket",
+      "body": "fedora",
+      "arms": "fists"
+    }
+  }
 }

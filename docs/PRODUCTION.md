@@ -1,6 +1,6 @@
 ---
 title: Production Checklist
-updated: 2026-04-19
+updated: 2026-04-20
 status: current
 domain: release
 ---
@@ -51,24 +51,6 @@ This page tracks only what is **partial** or **explicitly post-1.0**.
 
 ### Rules / sim follow-ups (from the 1.1.0-beta.1 dragon ledger)
 
-- [ ] **LAUNDER currency UX trap** — `Clean Money` is spendable as a
-      bribe, which silently destroys the heat-relief effect mid-war.
-      Either tag it non-spendable or warn before spend.
-- [ ] **AI planner `justPromoted` awareness** — passive bonus works
-      (extra action budget on first turn of a promoted turf), but the
-      planner doesn't pre-bias toward aggression on those turns.
-- [ ] **Perfect War escalating-currency fallback** — `rewards.ts:163`
-      always returns flat `$500` once the mythic pool is empty. RULES
-      §13.4 specifies `$500 → $1000 → $1500 → …`. Persistence layer
-      needs to track per-side perfect-war count post-pool-exhaustion.
-- [ ] **Catalog re-parse per screen mount** — Collection / CardGarage
-      / Cards each call `loadFullCatalog()` in `useMemo([])`. Cache
-      at module scope, hand callers a `slice()`.
-- [ ] **SPA-fallthrough asset 404** — when an asset 404s on a host
-      that does SPA fallback (Cloudflare/Netlify), the browser receives
-      HTML and our `onError` fallback fires correctly but wastes a
-      fetch. Configure deploys to return a real 404 for `/assets/*`.
-
 ### Content / authoring
 
 - [ ] **Mythic art editorial pass** — replace geometric SVG
@@ -76,7 +58,6 @@ This page tracks only what is **partial** or **explicitly post-1.0**.
 - [ ] **Mythic balance paper-playtest** — each of the 10 individually.
 - [ ] **Tutorial flow** — guided first-war that surfaces market /
       holding / heat / bribes (currently invisible until ~turn 10).
-- [ ] **Card merge persistence** — full UI + storage round-trip.
 - [ ] **Opponent draw visual animation**.
 - [ ] **Visual polish designer pass** — full-surface review.
 - [ ] **Writer sign-off** on lore + achievement copy.
@@ -93,17 +74,8 @@ This page tracks only what is **partial** or **explicitly post-1.0**.
 
 ### Engineering hygiene
 
-- [ ] **`release-please-action` Node 20 → Node 24** — current pin
-      (`v4.1.3`) gets force-removed from runners on 2026-09-16.
-- [ ] **Release version gap v0.7.1 → v1.2.0-beta.1** — `v1.0.0` and
-      `v1.1.0-beta.1` exist in CHANGELOG but were never tagged or
-      released on GitHub. Either retroactively tag or add a CHANGELOG
-      note explaining the jump.
 - [ ] **100% balance-catalog `locked` state** — weekly cron autobalance
       drives this; no manual action unless it stalls.
-- [ ] **`tsconfig.sim.json` polish** — added in 1.1.0-beta.1 to give
-      `src/sim/` first-class type coverage; revisit if the duplicate
-      project ref drifts from `tsconfig.app.json`.
 
 ## Release Artifacts
 

@@ -20,5 +20,16 @@
   "unlocked": false,
   "unlockCondition": "Win 5 games",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-left",
+    "palette": "smoke",
+    "layers": {
+      "legs": "casual-slouch",
+      "torso": "cap-3",
+      "body": "lean",
+      "arms": "fists"
+    }
+  }
 }

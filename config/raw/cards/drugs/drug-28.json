@@ -19,5 +19,16 @@
   "unlocked": false,
   "unlockCondition": "Win a game using only stimulants",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "fan",
+    "palette": "toxic",
+    "layers": {
+      "backdrop": "pill-bottle",
+      "support": "herb-bag",
+      "primary": "drug-bag",
+      "badge": "burner-phone"
+    }
+  }
 }

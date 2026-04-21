@@ -19,5 +19,16 @@
   ],
   "unlocked": true,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "ambush",
+    "palette": "ash",
+    "layers": {
+      "legs": "stalk-lunge",
+      "torso": "hoodie",
+      "body": "tall-longcoat",
+      "arms": "knife-2"
+    }
+  }
 }

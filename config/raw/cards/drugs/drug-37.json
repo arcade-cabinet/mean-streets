@@ -19,5 +19,16 @@
   "unlocked": false,
   "unlockCondition": "Survive 4 killing blows using painkillers",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "triptych-left",
+    "palette": "haze",
+    "layers": {
+      "backdrop": "prescription-bottle",
+      "support": "money-clip",
+      "primary": "pill-bottle",
+      "badge": "syringe"
+    }
+  }
 }

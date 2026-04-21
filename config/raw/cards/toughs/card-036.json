@@ -20,5 +20,17 @@
   "unlocked": false,
   "unlockCondition": "Trigger 5 overdraw penalties on opponents",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "ambush",
+    "palette": "ash",
+    "layers": {
+      "back": "backpack",
+      "legs": "plant-tank",
+      "torso": "overcoat",
+      "body": "fedora-2",
+      "arms": "fists"
+    }
+  }
 }

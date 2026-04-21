@@ -19,5 +19,16 @@
   "unlocked": false,
   "unlockCondition": "Survive 3 killing blows using painkillers",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "triptych-left",
+    "palette": "haze",
+    "layers": {
+      "backdrop": "money-clip",
+      "support": "pill-bottle",
+      "primary": "syringe",
+      "badge": "burner-phone"
+    }
+  }
 }

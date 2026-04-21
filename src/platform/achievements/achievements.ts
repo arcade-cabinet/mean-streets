@@ -29,8 +29,15 @@ import type {
 // system. Currency cards are always unlocked (no condition) so they're
 // excluded from the union.
 type UnlockableCard = CompiledTough | CompiledWeapon | CompiledDrug;
-import type { TurfMetrics } from '../../sim/turf/types';
-import type { PlayerProfile } from '../persistence/storage';
+import type {
+  DifficultyTier,
+  TurfMetrics,
+  WarStats,
+} from '../../sim/turf/types';
+import type {
+  PlayerProfile,
+  StoredCardInventoryItem,
+} from '../persistence/storage';
 
 export interface GameEndEvent {
   winner: 'A' | 'B';
@@ -38,6 +45,7 @@ export interface GameEndEvent {
   metrics: TurfMetrics;
   turnCount: number;
   ownPositionsLost: number;
+  unlockDifficulty: DifficultyTier;
 }
 
 export interface UnlockResult {
@@ -52,6 +60,19 @@ interface ConditionContext {
 }
 
 type ConditionMatcher = (ctx: ConditionContext) => boolean;
+
+function cloneInventoryItem(
+  item: StoredCardInventoryItem,
+): StoredCardInventoryItem {
+  return { ...item };
+}
+
+export function ownPositionsLostFromWarStats(
+  warStats: WarStats,
+  playerSide: 'A' | 'B',
+): number {
+  return warStats.seizures.filter((s) => s.seizedBy !== playerSide).length;
+}
 
 function matchWinNGames(condition: string): ConditionMatcher | null {
   const match = /^win (\d+) games?$/i.exec(condition);
@@ -184,6 +205,8 @@ export function processGameEnd(
   );
 
   const alreadyUnlocked = new Set(nextProfile.unlockedCardIds);
+  const nextInstances = { ...(nextProfile.cardInstances ?? {}) };
+  const nextInventory = nextProfile.cardInventory?.map(cloneInventoryItem);
   const newlyUnlocked: string[] = [];
 
   for (const card of catalog) {
@@ -196,6 +219,17 @@ export function processGameEnd(
     if (matcher(ctx)) {
       newlyUnlocked.push(card.id);
       alreadyUnlocked.add(card.id);
+      const nextInstance = {
+        rolledRarity: card.rarity,
+        unlockDifficulty: event.unlockDifficulty,
+      };
+      nextInstances[card.id] = nextInstance;
+      if (nextInventory) {
+        nextInventory.push({
+          cardId: card.id,
+          ...nextInstance,
+        });
+      }
     }
   }
 
@@ -203,6 +237,8 @@ export function processGameEnd(
     nextProfile = {
       ...nextProfile,
       unlockedCardIds: [...alreadyUnlocked],
+      cardInstances: nextInstances,
+      ...(nextInventory ? { cardInventory: nextInventory } : {}),
     };
   }
 

@@ -25,5 +25,16 @@
   ],
   "unlocked": true,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "totem",
+    "palette": "slate",
+    "layers": {
+      "backdrop": "fist-raised",
+      "support": "chain",
+      "primary": "brass-knuckles",
+      "badge": "fist-punch"
+    }
+  }
 }

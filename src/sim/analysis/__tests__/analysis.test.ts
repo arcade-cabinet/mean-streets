@@ -85,8 +85,7 @@ describe('analysis layer', () => {
   });
 
   // Slow: full sim-backed sweep — validates the end-to-end pipeline.
-  // Set RUN_SLOW_TESTS=1 to enable locally or in a dedicated CI job.
-  // TODO: promote to a nightly job once we have a dedicated slow-test runner.
+  // Run via `pnpm run test:analysis:slow` locally or the nightly workflow.
   describe.skipIf(!process.env.RUN_SLOW_TESTS)('slow sim sweep (RUN_SLOW_TESTS=1)', () => {
     it('runCuratedSweep weapon_drug quick produces one result per permutation', () => {
       const permutationIds = buildCuratedSweepPermutations('weapon_drug');

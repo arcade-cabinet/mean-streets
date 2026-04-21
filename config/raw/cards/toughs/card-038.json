@@ -20,5 +20,17 @@
   "unlocked": false,
   "unlockCondition": "Win with a deck containing 3+ affiliations",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-right",
+    "palette": "ash",
+    "layers": {
+      "back": "phone-holster",
+      "legs": "casual-slouch",
+      "torso": "hoodie-4",
+      "body": "pompadour",
+      "arms": "pistol-compact"
+    }
+  }
 }

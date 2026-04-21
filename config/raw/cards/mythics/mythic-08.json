@@ -13,6 +13,10 @@
     "description": "Cannot be sent to Holding, ever — by the player, by the AI, by raids. When cops sweep active tops into Lockup during a raid, The Magistrate is excluded. The Magistrate does not know fear of the state.",
     "balance_note": "Heavy defensive role. R 9 is a wall. The anti-raid insurance is massive in late-game when heat naturally escalates. Particularly strong in Nightmare / Ultra-Nightmare where Lockup is permanent."
   },
+  "portrait": {
+    "mode": "custom",
+    "sprite": "the-magistrate-alt2"
+  },
   "unlocked": false,
   "locked": true,
   "draft": true

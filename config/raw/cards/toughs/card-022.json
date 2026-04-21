@@ -20,5 +20,17 @@
   "unlocked": false,
   "unlockCondition": "Win 1 games with a full Freelance deck",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-right",
+    "palette": "ash",
+    "layers": {
+      "back": "hood",
+      "legs": "casual-slouch",
+      "torso": "hoodie-2",
+      "body": "hood-mask",
+      "arms": "fists"
+    }
+  }
 }

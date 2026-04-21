@@ -19,5 +19,16 @@
   "unlocked": false,
   "unlockCondition": "Kill 7 enemies total",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "triptych-right",
+    "palette": "gunmetal",
+    "layers": {
+      "backdrop": "chain",
+      "support": "knife-2",
+      "primary": "chain",
+      "badge": "fist-small"
+    }
+  }
 }

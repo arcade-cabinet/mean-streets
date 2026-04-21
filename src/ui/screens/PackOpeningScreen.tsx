@@ -1,43 +1,73 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAppShell } from '../../platform';
 import { ArrowLeft, ChevronRight, Sparkles } from 'lucide-react';
-import { generatePack } from '../../sim/packs/generator';
-import { createRng, randomSeed } from '../../sim/cards/rng';
-import { addCardsToCollection, loadCollection } from '../../platform/persistence/collection';
+import { loadCollectibleCards } from '../../sim/cards/catalog';
 import type { Card as CardType, Rarity } from '../../sim/turf/types';
 import { Card as CardComponent } from '../cards';
 
-const STANDARD_PACK_SIZE = 5;
+const DEFAULT_PACK_CARD_IDS = [
+  'card-001',
+  'weap-01',
+  'drug-10',
+  'currency-1000',
+  'mythic-01',
+] as const;
+
+const DEFAULT_OWNED_CARD_IDS = ['card-001', 'currency-1000'] as const;
 
 interface PackOpeningScreenProps {
   onBack: () => void;
+  cards?: CardType[];
+  ownedCardIds?: Iterable<string>;
 }
 
 type Phase = 'sealed' | 'revealing' | 'summary';
 
-export function PackOpeningScreen({ onBack }: PackOpeningScreenProps) {
+export function loadPackOpeningFixtureCards(): CardType[] {
+  const cardsById = new Map(
+    loadCollectibleCards().map((card) => [card.id, card] as const),
+  );
+  return DEFAULT_PACK_CARD_IDS.map((id) => {
+    const card = cardsById.get(id);
+    if (!card) {
+      throw new Error(`Missing pack-opening fixture card: ${id}`);
+    }
+    return card;
+  });
+}
+
+export const PACK_OPENING_FIXTURE_OWNED_IDS = [...DEFAULT_OWNED_CARD_IDS];
+
+export function PackOpeningScreen({
+  onBack,
+  cards,
+  ownedCardIds,
+}: PackOpeningScreenProps) {
   const { layout } = useAppShell();
   const compact = layout.id === 'phone-portrait' || layout.id === 'folded';
-
-  const [ownedIds, setOwnedIds] = useState<Set<string>>(new Set());
-  // packCards is null until the collection loads and the pack is generated.
-  const [packCards, setPackCards] = useState<CardType[]>([]);
-
-  useEffect(() => {
-    loadCollection().then(collection => {
-      setOwnedIds(new Set(collection.map(c => c.id)));
-      const rng = createRng(randomSeed());
-      const cards = generatePack('standard', collection, rng);
-      setPackCards(cards);
-    });
-  }, []);
+  const packCards = useMemo(
+    () => cards ?? loadPackOpeningFixtureCards(),
+    [cards],
+  );
+  const ownedIds = useMemo(
+    () => new Set(ownedCardIds ?? PACK_OPENING_FIXTURE_OWNED_IDS),
+    [ownedCardIds],
+  );
 
   const [phase, setPhase] = useState<Phase>('sealed');
   const [revealIdx, setRevealIdx] = useState(-1);
-  const [revealed, setRevealed] = useState<boolean[]>(() => new Array(STANDARD_PACK_SIZE).fill(false));
+  const [revealed, setRevealed] = useState<boolean[]>(() =>
+    new Array(packCards.length).fill(false),
+  );
+
+  useEffect(() => {
+    setPhase('sealed');
+    setRevealIdx(-1);
+    setRevealed(new Array(packCards.length).fill(false));
+  }, [packCards]);
 
   const currentCard = revealIdx >= 0 && revealIdx < packCards.length ? packCards[revealIdx] : null;
-  const allRevealed = revealed.every(Boolean);
+  const allRevealed = revealed.length > 0 && revealed.every(Boolean);
 
   const revealNext = useCallback(() => {
     const nextIdx = revealIdx + 1;
@@ -54,14 +84,16 @@ export function PackOpeningScreen({ onBack }: PackOpeningScreenProps) {
   }, [revealIdx, packCards.length]);
 
   const handleOpenPack = useCallback(() => {
+    if (packCards.length === 0) {
+      setPhase('summary');
+      return;
+    }
     setPhase('revealing');
     setRevealIdx(0);
-    setRevealed(prev => {
-      const next = [...prev];
-      next[0] = true;
-      return next;
-    });
-  }, []);
+    setRevealed(
+      Array.from({ length: packCards.length }, (_, index) => index === 0),
+    );
+  }, [packCards.length]);
 
   const handleAdvance = useCallback(() => {
     if (phase === 'revealing' && !allRevealed) {
@@ -83,13 +115,6 @@ export function PackOpeningScreen({ onBack }: PackOpeningScreenProps) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [phase, handleOpenPack, handleAdvance, onBack]);
-
-  // Save pack cards to collection when fully revealed
-  useEffect(() => {
-    if (phase === 'summary') {
-      addCardsToCollection(packCards).catch(() => {});
-    }
-  }, [phase, packCards]);
 
   const isNew = useCallback((card: CardType) => !ownedIds.has(card.id), [ownedIds]);
 

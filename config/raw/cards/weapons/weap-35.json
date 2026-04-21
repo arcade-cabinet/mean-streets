@@ -19,5 +19,16 @@
   "unlocked": false,
   "unlockCondition": "Win without losing a position",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "totem",
+    "palette": "gunmetal",
+    "layers": {
+      "backdrop": "pistol",
+      "support": "ammo-box",
+      "primary": "pistol-full",
+      "badge": "pistol"
+    }
+  }
 }

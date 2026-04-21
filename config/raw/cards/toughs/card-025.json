@@ -20,5 +20,16 @@
   "unlocked": false,
   "unlockCondition": "Win a game using only cards from 2 affiliations",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "wall-lean",
+    "palette": "smoke",
+    "layers": {
+      "legs": "wide-braced-2",
+      "torso": "hoodie-4",
+      "body": "bandana",
+      "arms": "fists"
+    }
+  }
 }

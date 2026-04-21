@@ -2,10 +2,14 @@ import type { Rng } from '../../sim/cards/rng';
 import { createRng, randomSeed } from '../../sim/cards/rng';
 import { generatePack, starterGrant } from '../../sim/packs/generator';
 import type { PackInstance, PackReward } from '../../sim/packs/types';
-import type { CardInstance, Card, DifficultyTier } from '../../sim/turf/types';
-import { loadToughCards } from '../../sim/cards/catalog';
-import { generateWeapons, generateDrugs, generateCurrency } from '../../sim/turf/generators';
-import { getDatabase, saveWebStore } from './database';
+import type {
+  CardInstance,
+  Card,
+  DifficultyTier,
+  Rarity,
+} from '../../sim/turf/types';
+import { loadCollectibleCards } from '../../sim/cards/catalog';
+import { getDatabase, withDatabaseWriteLock } from './database';
 
 /**
  * AI progression mirror (RULES §3 / §13.2).
@@ -14,12 +18,6 @@ import { getDatabase, saveWebStore } from './database';
  * reward the AI earns goes here. Stored under a separate SQLite
  * namespace so a collection-wipe on the player profile doesn't
  * stomp the AI's accumulated progress (and vice versa).
- *
- * **TODO (Vera):** `aiPerfectWarFallbackCount` is read/incremented by
- * persistence callers but rewards.ts still returns a flat $500 — the
- * escalation ($500 → $1000 → …) hasn't been wired through. Integration
- * tests should cover the first Perfect War after exhaustion and each
- * subsequent scale-up.
  */
 export interface AIProfileData {
   aiCollection: CardInstance[];
@@ -57,7 +55,11 @@ const testStore = new Map<string, string>();
 
 function safeParse<T>(raw: string | undefined | null): T | null {
   if (!raw) return null;
-  try { return JSON.parse(raw) as T; } catch { return null; }
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
 }
 
 async function rawGet(): Promise<AIProfileData | null> {
@@ -76,16 +78,16 @@ async function rawSet(data: AIProfileData): Promise<void> {
     testStore.set(AI_KEY, JSON.stringify(data));
     return;
   }
-  const db = await getDatabase();
   const now = new Date().toISOString();
-  await db.run(
-    `INSERT INTO app_kv(namespace, item_key, value, updated_at)
-      VALUES (?, ?, ?, ?)
-      ON CONFLICT(namespace, item_key)
-      DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
-    [AI_NS, AI_KEY, JSON.stringify(data), now],
-  );
-  await saveWebStore();
+  await withDatabaseWriteLock(async (db) => {
+    await db.run(
+      `INSERT INTO app_kv(namespace, item_key, value, updated_at)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(namespace, item_key)
+        DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+      [AI_NS, AI_KEY, JSON.stringify(data), now],
+    );
+  });
 }
 
 /** Load the AI profile, seeding defaults on first read. */
@@ -93,7 +95,9 @@ export async function loadAIProfile(): Promise<AIProfileData> {
   const existing = await rawGet();
   // Spread defaults first so fields added post-launch don't throw on
   // old rows lacking those keys.
-  return existing ? { ...DEFAULT_AI_PROFILE, ...existing } : { ...DEFAULT_AI_PROFILE };
+  return existing
+    ? { ...DEFAULT_AI_PROFILE, ...existing }
+    : { ...DEFAULT_AI_PROFILE };
 }
 
 /** Persist the AI profile blob. */
@@ -102,14 +106,23 @@ export async function saveAIProfile(data: AIProfileData): Promise<void> {
 }
 
 function fullPool(): Card[] {
-  return [
-    ...loadToughCards(), ...generateWeapons(),
-    ...generateDrugs(), ...generateCurrency(),
-  ];
+  return loadCollectibleCards();
+}
+
+let cachedPoolMap: Map<string, Card> | null = null;
+
+function poolMap(): Map<string, Card> {
+  if (cachedPoolMap !== null) return cachedPoolMap;
+  cachedPoolMap = new Map(fullPool().map((card) => [card.id, card]));
+  return cachedPoolMap;
 }
 
 function asInstance(card: Card, difficulty: DifficultyTier): CardInstance {
-  return { cardId: card.id, rolledRarity: card.rarity, unlockDifficulty: difficulty };
+  return {
+    cardId: card.id,
+    rolledRarity: card.rarity,
+    unlockDifficulty: difficulty,
+  };
 }
 
 /** Grant the AI its starter collection (mirrors §3 player grant). */
@@ -125,8 +138,26 @@ export async function grantAIStarterCollection(
   });
 }
 
+function resolveAIInstance(instance: CardInstance): Card | null {
+  const base = poolMap().get(instance.cardId);
+  if (!base) return null;
+  return { ...base, rarity: instance.rolledRarity as Rarity };
+}
+
+export async function loadAICollection(): Promise<Card[]> {
+  const profile = await loadAIProfile();
+  const cards: Card[] = [];
+  for (const instance of profile.aiCollection) {
+    const resolved = resolveAIInstance(instance);
+    if (resolved) cards.push(resolved);
+  }
+  return cards;
+}
+
 /** Queue PackInstances for the AI to open later. */
-export async function addPendingPacksToAI(packs: PackInstance[]): Promise<void> {
+export async function addPendingPacksToAI(
+  packs: PackInstance[],
+): Promise<void> {
   return withAIProfileLock(async () => {
     const profile = (await rawGet()) ?? { ...DEFAULT_AI_PROFILE };
     profile.aiPendingPacks = [...profile.aiPendingPacks, ...packs];
@@ -147,12 +178,10 @@ export async function openPendingAIPacks(
     const profile = (await rawGet()) ?? { ...DEFAULT_AI_PROFILE };
     if (profile.aiPendingPacks.length === 0) return [];
     const rng = createRng(seed ?? randomSeed());
-    const pool = fullPool();
-    // Running view so consecutive packs in one batch reflect earlier
-    // pulls (mirrors collection.ts's openRewardPacks).
-    const running: Card[] = pool.filter((c) =>
-      profile.aiCollection.some((ci) => ci.cardId === c.id),
-    );
+    // Mirror the player reward opener: duplicate-owned cards must stay
+    // eligible so AI merge progression remains possible, but cards
+    // opened earlier in this same batch remain excluded.
+    const running: Card[] = [];
     const fresh: CardInstance[] = [];
     for (const pack of profile.aiPendingPacks) {
       const cards = generatePack(pack.kind, running, rng, { unlockDifficulty });
@@ -179,7 +208,9 @@ export async function aiPendingPacksFromRewards(
     for (let i = 0; i < r.count; i++) {
       packs.push({
         id: `ai-pack-${rng.int(100000, 999999)}`,
-        kind: r.kind, cards: [], openedAt: null,
+        kind: r.kind,
+        cards: [],
+        openedAt: null,
       });
     }
   }
@@ -205,16 +236,42 @@ export async function loadAIOwedMythicIds(): Promise<string[]> {
  */
 export async function saveAIMythicAssignments(
   assignments: Record<string, 'A' | 'B'>,
+  unlockDifficulty: DifficultyTier = 'easy',
 ): Promise<void> {
   return withAIProfileLock(async () => {
     const profile = (await rawGet()) ?? { ...DEFAULT_AI_PROFILE };
     // Only preserve AI-owned ('B') mythics; player-owned go into PlayerProfile.
     const aiAssignments: Record<string, string> = {};
+    const existingById = new Map(
+      profile.aiCollection.map((instance) => [instance.cardId, instance]),
+    );
+    const nextMythics: CardInstance[] = [];
     for (const [id, side] of Object.entries(assignments)) {
-      if (side === 'B') aiAssignments[id] = 'B';
+      if (side !== 'B') continue;
+      aiAssignments[id] = 'B';
+      nextMythics.push(
+        existingById.get(id) ?? {
+          cardId: id,
+          rolledRarity: 'mythic',
+          unlockDifficulty,
+        },
+      );
     }
     profile.aiMythicAssignments = aiAssignments;
+    profile.aiCollection = [
+      ...profile.aiCollection.filter((instance) => !/^mythic-\d+$/.test(instance.cardId)),
+      ...nextMythics,
+    ];
     await rawSet(profile);
+  });
+}
+
+export async function incrementAIPerfectWarFallbackCount(): Promise<number> {
+  return withAIProfileLock(async () => {
+    const profile = (await rawGet()) ?? { ...DEFAULT_AI_PROFILE };
+    profile.aiPerfectWarFallbackCount += 1;
+    await rawSet(profile);
+    return profile.aiPerfectWarFallbackCount;
   });
 }
 
@@ -224,7 +281,7 @@ export async function resetAIProfileForTests(): Promise<void> {
     testStore.clear();
     return;
   }
-  const db = await getDatabase();
-  await db.run('DELETE FROM app_kv WHERE namespace = ?', [AI_NS]);
-  await saveWebStore();
+  await withDatabaseWriteLock(async (db) => {
+    await db.run('DELETE FROM app_kv WHERE namespace = ?', [AI_NS]);
+  });
 }

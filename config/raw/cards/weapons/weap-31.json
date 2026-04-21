@@ -25,5 +25,16 @@
   ],
   "unlocked": true,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "triptych-left",
+    "palette": "steel",
+    "layers": {
+      "backdrop": "burner-phone",
+      "support": "pistol-compact",
+      "primary": "holster-pistol",
+      "badge": "ammo-box"
+    }
+  }
 }

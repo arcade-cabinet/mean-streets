@@ -1,6 +1,6 @@
 ---
 title: Visual Review Workflow
-updated: 2026-04-17
+updated: 2026-04-20
 status: current
 domain: ui
 ---
@@ -17,31 +17,37 @@ using stable, regenerated screenshots rather than ad hoc judgment.
 ```bash
 pnpm run visual:export
 pnpm run visual:export:headless
+pnpm run visual:export:fullpage
+pnpm run visual:export:fullpage:headless
 ```
 
-Both commands render the Playwright visual fixtures and export screenshots to:
+The viewport export commands render the Playwright visual fixtures and export screenshots to:
 
 ```bash
 artifacts/visual-review/<project>/<fixture>.png
 ```
 
+The full-page export commands capture the same fixture set with
+`fullPage: true` and write them to:
+
+```bash
+artifacts/visual-review/<project>/fullpage/<fixture>.png
+```
+
+The visual capture lane now takes viewport screenshots with CSS
+animations disabled. That keeps the export set deterministic across the
+4 Playwright device profiles and avoids false failures on animated
+screens.
+
 ## Current Fixture Set (v0.3)
 
-- `menu` — Main menu with navigation buttons (New Game, Load, Collection, Card Garage, Open Pack)
-- `difficulty` — Difficulty tier grid (Easy/Medium/Hard/Nightmare/Ultra — Sudden Death removed)
-- `card-garage` — Collection management UI with enable/disable + priority slider 1-10 + merge UI + auto-toggles
-- `game-single-lane` — GameScreen with 1v1 active turf + reserves indicator + heat meter + queued strikes
-- `game-heat-high` — GameScreen variant with heat ≥ 0.7 showing raid-imminent state
-- `game-market-open` — GameScreen with BlackMarketPanel expanded (modal on phone)
-- `game-holding-active` — GameScreen with HoldingPanel showing tough in custody + lockup countdown
-- `game-resolution` — Resolution overlay mid-animation (queued strike landing, dominance order)
-- `stack-fan` — StackFanModal showing own-side (all face-up) vs opponent-side (mostly face-down + some revealed)
-- `card-base` — All card kinds at all 5 rolled rarities (common/uncommon/rare/legendary/mythic)
-- `card-mythic` — All 10 mythics with their unique SVG art + shared gold ring treatment
-- `card-wounded` — Tough card showing HP bar at full/wounded/critical states
-- `card-unlock-diff` — Card showing unlock-difficulty icon variants (easy/medium/hard/nightmare/ultra)
-- `pack-opening` — Sealed → revealing → summary flow with rolled-rarity reveal animation
-- `game-over` — Winner screen with per-turf ratings + war outcome + reward pack queue
+- `menu` — Main menu live navigation surface
+- `difficulty` — Difficulty tier grid (Easy/Medium/Hard/Nightmare/Ultra)
+- `deck-garage` — Deck list / garage overview fixture
+- `combat` — Single-lane live `GameScreen` fixture
+- `card` — Mixed card gallery fixture (tough / weapon / drug / currency / mythic)
+- `pack-opening` — Sealed → revealing → summary preview fixture with deterministic authored cards
+- `game-over` — Victory-state game-over fixture with authored war outcome + sample rewards
 
 ## Review Targets
 
@@ -50,27 +56,24 @@ and the live hero art in `public/assets/hero.png`.
 
 Focus review on:
 
-- **Single-lane readability**: is the active 1v1 engagement clear? Reserves indicator unambiguous?
-- **Heat meter**: 0-100% scale legible, color gradient at raid thresholds, positioned centrally
-- **Turf composite card**: power/resistance badges, HP bar per tough, roster, affiliation icons, closed-ranks indicator
-- **Card frame v0.3**: rolled-rarity border (grey/blue/gold/red/custom-mythic), unlock-difficulty icon top-left, kind surface tints, portrait area
-- **Mythic visual language**: shared gold-ring treatment across all 10, per-mythic unique SVG readable at card scale
-- **Affiliation symbol glow**: loyal=gold, rival=red visibility — compared to mythic gold ring (distinction clear?)
-- **Action bar sizing**: new buttons (Draw, Retreat, Modifier Swap, Send to Market, Send to Holding, Direct/Pushed/Funded) fit on phone portrait
-- **BlackMarketPanel + HoldingPanel**: modal on phone vs inline on tablet/desktop, readable at glance
-- **Stack fan modal**: face-down opponent cards clearly marked, face-up revealed cards distinct, HP bar visible per tough
-- **Resolution overlay**: dominance-ordered strike animation, intangible trigger flashes, mythic flip animation
-- **Card Garage merge UI**: pyramid cost clarity (2→1 upgrade path), priority slider responsiveness, auto-toggles distinct
-- **Black / dark-red / cold-metal balance** across all screens
+- **Menu hierarchy**: logo, actions, and safe-area spacing read cleanly on phone and tablet
+- **Difficulty grid clarity**: tier labels, icon tinting, and tile density remain readable on narrow screens
+- **Deck garage density**: deck cards, controls, and spacing hold up in single-column mobile layouts
+- **Single-lane combat readability**: active turf, hand, HUD, and action bar remain legible without overflow
+- **Card frame language**: rarity borders, portrait area, affiliation markers, and HP bars read clearly at card scale
+- **Pack opening flow**: sealed state, reveal state, and summary state all feel deliberate and readable
+- **Black / dark-red / cold-metal balance** across all exported screens
 - **Typography emphasis and hierarchy**
 - **Spacing, density, and empty-space usage**
 - **Mobile portrait clarity** versus tablet/wide composition
-- **Consistency across** menu, difficulty, game, collection, card-garage, pack-opening, game-over
+- **Consistency across** menu, difficulty, deck-garage, combat, card, pack-opening, and game-over
 
 ## Current Test Surface
 
 - `pnpm run test:visual`
   Runs the multi-project visual fixture capture lane.
+- `pnpm run test:visual:fullpage`
+  Runs the opt-in multi-project full-page capture lane.
 - `pnpm run test:e2e`
   Runs the full e2e suite across 4 device profiles (desktop-chromium,
   iphone-14, pixel-7, ipad-pro-landscape).
@@ -80,15 +83,19 @@ Focus review on:
 - Exported screenshots are intentionally ignored by git.
 - Playwright attachments still land in `test-results/` for one-off debugging.
 - If visual changes are made, regenerate the export set before doing subjective review.
-- FixtureApp supports the v0.3 fixture set (listed above). Some fixtures
-  are state-dependent (game-heat-high, game-market-open) — FixtureApp
-  accepts a `scenario` query param to seed the sim to the target state.
-- Pack opening, collection, card-garage, and game-over screens are
-  tested via live navigation flows in `e2e/app-flow.spec.ts`,
-  `e2e/pack-opening.spec.ts`, `e2e/card-garage.spec.ts`, and
-  `e2e/war-outcome.spec.ts`.
-- Resolution overlay + heat-meter reactivity are tested via
-  `e2e/single-lane-flow.spec.ts` with scripted sim state.
+- FixtureApp currently supports exactly the 7 fixture routes listed
+  above. Add the route first before documenting any new fixture here.
+- `e2e/pack-opening.spec.ts` now runs against the `/?fixture=pack-opening`
+  route rather than a dead live-app path.
+- `e2e/visual-fixtures.spec.ts` is opt-in only
+  (`MEAN_STREETS_VISUAL_SPECS=1`); the supported capture path is
+  `pnpm run test:visual` / `visual:export*` via
+  `scripts/capture-visual-fixtures.mjs`.
+- `e2e/fullpage.spec.ts` is also opt-in only
+  (`MEAN_STREETS_FULLPAGE=1`); the supported capture path is
+  `pnpm run test:visual:fullpage` / `visual:export:fullpage*`.
+- `e2e/visual-fixtures.spec.ts` and `e2e/fullpage.spec.ts` disable CSS
+  animations during capture so the exported screenshots stay stable.
 
 ## Gap Analysis Worksheet
 
@@ -98,17 +105,19 @@ characters.
 
 | Fixture          | Device profile          | Target                                    | Gap (fill in) |
 |------------------|-------------------------|-------------------------------------------|---------------|
-| menu             | desktop-chromium        | Title wordmark + menu chip size           |               |
+| menu             | desktop-chromium        | Title wordmark + action spacing           |               |
 | menu             | iphone-14               | Safe-area top, touch-friendly chips       |               |
-| menu             | ipad-pro-landscape      | Wide-mode hero crop, two-column chips     |               |
-| menu             | pixel-7                 | Portrait hero fit, no clipped edges       |               |
-| difficulty       | desktop-chromium        | 2x3 grid balance, tier icon tinting       |               |
+| difficulty       | desktop-chromium        | Grid balance, tier icon tinting           |               |
 | difficulty       | iphone-14               | Compact grid, touch target adequacy       |               |
-| deck-garage      | desktop-chromium        | Deck card density, hover state            |               |
-| deck-garage      | iphone-14               | Single-column list, 60% screen height     |               |
-| combat           | desktop-chromium        | Turf composite readability, action bar    |               |
-| combat           | iphone-14               | Action bar overflow, hand card sizing     |               |
-| card             | desktop-chromium        | Card frame, rarity borders, affiliation   |               |
+| deck-garage      | desktop-chromium        | Deck card density, hierarchy              |               |
+| deck-garage      | iphone-14               | Single-column fit, scroll rhythm          |               |
+| combat           | desktop-chromium        | Turf readability, action bar balance      |               |
+| combat           | iphone-14               | Action bar fit, hand card sizing          |               |
+| card             | desktop-chromium        | Card frame, rarity borders, portraits     |               |
+| pack-opening     | iphone-14               | Sealed state and summary readability      |               |
+| pack-opening     | ipad-pro-landscape      | Reveal composition on wide screens        |               |
+| game-over        | iphone-14               | Reward summary and CTA fit                |               |
+| game-over        | desktop-chromium        | Reward panel hierarchy                    |               |
 
 ### How to review
 
@@ -119,5 +128,8 @@ characters.
 
 ### Change-log
 
+- 2026-04-20 — Reconciled the fixture list with the actual `FixtureApp`
+  routes (`menu`, `difficulty`, `deck-garage`, `combat`, `card`,
+  `pack-opening`, `game-over`) and documented deterministic screenshot capture.
 - 2026-04-17 — Updated fixture set for v0.3 single-lane rewrite: HeatMeter, BlackMarketPanel, HoldingPanel, MythicBadge, and TurfCompositeCard with HP bars replace v0.2 parallel-turf fixtures.
 - 2026-04-15 — Updated fixture set and review targets for v0.2 (stack redesign).

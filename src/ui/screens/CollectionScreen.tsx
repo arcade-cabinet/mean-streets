@@ -2,9 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAppShell } from '../../platform';
 import { ArrowLeft } from 'lucide-react';
 import { loadCollection } from '../../platform/persistence/collection';
-import { loadToughCards } from '../../sim/cards/catalog';
-import { generateWeapons, generateDrugs, generateCurrency } from '../../sim/turf/generators';
-import type { Card as CardType, CardCategory, Rarity } from '../../sim/turf/types';
+import { loadProfile } from '../../platform/persistence/storage';
+import { loadCollectibleCards } from '../../sim/cards/catalog';
+import type {
+  Card as CardType,
+  CardCategory,
+  DifficultyTier,
+  Rarity,
+} from '../../sim/turf/types';
 import { Card as CardComponent } from '../cards';
 
 type CategoryFilter = 'all' | CardCategory;
@@ -32,18 +37,27 @@ interface CollectionScreenProps {
 }
 
 function loadFullCatalog(): CardType[] {
-  return [...loadToughCards(), ...generateWeapons(), ...generateDrugs(), ...generateCurrency()];
+  return loadCollectibleCards();
 }
 
 function countByCategory(cards: CardType[]): Record<CardCategory, number> {
-  const counts: Record<CardCategory, number> = { tough: 0, weapon: 0, drug: 0, currency: 0 };
+  const counts: Record<CardCategory, number> = {
+    tough: 0,
+    weapon: 0,
+    drug: 0,
+    currency: 0,
+  };
   for (const c of cards) counts[c.kind]++;
   return counts;
 }
 
 function countByRarity(cards: CardType[]): Record<Rarity, number> {
   const counts: Record<Rarity, number> = {
-    common: 0, uncommon: 0, rare: 0, legendary: 0, mythic: 0,
+    common: 0,
+    uncommon: 0,
+    rare: 0,
+    legendary: 0,
+    mythic: 0,
   };
   for (const c of cards) counts[c.rarity]++;
   return counts;
@@ -54,31 +68,68 @@ export function CollectionScreen({ onBack, onPlay }: CollectionScreenProps) {
   const compact = layout.id === 'phone-portrait' || layout.id === 'folded';
 
   const catalog = useMemo(loadFullCatalog, []);
-  const catalogIds = useMemo(() => new Set(catalog.map(c => c.id)), [catalog]);
-  const [ownedIds, setOwnedIds] = useState<Set<string> | null>(null);
+  const catalogIds = useMemo(
+    () => new Set(catalog.map((c) => c.id)),
+    [catalog],
+  );
+  const [ownedCards, setOwnedCards] = useState<Record<string, CardType>>({});
+  const [unlockMap, setUnlockMap] = useState<Record<string, DifficultyTier>>(
+    {},
+  );
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
   const [rarityFilter, setRarityFilter] = useState<Rarity | 'all'>('all');
 
   useEffect(() => {
-    loadCollection().then(cards => {
-      setOwnedIds(new Set(cards.map(c => c.id)));
+    let cancelled = false;
+    Promise.all([loadCollection(), loadProfile()]).then(([cards, profile]) => {
+      if (cancelled) return;
+      if (cards.length === 0) return;
+      const nextOwned: Record<string, CardType> = {};
+      for (const card of cards) nextOwned[card.id] = card;
+      const instances = profile.cardInstances ?? {};
+      const nextUnlocks: Record<string, DifficultyTier> = {};
+      for (const card of cards) {
+        nextUnlocks[card.id] = (instances[card.id]?.unlockDifficulty ??
+          'easy') as DifficultyTier;
+      }
+      setOwnedCards(nextOwned);
+      setUnlockMap(nextUnlocks);
     });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
+  const mergedCatalog = useMemo(
+    () => catalog.map((card) => ownedCards[card.id] ?? card),
+    [catalog, ownedCards],
+  );
+
   const filtered = useMemo(() => {
-    return catalog.filter(c => {
+    return mergedCatalog.filter((c) => {
       if (categoryFilter !== 'all' && c.kind !== categoryFilter) return false;
       if (rarityFilter !== 'all' && c.rarity !== rarityFilter) return false;
       return true;
     });
-  }, [catalog, categoryFilter, rarityFilter]);
+  }, [mergedCatalog, categoryFilter, rarityFilter]);
 
-  const ownedCount = ownedIds ? [...catalogIds].filter(id => ownedIds.has(id)).length : 0;
-  const categoryCounts = useMemo(() => countByCategory(catalog), [catalog]);
-  const rarityCounts = useMemo(() => countByRarity(catalog), [catalog]);
+  const ownedCount = [...catalogIds].filter((id) => ownedCards[id] != null)
+    .length;
+  const categoryCounts = useMemo(
+    () => countByCategory(mergedCatalog),
+    [mergedCatalog],
+  );
+  const rarityCounts = useMemo(
+    () => countByRarity(mergedCatalog),
+    [mergedCatalog],
+  );
 
   return (
-    <main className="coll-screen" data-testid="collection-screen" aria-label="Card Collection">
+    <main
+      className="coll-screen"
+      data-testid="collection-screen"
+      aria-label="Card Collection"
+    >
       <header className="coll-header">
         <button
           className="coll-back-btn"
@@ -90,29 +141,49 @@ export function CollectionScreen({ onBack, onPlay }: CollectionScreenProps) {
         </button>
         <h1 className="coll-title">Collection</h1>
         <div className="coll-progress" data-testid="collection-progress">
-          <span className="coll-progress-count">{ownedCount} / {catalog.length}</span>
+          <span className="coll-progress-count">
+            {ownedCount} / {catalog.length}
+          </span>
           <span className="coll-progress-label">unlocked</span>
         </div>
         {onPlay && (
-          <button className="coll-play-btn" onClick={onPlay} data-testid="collection-play">
+          <button
+            className="coll-play-btn"
+            onClick={onPlay}
+            data-testid="collection-play"
+          >
             Play
           </button>
         )}
       </header>
 
       <div className="coll-summary" data-testid="collection-summary">
-        <span className="coll-summary-item coll-summary-tough">{categoryCounts.tough} toughs</span>
-        <span className="coll-summary-sep" aria-hidden="true">/</span>
-        <span className="coll-summary-item coll-summary-weapon">{categoryCounts.weapon} weapons</span>
-        <span className="coll-summary-sep" aria-hidden="true">/</span>
-        <span className="coll-summary-item coll-summary-drug">{categoryCounts.drug} drugs</span>
-        <span className="coll-summary-sep" aria-hidden="true">/</span>
-        <span className="coll-summary-item coll-summary-currency">{categoryCounts.currency} cash</span>
+        <span className="coll-summary-item coll-summary-tough">
+          {categoryCounts.tough} toughs
+        </span>
+        <span className="coll-summary-sep" aria-hidden="true">
+          /
+        </span>
+        <span className="coll-summary-item coll-summary-weapon">
+          {categoryCounts.weapon} weapons
+        </span>
+        <span className="coll-summary-sep" aria-hidden="true">
+          /
+        </span>
+        <span className="coll-summary-item coll-summary-drug">
+          {categoryCounts.drug} drugs
+        </span>
+        <span className="coll-summary-sep" aria-hidden="true">
+          /
+        </span>
+        <span className="coll-summary-item coll-summary-currency">
+          {categoryCounts.currency} cash
+        </span>
       </div>
 
       <nav className="coll-filters" aria-label="Collection filters">
         <div className="coll-filter-row">
-          {CATEGORY_TABS.map(tab => (
+          {CATEGORY_TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setCategoryFilter(tab.id)}
@@ -125,7 +196,7 @@ export function CollectionScreen({ onBack, onPlay }: CollectionScreenProps) {
           ))}
         </div>
         <div className="coll-filter-row coll-filter-row-rarity">
-          {RARITY_FILTERS.map(r => (
+          {RARITY_FILTERS.map((r) => (
             <button
               key={r.id}
               onClick={() => setRarityFilter(r.id)}
@@ -134,7 +205,11 @@ export function CollectionScreen({ onBack, onPlay }: CollectionScreenProps) {
               aria-pressed={rarityFilter === r.id}
             >
               {r.label}
-              {r.id !== 'all' && <span className="coll-rarity-count">({rarityCounts[r.id]})</span>}
+              {r.id !== 'all' && (
+                <span className="coll-rarity-count">
+                  ({rarityCounts[r.id]})
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -145,11 +220,18 @@ export function CollectionScreen({ onBack, onPlay }: CollectionScreenProps) {
       </div>
 
       <section className="coll-grid" aria-label="Card grid">
-        {filtered.map(card => {
-          const owned = ownedIds?.has(card.id) ?? false;
+        {filtered.map((card) => {
+          const owned = ownedCards[card.id] != null;
           return (
-            <div key={card.id} className={`coll-grid-cell ${owned ? '' : 'coll-grid-cell-locked'}`}>
-              <CardComponent card={card} compact={compact} />
+            <div
+              key={card.id}
+              className={`coll-grid-cell ${owned ? '' : 'coll-grid-cell-locked'}`}
+            >
+              <CardComponent
+                card={card}
+                compact={compact}
+                unlockDifficulty={unlockMap[card.id]}
+              />
               {!owned && <div className="coll-locked-overlay" />}
             </div>
           );

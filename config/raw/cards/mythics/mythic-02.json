@@ -13,6 +13,10 @@
     "description": "On play: resets the shared heat meter to 0.0. One-shot effect.",
     "balance_note": "Durable (R 8) but low offense. The payoff is heat relief during a critical moment — pull The Accountant when you're about to trigger a raid on your own stack. One-shot utility nature keeps R below Magistrate's fortress role."
   },
+  "portrait": {
+    "mode": "custom",
+    "sprite": "the-accountant"
+  },
   "unlocked": false,
   "locked": true,
   "draft": true

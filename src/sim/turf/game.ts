@@ -1,4 +1,5 @@
 import type { Rng } from '../cards/rng';
+import { loadMythicPoolIds } from '../cards/catalog';
 import { createRng, randomSeed } from '../cards/rng';
 import { TURF_SIM_CONFIG } from './ai/config';
 import { createTurf, resetTurfIdCounter } from './board';
@@ -29,37 +30,38 @@ export interface MatchState {
 
 // ── Player initialization ─────────────────────────────────
 
-function createPlayer(config: GameConfig, deck: Card[], rng: Rng): PlayerState {
+function cloneCard(card: Card): Card {
+  if (card.kind === 'tough') {
+    return {
+      ...card,
+      abilities: [...card.abilities],
+    };
+  }
+  if (card.kind === 'currency') {
+    return {
+      ...card,
+      abilities: card.abilities ? [...card.abilities] : undefined,
+    };
+  }
+  return {
+    ...card,
+    abilities: [...card.abilities],
+  };
+}
+
+function createPlayer(config: GameConfig, deck: Card[], _rng: Rng): PlayerState {
   const turfs = Array.from({ length: config.turfCount }, (_, i) =>
     createTurf({ isActive: i === 0, reserveIndex: i }),
   );
-  const shuffled = rng.shuffle([...deck]);
   return {
     turfs,
-    deck: shuffled,
+    deck: deck.map(cloneCard),
     toughsInPlay: 0,
     actionsRemaining: config.firstTurnActions,
     pending: null,
     queued: [],
     turnEnded: false,
   };
-}
-
-function loadMythicIds(): string[] {
-  // Canonical ids matching the authored mythic cards in
-  // config/raw/cards/mythics/ (mythic-01 … mythic-10).
-  return [
-    'mythic-01',
-    'mythic-02',
-    'mythic-03',
-    'mythic-04',
-    'mythic-05',
-    'mythic-06',
-    'mythic-07',
-    'mythic-08',
-    'mythic-09',
-    'mythic-10',
-  ];
 }
 
 function emptyWarStats(): WarStats {
@@ -78,10 +80,12 @@ function createGameState(
 
   // Enforce RULES §11 global exclusivity: owned mythics are pre-assigned
   // to their side and excluded from the shared unassigned pool.
-  const allMythicIds = loadMythicIds();
+  const allMythicIds = loadMythicPoolIds();
   const aOwned = new Set(ownedMythics.A);
   const bOwned = new Set(ownedMythics.B);
-  const mythicPool = allMythicIds.filter((id) => !aOwned.has(id) && !bOwned.has(id));
+  const mythicPool = allMythicIds.filter(
+    (id) => !aOwned.has(id) && !bOwned.has(id),
+  );
   const mythicAssignments: Record<string, 'A' | 'B'> = {};
   for (const id of ownedMythics.A) mythicAssignments[id] = 'A';
   for (const id of ownedMythics.B) mythicAssignments[id] = 'B';

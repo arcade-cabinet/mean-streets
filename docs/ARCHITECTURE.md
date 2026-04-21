@@ -43,7 +43,7 @@ config/
     toughs/card-*.json            # 100 toughs (55 common / 25 uncommon / 15 rare / 5 legendary)
     weapons/weap-*.json           # 50 weapons (28/12/8/2)
     drugs/drug-*.json             # 50 drugs (28/12/8/2)
-    currency/currency-*.json      # 2 currency cards ($100, $1000)
+    currency/currency-*.json      # 3 currency cards ($100, $1000, Clean Money)
     mythics/mythic-*.json         # 10 hand-authored mythics (never in packs)
   compiled/                       # Build-time outputs (gitignored)
     toughs.json, weapons.json, drugs.json, currency.json, mythics.json
@@ -174,7 +174,8 @@ e2e/                              # Playwright specs (4 device profiles)
   app-flow.spec.ts                # Menu → difficulty → game flow
   accessibility.spec.ts           # Tap-only, landmarks, keyboard navigation
   difficulty-grid.spec.ts         # Difficulty selection (5 tiers, no Sudden Death in v0.3)
-  pack-opening.spec.ts            # Sealed → reveal → summary flow
+  pack-opening.spec.ts            # Pack-opening fixture route (sealed → reveal → summary)
+  war-outcome.spec.ts             # Game-over fixture route (winner + rewards)
   responsive-alignment.spec.ts    # Overflow checks across fixtures
   visual-fixtures.spec.ts         # Fixture screenshots for review
   layout-classification.spec.ts   # Device layout detection

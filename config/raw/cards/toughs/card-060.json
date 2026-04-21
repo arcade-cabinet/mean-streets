@@ -20,5 +20,17 @@
   "unlocked": false,
   "unlockCondition": "Win a game on the first night phase",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "wall-lean",
+    "palette": "rust",
+    "layers": {
+      "back": "backpack",
+      "legs": "casual-slouch",
+      "torso": "puffer-jacket",
+      "body": "shaved",
+      "arms": "fists"
+    }
+  }
 }

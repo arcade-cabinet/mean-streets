@@ -20,5 +20,16 @@
   "unlocked": false,
   "unlockCondition": "Kill 7 top toughs total",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "wall-lean",
+    "palette": "ember",
+    "layers": {
+      "legs": "casual-slouch",
+      "torso": "runner-2",
+      "body": "slick-femme-2",
+      "arms": "fists"
+    }
+  }
 }

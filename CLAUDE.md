@@ -64,9 +64,11 @@ pnpm run test               # Node + DOM unit tests (fast)
 pnpm run test:node          # Pure node tests (sim, pure logic)
 pnpm run test:dom           # jsdom tests (presentational components)
 pnpm run test:browser       # Vitest browser-playwright (real Chromium)
-pnpm run test:e2e           # Playwright end-to-end (LOCAL ONLY — not in CI)
+pnpm run test:e2e           # Playwright end-to-end (split local/CD lane)
 pnpm run test:visual        # Playwright visual fixture capture
-pnpm run test:release       # Release gate (requires RELEASE_GATING=1)
+pnpm run test:visual:fullpage # Full-page visual fixture capture
+pnpm run test:analysis:slow # Slow sim-backed curated sweep
+pnpm run test:release       # Release gate
 pnpm run analysis:benchmark # Rerun balance benchmark → sim/reports/analysis/
 pnpm run analysis:lock      # Curated sweep + balance locking pass (read-only)
 pnpm run analysis:lock:persist # Same, but writes sim/reports/turf/balance-history.json
@@ -124,7 +126,7 @@ pnpm run cap:sync           # Build + sync web assets to Capacitor
 - `config/raw/cards/toughs/` — 100 toughs (55C/25U/15R/5L)
 - `config/raw/cards/weapons/` — 50 weapons (28C/12U/8R/2L)
 - `config/raw/cards/drugs/` — 50 drugs (28C/12U/8R/2L)
-- `config/raw/cards/currency/` — 2 currency cards
+- `config/raw/cards/currency/` — 3 currency cards
 - `config/raw/cards/mythics/` — 10 hand-authored mythics (NOT in packs)
 - `public/assets/mythics/` — 10 SVG art placeholders with shared
   gold-ring treatment

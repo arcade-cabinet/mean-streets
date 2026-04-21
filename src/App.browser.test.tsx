@@ -2,7 +2,12 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import App from './App';
 import { renderInBrowser, settleBrowser } from './test/render-browser';
-import { resetPersistenceForTests } from './ui/deckbuilder/storage';
+import {
+  loadActiveRun,
+  resetPersistenceForTests,
+  saveProfile,
+  saveSettings,
+} from './ui/deckbuilder/storage';
 
 async function waitForSelector(selector: string, timeoutMs = 5000): Promise<Element | null> {
   const started = Date.now();
@@ -22,6 +27,22 @@ async function dismissRulesOnboarding(): Promise<void> {
   }
 }
 
+async function waitForActiveRun(timeoutMs = 5000): Promise<{
+  playerDeck: Array<{ id: string }>;
+} | null> {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    const activeRun = await loadActiveRun<{
+      playerDeck: Array<{ id: string }>;
+    }>();
+    if (activeRun) return activeRun;
+    await new Promise((resolve) => window.setTimeout(resolve, 50));
+  }
+  return loadActiveRun<{
+    playerDeck: Array<{ id: string }>;
+  }>();
+}
+
 describe('App flow', () => {
   let cleanup: (() => void) | undefined;
 
@@ -30,12 +51,14 @@ describe('App flow', () => {
     cleanup?.();
   });
 
-  it('renders the main menu with 3 entry points', async () => {
+  it('renders the main menu with 5 entry points', async () => {
     cleanup = (await renderInBrowser(<App />)).unmount;
 
     expect(document.querySelector('[data-testid="main-menu-screen"]')).not.toBeNull();
     expect(document.querySelector('[data-testid="new-game-button"]')).not.toBeNull();
     expect(document.querySelector('[data-testid="load-game-button"]')).not.toBeNull();
+    expect(document.querySelector('[data-testid="collection-button"]')).not.toBeNull();
+    expect(document.querySelector('[data-testid="garage-button"]')).not.toBeNull();
     expect(document.querySelector('[data-testid="cards-button"]')).not.toBeNull();
   });
 
@@ -57,6 +80,24 @@ describe('App flow', () => {
     expect(document.querySelector('[data-testid="diff-tile-ultra-nightmare"]')).not.toBeNull();
     expect(document.querySelector('[data-testid="diff-sudden-death"]')).toBeNull();
     expect(document.querySelector('[data-testid="diff-start"]')).not.toBeNull();
+  });
+
+  it('routes Collection entry point to the collection screen', async () => {
+    cleanup = (await renderInBrowser(<App />)).unmount;
+
+    await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="collection-button"]')!);
+    await settleBrowser();
+
+    expect(await waitForSelector('[data-testid="collection-screen"]')).not.toBeNull();
+  });
+
+  it('routes Garage entry point to the card garage screen', async () => {
+    cleanup = (await renderInBrowser(<App />)).unmount;
+
+    await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="garage-button"]')!);
+    await settleBrowser();
+
+    expect(await waitForSelector('[data-testid="card-garage-screen"]')).not.toBeNull();
   });
 
   it('routes Cards entry point to the cards screen', async () => {
@@ -85,5 +126,62 @@ describe('App flow', () => {
 
     expect(await waitForSelector('[data-testid="game-screen"]', 10000)).not.toBeNull();
     expect(document.querySelector('[data-testid="action-budget"]')).not.toBeNull();
+  });
+
+  it('starts wars from full owned inventory instead of the deduped summary collection', async () => {
+    await saveSettings({
+      audioEnabled: true,
+      motionReduced: false,
+      rulesSeen: true,
+    });
+    await saveProfile({
+      unlockedCardIds: ['card-001', 'card-002'],
+      cardInstances: {
+        'card-001': {
+          rolledRarity: 'common',
+          unlockDifficulty: 'easy',
+        },
+        'card-002': {
+          rolledRarity: 'common',
+          unlockDifficulty: 'easy',
+        },
+      },
+      cardInventory: [
+        {
+          cardId: 'card-001',
+          rolledRarity: 'common',
+          unlockDifficulty: 'easy',
+        },
+        {
+          cardId: 'card-001',
+          rolledRarity: 'common',
+          unlockDifficulty: 'hard',
+        },
+        {
+          cardId: 'card-002',
+          rolledRarity: 'common',
+          unlockDifficulty: 'easy',
+        },
+      ],
+      wins: 0,
+      lastPlayedAt: null,
+    });
+
+    cleanup = (await renderInBrowser(<App />)).unmount;
+
+    await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="new-game-button"]')!);
+    await settleBrowser();
+    expect(await waitForSelector('[data-testid="difficulty-screen"]')).not.toBeNull();
+
+    await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="diff-tile-easy"]')!);
+    await settleBrowser();
+    await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="diff-start"]')!);
+    await settleBrowser();
+
+    const activeRun = await waitForActiveRun();
+    expect(activeRun).not.toBeNull();
+    expect(
+      activeRun!.playerDeck.filter((card) => card.id === 'card-001'),
+    ).toHaveLength(2);
   });
 });

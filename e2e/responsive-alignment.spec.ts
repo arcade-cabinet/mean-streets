@@ -1,7 +1,15 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 
-const FIXTURES = ['menu', 'difficulty', 'deck-garage', 'combat', 'card'] as const;
+const FIXTURES = [
+  'menu',
+  'difficulty',
+  'deck-garage',
+  'combat',
+  'card',
+  'pack-opening',
+  'game-over',
+] as const;
 
 async function assertNoHorizontalOverflow(page: Page, fixture: string) {
   await page.goto(`/?fixture=${fixture}`);
@@ -24,11 +32,7 @@ async function assertNoHorizontalOverflow(page: Page, fixture: string) {
 
 test.describe('responsive horizontal alignment', () => {
   for (const fixture of FIXTURES) {
-    test(`${fixture} fits within viewport`, async ({ page }, testInfo) => {
-      // GameScreen action bar overflows at 390px (iPhone 14) — tracked layout bug, not test bug.
-      if (fixture === 'combat' && testInfo.project.name === 'iphone-14') {
-        test.fixme(true, 'game-screen overflows at 390px width — needs CSS fix');
-      }
+    test(`${fixture} fits within viewport`, async ({ page }) => {
       await assertNoHorizontalOverflow(page, fixture);
     });
   }

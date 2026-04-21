@@ -1,4 +1,4 @@
-import { getDatabase, saveWebStore } from './database';
+import { getDatabase, withDatabaseWriteLock } from './database';
 
 export interface CardPreset {
   id: string;
@@ -37,6 +37,17 @@ export interface StoredCardInstance {
   unlockDifficulty: 'easy' | 'medium' | 'hard' | 'nightmare' | 'ultra-nightmare';
 }
 
+/**
+ * Full owned inventory entry (v1.2).
+ *
+ * `cardInstances` remains as a best-per-cardId summary for older readers and
+ * collection/gallery surfaces. `cardInventory` is the authoritative list of
+ * every owned instance, including duplicates needed for merge progression.
+ */
+export interface StoredCardInventoryItem extends StoredCardInstance {
+  cardId: string;
+}
+
 export interface PlayerProfile {
   unlockedCardIds: string[];
   /**
@@ -46,12 +57,24 @@ export interface PlayerProfile {
    */
   cardInstances?: Record<string, StoredCardInstance>;
   /**
+   * Optional v1.2 sidecar: every owned card instance, including duplicates.
+   * This is the authoritative source for merge progression; `cardInstances`
+   * is kept as a best-instance summary per card id for compatibility.
+   */
+  cardInventory?: StoredCardInventoryItem[];
+  /**
    * Mythic card ids currently owned by the player (RULES §11).
    * Persisted separately so match bootstrap can exclude these from the
    * shared unassigned pool and pre-seed mythicAssignments for side 'A'.
    * A mythic id here is always also present in unlockedCardIds.
    */
   ownedMythicIds?: string[];
+  /**
+   * Count of Perfect Wars won after the global mythic pool was already
+   * exhausted. RULES §13.4 scales the fallback payout by this count:
+   * $500, $1000, $1500, ...
+   */
+  perfectWarsAfterPoolExhaustion?: number;
   wins: number;
   lastPlayedAt: string | null;
 }
@@ -155,6 +178,17 @@ export async function loadProfile(): Promise<PlayerProfile> {
     }
     if (migrated) await saveProfile(profile);
   }
+  if (profile.cardInventory) {
+    let migrated = false;
+    for (const instance of profile.cardInventory) {
+      const raw = instance.unlockDifficulty as unknown;
+      if (raw === LEGACY_SUDDEN_DEATH) {
+        instance.unlockDifficulty = 'ultra-nightmare';
+        migrated = true;
+      }
+    }
+    if (migrated) await saveProfile(profile);
+  }
   return profile;
 }
 
@@ -183,9 +217,9 @@ export async function resetPersistenceForTests(): Promise<void> {
     return;
   }
 
-  const db = await getDatabase();
-  await db.execute('DELETE FROM app_kv;');
-  await saveWebStore();
+  await withDatabaseWriteLock(async (lockedDb) => {
+    await lockedDb.execute('DELETE FROM app_kv;');
+  });
   migrationPromise = null;
 }
 
@@ -238,16 +272,16 @@ async function setItem<T>(namespace: string, key: string, value: T): Promise<voi
     return;
   }
 
-  const db = await getDatabase();
   const now = new Date().toISOString();
-  await db.run(
-    `INSERT INTO app_kv(namespace, item_key, value, updated_at)
-      VALUES (?, ?, ?, ?)
-      ON CONFLICT(namespace, item_key)
-      DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
-    [namespace, key, JSON.stringify(value), now],
-  );
-  await saveWebStore();
+  await withDatabaseWriteLock(async (db) => {
+    await db.run(
+      `INSERT INTO app_kv(namespace, item_key, value, updated_at)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(namespace, item_key)
+        DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+      [namespace, key, JSON.stringify(value), now],
+    );
+  });
 }
 
 async function deleteItem(namespace: string, key: string): Promise<void> {
@@ -256,9 +290,9 @@ async function deleteItem(namespace: string, key: string): Promise<void> {
     return;
   }
 
-  const db = await getDatabase();
-  await db.run('DELETE FROM app_kv WHERE namespace = ? AND item_key = ?', [namespace, key]);
-  await saveWebStore();
+  await withDatabaseWriteLock(async (db) => {
+    await db.run('DELETE FROM app_kv WHERE namespace = ? AND item_key = ?', [namespace, key]);
+  });
 }
 
 async function namespaceCount(namespace: string): Promise<number> {

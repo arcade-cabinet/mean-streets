@@ -19,5 +19,16 @@
   ],
   "unlocked": true,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "street-right",
+    "palette": "ember",
+    "layers": {
+      "legs": "plant-tank",
+      "torso": "hoodie",
+      "body": "bandana-2",
+      "arms": "fists"
+    }
+  }
 }

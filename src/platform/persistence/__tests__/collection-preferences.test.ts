@@ -60,6 +60,20 @@ describe('loadPreferences', () => {
     expect(prefs[1]).toEqual({ cardId: 'card-b', enabled: true, priority: 5 });
   });
 
+  it('falls back to legacy raw card ids when reading bucket-key preferences', async () => {
+    current.cardPreferences = {
+      'card-a': { cardId: 'card-a', enabled: false, priority: 3 },
+    };
+
+    const prefs = await loadPreferences(['card-a::legendary']);
+
+    expect(prefs[0]).toEqual({
+      cardId: 'card-a::legendary',
+      enabled: false,
+      priority: 3,
+    });
+  });
+
   it('returns empty array when no ids requested', async () => {
     const prefs = await loadPreferences([]);
     expect(prefs).toEqual([]);

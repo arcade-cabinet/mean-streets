@@ -1,11 +1,16 @@
 """
 Extract mythic silhouettes from sheets 04 and 05.
 Uses same threshold-based extraction as the main pipeline.
-Output: raw-assets/sprites/mythics/{name}.png
+Outputs extracted sprites to raw-assets/sprites/mythics/{name}.png and then
+rebuilds public/assets/card-art/mythic-{01..10}.png from the authored custom
+portrait assignments.
 """
+from collections import Counter
 from pathlib import Path
 from PIL import Image
 import json
+
+from compose_mythics import assigned_sprite, compose, fail
 
 
 def extract_sprites_from_sheet(sheet_path: Path, threshold: int = 128) -> list[tuple[Image.Image, tuple[int,int,int,int]]]:
@@ -104,46 +109,35 @@ def main():
             rgba.save(out_path)
             print(f"  {name}: {sprite_img.size[0]}x{sprite_img.size[1]} → {out_path.name}")
 
-    # Now generate the card art PNGs for the 10 mythics using the best sprites
     card_art_dir = root / "public" / "assets" / "card-art"
+    card_art_dir.mkdir(parents=True, exist_ok=True)
+    mythic_dir = root / "config" / "raw" / "cards" / "mythics"
+    mythics = [
+        json.loads(path.read_text())
+        for path in sorted(mythic_dir.glob("*.json"))
+    ]
 
-    # Map mythic IDs to preferred sprite names
-    mythic_mapping = {
-        "mythic-01": "the-silhouette",
-        "mythic-02": "the-accountant",
-        "mythic-03": "the-architect",
-        "mythic-04": "the-informer",
-        "mythic-05": "the-ghost",
-        "mythic-06": "the-warlord",
-        "mythic-07": "the-fixer",
-        "mythic-08": "the-magistrate",
-        "mythic-09": "the-phantom",
-        "mythic-10": "the-reaper",
-    }
+    mythic_ids = {card["id"] for card in mythics}
+    for path in card_art_dir.glob("mythic-*.png"):
+        if path.stem in mythic_ids:
+            path.unlink()
+
+    sprite_names = [assigned_sprite(card) for card in mythics]
+    duplicates = sorted(
+        sprite_name for sprite_name, count in Counter(sprite_names).items() if count > 1
+    )
+    if duplicates:
+        fail(f"duplicate mythic sprite assignments: {', '.join(duplicates)}")
 
     composed = 0
-    for card_id, sprite_name in mythic_mapping.items():
+    for card in mythics:
+        card_id = card["id"]
+        sprite_name = assigned_sprite(card)
         sprite_path = out_dir / f"{sprite_name}.png"
         if not sprite_path.exists():
-            # Try alt version
-            sprite_path = out_dir / f"{sprite_name}-alt.png"
-        if not sprite_path.exists():
-            print(f"  SKIP {card_id}: no sprite for {sprite_name}")
-            continue
+            fail(f"{card_id}: {sprite_name}.png not found in {out_dir}")
 
-        # Compose onto 120x160 canvas (same as other card art)
-        spr = Image.open(sprite_path).convert("RGBA")
-        cw, ch = 120, 160
-        canvas = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
-
-        sw, sh = spr.size
-        scale = min(int(cw * 0.85) / max(sw, 1), int(ch * 0.85) / max(sh, 1))
-        nw, nh = max(1, int(sw * scale)), max(1, int(sh * scale))
-        spr = spr.resize((nw, nh), Image.LANCZOS)
-        x = (cw - nw) // 2
-        y = ch - nh - 4
-        canvas.paste(spr, (x, y), spr)
-
+        canvas = compose(sprite_path)
         out_path = card_art_dir / f"{card_id}.png"
         canvas.save(out_path)
         composed += 1

@@ -19,5 +19,16 @@
   "unlocked": false,
   "unlockCondition": "Seize 16 positions total",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "fan",
+    "palette": "slate",
+    "layers": {
+      "backdrop": "burner-phone",
+      "support": "chain",
+      "primary": "knife",
+      "badge": "hook-blade"
+    }
+  }
 }

@@ -20,5 +20,16 @@
   "unlocked": false,
   "unlockCondition": "Use 16 drugs in total across games",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "totem",
+    "palette": "haze",
+    "layers": {
+      "backdrop": "pill-bottle",
+      "support": "syringe",
+      "primary": "prescription-bottle",
+      "badge": "money-clip"
+    }
+  }
 }

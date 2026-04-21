@@ -20,5 +20,16 @@
   "unlocked": false,
   "unlockCondition": "Kill 11 enemies total",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "fan",
+    "palette": "gunmetal",
+    "layers": {
+      "backdrop": "brass-knuckles",
+      "support": "knife-2",
+      "primary": "knife",
+      "badge": "hook-blade"
+    }
+  }
 }

@@ -90,6 +90,26 @@ describe('runIntangiblesPhase — probabilistic bribe', () => {
     expect(state.metrics.bribesFailed).toBe(1);
     expect(state.metrics.bribesAccepted).toBe(0);
   });
+
+  it('does not spend LAUNDER currency on bribes', () => {
+    const attacker = mkTurf('a', [up(mkTough())]);
+    const defender = mkTurf('d', [
+      up(mkTough()),
+      up(
+        mkCurrency(1000, 'currency-launder', {
+          rarity: 'legendary',
+          abilities: ['LAUNDER'],
+        }),
+      ),
+    ]);
+    const state = mkState([attacker], [defender], 1);
+    const out = runIntangiblesPhase(state, Q);
+
+    expect(out.kind).toBe('proceed');
+    expect(defender.stack.some((sc) => sc.card.id === 'currency-launder')).toBe(true);
+    expect(state.metrics.bribesAccepted).toBe(0);
+    expect(state.metrics.bribesFailed).toBe(0);
+  });
 });
 
 // ── Tangibles — rarity-scaled ───────────────────────────────

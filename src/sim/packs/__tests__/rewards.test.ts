@@ -6,6 +6,7 @@ import {
   computePerTurfRewards,
   computeRewardBundle,
   computeWarOutcomeReward,
+  flattenRewardBundlePacks,
   rollPackCategory,
 } from '../rewards';
 import type { WarStats } from '../../turf/types';
@@ -119,14 +120,20 @@ describe('computeWarOutcomeReward', () => {
     expect(pool).toHaveLength(2);
   });
 
-  it('falls back to $500 on Perfect War with empty pool', () => {
+  it('scales Perfect War fallback currency after pool exhaustion', () => {
     const stats = mkStats([
       { seizedBy: 'A', seizedTurfIdx: 0, turnsOnThatTurf: 1 },
     ]);
-    const reward = computeWarOutcomeReward(stats, true, [], createRng(7), 'A');
-    expect(reward.outcome).toBe('perfect');
-    expect(reward.mythicDraw).toBeNull();
-    expect(reward.escalatingCurrency).toBe(500);
+    const first = computeWarOutcomeReward(stats, true, [], createRng(7), 'A', 0);
+    expect(first.outcome).toBe('perfect');
+    expect(first.mythicDraw).toBeNull();
+    expect(first.escalatingCurrency).toBe(500);
+
+    const second = computeWarOutcomeReward(stats, true, [], createRng(7), 'A', 1);
+    expect(second.escalatingCurrency).toBe(1000);
+
+    const third = computeWarOutcomeReward(stats, true, [], createRng(7), 'A', 2);
+    expect(third.escalatingCurrency).toBe(1500);
   });
 
   it('returns null outcome on loss', () => {
@@ -183,6 +190,31 @@ describe('computeRewardBundle', () => {
     const bundle = computeRewardBundle(stats, false, [], createRng(1), 'A');
     expect(bundle.turfRewards).toEqual([]);
     expect(bundle.warOutcomeReward.outcome).toBeNull();
+  });
+
+  it('threads the fallback count through the bundle outcome reward', () => {
+    const stats = mkStats([
+      { seizedBy: 'A', seizedTurfIdx: 0, turnsOnThatTurf: 1 },
+    ]);
+    const bundle = computeRewardBundle(stats, true, [], createRng(5), 'A', 2);
+    expect(bundle.warOutcomeReward.escalatingCurrency).toBe(1500);
+  });
+});
+
+describe('flattenRewardBundlePacks', () => {
+  it('collects every concrete reward pack from the bundle', () => {
+    const stats = mkStats([
+      { seizedBy: 'A', seizedTurfIdx: 0, turnsOnThatTurf: 1 },
+      { seizedBy: 'A', seizedTurfIdx: 1, turnsOnThatTurf: 2 },
+      { seizedBy: 'A', seizedTurfIdx: 2, turnsOnThatTurf: 3 },
+    ]);
+    const bundle = computeRewardBundle(stats, true, [], createRng(9), 'A');
+    expect(flattenRewardBundlePacks(bundle).map((pack) => pack.kind)).toEqual([
+      'standard',
+      'triple',
+      'single',
+      'standard',
+    ]);
   });
 });
 

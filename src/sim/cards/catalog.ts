@@ -6,7 +6,12 @@ import {
   type CompiledTough,
   CompiledToughSchema,
 } from './schemas';
-import type { ToughCard } from '../turf/types';
+import {
+  generateDrugs,
+  generateWeapons,
+  loadCurrencyCatalog,
+} from '../turf/generators';
+import type { Card, ToughCard } from '../turf/types';
 import simConfig from '../../data/ai/turf-sim.json';
 
 const parsed = (compiledToughs as unknown[]).map((entry) =>
@@ -19,6 +24,10 @@ const parsed = (compiledToughs as unknown[]).map((entry) =>
 const parsedMythics = (compiledMythics as unknown[]).map((entry) =>
   CompiledMythicSchema.parse(entry),
 );
+
+function clonePortrait<T>(value: T): T {
+  return structuredClone(value);
+}
 
 function toToughCard(card: CompiledTough | CompiledMythic): ToughCard {
   return {
@@ -42,11 +51,32 @@ function toToughCard(card: CompiledTough | CompiledMythic): ToughCard {
   };
 }
 
+function cloneRuntimeCard<T extends Card>(card: T): T {
+  if (card.kind === 'tough') {
+    return {
+      ...card,
+      abilities: [...card.abilities],
+    } as T;
+  }
+  if (card.kind === 'currency') {
+    return {
+      ...card,
+      abilities: card.abilities ? [...card.abilities] : undefined,
+    } as T;
+  }
+  return {
+    ...card,
+    abilities: [...card.abilities],
+  } as T;
+}
+
 export function loadToughCards(): ToughCard[] {
   return parsed.map(toToughCard);
 }
 
-export function loadStarterToughCards(starterCount = simConfig.starterCollection.toughPoolSize): ToughCard[] {
+export function loadStarterToughCards(
+  starterCount = simConfig.starterCollection.toughPoolSize,
+): ToughCard[] {
   return loadToughCards().slice(0, starterCount);
 }
 
@@ -57,7 +87,11 @@ export function loadStarterToughCards(starterCount = simConfig.starterCollection
  * consumer for the life of the process.
  */
 export function loadCompiledToughs(): CompiledTough[] {
-  return parsed.map((t) => ({ ...t, abilities: [...t.abilities] }));
+  return parsed.map((t) => ({
+    ...t,
+    abilities: [...t.abilities],
+    portrait: clonePortrait(t.portrait),
+  }));
 }
 
 /**
@@ -75,6 +109,26 @@ export function loadMythicCards(): ToughCard[] {
   return parsedMythics.map(toToughCard);
 }
 
+let cachedCollectibleCards: Card[] | null = null;
+
+/**
+ * Full collectible catalog used by persistence and gallery surfaces.
+ * Centralizing this avoids drift between screens when new card families
+ * (like mythics or authored currency) are added to the owned-card set.
+ */
+export function loadCollectibleCards(): Card[] {
+  if (cachedCollectibleCards === null) {
+    cachedCollectibleCards = [
+      ...loadToughCards(),
+      ...loadMythicCards(),
+      ...generateWeapons(),
+      ...generateDrugs(),
+      ...loadCurrencyCatalog(),
+    ];
+  }
+  return cachedCollectibleCards.map(cloneRuntimeCard);
+}
+
 /** Return the 10 mythic card ids as a fresh array for `mythicPool` seeding. */
 export function loadMythicPoolIds(): string[] {
   return parsedMythics.map((m) => m.id);
@@ -82,5 +136,9 @@ export function loadMythicPoolIds(): string[] {
 
 /** Raw compiled mythic records (includes `mythic_signature` doc block). */
 export function loadCompiledMythics(): CompiledMythic[] {
-  return parsedMythics.map((m) => ({ ...m, abilities: [...m.abilities] }));
+  return parsedMythics.map((m) => ({
+    ...m,
+    abilities: [...m.abilities],
+    portrait: clonePortrait(m.portrait),
+  }));
 }

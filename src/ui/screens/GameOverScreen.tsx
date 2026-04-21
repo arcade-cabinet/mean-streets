@@ -1,5 +1,10 @@
 import { useEffect } from 'react';
-import type { Card, TurfMetrics } from '../../sim/turf/types';
+import type { WarOutcome } from '../../sim/packs';
+import type {
+  Card,
+  DifficultyTier,
+  TurfMetrics,
+} from '../../sim/turf/types';
 import { Card as CardComponent } from '../cards';
 import { playVictory, playDefeat } from '../audio/sfx';
 
@@ -7,6 +12,9 @@ interface GameOverScreenProps {
   winner: 'A' | 'B';
   metrics: TurfMetrics;
   rewardCards?: Card[];
+  rewardOutcome?: WarOutcome | null;
+  rewardCurrencyAmount?: number | null;
+  rewardUnlockDifficulty?: DifficultyTier;
   onPlayAgain: () => void;
 }
 
@@ -24,8 +32,31 @@ function StatRow({ label, value }: StatRowProps) {
   );
 }
 
-export function GameOverScreen({ winner, metrics, rewardCards = [], onPlayAgain }: GameOverScreenProps) {
+function formatWarOutcome(outcome: WarOutcome): string {
+  switch (outcome) {
+    case 'perfect':
+      return 'Perfect War';
+    case 'flawless':
+      return 'Flawless War';
+    case 'dominant':
+      return 'Dominant War';
+    case 'won':
+      return 'Won War';
+  }
+}
+
+export function GameOverScreen({
+  winner,
+  metrics,
+  rewardCards = [],
+  rewardOutcome = null,
+  rewardCurrencyAmount = null,
+  rewardUnlockDifficulty,
+  onPlayAgain,
+}: GameOverScreenProps) {
   const isVictory = winner === 'A';
+  const hasRewardSummary =
+    rewardOutcome !== null || rewardCurrencyAmount !== null;
 
   useEffect(() => {
     void (isVictory ? playVictory() : playDefeat());
@@ -58,16 +89,41 @@ export function GameOverScreen({ winner, metrics, rewardCards = [], onPlayAgain 
         <StatRow label="Cards Played" value={metrics.cardsPlayed} />
       </div>
 
-      {rewardCards.length > 0 && (
+      {(hasRewardSummary || rewardCards.length > 0) && (
         <div className="gameover-rewards" data-testid="gameover-rewards">
           <h2 className="gameover-rewards-title">Spoils of War</h2>
-          <div className="gameover-rewards-grid">
-            {rewardCards.map(card => (
-              <div key={card.id} className="gameover-reward-cell">
-                <CardComponent card={card} compact />
-              </div>
-            ))}
-          </div>
+          {hasRewardSummary && (
+            <div
+              className="gameover-reward-summary"
+              data-testid="gameover-reward-summary"
+            >
+              {rewardOutcome && (
+                <StatRow
+                  label="War Outcome"
+                  value={formatWarOutcome(rewardOutcome)}
+                />
+              )}
+              {rewardCurrencyAmount !== null && (
+                <StatRow
+                  label="Fallback Bounty"
+                  value={`$${rewardCurrencyAmount.toLocaleString()}`}
+                />
+              )}
+            </div>
+          )}
+          {rewardCards.length > 0 && (
+            <div className="gameover-rewards-grid">
+              {rewardCards.map(card => (
+                <div key={card.id} className="gameover-reward-cell">
+                  <CardComponent
+                    card={card}
+                    compact
+                    unlockDifficulty={rewardUnlockDifficulty}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

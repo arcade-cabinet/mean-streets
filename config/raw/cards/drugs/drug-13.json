@@ -18,5 +18,16 @@
   ],
   "unlocked": true,
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "triptych-left",
+    "palette": "toxic",
+    "layers": {
+      "backdrop": "wallet",
+      "support": "prescription-bottle",
+      "primary": "herb-bag",
+      "badge": "pill-bottle"
+    }
+  }
 }

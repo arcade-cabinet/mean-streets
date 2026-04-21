@@ -20,5 +20,16 @@
   "unlocked": false,
   "unlockCondition": "Win without losing a position",
   "locked": false,
-  "draft": true
+  "draft": true,
+  "portrait": {
+    "mode": "stack",
+    "template": "totem",
+    "palette": "slate",
+    "layers": {
+      "backdrop": "ammo-box",
+      "support": "burner-phone",
+      "primary": "paper-bag",
+      "badge": "grenade"
+    }
+  }
 }

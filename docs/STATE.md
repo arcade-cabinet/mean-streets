@@ -1,6 +1,6 @@
 ---
 title: State
-updated: 2026-04-19
+updated: 2026-04-20
 status: current
 domain: context
 ---
@@ -11,9 +11,9 @@ What is done, what is in flight, and what comes next. Release-readiness
 status lives in [PRODUCTION.md](./PRODUCTION.md). Branch history in
 `git log`; CHANGELOG.md is the canonical per-version diff.
 
-## Where We Are (2026-04-19)
+## Where We Are (2026-04-20)
 
-Latest release tag: `v1.2.0-beta.1`. Most recent balance lock:
+Latest release tag: `v1.2.1-beta.1`. Most recent balance lock:
 `winRateA 0.512` / `timeoutRate 0.000` / `avgTurns 16.3`. No active
 feature branches. Post-1.0 polish runway tracked in
 [PRODUCTION.md](./PRODUCTION.md). For exact `main` HEAD use
@@ -29,6 +29,13 @@ feature branches. Post-1.0 polish runway tracked in
   Capacitor 8 SPM migration; fixed on `main` in PR #36 but the rerun
   uses the historical workflow file, so the iOS archive for this
   specific tag is missing. The next release tag will produce one.
+
+### v1.2.1-beta.1 — 2026-04-20
+
+- Documentation-only cleanup release.
+- Clarified historical versioning: public Git tags jump `v0.7.1 →
+  v1.2.0-beta.1`; `v1.0.0` and `v1.1.0-beta.1` remain documented
+  milestones, not published tags.
 
 ### v1.1.0-beta.1 — 2026-04-19
 
@@ -70,7 +77,7 @@ shape" dragons; 5 documented as follow-ups in
 
 ### v1.0.0 — 2026-04-18
 
-- **Card art pipeline** — 212 PNG silhouettes, dark red surface, ragged edges, 212 unique flavor text entries.
+- **Card art pipeline** — 213 PNG silhouettes, dark red surface, ragged edges, 213 unique flavor text entries.
 - **Draw flow redesign** — pending → contextual placement, auto-market for unplayable modifiers, peek button, drawn card modal with flip animation.
 - **SFX** — procedural sound via Tone.js, integrated on all game events.
 - **Phone layout** — vertical menu, HUD draw button, safe-area aware.
@@ -78,8 +85,10 @@ shape" dragons; 5 documented as follow-ups in
 - **Automerge** — Dependabot automerge workflow added.
 - **PRs**: #27 (beta.1), #28 (rc.1), #29 (mythic art), #30 (phone fix), #31 (1.0.0), #32 (changelog).
 - **Note**: `v1.0.0` was bumped in `package.json` but never tagged or
-  released on GitHub; the release tag history jumps `v0.7.1 →
-  v1.2.0-beta.1`. CHANGELOG entry for `v1.0.0` is canonical.
+  released on GitHub; `v1.1.0-beta.1` likewise remained an internal
+  milestone. The release tag history jumps `v0.7.1 →
+  v1.2.0-beta.1`. CHANGELOG + STATE entries for those milestones are
+  canonical.
 
 ### v0.6.0
 
@@ -96,14 +105,14 @@ mythic abilities, pack simplification, and workflow consolidation.
 
 | Suite | Count | Runner |
 |-------|-------|--------|
-| Node (sim, ECS, pure logic) | 574 | `pnpm run test:node` |
-| DOM (jsdom presentational) | 109 | `pnpm run test:dom` |
-| Browser (real Chromium) | 95 | `pnpm run test:browser` |
-| E2E (4 device viewports) | 142 pass / 34 skip | `pnpm run test:e2e` (local) |
+| Node (sim, ECS, pure logic) | 624 pass / 4 skip | `pnpm run test:node` |
+| DOM (jsdom presentational) | 116 pass | `pnpm run test:dom` |
+| Browser (real Chromium) | 106 pass | `pnpm run test:browser` |
+| E2E (4 device viewports) | 157 pass / 9 skip + 28 visual captures | `pnpm run test:e2e` (local) |
 
 ## Current Work
 
-No active feature branches. Beta channel is `v1.2.0-beta.1`.
+No active feature branches. Beta channel is `v1.2.1-beta.1`.
 
 ## What Comes Next
 
@@ -118,6 +127,8 @@ multiplayer) live in [DESIGN.md](./DESIGN.md) "Future Direction".
 git log --oneline -10          # recent commits
 gh pr list                     # open PRs
 pnpm run analysis:benchmark    # check current balance state
+pnpm run test:analysis:slow    # full slow analysis sweep
+pnpm run typecheck            # referenced TS projects (app/node/sim)
 pnpm run test:node             # node tests (fast)
 pnpm run test:browser          # browser tests (real Chromium)
 pnpm run test:e2e              # E2E (local only, 4 device viewports)

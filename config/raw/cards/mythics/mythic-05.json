@@ -13,6 +13,10 @@
     "description": "Strikes bypass the opponent's top tough and target any face-up-via-retreat tough in their stack. Forces a reveal on the stack path during the attack.",
     "balance_note": "Glass cannon. Strike 9 is brutal. R 5 means The Ghost falls to a single well-equipped attacker. Use to pick off the opponent's retreated tough before they can shift it back up."
   },
+  "portrait": {
+    "mode": "custom",
+    "sprite": "the-ghost-alt2"
+  },
   "unlocked": false,
   "locked": true,
   "draft": true
