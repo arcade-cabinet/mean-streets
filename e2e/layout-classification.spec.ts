@@ -22,7 +22,7 @@ test('data-layout matches expectation for this project', async ({ page }, testIn
   const expected = EXPECTED[testInfo.project.name];
   test.skip(!expected, `no expectation pinned for ${testInfo.project.name}`);
 
-  await page.goto('/?fixture=menu');
+  await page.goto('?fixture=menu');
   await page.waitForLoadState('networkidle');
   const layoutId = await page.evaluate(() => document.documentElement.dataset.layout);
   expect(layoutId, `${testInfo.project.name} should resolve to ${expected}`).toBe(expected);

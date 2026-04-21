@@ -12,7 +12,7 @@ const FIXTURES = [
 ] as const;
 
 async function assertNoHorizontalOverflow(page: Page, fixture: string) {
-  await page.goto(`/?fixture=${fixture}`);
+  await page.goto(`?fixture=${fixture}`);
   await page.waitForLoadState('networkidle');
   const overflow = await page.evaluate(() => {
     const innerW = window.innerWidth;
@@ -45,7 +45,7 @@ test.describe('menu logo does not overlap menu actions', () => {
       'only assert against stacked menu variant',
     );
 
-    await page.goto('/?fixture=menu');
+    await page.goto('?fixture=menu');
     await page.waitForLoadState('networkidle');
 
     const rects = await page.evaluate(() => {

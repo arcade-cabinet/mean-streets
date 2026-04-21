@@ -4,7 +4,7 @@ test.describe('mythic engagement (v0.3)', () => {
   test('mythic cards render gold-ring treatment in the card fixture', async ({
     page,
   }) => {
-    await page.goto('/?fixture=card');
+    await page.goto('?fixture=card');
     const mythicCard = page.getByTestId('card-mythic-01');
     await expect(mythicCard).toBeVisible();
     await expect(mythicCard).toHaveAttribute('data-rarity', 'mythic');
@@ -14,7 +14,7 @@ test.describe('mythic engagement (v0.3)', () => {
   test('MythicBadge component renders on mythic cards in the card fixture', async ({
     page,
   }) => {
-    await page.goto('/?fixture=card');
+    await page.goto('?fixture=card');
     await expect(page.getByTestId('card-mythic-01')).toBeVisible();
     await expect(page.getByTestId('mythic-badge').first()).toBeVisible();
   });

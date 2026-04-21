@@ -30,7 +30,7 @@ test('unfolded posture activates fold-aware gutter + stays aligned', async ({ pa
     };
   });
 
-  await page.goto('/?fixture=menu');
+  await page.goto('?fixture=menu');
   await page.waitForLoadState('networkidle');
 
   const info = await page.evaluate(() => {

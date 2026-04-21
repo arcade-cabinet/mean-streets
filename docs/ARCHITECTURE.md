@@ -177,7 +177,7 @@ e2e/                              # Playwright specs (4 device profiles)
   pack-opening.spec.ts            # Pack-opening fixture route (sealed → reveal → summary)
   war-outcome.spec.ts             # Game-over fixture route (winner + rewards)
   responsive-alignment.spec.ts    # Overflow checks across fixtures
-  visual-fixtures.spec.ts         # Fixture screenshots for review
+  visual-fixtures.spec.ts         # Opt-in fixture route smoke test
   layout-classification.spec.ts   # Device layout detection
   fold-posture.spec.ts            # Fold-aware layout
 

@@ -12,7 +12,7 @@ const TIERS = [
 
 test.describe('difficulty grid', () => {
   test('fixture renders all 5 tier tiles', async ({ page }) => {
-    await page.goto('/?fixture=difficulty');
+    await page.goto('?fixture=difficulty');
     await expect(page.getByTestId('difficulty-screen')).toBeVisible();
 
     for (const tier of TIERS) {
@@ -21,14 +21,14 @@ test.describe('difficulty grid', () => {
   });
 
   test('Sudden Death tier is absent (removed in v0.3)', async ({ page }) => {
-    await page.goto('/?fixture=difficulty');
+    await page.goto('?fixture=difficulty');
     await expect(page.getByTestId('difficulty-screen')).toBeVisible();
 
     await expect(page.getByTestId('diff-tile-sudden-death')).toHaveCount(0);
   });
 
   test('selecting a tile highlights it and enables start', async ({ page }, testInfo) => {
-    await page.goto('/?fixture=difficulty');
+    await page.goto('?fixture=difficulty');
     await expect(page.getByTestId('difficulty-screen')).toBeVisible();
 
     const startBtn = page.getByTestId('diff-start');
@@ -44,7 +44,7 @@ test.describe('difficulty grid', () => {
   });
 
   test('grid tiles fit within viewport on all device profiles', async ({ page }) => {
-    await page.goto('/?fixture=difficulty');
+    await page.goto('?fixture=difficulty');
     await expect(page.getByTestId('difficulty-screen')).toBeVisible();
 
     const overflow = await page.evaluate(() => ({
@@ -55,7 +55,7 @@ test.describe('difficulty grid', () => {
   });
 
   test('back button is visible', async ({ page }) => {
-    await page.goto('/?fixture=difficulty');
+    await page.goto('?fixture=difficulty');
     await expect(page.getByTestId('difficulty-screen')).toBeVisible();
     await expect(page.getByTestId('diff-back')).toBeVisible();
   });

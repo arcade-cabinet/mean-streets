@@ -85,8 +85,8 @@ Environment: Playwright against the running dev server
   (`scripts/capture-visual-fixtures.mjs`), which drives Playwright's raw
   browser API directly against the same fixture routes.
 - `e2e/visual-fixtures.spec.ts` is now opt-in only
-  (`MEAN_STREETS_VISUAL_SPECS=1`) so a plain `playwright test` run
-  does not collapse under the unsupported all-in-one visual matrix.
+  (`MEAN_STREETS_VISUAL_SPECS=1`) as a fixture-route smoke test; screenshot
+  capture lives in `scripts/capture-visual-fixtures.mjs`.
 - `test:e2e:governor` runs the long-form `@governor` full-game suite
   separately, headless, on `desktop-chromium` with `--workers=1`.
 
@@ -222,7 +222,7 @@ pnpm run analysis:autobalance    # iterative stat tuning loop
   interaction.
 - E2E: at least one Playwright spec per shipped screen or fixture surface.
   Live app routes should be covered through real navigation flows; fixture-only
-  surfaces such as `pack-opening` may be covered through explicit `/?fixture=`
+  surfaces such as `pack-opening` may be covered through explicit `?fixture=`
   routes instead.
 - Balance: 70% lock coverage before release; 100% post-launch (weekly cron).
 

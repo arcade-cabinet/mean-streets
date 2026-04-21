@@ -85,16 +85,16 @@ Focus review on:
 - If visual changes are made, regenerate the export set before doing subjective review.
 - FixtureApp currently supports exactly the 7 fixture routes listed
   above. Add the route first before documenting any new fixture here.
-- `e2e/pack-opening.spec.ts` now runs against the `/?fixture=pack-opening`
+- `e2e/pack-opening.spec.ts` now runs against the `?fixture=pack-opening`
   route rather than a dead live-app path.
 - `e2e/visual-fixtures.spec.ts` is opt-in only
-  (`MEAN_STREETS_VISUAL_SPECS=1`); the supported capture path is
+  (`MEAN_STREETS_VISUAL_SPECS=1`) as a fixture-route smoke test; the supported capture path is
   `pnpm run test:visual` / `visual:export*` via
   `scripts/capture-visual-fixtures.mjs`.
 - `e2e/fullpage.spec.ts` is also opt-in only
   (`MEAN_STREETS_FULLPAGE=1`); the supported capture path is
   `pnpm run test:visual:fullpage` / `visual:export:fullpage*`.
-- `e2e/visual-fixtures.spec.ts` and `e2e/fullpage.spec.ts` disable CSS
+- The supported capture scripts and `e2e/fullpage.spec.ts` disable CSS
   animations during capture so the exported screenshots stay stable.
 
 ## Gap Analysis Worksheet

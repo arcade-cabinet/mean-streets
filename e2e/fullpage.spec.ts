@@ -8,7 +8,7 @@ const RUN = process.env.MEAN_STREETS_FULLPAGE === '1';
 const SCREENSHOT_TIMEOUT_MS = 30_000;
 
 async function full(page: Page, fixture: string, project: string) {
-  await page.goto(`/?fixture=${fixture}`);
+  await page.goto(`?fixture=${fixture}`);
   await page.waitForLoadState('networkidle');
   const dir = join(DIR, project, 'fullpage');
   mkdirSync(dir, { recursive: true });
