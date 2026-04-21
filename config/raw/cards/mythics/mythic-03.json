@@ -5,10 +5,20 @@
   "tagline": "Every block needs a blueprint.",
   "archetype": "hustler",
   "affiliation": "freelance",
-  "power": [5],
-  "resistance": [8],
-  "rarity": ["mythic"],
-  "abilities": ["BUILD_TURF"],
+  "power": [
+    5
+  ],
+  "resistance": [
+    8
+  ],
+  "maxHp": 8,
+  "hp": 8,
+  "rarity": [
+    "mythic"
+  ],
+  "abilities": [
+    "BUILD_TURF"
+  ],
   "mythic_signature": {
     "description": "On play: carve out an additional reserve turf for your side, even at Ultra-Nightmare's 1-turf cap. One-shot effect.",
     "balance_note": "Mid stats, late-war comeback play. Modest offense, serviceable resistance. The real payoff is turning a 1-turf losing position into a 2-turf toehold."

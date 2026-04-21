@@ -2077,6 +2077,23 @@
     "palette": "smoke",
     "layers": [
       {
+        "role": "back",
+        "sprite": "legs/lean-2.png",
+        "scale": 0.578,
+        "x": 21,
+        "y": 9,
+        "rotation": 8.81,
+        "mirror": true,
+        "color": [
+          162,
+          176,
+          184,
+          38
+        ],
+        "fill": 0.88,
+        "anchor": "bottom"
+      },
+      {
         "role": "pose",
         "sprite": "torsos/wide-braced-2.png",
         "scale": 0.827,

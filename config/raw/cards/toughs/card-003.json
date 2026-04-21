@@ -18,6 +18,8 @@
     6,
     7
   ],
+  "maxHp": 7,
+  "hp": 7,
   "rarity": [
     "common"
   ],

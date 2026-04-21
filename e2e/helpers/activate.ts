@@ -1,7 +1,7 @@
 import type { Locator, TestInfo } from '@playwright/test';
 
 /**
- * Tap the target on touch-enabled projects, click it otherwise.
+ * Activate the target with a DOM click across pointer profiles.
  *
  * Waits for visibility and best-effort scrolls into view before acting
  * so the action survives narrow phone viewports where the tap target
@@ -11,19 +11,12 @@ import type { Locator, TestInfo } from '@playwright/test';
  *
  * Shared across every e2e spec that needs unified tap/click routing.
  */
-export async function activate(target: Locator, testInfo: TestInfo): Promise<void> {
+export async function activate(
+  target: Locator,
+  testInfo: TestInfo,
+): Promise<void> {
+  void testInfo;
   await target.waitFor({ state: 'visible' });
   await target.scrollIntoViewIfNeeded().catch(() => undefined);
-  if (testInfo.project.use.hasTouch) {
-    try {
-      await target.tap({ force: true });
-      return;
-    } catch {
-      // Chromium mobile emulation can reject tap() on transformed / composited
-      // game elements even when the DOM click target is valid.
-      await target.click({ force: true });
-    }
-    return;
-  }
   await target.click({ force: true });
 }

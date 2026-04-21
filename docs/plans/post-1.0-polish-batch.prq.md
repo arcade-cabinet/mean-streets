@@ -416,9 +416,54 @@ are the ones that genuinely require their hands.
 
 **Dependencies:** none.
 
+#### T13 — Tutorial flow annotations
+
+**Priority:** P2 (onboarding clarity)
+**Files:** `src/ui/screens/GameScreen.tsx`, `src/ui/board/*`,
+`src/platform/persistence/profile.ts`, new tutorial-state module if
+needed.
+**Description:** Add first-war tutorial annotations for the systems
+that are easy to miss in a deterministic no-dice game: market,
+holding, heat, bribes, pushed strikes, and mythic ownership. Keep copy
+short and data-driven so the writer can revise text later without
+rewiring the flow.
+
+**Acceptance criteria:**
+- First new game shows dismissible annotations for market, holding,
+  heat, bribes, and pushed strikes when each system first becomes
+  relevant
+- Tutorial dismissal state persists through the shared Capacitor SQLite
+  profile layer, not localStorage
+- Reduced-motion mode disables any tutorial animation
+- Browser/DOM test covers first-seen and dismissed states
+
+**Dependencies:** none.
+
+#### T14 — Splash screen custom art refresh
+
+**Priority:** P3 (store polish)
+**Files:** `branding/icon.svg`, `scripts/generate-mobile-icons.sh`,
+`ios/`, `android/`, generated icon/splash outputs.
+**Description:** Replace the placeholder splash/icon treatment with a
+Mean Streets-specific mark derived from the existing branding SVG, then
+rerun `pnpm run assets:generate`. This stays in-repo: the script is the
+asset factory and no outside illustrator is required.
+
+**Acceptance criteria:**
+- `branding/icon.svg` contains the final source mark
+- `pnpm run assets:generate` regenerates the mobile icon and splash
+  outputs without manual edits
+- Generated assets are committed only if they differ from the current
+  checked-in files
+- `pnpm run cap:sync` succeeds after generation
+
+**Dependencies:** none.
+
 ## Dependencies summary
 
 ```
+T00 (silhouette uniqueness) - independent; should precede T09 baselines
+T00.5 (currency-launder art) - can ship with T00 or independently
 T01 (Node 24) - independent
 T02 (version gap doc) - independent
 T03 (tsconfig dedupe) - independent
@@ -431,9 +476,11 @@ T09 (opponent draw anim) - independent
 T10 (SPA 404 doc) - independent
 T11 (store-listing draft) - independent
 T12 (LAUNCH_READINESS draft) - independent
+T13 (tutorial annotations) - independent
+T14 (splash custom art) - independent
 ```
 
-11 of 12 are fully parallel. T06 has a soft preference for T03 to
+15 of 16 are fully parallel. T06 has a soft preference for T03 to
 land first.
 
 ## Execution config

@@ -11,6 +11,8 @@
   "resistance": [
     3
   ],
+  "maxHp": 3,
+  "hp": 3,
   "rarity": [
     "common"
   ],

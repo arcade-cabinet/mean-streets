@@ -74,7 +74,7 @@ function requireCustomPortrait(portrait, context) {
 }
 
 function compileTough({ file, data }) {
-  requireFields(data, ['id', 'kind', 'name', 'archetype', 'affiliation', 'power', 'resistance', 'rarity', 'abilities', 'unlocked', 'locked'], `toughs/${file}`);
+  requireFields(data, ['id', 'kind', 'name', 'archetype', 'affiliation', 'power', 'resistance', 'maxHp', 'hp', 'rarity', 'abilities', 'unlocked', 'locked'], `toughs/${file}`);
   if (data.kind !== 'tough') throw new Error(`toughs/${file}: expected kind=tough, got ${data.kind}`);
   requireStackPortrait(data.portrait, `toughs/${file}`);
   return {
@@ -86,6 +86,8 @@ function compileTough({ file, data }) {
     affiliation: data.affiliation,
     power: latest(data.power),
     resistance: latest(data.resistance),
+    maxHp: data.maxHp,
+    hp: data.hp,
     rarity: latest(data.rarity),
     abilities: data.abilities,
     unlocked: data.unlocked,
@@ -163,7 +165,7 @@ function compileCurrency({ file, data }) {
 function compileMythic({ file, data }) {
   requireFields(
     data,
-    ['id', 'kind', 'name', 'archetype', 'affiliation', 'power', 'resistance', 'rarity', 'abilities', 'mythic_signature', 'unlocked', 'locked'],
+    ['id', 'kind', 'name', 'archetype', 'affiliation', 'power', 'resistance', 'maxHp', 'hp', 'rarity', 'abilities', 'mythic_signature', 'unlocked', 'locked'],
     `mythics/${file}`,
   );
   if (data.kind !== 'tough') throw new Error(`mythics/${file}: expected kind=tough (mythics are toughs), got ${data.kind}`);
@@ -179,6 +181,8 @@ function compileMythic({ file, data }) {
     affiliation: data.affiliation,
     power: latest(data.power),
     resistance: latest(data.resistance),
+    maxHp: data.maxHp,
+    hp: data.hp,
     rarity,
     abilities: data.abilities,
     mythic_signature: data.mythic_signature,

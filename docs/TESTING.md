@@ -122,8 +122,11 @@ Captures screenshots of UI components for review. Review instructions in
 [VISUAL_REVIEW.md](./VISUAL_REVIEW.md).
 
 This uses `scripts/capture-visual-fixtures.mjs`, which launches a headless
-Playwright Chromium session directly and captures each fixture root across all
-four device profiles.
+Playwright Chromium session directly when `PW_HEADLESS=1`. The default
+`pnpm run test:visual` script runs it headed for interactive review; use
+`pnpm run test:visual:headless` or set `PW_HEADLESS=1` to capture without a
+display. The capture script still covers each fixture root across all four
+device profiles.
 
 ### Combined
 

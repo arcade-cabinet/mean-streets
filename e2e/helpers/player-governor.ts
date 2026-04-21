@@ -44,13 +44,24 @@ async function perceive(page: Page): Promise<PerceivedState> {
     const gameOver = !!qs('[data-testid="gameover-screen"]');
     if (gameOver) {
       return {
-        turnNumber: 0, actionsRemaining: 0, actionsTotal: 0,
-        deckCount: 0, hasPending: false, pendingIsTough: false,
-        endTurnAvailable: false, turnEnded: true, waitingForOpponent: false,
-        playerTurfEmpty: true, playerTurfHasTough: false,
-        opponentTurfEmpty: true, heat: '0%',
-        turfsPlayer: 0, turfsOpponent: 0,
-        queuedStrikeCount: 0, canDraw: false, gameOver: true,
+        turnNumber: 0,
+        actionsRemaining: 0,
+        actionsTotal: 0,
+        deckCount: 0,
+        hasPending: false,
+        pendingIsTough: false,
+        endTurnAvailable: false,
+        turnEnded: true,
+        waitingForOpponent: false,
+        playerTurfEmpty: true,
+        playerTurfHasTough: false,
+        opponentTurfEmpty: true,
+        heat: '0%',
+        turfsPlayer: 0,
+        turfsOpponent: 0,
+        queuedStrikeCount: 0,
+        canDraw: false,
+        gameOver: true,
         stackFanOpen: false,
       } satisfies PerceivedState;
     }
@@ -71,18 +82,24 @@ async function perceive(page: Page): Promise<PerceivedState> {
     const hasPending = !!qs('[data-testid="pending-card"]');
     const waitingForOpponent = !!qs('[data-testid="opponent-turn-overlay"]');
 
-    const endTurnBtn = qs('[data-testid="action-end_turn"]') as HTMLButtonElement | null;
+    const endTurnBtn = qs(
+      '[data-testid="action-end_turn"]',
+    ) as HTMLButtonElement | null;
     const endTurnAvailable = !!endTurnBtn && !endTurnBtn.disabled;
     const turnEnded = endTurnBtn?.disabled ?? false;
 
     const playerTurf = qs('[data-testid="turf-lane-A"]');
-    const playerTurfEmpty = !!playerTurf?.querySelector('.turf-composite-empty');
+    const playerTurfEmpty = !!playerTurf?.querySelector(
+      '.turf-composite-empty',
+    );
     const playerTurfHasTough = !!playerTurf?.querySelector(
       '.turf-composite-roster-entry, .turf-composite-compact-name',
     );
 
     const opponentTurf = qs('[data-testid="turf-lane-B"]');
-    const opponentTurfEmpty = !!opponentTurf?.querySelector('.turf-composite-empty');
+    const opponentTurfEmpty = !!opponentTurf?.querySelector(
+      '.turf-composite-empty',
+    );
 
     const turfsText = txt('.game-hud-bar-turfs');
     const turfsMatch = turfsText.match(/(\d+)\s*vs\s*(\d+)/);
@@ -94,7 +111,8 @@ async function perceive(page: Page): Promise<PerceivedState> {
     const heat = heatMatch ? `${heatMatch[1]}%` : '0%';
 
     const drawSlot = qs('[data-testid="slot-player-draw"]');
-    const canDraw = drawSlot?.classList.contains('board-slot-tappable') ?? false;
+    const canDraw =
+      drawSlot?.classList.contains('board-slot-tappable') ?? false;
 
     const chips = document.querySelectorAll('[data-testid^="queued-chip-"]');
     const queuedStrikeCount = chips.length;
@@ -106,11 +124,25 @@ async function perceive(page: Page): Promise<PerceivedState> {
     const stackFanOpen = !!qs('.stack-fan-backdrop');
 
     return {
-      turnNumber, actionsRemaining, actionsTotal, deckCount,
-      hasPending, pendingIsTough, endTurnAvailable, turnEnded, waitingForOpponent,
-      playerTurfEmpty, playerTurfHasTough, opponentTurfEmpty,
-      heat, turfsPlayer, turfsOpponent, queuedStrikeCount,
-      canDraw, gameOver, stackFanOpen,
+      turnNumber,
+      actionsRemaining,
+      actionsTotal,
+      deckCount,
+      hasPending,
+      pendingIsTough,
+      endTurnAvailable,
+      turnEnded,
+      waitingForOpponent,
+      playerTurfEmpty,
+      playerTurfHasTough,
+      opponentTurfEmpty,
+      heat,
+      turfsPlayer,
+      turfsOpponent,
+      queuedStrikeCount,
+      canDraw,
+      gameOver,
+      stackFanOpen,
     } satisfies PerceivedState;
   });
 }
@@ -134,7 +166,10 @@ function parseHeat(state: PerceivedState): number {
   return match ? parseInt(match[1]) / 100 : 0;
 }
 
-interface ScoredCandidate { action: GovernorAction; score: number }
+interface ScoredCandidate {
+  action: GovernorAction;
+  score: number;
+}
 
 function scoreActions(
   state: PerceivedState,
@@ -144,16 +179,22 @@ function scoreActions(
 ): ScoredCandidate[] {
   const candidates: ScoredCandidate[] = [];
   const heat = parseHeat(state);
-  const canStrike = !strikeBlockedThisTurn
-    && state.playerTurfHasTough
-    && !state.opponentTurfEmpty
-    && state.actionsRemaining > 0;
+  const canStrike =
+    !strikeBlockedThisTurn &&
+    state.playerTurfHasTough &&
+    !state.opponentTurfEmpty &&
+    state.actionsRemaining > 0;
   const lastTurf = state.turfsOpponent <= 1;
 
   // Draw: valuable when board is empty, diminishes as toughs build
-  if (state.canDraw && drawsThisTurn < MAX_DRAWS_PER_TURN && actionsThisTurn < MAX_ACTIONS_PER_TURN) {
+  if (
+    state.canDraw &&
+    drawsThisTurn < MAX_DRAWS_PER_TURN &&
+    actionsThisTurn < MAX_ACTIONS_PER_TURN
+  ) {
     let score = 0.3;
-    if (state.playerTurfEmpty) score += 2.0; // urgent: need toughs on board
+    if (state.playerTurfEmpty)
+      score += 2.0; // urgent: need toughs on board
     else if (!state.playerTurfHasTough) score += 1.5;
     else score -= 0.5; // already have toughs, drawing is less valuable
     candidates.push({ action: 'draw', score });
@@ -175,7 +216,10 @@ function scoreActions(
 
   // End turn: only attractive when nothing else is valuable
   if (state.endTurnAvailable) {
-    candidates.push({ action: 'end_turn', score: state.actionsRemaining <= 0 ? 5.0 : -0.5 });
+    candidates.push({
+      action: 'end_turn',
+      score: state.actionsRemaining <= 0 ? 5.0 : -0.5,
+    });
   }
 
   return candidates.sort((a, b) => b.score - a.score);
@@ -192,17 +236,18 @@ function decide(
   if (state.waitingForOpponent) return 'wait';
   if (state.turnEnded) return 'wait';
   if (
-    state.actionsRemaining <= 0
-    && !state.hasPending
-    && !state.stackFanOpen
-    && !expectingStrikeTarget
+    state.actionsRemaining <= 0 &&
+    !state.hasPending &&
+    !state.stackFanOpen &&
+    !expectingStrikeTarget
   ) {
     return state.endTurnAvailable ? 'end_turn' : 'wait';
   }
 
   // In-progress multi-step actions take priority
   if (state.stackFanOpen && state.hasPending) return 'place_pick_slot';
-  if (expectingStrikeTarget && !state.stackFanOpen && !state.opponentTurfEmpty) return 'strike_target';
+  if (expectingStrikeTarget && !state.stackFanOpen && !state.opponentTurfEmpty)
+    return 'strike_target';
   if (state.stackFanOpen) return 'strike_pick_tough';
 
   // Pending card must be handled before anything else
@@ -214,10 +259,10 @@ function decide(
 
   // Safety: if we've taken too many actions this turn, end it
   if (
-    actionsThisTurn >= MAX_ACTIONS_PER_TURN
-    && !state.hasPending
-    && !state.stackFanOpen
-    && !expectingStrikeTarget
+    actionsThisTurn >= MAX_ACTIONS_PER_TURN &&
+    !state.hasPending &&
+    !state.stackFanOpen &&
+    !expectingStrikeTarget
   ) {
     return state.endTurnAvailable ? 'end_turn' : 'wait';
   }
@@ -236,82 +281,87 @@ async function execute(
   page: Page,
   testInfo: TestInfo,
   action: GovernorAction,
-): Promise<void> {
+): Promise<boolean> {
   switch (action) {
     case 'draw': {
       const compactButton = page.getByTestId('hud-draw');
       if (await compactButton.isVisible({ timeout: 250 }).catch(() => false)) {
         await activate(compactButton, testInfo);
-        break;
+        return true;
       }
       const slot = page.getByTestId('slot-player-draw');
       await activate(slot, testInfo);
-      break;
+      return true;
     }
     case 'place': {
       const turf = page.getByTestId('turf-lane-A');
       await activate(turf, testInfo);
-      break;
+      return true;
     }
     case 'place_pick_slot': {
       const slot = page.locator('[data-testid^="stack-fan-insert-"]').first();
       if (await slot.isVisible({ timeout: 1000 }).catch(() => false)) {
         await activate(slot, testInfo);
+        return true;
       } else {
         const close = page.locator('.stack-fan-close');
         if (await close.isVisible({ timeout: 500 }).catch(() => false)) {
           await activate(close, testInfo);
         }
       }
-      break;
+      return false;
     }
     case 'discard': {
       const market = page.getByTestId('slot-market');
       await activate(market, testInfo);
-      break;
+      return true;
     }
     case 'strike_open_fan': {
       const turf = page.getByTestId('turf-lane-A');
       await activate(turf, testInfo);
       await page.waitForTimeout(150);
-      break;
+      return true;
     }
     case 'strike_pick_tough': {
-      const activeTough = page.locator(
-        '.stack-fan-card-active.stack-fan-card-pickable:has(.card-tough)',
-      ).first();
+      const activeTough = page
+        .locator(
+          '.stack-fan-card-active.stack-fan-card-pickable:has(.card-tough)',
+        )
+        .first();
       if (await activeTough.isVisible({ timeout: 250 }).catch(() => false)) {
         await activate(activeTough, testInfo);
-        break;
+        return true;
       }
       const visibleTough = page
         .locator('.stack-fan-card-pickable:has(.card-tough):visible')
         .first();
       if (await visibleTough.isVisible({ timeout: 750 }).catch(() => false)) {
         await activate(visibleTough, testInfo);
+        return true;
       } else {
         const close = page.locator('.stack-fan-close');
         if (await close.isVisible({ timeout: 500 }).catch(() => false)) {
           await activate(close, testInfo);
         }
       }
-      break;
+      return false;
     }
     case 'strike_target': {
       const oppTurf = page.getByTestId('turf-lane-B');
       await activate(oppTurf, testInfo);
-      break;
+      return true;
     }
     case 'end_turn': {
       const btn = page.getByTestId('action-end_turn');
       if (await btn.isVisible().catch(() => false)) {
         await activate(btn, testInfo);
+        return true;
       }
-      break;
+      return false;
     }
     case 'wait':
       await page.waitForTimeout(300);
-      break;
+      return false;
   }
 }
 
@@ -358,8 +408,13 @@ export async function runPlayerGovernor(
     const state = await perceive(page);
 
     if (state.gameOver) {
-      const winnerText = await page.locator('.gameover-title').textContent().catch(() => '');
-      const winner = winnerText?.includes('Victory') ? 'A' as const : 'B' as const;
+      const winnerText = await page
+        .locator('.gameover-title')
+        .textContent()
+        .catch(() => '');
+      const winner = winnerText?.includes('Victory')
+        ? ('A' as const)
+        : ('B' as const);
       return {
         turns: state.turnNumber || lastTurn,
         winner,
@@ -378,7 +433,11 @@ export async function runPlayerGovernor(
       strikeBlockedThisTurn = false;
     }
 
-    if (state.queuedStrikeCount > prevQueuedStrikeCount || state.waitingForOpponent || state.turnEnded) {
+    if (
+      state.queuedStrikeCount > prevQueuedStrikeCount ||
+      state.waitingForOpponent ||
+      state.turnEnded
+    ) {
       expectingStrikeTarget = false;
     }
 
@@ -391,16 +450,21 @@ export async function runPlayerGovernor(
     );
 
     if (
-      action === prevAction
-      && (action === 'place' || action === 'place_pick_slot' || action === 'discard')
-      && state.hasPending === prevHasPending
+      action === prevAction &&
+      (action === 'place' ||
+        action === 'place_pick_slot' ||
+        action === 'discard') &&
+      state.hasPending === prevHasPending
     ) {
       consecutiveSameAction++;
       if (consecutiveSameAction > 2) {
         action = state.hasPending ? 'discard' : 'end_turn';
         consecutiveSameAction = 0;
       }
-    } else if (action === prevAction && (action === 'strike_open_fan' || action === 'strike_pick_tough')) {
+    } else if (
+      action === prevAction &&
+      (action === 'strike_open_fan' || action === 'strike_pick_tough')
+    ) {
       consecutiveSameAction++;
       if (consecutiveSameAction > 3) {
         strikeBlockedThisTurn = true;
@@ -415,7 +479,9 @@ export async function runPlayerGovernor(
     if (action !== 'wait') actionsThisTurn++;
 
     if (options.verbose && (action !== 'wait' || consecutiveWaits % 50 === 0)) {
-      console.log(`[Gov] T${state.turnNumber} A${state.actionsRemaining}/${state.actionsTotal} → ${action} | pending=${state.hasPending}(tough=${state.pendingIsTough}) canDraw=${state.canDraw} turfEmpty=${state.playerTurfEmpty} hasTough=${state.playerTurfHasTough} wait=${state.waitingForOpponent} ended=${state.turnEnded} waits=${consecutiveWaits}`);
+      console.log(
+        `[Gov] T${state.turnNumber} A${state.actionsRemaining}/${state.actionsTotal} → ${action} | pending=${state.hasPending}(tough=${state.pendingIsTough}) canDraw=${state.canDraw} turfEmpty=${state.playerTurfEmpty} hasTough=${state.playerTurfHasTough} wait=${state.waitingForOpponent} ended=${state.turnEnded} waits=${consecutiveWaits}`,
+      );
     }
     log.push({ turn: state.turnNumber, action, state });
     prevAction = action;
@@ -431,9 +497,9 @@ export async function runPlayerGovernor(
     }
 
     try {
-      await execute(page, testInfo, action);
+      const activated = await execute(page, testInfo, action);
       if (action === 'strike_pick_tough') {
-        expectingStrikeTarget = true;
+        expectingStrikeTarget = activated;
       } else if (action === 'strike_target') {
         strikeBlockedThisTurn = false;
       } else if (action !== 'strike_target' && action !== 'wait') {
@@ -443,10 +509,15 @@ export async function runPlayerGovernor(
       if (action === 'strike_pick_tough' || action === 'strike_target') {
         expectingStrikeTarget = false;
       }
-      if (action === 'strike_open_fan' || action === 'strike_pick_tough' || action === 'strike_target') {
+      if (
+        action === 'strike_open_fan' ||
+        action === 'strike_pick_tough' ||
+        action === 'strike_target'
+      ) {
         strikeBlockedThisTurn = true;
       }
-      if (options.verbose) console.log(`[Gov] execute failed for ${action}, skipping`);
+      if (options.verbose)
+        console.log(`[Gov] execute failed for ${action}, skipping`);
     }
 
     prevQueuedStrikeCount = state.queuedStrikeCount;

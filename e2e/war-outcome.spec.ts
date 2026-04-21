@@ -29,9 +29,8 @@ test.describe('war outcome (v0.3)', () => {
     await page.goto('?fixture=game-over');
 
     await expect(page.getByTestId('gameover-rewards')).toBeVisible();
-    await expect(page.getByTestId('card-unlock-badge').first()).toHaveText(
-      'H',
-    );
-    await expect(page.getByTestId('card-tough-fixture')).toBeVisible();
+    const toughReward = page.getByTestId('card-tough-fixture');
+    await expect(toughReward).toBeVisible();
+    await expect(toughReward.getByTestId('card-unlock-badge')).toHaveText('H');
   });
 });

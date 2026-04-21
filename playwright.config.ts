@@ -3,7 +3,14 @@ import { defineConfig, devices } from '@playwright/test';
 const IS_CI = !!process.env.CI;
 const IS_HEADLESS = IS_CI || process.env.PW_HEADLESS === '1';
 const CHROMIUM_CHANNEL = IS_HEADLESS ? undefined : 'chrome';
-const PLAYWRIGHT_PORT = 41739;
+const DEFAULT_PLAYWRIGHT_PORT = 41739;
+const configuredPort = Number(
+  process.env.PLAYWRIGHT_PORT ?? process.env.PW_PORT,
+);
+const PLAYWRIGHT_PORT =
+  Number.isInteger(configuredPort) && configuredPort > 0
+    ? configuredPort
+    : DEFAULT_PLAYWRIGHT_PORT;
 const PLAYWRIGHT_BASE_URL = `http://127.0.0.1:${PLAYWRIGHT_PORT}/mean-streets/`;
 const REUSE_SERVER = !IS_CI && process.env.PW_REUSE_SERVER === '1';
 

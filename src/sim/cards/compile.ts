@@ -20,6 +20,8 @@ export function compileTough(authored: AuthoredTough): CompiledTough {
     affiliation: authored.affiliation,
     power: latestStat(authored.power),
     resistance: latestStat(authored.resistance),
+    maxHp: authored.maxHp,
+    hp: authored.hp,
     rarity: latestRarity(authored.rarity),
     abilities: authored.abilities,
     unlocked: authored.unlocked,

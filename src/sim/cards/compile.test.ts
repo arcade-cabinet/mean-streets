@@ -22,6 +22,8 @@ describe('card compile helpers', () => {
       affiliation: 'kings_row',
       power: [2, 4],
       resistance: [3, 5],
+      maxHp: 5,
+      hp: 5,
       rarity: ['common', 'rare'],
       abilities: ['BRAWL'],
       unlocked: true,
@@ -84,6 +86,8 @@ describe('card compile helpers', () => {
     expect(compileTough(tough)).toMatchObject({
       power: 4,
       resistance: 5,
+      maxHp: 5,
+      hp: 5,
       rarity: 'rare',
       portrait: tough.portrait,
     });
