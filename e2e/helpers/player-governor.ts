@@ -308,18 +308,20 @@ async function execute(
       return true;
     }
     case 'place_pick_slot': {
-      const slot = page.locator('[data-testid^="stack-fan-insert-"]').first();
-      if (await slot.isVisible({ timeout: 1000 }).catch(() => false)) {
-        await activate(slot, testInfo);
-        return true;
-      } else {
-        const close = page.locator('.stack-fan-close');
-        if (await close.isVisible({ timeout: 500 }).catch(() => false)) {
-          if (verbose) {
-            console.log('[Gov] closing stack fan: no visible insert slot');
-          }
-          await activate(close, testInfo);
+      const slots = page.locator('[data-testid^="stack-fan-insert-"]');
+      for (let i = 0, count = await slots.count(); i < count; i++) {
+        const slot = slots.nth(i);
+        if (await slot.isVisible({ timeout: 250 }).catch(() => false)) {
+          await activate(slot, testInfo);
+          return true;
         }
+      }
+      const close = page.locator('.stack-fan-close');
+      if (await close.isVisible({ timeout: 500 }).catch(() => false)) {
+        if (verbose) {
+          console.log('[Gov] closing stack fan: no visible insert slot');
+        }
+        await activate(close, testInfo);
       }
       return false;
     }
