@@ -182,11 +182,17 @@ function decide(
   state: PerceivedState,
   expectingStrikeTarget: boolean,
   strikeBlockedThisTurn: boolean,
+  actionsThisTurn: number,
 ): GovernorAction {
   if (state.gameOver) return 'wait';
   if (state.waitingForOpponent) return 'wait';
   if (state.turnEnded) return 'wait';
-  if (state.actionsRemaining <= 0 && !state.hasPending) {
+  if (
+    state.actionsRemaining <= 0
+    && !state.hasPending
+    && !state.stackFanOpen
+    && !expectingStrikeTarget
+  ) {
     return state.endTurnAvailable ? 'end_turn' : 'wait';
   }
 
@@ -203,7 +209,12 @@ function decide(
   }
 
   // Safety: if we've taken too many actions this turn, end it
-  if (actionsThisTurn >= MAX_ACTIONS_PER_TURN) {
+  if (
+    actionsThisTurn >= MAX_ACTIONS_PER_TURN
+    && !state.hasPending
+    && !state.stackFanOpen
+    && !expectingStrikeTarget
+  ) {
     return state.endTurnAvailable ? 'end_turn' : 'wait';
   }
 
@@ -360,7 +371,12 @@ export async function runPlayerGovernor(
       expectingStrikeTarget = false;
     }
 
-    let action = decide(state, expectingStrikeTarget, strikeBlockedThisTurn);
+    let action = decide(
+      state,
+      expectingStrikeTarget,
+      strikeBlockedThisTurn,
+      actionsThisTurn,
+    );
 
     if (
       action === prevAction

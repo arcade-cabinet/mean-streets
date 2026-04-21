@@ -5,6 +5,9 @@ on:
   schedule:
     - cron: '0 9 * * *'
 
+permissions:
+  contents: read
+
 jobs:
   slow-analysis:
     runs-on: ubuntu-latest
