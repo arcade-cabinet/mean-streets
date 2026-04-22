@@ -73,17 +73,19 @@ Current test files: `StackFanModal.browser.test.tsx`,
 ### E2E Tests
 
 ```bash
-pnpm run test:e2e        # smoke flow, safe for CI/CD
-pnpm run test:e2e:full   # full local suite
+pnpm run test:e2e:headless # CI/CD-safe smoke flow
+pnpm run test:e2e          # local smoke flow
+pnpm run test:e2e:full     # full local suite
 ```
 
 Environment: Playwright against the running dev server
 (`playwright.config.ts`). Tests in `e2e/*.spec.ts`.
 
-`pnpm run test:e2e` is the deploy-safe smoke lane. It runs
+`pnpm run test:e2e:headless` is the deploy-safe smoke lane used by CI/CD. It runs
 `e2e/app-flow.spec.ts` across the configured Playwright projects unless a
 specific project is passed, for example
-`pnpm run test:e2e:headless --project desktop-chromium`.
+`pnpm run test:e2e:headless --project desktop-chromium`. `pnpm run test:e2e`
+is the local smoke alias for the same spec.
 
 `pnpm run test:e2e:full` is intentionally split for local release review:
 - `test:e2e:core` runs the normal parallel Playwright batch.
