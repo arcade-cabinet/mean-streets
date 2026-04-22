@@ -7162,6 +7162,7 @@ select {
     linear-gradient(90deg, rgba(255, 231, 181, 0.035) 1px, transparent 1px),
     linear-gradient(180deg, rgba(255, 231, 181, 0.025) 1px, transparent 1px);
   background-size: 84px 84px, 84px 84px;
+  -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 78%);
   mask-image: radial-gradient(ellipse at center, black 0%, transparent 78%);
   opacity: 0.52;
 }
@@ -7433,8 +7434,27 @@ select {
   box-shadow: inset 0 1px 0 rgba(255, 230, 190, 0.08), inset 0 0 80px rgba(0, 0, 0, 0.72);
 }
 
+.street-stage-combat::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 4.6rem;
+  bottom: 0.6rem;
+  width: min(44rem, 42vw);
+  transform: translateX(-50%);
+  border-inline: 1px solid rgba(224, 177, 95, 0.08);
+  background:
+    radial-gradient(ellipse at 50% 48%, rgba(224, 177, 95, 0.08), transparent 52%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.28));
+  z-index: 0;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(180deg, transparent, black 10%, black 88%, transparent);
+  mask-image: linear-gradient(180deg, transparent, black 10%, black 88%, transparent);
+}
+
 .street-stage-line {
   position: absolute;
+  z-index: 1;
   top: 4.2rem;
   bottom: 1.2rem;
   width: clamp(76px, 11vw, 180px);
@@ -7474,8 +7494,35 @@ select {
 .street-stage-line-right::before { content: "Holding"; }
 .street-stage-line-right::after { content: "Custody"; }
 
+.street-stage-prop-cluster {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  gap: clamp(0.6rem, 1.5vw, 1rem);
+  opacity: 0.34;
+  filter: drop-shadow(0 24px 34px rgba(0, 0, 0, 0.7));
+}
+
+.street-stage-prop-cluster .contraband-prop {
+  width: clamp(54px, 7vw, 118px);
+  filter: saturate(0.72) contrast(1.15) brightness(0.8);
+}
+
+.street-stage-prop-cluster-left {
+  left: clamp(2.4rem, 7vw, 8rem);
+  top: 39%;
+  transform: rotate(-9deg);
+}
+
+.street-stage-prop-cluster-right {
+  right: clamp(2.4rem, 7vw, 8rem);
+  bottom: 20%;
+  transform: rotate(8deg);
+}
+
 .street-stage-tag {
   position: absolute;
+  z-index: 1;
   left: 50%;
   transform: translateX(-50%);
   color: rgba(224, 177, 95, 0.2);
@@ -7508,6 +7555,19 @@ select {
   grid-template-columns: minmax(7rem, 0.7fr) minmax(17rem, 34rem) minmax(7rem, 0.7fr);
   gap: clamp(0.6rem, 2vw, 2rem);
   padding: clamp(0.55rem, 2vw, 1.5rem);
+}
+
+.game-screen-v3 .board-grid::before {
+  content: "";
+  position: absolute;
+  inset: clamp(0.6rem, 2vw, 1.4rem) clamp(7rem, 18vw, 20rem);
+  z-index: -1;
+  border-radius: 34px;
+  background:
+    linear-gradient(180deg, rgba(190, 54, 42, 0.12), transparent 44%, rgba(224, 177, 95, 0.1)),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 18px);
+  box-shadow: inset 0 0 42px rgba(0, 0, 0, 0.48);
+  opacity: 0.72;
 }
 
 .game-screen-v3 .board-slot {
@@ -7571,6 +7631,18 @@ select {
   font-size: 0.6rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
+}
+
+.game-screen-v3 .board-slot-turf::after {
+  content: "";
+  position: absolute;
+  left: 0.8rem;
+  right: 0.8rem;
+  bottom: 0.6rem;
+  z-index: 2;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(224, 177, 95, 0.34), transparent);
+  opacity: 0.8;
 }
 
 .game-screen-v3 .board-slot-opponent::before { content: "Rival Turf"; }
@@ -8084,7 +8156,10 @@ select {
   }
 
   .street-stage-line,
-  .street-stage-tag {
+  .street-stage-tag,
+  .street-stage-prop-cluster,
+  .street-stage-combat::after,
+  .game-screen-v3 .board-grid::before {
     display: none;
   }
 
