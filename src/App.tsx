@@ -40,7 +40,13 @@ import {
   type WarOutcome,
 } from './sim/packs';
 import { emptyMetrics } from './sim/turf/environment';
-import type { Card, GameConfig, TurfMetrics, WarStats } from './sim/turf/types';
+import {
+  isPermadeathConfig,
+  type Card,
+  type GameConfig,
+  type TurfMetrics,
+  type WarStats,
+} from './sim/turf/types';
 import {
   type AppSettings,
   loadActiveRun,
@@ -51,7 +57,7 @@ import {
   saveSettings,
 } from './ui/deckbuilder/storage';
 import { GrittyFilters } from './ui/filters';
-import { type DrawerTab, GameMenuDrawer, RulesModal } from './ui/overlays';
+import { type DrawerTab, GameMenuDrawer, TutorialModal } from './ui/overlays';
 import {
   MainMenuScreen,
 } from './ui/screens';
@@ -89,17 +95,16 @@ const GameScreen = lazy(async () => {
 type Screen =
   | 'menu'
   | 'cards'
-  | 'difficulty'
   | 'combat'
   | 'gameover'
   | 'collection'
   | 'card-garage';
-type Modal = 'rules-onboarding' | 'game-menu' | null;
+type Modal = 'tutorial-onboarding' | 'difficulty' | 'game-menu' | null;
 // Bumped whenever sim behavior changes in a way that would make a
 // seed-based resume reconstruct a different game state than the user saw
 // before closing the app. Any PR that touches resolve.ts, attacks.ts, or
 // the tunables in turf-sim.json that affect gameplay must bump this.
-const SIM_VERSION = 'v0.3-1.1.0-beta.2';
+const SIM_VERSION = 'v0.3-1.1.0-beta.3';
 
 interface ActiveRunState {
   phase: 'combat';
@@ -205,21 +210,25 @@ export default function App() {
   }
 
   function handleOpenNewGame() {
+    setScreen('menu');
     if (!settings.rulesSeen) {
-      setModal('rules-onboarding');
+      setModal('tutorial-onboarding');
       return;
     }
-    setModal(null);
-    setScreen('difficulty');
+    setModal('difficulty');
   }
 
-  function handleConfirmRulesOnboarding() {
+  function handleOpenDifficulty() {
+    setScreen('menu');
+    setModal('difficulty');
+  }
+
+  function handleConfirmTutorialOnboarding() {
     void (async () => {
       const next = { ...settings, rulesSeen: true };
       setSettingsState(next);
+      setModal('difficulty');
       await saveSettings(next);
-      setModal(null);
-      setScreen('difficulty');
     })();
   }
 
@@ -253,12 +262,14 @@ export default function App() {
       );
       setWorld(resumedWorld);
       setActiveConfig(activeRun.config);
+      setModal(null);
       setScreen(activeRun.phase);
     })();
   }
 
   function handleSelectDifficulty(config: GameConfig) {
     const seed = randomSeed();
+    setModal(null);
     void (async () => {
       await grantAIStarterCollection(createRng(seed * 5 + 11));
 
@@ -401,6 +412,7 @@ export default function App() {
       ]);
 
       if (config) {
+        const permadeath = isPermadeathConfig(config);
         const rewardOpenSeed =
           rewardPacks.length > 0 ? rng.int(1, 2147483646) : undefined;
         if (playerWon) {
@@ -408,6 +420,7 @@ export default function App() {
             rewardPacks,
             config.difficulty,
             rewardOpenSeed,
+            { permadeath },
           );
           rewardCards = [...rewardCards, ...packCards];
           setLastRewards({
@@ -417,7 +430,9 @@ export default function App() {
           });
         } else {
           await addPendingPacksToAI(rewardPacks);
-          await openPendingAIPacks(config.difficulty, rewardOpenSeed);
+          await openPendingAIPacks(config.difficulty, rewardOpenSeed, {
+            permadeath,
+          });
           if (rewardCurrencyAmount !== null) {
             await incrementAIPerfectWarFallbackCount();
           }
@@ -437,7 +452,7 @@ export default function App() {
     setHasActiveRun(false);
     setLastRewards(EMPTY_GAME_OVER_REWARDS);
     void saveActiveRun<ActiveRunState>(null);
-    setScreen('difficulty');
+    handleOpenDifficulty();
   }
 
   function handleSettingsChange(next: AppSettings) {
@@ -464,7 +479,7 @@ export default function App() {
         <ScreenBoundary>
           <CardsScreen
             onBack={() => setScreen('menu')}
-            onStartGame={() => setScreen('difficulty')}
+            onStartGame={handleOpenDifficulty}
           />
         </ScreenBoundary>
       )}
@@ -472,15 +487,6 @@ export default function App() {
       {screen === 'card-garage' && (
         <ScreenBoundary>
           <CardGarageScreen onBack={() => setScreen('menu')} />
-        </ScreenBoundary>
-      )}
-
-      {screen === 'difficulty' && (
-        <ScreenBoundary>
-          <DifficultyScreen
-            onSelect={handleSelectDifficulty}
-            onBack={() => setScreen('menu')}
-          />
         </ScreenBoundary>
       )}
 
@@ -516,8 +522,17 @@ export default function App() {
         </ScreenBoundary>
       )}
 
-      {modal === 'rules-onboarding' && (
-        <RulesModal onClose={handleConfirmRulesOnboarding} />
+      {modal === 'tutorial-onboarding' && (
+        <TutorialModal onClose={handleConfirmTutorialOnboarding} />
+      )}
+
+      {modal === 'difficulty' && (
+        <ScreenBoundary>
+          <DifficultyScreen
+            onSelect={handleSelectDifficulty}
+            onBack={() => setModal(null)}
+          />
+        </ScreenBoundary>
       )}
 
       {modal === 'game-menu' && (

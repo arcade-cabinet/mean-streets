@@ -20,6 +20,7 @@ import type {
   QueuedAction,
   TurfGameState,
 } from './types';
+import { isPermadeathConfig } from './types';
 
 function actionsForTurn(
   config: GameConfig,
@@ -47,6 +48,46 @@ interface RankedAction {
 
 function opponent(side: 'A' | 'B'): 'A' | 'B' {
   return side === 'A' ? 'B' : 'A';
+}
+
+function recordTurfSeizure(
+  state: TurfGameState,
+  seizedBy: 'A' | 'B',
+  defSide: 'A' | 'B',
+  turfIdx: number,
+): void {
+  const defender = state.players[defSide];
+  const turf = defender.turfs[turfIdx];
+  if (!turf) return;
+
+  // Send dead turf's surviving modifiers to the Black Market.
+  const mods = turfModifiers(turf);
+  for (const m of mods) state.blackMarket.push(m);
+  const previousTurns = state.warStats.seizures
+    .filter((s) => s.seizedBy === seizedBy)
+    .reduce((sum, s) => sum + s.turnsOnThatTurf, 0);
+  state.warStats.seizures.push({
+    seizedBy,
+    seizedTurfIdx: turfIdx,
+    turnsOnThatTurf: state.turnNumber - previousTurns,
+  });
+  state.metrics.seizures++;
+  if (turfIdx === 0) promoteReserveTurf(defender);
+  else defender.turfs.splice(turfIdx, 1);
+}
+
+function cancelInvalidQueuedActions(state: TurfGameState): void {
+  for (const side of ['A', 'B'] as const) {
+    const player = state.players[side];
+    player.queued = player.queued.filter((q) => {
+      const src = state.players[q.side].turfs[q.turfIdx];
+      const def = state.players[opponent(q.side)].turfs[q.targetTurfIdx];
+      if (!src || !def) return false;
+      return src.stack.some(
+        (sc) => sc.card.kind === 'tough' && sc.card.hp > 0,
+      );
+    });
+  }
 }
 
 function dominanceForQueued(state: TurfGameState, q: QueuedAction): RankedAction {
@@ -115,8 +156,8 @@ function maybeCombatBribe(state: TurfGameState, q: QueuedAction): boolean {
 
 /**
  * Raid phase. If triggered: wipe market, sweep face-up tops on both
- * active turfs into lockup, cancel queued strikes whose source tough
- * was locked up. Returns true if a raid fired.
+ * active turfs into lockup, or kill them outright under Permadeath.
+ * Queued strikes from seized toughs are canceled. Returns true if a raid fired.
  */
 function raidPhase(state: TurfGameState): boolean {
   const heat = computeHeat(state).total;
@@ -136,6 +177,8 @@ function raidPhase(state: TurfGameState): boolean {
     const top = active.stack[topIdx];
     if (!top.faceUp) continue;
     if (top.card.kind !== 'tough') continue;
+
+    const permadeath = isPermadeathConfig(state.config);
 
     // Bail? If total turf cash ≥ bailAmount, consume cheapest bills to cover.
     const bailAmount = TURF_SIM_CONFIG.bribe.bailAmount;
@@ -164,7 +207,7 @@ function raidPhase(state: TurfGameState): boolean {
       continue;
     }
 
-    // Lockup the top tough + its modifiers.
+    // Seize the top tough + its modifiers.
     const lockedTough = top.card;
     const lockedMods: ModifierCard[] = modifiersByOwner(active, lockedTough.id);
     // Remove every mod bound to that tough first (in reverse order to preserve indices).
@@ -176,14 +219,22 @@ function raidPhase(state: TurfGameState): boolean {
     }
     // Remove the tough from the stack (index may have shifted if mods were below it,
     // so re-find it).
-    const newTopIdx = active.stack.findIndex((sc) => sc.card.id === lockedTough.id);
+    const newTopIdx = active.stack.findIndex(
+      (sc) => sc.card.kind === 'tough' && sc.card.id === lockedTough.id,
+    );
     if (newTopIdx >= 0) removeFromStack(active, newTopIdx);
-    state.lockup[side].push({
-      tough: lockedTough,
-      attachedModifiers: lockedMods,
-      turnsRemaining: lockupDuration(state.config.difficulty),
-    });
+    if (!permadeath) {
+      state.lockup[side].push({
+        tough: lockedTough,
+        attachedModifiers: lockedMods,
+        turnsRemaining: lockupDuration(state.config.difficulty),
+      });
+    }
     if (player.toughsInPlay > 0) player.toughsInPlay--;
+
+    if (!hasToughOnTurf(active)) {
+      recordTurfSeizure(state, opponent(side), side, 0);
+    }
 
     // Cancel queued strikes from this side targeting via this tough.
     player.queued = player.queued.filter((q) => {
@@ -194,6 +245,7 @@ function raidPhase(state: TurfGameState): boolean {
       );
     });
   }
+  cancelInvalidQueuedActions(state);
   return true;
 }
 
@@ -246,20 +298,7 @@ export function resolvePhase(state: TurfGameState): void {
     for (let i = defender.turfs.length - 1; i >= 0; i--) {
       if (attackedBy.get(key(defSide, i)) !== atkSide) continue;
       if (hasToughOnTurf(defender.turfs[i])) continue;
-      // Send dead turf's surviving modifiers to the Black Market.
-      const mods = turfModifiers(defender.turfs[i]);
-      for (const m of mods) state.blackMarket.push(m);
-      const previousTurns = state.warStats.seizures
-        .filter((s) => s.seizedBy === atkSide)
-        .reduce((sum, s) => sum + s.turnsOnThatTurf, 0);
-      state.warStats.seizures.push({
-        seizedBy: atkSide,
-        seizedTurfIdx: i,
-        turnsOnThatTurf: state.turnNumber - previousTurns,
-      });
-      state.metrics.seizures++;
-      if (i === 0) promoteReserveTurf(defender);
-      else defender.turfs.splice(i, 1);
+      recordTurfSeizure(state, atkSide, defSide, i);
     }
   }
 

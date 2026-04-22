@@ -204,6 +204,7 @@ vi.mock('../ui/filters', () => ({
 vi.mock('../ui/overlays', () => ({
   GameMenuDrawer: () => null,
   RulesModal: () => null,
+  TutorialModal: () => null,
 }));
 
 vi.mock('../ui/screens', () => ({
@@ -280,6 +281,8 @@ vi.mock('../ui/screens/CardsScreen', () => ({
 describe('App reward flow', () => {
   beforeEach(() => {
     mockWinner.side = 'A';
+    mockConfig.suddenDeath = false;
+    mockConfig.difficulty = 'hard';
     mockGameState.metrics.turns = 4;
     mockGameState.metrics.kills = 2;
     mockGameState.metrics.seizures = 1;
@@ -326,6 +329,9 @@ describe('App reward flow', () => {
     });
     expect(mockOpenRewardPackInstances).toHaveBeenCalledOnce();
     expect(mockOpenRewardPackInstances.mock.calls[0]?.[0]).toHaveLength(1);
+    expect(mockOpenRewardPackInstances.mock.calls[0]?.[3]).toEqual({
+      permadeath: false,
+    });
     expect(mockSaveProfile).toHaveBeenCalledWith(
       expect.objectContaining({
         wins: 1,
@@ -361,7 +367,24 @@ describe('App reward flow', () => {
     });
     expect(mockGameOverProps.rewardCards).toEqual([]);
     expect(mockAddPendingPacksToAI).toHaveBeenCalledOnce();
-    expect(mockOpenPendingAIPacks).toHaveBeenCalledOnce();
+    expect(mockOpenPendingAIPacks).toHaveBeenCalledWith('hard', expect.any(Number), {
+      permadeath: false,
+    });
     expect(mockIncrementAIPerfectWarFallbackCount).toHaveBeenCalledOnce();
+  });
+
+  it('threads permadeath into reward pack opening', async () => {
+    mockConfig.suddenDeath = true;
+
+    await playWar('A');
+
+    await waitFor(() => {
+      expect(mockOpenRewardPackInstances).toHaveBeenCalledWith(
+        expect.any(Array),
+        'hard',
+        expect.any(Number),
+        { permadeath: true },
+      );
+    });
   });
 });

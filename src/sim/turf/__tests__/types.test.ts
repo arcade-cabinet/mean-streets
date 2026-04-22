@@ -14,7 +14,7 @@ import type {
   DeckSnapshot,
   TurfGameResult,
 } from '../types';
-import { DEFAULT_GAME_CONFIG } from '../types';
+import { DEFAULT_GAME_CONFIG, isPermadeathConfig } from '../types';
 
 describe('card type construction', () => {
   it('ToughCard uses kind:"tough" discriminant', () => {
@@ -115,6 +115,12 @@ describe('DEFAULT_GAME_CONFIG', () => {
   it('medium difficulty defaults to 4 turfs', () => {
     expect(DEFAULT_GAME_CONFIG.difficulty).toBe('medium');
     expect(DEFAULT_GAME_CONFIG.turfCount).toBe(4);
+  });
+
+  it('treats Ultra Nightmare as forced permadeath while allowing the modifier on any tier', () => {
+    expect(isPermadeathConfig({ difficulty: 'medium', suddenDeath: false })).toBe(false);
+    expect(isPermadeathConfig({ difficulty: 'medium', suddenDeath: true })).toBe(true);
+    expect(isPermadeathConfig({ difficulty: 'ultra-nightmare', suddenDeath: false })).toBe(true);
   });
 });
 

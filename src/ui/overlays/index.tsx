@@ -124,6 +124,81 @@ export function RulesModal({ onClose }: RulesModalProps) {
   );
 }
 
+const TUTORIAL_STEPS = [
+  {
+    label: 'Stack',
+    title: 'Build a face-down crew stack',
+    copy: 'Toughs carry the block. Weapons, drugs, and cash tuck under them as pressure.',
+  },
+  {
+    label: 'Reveal',
+    title: 'Strike only when the math is yours',
+    copy: 'No dice. Power, resistance, wounds, and board state decide the hit.',
+  },
+  {
+    label: 'Heat',
+    title: 'Every loud card invites cops',
+    copy: 'Bail can save a top tough. Permadeath turns a raid seizure into a body bag.',
+  },
+  {
+    label: 'Seize',
+    title: 'Take the block before yours folds',
+    copy: 'Drop their active turf, promote the next reserve, and finish the war street by street.',
+  },
+];
+
+interface TutorialModalProps {
+  onClose: () => void;
+}
+
+export function TutorialModal({ onClose }: TutorialModalProps) {
+  return (
+    <ModalFrame title="First Run Brief" subtitle="No Wall of Text" onClose={onClose} className="tutorial-modal">
+      <div className="tutorial-board" data-testid="tutorial-modal">
+        <div className="tutorial-lane tutorial-lane-player">
+          <span className="tutorial-lane-label">Your Turf</span>
+          <div className="tutorial-stack">
+            <span className="tutorial-card tutorial-card-tough">Tough</span>
+            <span className="tutorial-card tutorial-card-mod">Weapon</span>
+            <span className="tutorial-card tutorial-card-cash">Cash</span>
+          </div>
+        </div>
+        <div className="tutorial-action-line" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </div>
+        <div className="tutorial-lane tutorial-lane-rival">
+          <span className="tutorial-lane-label">Rival Turf</span>
+          <div className="tutorial-stack tutorial-stack-rival">
+            <span className="tutorial-card tutorial-card-tough">Target</span>
+            <span className="tutorial-card tutorial-card-heat">Heat</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="tutorial-steps" aria-label="Tutorial steps">
+        {TUTORIAL_STEPS.map((step, index) => (
+          <section className="tutorial-step" key={step.label}>
+            <span className="tutorial-step-number">{String(index + 1).padStart(2, '0')}</span>
+            <div>
+              <span className="tutorial-step-label">{step.label}</span>
+              <h3>{step.title}</h3>
+              <p>{step.copy}</p>
+            </div>
+          </section>
+        ))}
+      </div>
+
+      <div className="app-modal-actions">
+        <button className="menu-button menu-button-primary" onClick={onClose} data-testid="close-tutorial-button">
+          <span className="menu-button-label">Pick the Stakes</span>
+        </button>
+      </div>
+    </ModalFrame>
+  );
+}
+
 interface GameMenuDrawerProps {
   settings: AppSettings;
   activeTab: DrawerTab;

@@ -11,10 +11,11 @@ test('menu → difficulty → game flow works on the live app', async ({ page },
   await expect(page.getByTestId('cards-button')).toBeVisible();
 
   await activate(page.getByTestId('new-game-button'), testInfo);
-  await expect(page.getByRole('heading', { name: 'Rules' })).toBeVisible();
-  await activate(page.getByTestId('close-rules-button'), testInfo);
+  await expect(page.getByRole('heading', { name: 'First Run Brief' })).toBeVisible();
+  await activate(page.getByTestId('close-tutorial-button'), testInfo);
 
   await expect(page.getByTestId('difficulty-screen')).toBeVisible();
+  await expect(page.getByTestId('main-menu-screen')).toBeVisible();
 
   await activate(page.getByTestId('diff-tile-easy'), testInfo);
   await activate(page.getByTestId('diff-start'), testInfo);
@@ -46,10 +47,11 @@ test('difficulty back button returns to menu', async ({ page }, testInfo) => {
   await expect(page.getByTestId('main-menu-screen')).toBeVisible();
 
   await activate(page.getByTestId('new-game-button'), testInfo);
-  await expect(page.getByRole('heading', { name: 'Rules' })).toBeVisible();
-  await activate(page.getByTestId('close-rules-button'), testInfo);
+  await expect(page.getByRole('heading', { name: 'First Run Brief' })).toBeVisible();
+  await activate(page.getByTestId('close-tutorial-button'), testInfo);
   await expect(page.getByTestId('difficulty-screen')).toBeVisible();
 
   await activate(page.getByTestId('diff-back'), testInfo);
   await expect(page.getByTestId('main-menu-screen')).toBeVisible();
+  await expect(page.getByTestId('difficulty-screen')).toHaveCount(0);
 });

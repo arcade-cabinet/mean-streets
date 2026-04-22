@@ -289,6 +289,7 @@
       "nightmare":       1.6,
       "ultra-nightmare": 2.0
     },
+    "permadeathRewardMult": 1.25,
     "perfectWarFallbackCurrency": 500,
     "topTierPackKindWeights": {
       "single":   0,

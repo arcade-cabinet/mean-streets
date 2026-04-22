@@ -76,6 +76,34 @@ describe('generatePack', () => {
     expect(ultraHigh).toBeGreaterThanOrEqual(easyHigh);
   });
 
+  it('permadeath stacks an extra roll-up bonus onto the selected difficulty', () => {
+    const normalCounts: Record<string, number> = {
+      common: 0, uncommon: 0, rare: 0, legendary: 0, mythic: 0,
+    };
+    const permaCounts: Record<string, number> = {
+      common: 0, uncommon: 0, rare: 0, legendary: 0, mythic: 0,
+    };
+
+    for (let seed = 1; seed <= 160; seed++) {
+      const normal = generatePack('standard', emptyCollection, createRng(seed), {
+        unlockDifficulty: 'hard',
+      });
+      for (const c of normal) normalCounts[c.rarity]++;
+
+      const perma = generatePack('standard', emptyCollection, createRng(seed), {
+        unlockDifficulty: 'hard',
+        permadeath: true,
+      });
+      for (const c of perma) permaCounts[c.rarity]++;
+    }
+
+    const normalTotal = normalCounts.common + normalCounts.uncommon + normalCounts.rare + normalCounts.legendary;
+    const permaTotal = permaCounts.common + permaCounts.uncommon + permaCounts.rare + permaCounts.legendary;
+    const normalHigh = (normalCounts.rare + normalCounts.legendary) / normalTotal;
+    const permaHigh = (permaCounts.rare + permaCounts.legendary) / permaTotal;
+    expect(permaHigh).toBeGreaterThanOrEqual(normalHigh);
+  });
+
   it('is deterministic with the same seed', () => {
     const a = generatePack('standard', emptyCollection, createRng(99));
     const b = generatePack('standard', emptyCollection, createRng(99));

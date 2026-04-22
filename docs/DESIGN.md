@@ -54,7 +54,7 @@ hand — and when this block falls, the next one promotes up.
 - Not a deckbuilder — your **collection** is your deck, curated
   through pack unlocks + merge + priority sliders.
 - Not sudden-death-locked — the turf-progression model replaces
-  Sudden Death entirely (raids provide the fast-end tension).
+  Sudden Death as a tier; Permadeath is an explicit optional stake.
 
 ## Core Loop
 
@@ -148,8 +148,8 @@ know they have is what they use against you.
 Heat is a shared scalar that grows with stack rarity concentration
 and currency pressure. At turn end, raid probability = `heat² ×
 difficulty_coef`. Raids resolve **before** combat: Black Market is
-wiped, face-up active tops go to Lockup, bail is $500 (cops pocket
-everything above).
+wiped, face-up active tops go to Lockup, or die outright when
+Permadeath is active. Bail is $500 (cops pocket everything above).
 
 This replaces Sudden Death as the escalation mechanic. The pressure
 isn't time-of-match; it's **how loud you're playing**. A cautious
@@ -221,7 +221,8 @@ AI looseness, player action economy, turf count, heat coefficient,
 lockup duration, and reward multiplier all scale with difficulty.
 Easy is a 5-turf sandbox with a noisy AI and rare raids. Nightmare
 is 2 turfs and a surgical AI. **Ultra-Nightmare** is 1 turf,
-2-ply lookahead, perma-lockup — toughs sent to Lockup never return.
+2-ply lookahead, forced Permadeath, and perma-lockup — toughs sent
+to Lockup never return, and raid-seized toughs die before custody.
 
 ## Difficulty Tiers
 
@@ -235,9 +236,11 @@ Ultra-     (1 turf,  3 actions/turn, 2-ply AI lookahead,
  Nightmare  raid coef 1.5, PERMA lockup)
 ```
 
-Sudden Death no longer exists as a difficulty. The turf-progression
-+ raid system delivers the same "fast, decisive, one-slip-and-you're-
-out" feel organically.
+Sudden Death no longer exists as a difficulty. **Permadeath** is now
+a separate "Body Bags" run modifier available on every tier and forced
+by Ultra-Nightmare. It sharpens the raid system instead of replacing
+it: bail still matters, but an unbailed raid seizure kills the top
+tough and confiscates the attached stack.
 
 ## Victory Ratings
 

@@ -44,6 +44,10 @@ export interface MergeCollectionResult {
   unlockDifficulty: DifficultyTier;
 }
 
+export interface RewardOpenOptions {
+  permadeath?: boolean;
+}
+
 function defaultInstanceForCard(card: Card): StoredCardInstance {
   return {
     rolledRarity: card.rarity,
@@ -470,6 +474,7 @@ export async function openRewardPacks(
   rewards: PackReward[],
   unlockDifficulty: DifficultyTier = DEFAULT_UNLOCK_DIFFICULTY,
   seed?: number,
+  options: RewardOpenOptions = {},
 ): Promise<Card[]> {
   const packKinds: PackKind[] = [];
   for (const reward of rewards) {
@@ -477,18 +482,20 @@ export async function openRewardPacks(
       packKinds.push(reward.kind);
     }
   }
-  return openRewardPackKinds(packKinds, unlockDifficulty, seed);
+  return openRewardPackKinds(packKinds, unlockDifficulty, seed, options);
 }
 
 export async function openRewardPackInstances(
   packs: PackInstance[],
   unlockDifficulty: DifficultyTier = DEFAULT_UNLOCK_DIFFICULTY,
   seed?: number,
+  options: RewardOpenOptions = {},
 ): Promise<Card[]> {
   return openRewardPackKinds(
     packs.map((pack) => pack.kind),
     unlockDifficulty,
     seed,
+    options,
   );
 }
 
@@ -496,6 +503,7 @@ async function openRewardPackKinds(
   packKinds: PackKind[],
   unlockDifficulty: DifficultyTier,
   seed?: number,
+  options: RewardOpenOptions = {},
 ): Promise<Card[]> {
   const rng = createRng(seed ?? randomSeed());
   const newCards: Card[] = [];
@@ -508,6 +516,7 @@ async function openRewardPackKinds(
   for (const kind of packKinds) {
     const packCards = generatePack(kind, runningCollection, rng, {
       unlockDifficulty,
+      permadeath: options.permadeath,
     });
     newCards.push(...packCards);
     for (const card of packCards) {

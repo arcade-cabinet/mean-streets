@@ -63,7 +63,9 @@ export interface PlayerState {
 // ── Difficulty & Game Config ────────────────────────────────
 export type DifficultyTier = 'easy' | 'medium' | 'hard' | 'nightmare' | 'ultra-nightmare';
 export interface GameConfig {
-  difficulty: DifficultyTier; suddenDeath: boolean;
+  difficulty: DifficultyTier;
+  /** Legacy storage name: this now represents the optional Permadeath modifier. */
+  suddenDeath: boolean;
   turfCount: number; actionsPerTurn: number; firstTurnActions: number;
 }
 const defaultDiff = simConfig.difficulty[simConfig.gameDefaults.defaultDifficulty as DifficultyTier];
@@ -72,6 +74,12 @@ export const DEFAULT_GAME_CONFIG: GameConfig = {
   suddenDeath: false, turfCount: defaultDiff.turfCount,
   actionsPerTurn: defaultDiff.actionsPerTurn, firstTurnActions: defaultDiff.firstTurnActions,
 };
+
+export function isPermadeathConfig(
+  config: Pick<GameConfig, 'difficulty' | 'suddenDeath'>,
+): boolean {
+  return config.suddenDeath || config.difficulty === 'ultra-nightmare';
+}
 
 // ── Attacks & Phase ─────────────────────────────────────────
 export type AttackType = 'direct' | 'funded' | 'pushed';

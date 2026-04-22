@@ -18,6 +18,7 @@ describe('DifficultyScreen (browser)', () => {
 
     expect(document.querySelector('[data-testid="difficulty-screen"]')).not.toBeNull();
     expect(document.querySelectorAll('[role="radio"]').length).toBe(5);
+    expect(document.querySelector('[data-testid="diff-permadeath"]')).not.toBeNull();
   });
 
   it('selects a tier on click', async () => {
@@ -42,7 +43,21 @@ describe('DifficultyScreen (browser)', () => {
     expect(onSelect).toHaveBeenCalledOnce();
     const config = onSelect.mock.calls[0][0];
     expect(config.difficulty).toBe('medium');
+    expect(config.suddenDeath).toBe(false);
     expect(config.turfCount).toBeGreaterThan(0);
+  });
+
+  it('toggles permadeath in the browser', async () => {
+    const onSelect = vi.fn();
+    cleanup = (await renderInBrowser(
+      <DifficultyScreen onSelect={onSelect} onBack={vi.fn()} />,
+    )).unmount;
+
+    document.querySelector<HTMLElement>('[data-testid="diff-permadeath"]')!.click();
+    await settleBrowser();
+    document.querySelector<HTMLElement>('[data-testid="diff-start"]')!.click();
+
+    expect(onSelect.mock.calls[0][0].suddenDeath).toBe(true);
   });
 
   it('renders compact grid on phone viewport', async () => {

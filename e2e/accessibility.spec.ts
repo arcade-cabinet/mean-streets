@@ -33,12 +33,13 @@ test('tap-only flow completes menu → difficulty → game start without drag', 
   await assertHasAccessibleName(page, 'cards-button');
 
   await tap(page.getByTestId('new-game-button'), testInfo);
-  await expect(page.getByRole('heading', { name: 'Rules' })).toBeVisible();
-  await tap(page.getByTestId('close-rules-button'), testInfo);
+  await expect(page.getByRole('heading', { name: 'First Run Brief' })).toBeVisible();
+  await tap(page.getByTestId('close-tutorial-button'), testInfo);
 
   await expect(page.getByTestId('difficulty-screen')).toBeVisible();
 
   await assertHasAccessibleName(page, 'diff-start');
+  await assertHasAccessibleName(page, 'diff-permadeath');
 
   await tap(page.getByTestId('diff-tile-easy'), testInfo);
   await tap(page.getByTestId('diff-start'), testInfo);
@@ -61,16 +62,15 @@ test('main menu structure exposes a main landmark', async ({ page }) => {
   expect(hasLandmark, 'main menu should expose a landmark or h1').toBe(true);
 });
 
-test('difficulty screen exposes a main landmark', async ({ page }) => {
+test('difficulty selector exposes dialog semantics and a heading', async ({ page }) => {
   await page.goto('?fixture=difficulty');
   await expect(page.getByTestId('difficulty-screen')).toBeVisible();
 
   const hasLandmark = await page.evaluate(() => {
     return Boolean(
-      document.querySelector('main') ||
-        document.querySelector('[role="main"]') ||
+      document.querySelector('[role="dialog"][aria-modal="true"]') &&
         document.querySelector('h1'),
     );
   });
-  expect(hasLandmark, 'difficulty screen should expose a landmark or h1').toBe(true);
+  expect(hasLandmark, 'difficulty selector should expose modal dialog semantics and h1').toBe(true);
 });
