@@ -175,18 +175,18 @@ export function DifficultyScreen({ onSelect, onBack }: DifficultyScreenProps) {
     tier: DifficultyTier,
   ) {
     const currentIndex = TIERS.findIndex((entry) => entry.id === tier);
-    let nextIndex = currentIndex;
-    if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
-      nextIndex = (currentIndex - 1 + TIERS.length) % TIERS.length;
-    } else if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
-      nextIndex = (currentIndex + 1) % TIERS.length;
-    } else if (event.key === 'Home') {
-      nextIndex = 0;
-    } else if (event.key === 'End') {
-      nextIndex = TIERS.length - 1;
-    } else {
-      return;
-    }
+    const nextIndex =
+      event.key === 'ArrowLeft' || event.key === 'ArrowUp'
+        ? (currentIndex - 1 + TIERS.length) % TIERS.length
+        : event.key === 'ArrowRight' || event.key === 'ArrowDown'
+          ? (currentIndex + 1) % TIERS.length
+          : event.key === 'Home'
+            ? 0
+            : event.key === 'End'
+              ? TIERS.length - 1
+              : null;
+
+    if (nextIndex === null) return;
 
     event.preventDefault();
     const nextTier = TIERS[nextIndex].id;
