@@ -73,13 +73,17 @@ def require_layer(icon_id: str, index: int, raw: Any, sprites_root: Path) -> Lay
     except (TypeError, ValueError):
         fail(f"{icon_id}.layers[{index}] transform values must be numeric")
 
+    mirror = raw.get("mirror", False)
+    if not isinstance(mirror, bool):
+        fail(f"{icon_id}.layers[{index}].mirror must be a boolean")
+
     return LayerPlan(
         sprite=sprite,
         scale=max(0.05, scale),
         x=x,
         y=y,
         rotation=rotation,
-        mirror=bool(raw.get("mirror", False)),
+        mirror=mirror,
         color=(color[0], color[1], color[2], color[3]),
         anchor=anchor,
     )
@@ -143,15 +147,20 @@ def main() -> None:
     manifest = read_json(manifest_path)
 
     canvas = manifest.get("canvas", {}) if isinstance(manifest, dict) else {}
-    canvas_w = int(canvas.get("width", DEFAULT_CANVAS_W))
-    canvas_h = int(canvas.get("height", DEFAULT_CANVAS_H))
+    try:
+        canvas_w = int(canvas.get("width", DEFAULT_CANVAS_W))
+        canvas_h = int(canvas.get("height", DEFAULT_CANVAS_H))
+    except (TypeError, ValueError):
+        fail("manifest.canvas.width and manifest.canvas.height must be integers")
+    if canvas_w <= 0 or canvas_h <= 0:
+        fail("manifest.canvas.width and manifest.canvas.height must be > 0")
+
     icons = manifest.get("icons") if isinstance(manifest, dict) else None
     if not isinstance(icons, dict) or not icons:
         fail("manifest.icons must be a non-empty object")
 
     out_dir.mkdir(parents=True, exist_ok=True)
-    for old_icon in out_dir.glob("*.png"):
-        old_icon.unlink()
+    rendered: list[tuple[str, Image.Image]] = []
 
     for icon_id, icon in sorted(icons.items()):
         if not isinstance(icon, dict):
@@ -164,7 +173,12 @@ def main() -> None:
             require_layer(icon_id, index, layer, sprites_root)
             for index, layer in enumerate(layers_raw)
         ]
-        render_icon(layers, sprites_root, canvas_w, canvas_h).save(out_dir / f"{icon_id}.png")
+        rendered.append((icon_id, render_icon(layers, sprites_root, canvas_w, canvas_h)))
+
+    for old_icon in out_dir.glob("*.png"):
+        old_icon.unlink()
+    for icon_id, image in rendered:
+        image.save(out_dir / f"{icon_id}.png")
 
     print(f"Composed {len(icons)} UI silhouette icons → {out_dir}")
 
