@@ -47,7 +47,7 @@
     "test:e2e": "pnpm run test:e2e:smoke",
     "test:e2e:headless": "pnpm run test:e2e:smoke:headless",
     "test:e2e:full": "pnpm run test:e2e:core && pnpm run test:e2e:visual && pnpm run test:e2e:governor",
-    "test:e2e:full:headless": "pnpm run test:e2e:core:headless && PW_HEADLESS=1 pnpm run test:e2e:visual && pnpm run test:e2e:governor",
+    "test:e2e:full:headless": "PW_HEADLESS=1 pnpm run test:e2e:full",
     "test:e2e:core": "node scripts/run-playwright.mjs test --grep-invert \"@governor|@visual\"",
     "test:e2e:core:headless": "PW_HEADLESS=1 node scripts/run-playwright.mjs test --grep-invert \"@governor|@visual\"",
     "test:e2e:visual": "node scripts/capture-visual-fixtures.mjs",
