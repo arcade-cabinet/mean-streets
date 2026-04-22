@@ -2,9 +2,19 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { World } from 'koota';
 import { useAppShell } from '../../platform';
 import {
-  useActionBudget, useBlackMarket, useDeckCount, useDeckPending, useMetrics,
-  useHeat, useHolding, useLockup, useMythicPool,
-  useQueuedStrikes, useTurfActive, useTurfReserves, useTurnEnded,
+  useActionBudget,
+  useBlackMarket,
+  useDeckCount,
+  useDeckPending,
+  useMetrics,
+  useHeat,
+  useHolding,
+  useLockup,
+  useMythicPool,
+  useQueuedStrikes,
+  useTurfActive,
+  useTurfReserves,
+  useTurnEnded,
 } from '../../ecs/hooks';
 import type { QueuedAction, Turf } from '../../sim/turf/types';
 import { HeatMeter, StackFanModal, TurfCompositeCard } from '../board';
@@ -12,7 +22,8 @@ import { Card as CardComponent } from '../cards';
 import { QueuedChips, type ActionMode } from './GameScreenActionBar';
 import type { StrikePhase } from './gameScreenHelpers';
 import {
-  GameMobileCustodyModal, GameMobileMarketModal,
+  GameMobileCustodyModal,
+  GameMobileMarketModal,
 } from './GameScreenSidebars';
 import { useOpponentTurn } from './useOpponentTurn';
 import { ResolutionOverlay } from './ResolutionOverlay';
@@ -24,7 +35,42 @@ interface GameScreenProps {
   world: World;
   onGameOver: (winner: 'A' | 'B') => void;
   onOpenMenu?: () => void;
+  tutorialMode?: 'first-war';
+  onTutorialComplete?: () => void;
 }
+
+const FIRST_WAR_COACH_STEPS = [
+  {
+    target: 'draw',
+    label: 'Draw the night',
+    title: 'Pull from the crew box.',
+    copy: 'Every run starts face-down. Draw first, then decide whether the block wants muscle, steel, cash, or heat.',
+  },
+  {
+    target: 'stack',
+    label: 'Build the stack',
+    title: 'Your turf is a portrait, not a spreadsheet.',
+    copy: 'Toughs stand on top. Weapons, drugs, and cash tuck under them until the stack tells a story.',
+  },
+  {
+    target: 'strike',
+    label: 'Call the shot',
+    title: 'No dice. Only board state.',
+    copy: 'Strike when power beats resistance. If the math is wrong, the street will make you pay for it.',
+  },
+  {
+    target: 'heat',
+    label: 'Watch the heat',
+    title: 'Every loud move invites cops.',
+    copy: 'Heat climbs with pressure. Raids hit before combat, and Body Bags turns seizure into permanent loss.',
+  },
+  {
+    target: 'seize',
+    label: 'Take the block',
+    title: 'Break the active turf, then keep moving.',
+    copy: 'Drop their top stack, force the next reserve forward, and finish the war one corner at a time.',
+  },
+] as const;
 
 export type ModalView =
   | { kind: 'none' }
@@ -36,16 +82,28 @@ export type ModalView =
   | { kind: 'drawer-holding' }
   | { kind: 'drawn-card' };
 
-export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
+export function GameScreen({
+  world,
+  onGameOver,
+  onOpenMenu,
+  tutorialMode,
+  onTutorialComplete,
+}: GameScreenProps) {
   const { layout } = useAppShell();
   const [mode, setMode] = useState<ActionMode>(null);
   const [strikePhase, setStrikePhase] = useState<StrikePhase>('pick-source');
   const [modal, setModal] = useState<ModalView>({ kind: 'none' });
   const [flash, setFlash] = useState<string | null>(null);
-  const [healTarget, setHealTarget] = useState<{ id: string; name: string } | null>(null);
-  const [resolution, setResolution] = useState<
-    { strikes: QueuedAction[]; raid: boolean; mythic: number } | null
-  >(null);
+  const [healTarget, setHealTarget] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [resolution, setResolution] = useState<{
+    strikes: QueuedAction[];
+    raid: boolean;
+    mythic: number;
+  } | null>(null);
+  const [coachStepIdx, setCoachStepIdx] = useState(0);
 
   const budget = useActionBudget();
   const playerActive = useTurfActive('A');
@@ -82,30 +140,54 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
   const totalOpponentTurfs = (opponentActive ? 1 : 0) + opponentReserves.length;
 
   const checkWin = useCallback((): boolean => {
-    if (totalOpponentTurfs === 0) { onGameOver('A'); return true; }
-    if (totalPlayerTurfs === 0) { onGameOver('B'); return true; }
+    if (totalOpponentTurfs === 0) {
+      onGameOver('A');
+      return true;
+    }
+    if (totalPlayerTurfs === 0) {
+      onGameOver('B');
+      return true;
+    }
     return false;
   }, [totalPlayerTurfs, totalOpponentTurfs, onGameOver]);
 
-  const { aiThinking, aiAction } = useOpponentTurn({ world, turnEndedA, turnEndedB, onFinish: checkWin });
+  const { aiThinking, aiAction } = useOpponentTurn({
+    world,
+    turnEndedA,
+    turnEndedB,
+    onFinish: checkWin,
+  });
 
   const metricsSnapshotRef = useRef({ raids: 0, mythicsFlipped: 0 });
 
   useEffect(() => {
     if (turnEndedA && turnEndedB && !pendingResolveRef.current) {
-      metricsSnapshotRef.current = { raids: metrics.raids, mythicsFlipped: metrics.mythicsFlipped };
+      metricsSnapshotRef.current = {
+        raids: metrics.raids,
+        mythicsFlipped: metrics.mythicsFlipped,
+      };
       pendingResolveRef.current = {
-        strikes: [...queuedA, ...queuedB], raid: false, mythic: 0,
+        strikes: [...queuedA, ...queuedB],
+        raid: false,
+        mythic: 0,
       };
     }
-  }, [turnEndedA, turnEndedB, queuedA, queuedB, metrics.raids, metrics.mythicsFlipped]);
+  }, [
+    turnEndedA,
+    turnEndedB,
+    queuedA,
+    queuedB,
+    metrics.raids,
+    metrics.mythicsFlipped,
+  ]);
 
   useEffect(() => {
     if (turnNumber !== prevTurnRef.current && prevTurnRef.current !== 0) {
       showFlash(`RESOLVED — Turn ${turnNumber}`, RESOLVE_FLASH_MS);
       if (pendingResolveRef.current) {
         const raidFired = metrics.raids > metricsSnapshotRef.current.raids;
-        const mythicDelta = metrics.mythicsFlipped - metricsSnapshotRef.current.mythicsFlipped;
+        const mythicDelta =
+          metrics.mythicsFlipped - metricsSnapshotRef.current.mythicsFlipped;
         pendingResolveRef.current.raid = raidFired;
         pendingResolveRef.current.mythic = mythicDelta;
         setResolution(pendingResolveRef.current);
@@ -116,10 +198,20 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
   }, [turnNumber, showFlash, metrics.raids, metrics.mythicsFlipped]);
 
   const actions = buildGameActions({
-    world, pending, playerActive, opponentActive,
-    mode, strikePhase, modal, healTarget,
-    setMode, setStrikePhase, setModal, setHealTarget,
-    flash: showFlash, checkWin,
+    world,
+    pending,
+    playerActive,
+    opponentActive,
+    mode,
+    strikePhase,
+    modal,
+    healTarget,
+    setMode,
+    setStrikePhase,
+    setModal,
+    setHealTarget,
+    flash: showFlash,
+    checkWin,
   });
 
   const exhausted = budget.remaining <= 0;
@@ -142,10 +234,38 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
 
   const canDraw = !exhausted && !turnEndedA && !pending && deckCount > 0;
   const holdingAll = [...holdingA, ...holdingB, ...lockupA, ...lockupB];
-  const drawerOpen = modal.kind === 'drawer-market' || modal.kind === 'drawer-holding';
+  const drawerOpen =
+    modal.kind === 'drawer-market' || modal.kind === 'drawer-holding';
+  const coachActive = tutorialMode === 'first-war';
+  const coachStep = FIRST_WAR_COACH_STEPS[coachStepIdx];
+  const finishCoach = useCallback(() => {
+    setCoachStepIdx(0);
+    onTutorialComplete?.();
+  }, [onTutorialComplete]);
+  const advanceCoach = useCallback(() => {
+    if (coachStepIdx >= FIRST_WAR_COACH_STEPS.length - 1) {
+      finishCoach();
+      return;
+    }
+    setCoachStepIdx((idx) => idx + 1);
+  }, [coachStepIdx, finishCoach]);
 
   return (
-    <div className="game-screen game-screen-v3" data-testid="game-screen">
+    <div
+      className="game-screen game-screen-v3 world-screen world-screen-combat"
+      data-testid="game-screen"
+      data-coach-step={coachActive ? coachStep.target : undefined}
+    >
+      <div className="street-stage street-stage-combat" aria-hidden="true">
+        <span className="street-stage-line street-stage-line-left" />
+        <span className="street-stage-line street-stage-line-right" />
+        <span className="street-stage-tag street-stage-tag-player">
+          Your corner
+        </span>
+        <span className="street-stage-tag street-stage-tag-rival">
+          Rival corner
+        </span>
+      </div>
       {/* Drawer overlays — render above board */}
       {drawerOpen && (
         <button
@@ -169,7 +289,10 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
       {modal.kind === 'drawer-holding' && (
         <div className="game-drawer game-drawer-right">
           <GameMobileCustodyModal
-            holdingA={holdingA} holdingB={holdingB} lockupA={lockupA} lockupB={lockupB}
+            holdingA={holdingA}
+            holdingB={holdingB}
+            lockupA={lockupA}
+            lockupB={lockupB}
             onClose={() => setModal({ kind: 'none' })}
           />
         </div>
@@ -200,15 +323,26 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
             Draw ({deckCount})
           </button>
         )}
-        <span className="game-hud-bar-turfs">Turfs {totalPlayerTurfs} vs {totalOpponentTurfs}</span>
+        <span className="game-hud-bar-turfs">
+          Turfs {totalPlayerTurfs} vs {totalOpponentTurfs}
+        </span>
         <HeatMeter value={heat} compact={compact} />
-        <span className="game-hud-bar-mythic" data-testid="mythic-pool-indicator">
+        <span
+          className="game-hud-bar-mythic"
+          data-testid="mythic-pool-indicator"
+        >
           Mythic {mythic.unassigned.length}/10
         </span>
         <button
           type="button"
           className={`game-hud-panel-btn ${market.length > 0 ? 'game-hud-panel-btn-active' : ''}`}
-          onClick={() => setModal(modal.kind === 'drawer-market' ? { kind: 'none' } : { kind: 'drawer-market' })}
+          onClick={() =>
+            setModal(
+              modal.kind === 'drawer-market'
+                ? { kind: 'none' }
+                : { kind: 'drawer-market' },
+            )
+          }
           data-testid="slot-market"
         >
           Market {market.length > 0 ? `(${market.length})` : ''}
@@ -216,7 +350,13 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
         <button
           type="button"
           className={`game-hud-panel-btn ${holdingAll.length > 0 ? 'game-hud-panel-btn-active' : ''}`}
-          onClick={() => setModal(modal.kind === 'drawer-holding' ? { kind: 'none' } : { kind: 'drawer-holding' })}
+          onClick={() =>
+            setModal(
+              modal.kind === 'drawer-holding'
+                ? { kind: 'none' }
+                : { kind: 'drawer-holding' },
+            )
+          }
           data-testid="slot-holding"
         >
           Custody {holdingAll.length > 0 ? `(${holdingAll.length})` : ''}
@@ -232,27 +372,45 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
           </button>
         )}
         {onOpenMenu && (
-          <button type="button" className="game-hud-bar-menu" onClick={onOpenMenu} aria-label="Open game menu">Menu</button>
+          <button
+            type="button"
+            className="game-hud-bar-menu"
+            onClick={onOpenMenu}
+            aria-label="Open game menu"
+          >
+            Menu
+          </button>
         )}
       </div>
 
-      {flash && <div className="game-flash"><span className="game-flash-pill">{flash}</span></div>}
+      {flash && (
+        <div className="game-flash">
+          <span className="game-flash-pill">{flash}</span>
+        </div>
+      )}
       {(aiThinking || (turnEndedA && !turnEndedB)) && (
         <div className="game-overlay" data-testid="opponent-turn-overlay">
-          <div className="game-overlay-pill">{aiAction ?? 'Waiting for opponent…'}</div>
+          <div className="game-overlay-pill">
+            {aiAction ?? 'Waiting for opponent…'}
+          </div>
         </div>
       )}
 
       <div className="board-grid">
         {/* Row 1: Opponent Draw | Opponent Turf | Opponent Reserves */}
-        <div className="board-slot board-slot-draw board-slot-opponent-draw" data-testid="slot-opp-draw">
+        <div
+          className="board-slot board-slot-draw board-slot-opponent-draw"
+          data-testid="slot-opp-draw"
+        >
           <div className="draw-pile">
             <div className="draw-pile-card draw-pile-card-3" />
             <div className="draw-pile-card draw-pile-card-2" />
             <div className="draw-pile-card draw-pile-card-1">
               <span className="draw-pile-mark">MS</span>
             </div>
-            <span className="draw-pile-count">{opponentReserves.length} res</span>
+            <span className="draw-pile-count">
+              {opponentReserves.length} res
+            </span>
           </div>
         </div>
 
@@ -262,7 +420,11 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
           data-testid="turf-lane-B"
         >
           {opponentActive ? (
-            <TurfCompositeCard turf={opponentActive} compact={compact} isOwn={false} />
+            <TurfCompositeCard
+              turf={opponentActive}
+              compact={compact}
+              isOwn={false}
+            />
           ) : (
             <span className="board-slot-label">Empty Turf</span>
           )}
@@ -285,8 +447,12 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
         >
           {deckCount > 0 ? (
             <div className="draw-pile">
-              {deckCount > 2 && <div className="draw-pile-card draw-pile-card-3" />}
-              {deckCount > 1 && <div className="draw-pile-card draw-pile-card-2" />}
+              {deckCount > 2 && (
+                <div className="draw-pile-card draw-pile-card-3" />
+              )}
+              {deckCount > 1 && (
+                <div className="draw-pile-card draw-pile-card-2" />
+              )}
               <div className="draw-pile-card draw-pile-card-1">
                 <span className="draw-pile-mark">MS</span>
               </div>
@@ -324,18 +490,60 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
         </div>
       </div>
 
+      {coachActive && (
+        <aside
+          className="first-war-coach"
+          data-testid="first-war-coach"
+          aria-live="polite"
+        >
+          <div className="first-war-coach-count">
+            {String(coachStepIdx + 1).padStart(2, '0')} /{' '}
+            {String(FIRST_WAR_COACH_STEPS.length).padStart(2, '0')}
+          </div>
+          <p className="first-war-coach-label">{coachStep.label}</p>
+          <h2>{coachStep.title}</h2>
+          <p>{coachStep.copy}</p>
+          <div className="first-war-coach-actions">
+            <button
+              type="button"
+              onClick={finishCoach}
+              data-testid="first-war-coach-skip"
+            >
+              Skip
+            </button>
+            <button
+              type="button"
+              onClick={advanceCoach}
+              data-testid="first-war-coach-next"
+            >
+              {coachStepIdx >= FIRST_WAR_COACH_STEPS.length - 1
+                ? 'Hit the Street'
+                : 'Next'}
+            </button>
+          </div>
+        </aside>
+      )}
 
       <QueuedChips strikes={queuedA} />
 
-
       {(modal.kind === 'stack' || modal.kind === 'swap') && (
         <StackFanModal
-          turf={modal.turf} open isOwn
+          turf={modal.turf}
+          open
+          isOwn
           onCardPick={mode !== 'play_card' ? actions.onStackPick : undefined}
-          onClose={() => { setModal({ kind: 'none' }); if (mode === 'play_card') setMode(null); }}
-          showHp showOwnerLines={mode === 'modifier_swap'}
-          onPlaceAt={mode === 'play_card' && pending ? actions.placePendingAt : undefined}
-          placingIsModifier={mode === 'play_card' && !!pending && pending.kind !== 'tough'}
+          onClose={() => {
+            setModal({ kind: 'none' });
+            if (mode === 'play_card') setMode(null);
+          }}
+          showHp
+          showOwnerLines={mode === 'modifier_swap'}
+          onPlaceAt={
+            mode === 'play_card' && pending ? actions.placePendingAt : undefined
+          }
+          placingIsModifier={
+            mode === 'play_card' && !!pending && pending.kind !== 'tough'
+          }
         />
       )}
 
@@ -351,7 +559,10 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
 
       {modal.kind === 'holding' && (
         <GameMobileCustodyModal
-          holdingA={holdingA} holdingB={holdingB} lockupA={lockupA} lockupB={lockupB}
+          holdingA={holdingA}
+          holdingB={holdingB}
+          lockupA={lockupA}
+          lockupB={lockupB}
           onClose={() => setModal({ kind: 'none' })}
         />
       )}
@@ -362,7 +573,10 @@ export function GameScreen({ world, onGameOver, onOpenMenu }: GameScreenProps) {
           onClick={() => setModal({ kind: 'none' })}
           data-testid="drawn-card-modal"
         >
-          <div className="game-drawn-card-content" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="game-drawn-card-content"
+            onClick={(e) => e.stopPropagation()}
+          >
             <CardComponent card={pending} />
           </div>
           <span className="game-drawn-card-hint">Tap your turf to place</span>

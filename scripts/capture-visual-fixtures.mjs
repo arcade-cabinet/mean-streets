@@ -27,11 +27,15 @@ const PROJECTS = [
 
 const FIXTURES = [
   ['menu', 'main-menu-screen'],
+  ['tutorial', 'tutorial-modal'],
   ['difficulty', 'difficulty-screen'],
   ['deck-garage', 'deck-garage-screen'],
   ['combat', 'game-screen'],
+  ['combat-tutorial', 'game-screen'],
   ['card', 'fixture-root'],
   ['pack-opening', 'pack-opening-screen'],
+  ['pack-opening-reveal', 'pack-opening-screen'],
+  ['pack-opening-summary', 'pack-opening-screen'],
   ['game-over', 'gameover-screen'],
 ];
 

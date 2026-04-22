@@ -7135,3 +7135,1044 @@ select {
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
+
+/* ---- Visual Journey Pass: shared world staging ---- */
+.world-screen {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(145, 31, 22, 0.24), transparent 34%),
+    radial-gradient(circle at 78% 4%, rgba(214, 152, 69, 0.12), transparent 28%),
+    linear-gradient(180deg, #120807 0%, #070504 56%, #020202 100%);
+}
+
+.world-screen > :not(.ambient-silhouette-layer):not(.street-stage) {
+  position: relative;
+  z-index: 1;
+}
+
+.world-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(255, 231, 181, 0.035) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(255, 231, 181, 0.025) 1px, transparent 1px);
+  background-size: 84px 84px, 84px 84px;
+  mask-image: radial-gradient(ellipse at center, black 0%, transparent 78%);
+  opacity: 0.52;
+}
+
+.ambient-silhouette-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.ambient-silhouette-layer img {
+  position: absolute;
+  width: clamp(180px, 20vw, 320px);
+  opacity: 0.13;
+  filter: saturate(0.7) contrast(1.28) brightness(0.72) blur(0.2px);
+}
+
+.ambient-silhouette-layer img:nth-child(1) {
+  left: -4rem;
+  bottom: -2rem;
+  transform: rotate(-10deg) scale(1.08);
+}
+
+.ambient-silhouette-layer img:nth-child(2) {
+  right: -4rem;
+  top: 16%;
+  transform: rotate(12deg) scale(1.16);
+}
+
+.ambient-silhouette-layer img:nth-child(3) {
+  left: 52%;
+  bottom: -5rem;
+  transform: translateX(-50%) rotate(3deg) scale(1.2);
+  opacity: 0.08;
+}
+
+.contraband-prop {
+  width: clamp(44px, 7vw, 86px);
+  height: auto;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  filter: saturate(0.72) contrast(1.15) brightness(0.8) drop-shadow(0 18px 26px rgba(0, 0, 0, 0.48));
+}
+
+.screen-header-card {
+  background:
+    linear-gradient(180deg, rgba(28, 18, 16, 0.92), rgba(10, 8, 7, 0.94)),
+    linear-gradient(90deg, rgba(224, 177, 95, 0.08), transparent 58%);
+  border: 1px solid rgba(216, 166, 100, 0.28);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-heavy);
+  padding: 1rem;
+}
+
+.screen-header-kicker,
+.pack-kicker,
+.tutorial-brief-kicker {
+  margin: 0 0 0.25rem;
+  color: var(--text-hot);
+  font-family: var(--font-display);
+  font-size: 0.66rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.screen-header-title {
+  margin: 0;
+  font-family: var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.screen-header-copy {
+  margin: 0.35rem 0 0;
+  color: var(--text-dim);
+  line-height: 1.45;
+}
+
+/* ---- Visual Journey Pass: landing identity ---- */
+.menu-shell-hero,
+.menu-shell-phone-poster {
+  background:
+    radial-gradient(circle at 16% 12%, rgba(162, 36, 27, 0.18), transparent 34%),
+    linear-gradient(180deg, #090706 0%, #030202 100%);
+}
+
+.menu-shell .menu-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-repeat: no-repeat;
+  filter: saturate(0.86) contrast(1.08) brightness(0.74);
+}
+
+.menu-shell .menu-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 42%, transparent 0%, rgba(0, 0, 0, 0.1) 32%, rgba(0, 0, 0, 0.72) 78%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.86));
+}
+
+.menu-street-signage {
+  position: absolute;
+  z-index: 2;
+  left: clamp(1rem, 4vw, 4.5rem);
+  bottom: clamp(1rem, 5vh, 4rem);
+  display: grid;
+  gap: 0.25rem;
+  color: rgba(239, 227, 207, 0.58);
+  font-family: var(--font-display);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+}
+
+.menu-street-signage strong {
+  color: rgba(224, 177, 95, 0.9);
+  font-size: clamp(1.6rem, 3.8vw, 4rem);
+  line-height: 0.92;
+  max-width: 8ch;
+}
+
+.menu-shell-hero .menu-nav {
+  top: clamp(1.3rem, 3vw, 2.4rem);
+  padding: 0.35rem;
+  border: 1px solid rgba(216, 166, 100, 0.16);
+  border-radius: 999px;
+  background: rgba(6, 5, 4, 0.36);
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.42);
+}
+
+.menu-shell-phone-poster .menu-backdrop {
+  background-size: auto 100%;
+  background-position: 53% center;
+}
+
+.menu-shell-phone-poster .menu-logo {
+  position: absolute;
+  top: max(2rem, calc(env(safe-area-inset-top) + 1.2rem));
+  left: 50%;
+  display: block;
+  width: clamp(84px, 28vw, 122px);
+  max-width: 122px;
+  margin: 0;
+  transform: translateX(-50%);
+}
+
+.menu-shell-phone-poster .menu-nav {
+  position: absolute;
+  inset-inline: max(1rem, env(safe-area-inset-left)) max(1rem, env(safe-area-inset-right));
+  top: auto;
+  bottom: max(1rem, calc(env(safe-area-inset-bottom) + 1rem));
+  left: auto;
+  width: auto;
+  transform: none;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(216, 166, 100, 0.22);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(15, 10, 9, 0.68), rgba(7, 5, 4, 0.92)),
+    radial-gradient(circle at 50% 0%, rgba(160, 35, 25, 0.22), transparent 68%);
+  backdrop-filter: blur(12px) saturate(1.05);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.62);
+}
+
+.menu-shell-phone-poster .menu-btn {
+  min-width: 0;
+  min-height: 48px;
+  padding: 0.78rem 1rem;
+}
+
+.menu-shell-phone-poster .menu-street-signage {
+  top: 18%;
+  bottom: auto;
+  left: 1rem;
+  opacity: 0.78;
+}
+
+.menu-shell-phone-poster .menu-street-signage strong {
+  font-size: clamp(1.2rem, 7vw, 2rem);
+}
+
+/* ---- Visual Journey Pass: richer first-run brief ---- */
+.tutorial-modal {
+  position: relative;
+  overflow: auto;
+}
+
+.tutorial-modal .ambient-silhouette-layer {
+  border-radius: inherit;
+}
+
+.tutorial-brief-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+  margin: 1rem 0 0.7rem;
+  padding: 1rem;
+  overflow: hidden;
+  border: 1px solid rgba(216, 166, 100, 0.2);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(36, 22, 18, 0.9), rgba(10, 8, 7, 0.84)),
+    radial-gradient(circle at 100% 0%, rgba(160, 35, 25, 0.22), transparent 54%);
+}
+
+.tutorial-brief-card h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  color: var(--accent-paper);
+  font-size: clamp(1.25rem, 3vw, 2rem);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.tutorial-brief-card p:last-child {
+  margin: 0.45rem 0 0;
+  color: var(--text-dim);
+  line-height: 1.45;
+}
+
+.tutorial-brief-props {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  transform: rotate(-4deg);
+  opacity: 0.78;
+}
+
+/* ---- Visual Journey Pass: combat as street stage ---- */
+.game-screen-v3.world-screen-combat {
+  height: 100vh;
+  height: 100dvh;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(136, 27, 20, 0.13), transparent 34%),
+    linear-gradient(180deg, #0c0908 0%, #040403 100%);
+}
+
+.street-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.street-stage::before {
+  content: "";
+  position: absolute;
+  inset: 3.4rem clamp(0.75rem, 4vw, 3.5rem) 0;
+  border-radius: 42px 42px 0 0;
+  background:
+    linear-gradient(90deg, transparent 0 48%, rgba(224, 177, 95, 0.1) 48.4% 51.6%, transparent 52%),
+    radial-gradient(circle at 50% 50%, rgba(255, 226, 170, 0.045), transparent 56%),
+    repeating-linear-gradient(115deg, rgba(255,255,255,0.032) 0 1px, transparent 1px 22px),
+    linear-gradient(180deg, rgba(31, 24, 20, 0.92), rgba(5, 5, 5, 0.98));
+  box-shadow: inset 0 1px 0 rgba(255, 230, 190, 0.08), inset 0 0 80px rgba(0, 0, 0, 0.72);
+}
+
+.street-stage-line {
+  position: absolute;
+  top: 4.2rem;
+  bottom: 1.2rem;
+  width: clamp(76px, 11vw, 180px);
+  border: 1px solid rgba(216, 166, 100, 0.08);
+  background:
+    linear-gradient(180deg, rgba(218, 171, 78, 0.04), transparent),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0 1px, transparent 1px 18px);
+  filter: blur(0.1px);
+}
+
+.street-stage-line-left { left: clamp(0.8rem, 3vw, 2rem); }
+.street-stage-line-right { right: clamp(0.8rem, 3vw, 2rem); }
+
+.street-stage-line::before,
+.street-stage-line::after {
+  position: absolute;
+  left: 50%;
+  width: max-content;
+  color: rgba(255, 230, 190, 0.28);
+  font-family: var(--font-display);
+  font-size: clamp(0.72rem, 1.2vw, 1rem);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  transform: translateX(-50%);
+}
+
+.street-stage-line::before {
+  top: 12%;
+}
+
+.street-stage-line::after {
+  bottom: 14%;
+}
+
+.street-stage-line-left::before { content: "Draw Box"; }
+.street-stage-line-left::after { content: "Crew Queue"; }
+.street-stage-line-right::before { content: "Holding"; }
+.street-stage-line-right::after { content: "Custody"; }
+
+.street-stage-tag {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(224, 177, 95, 0.2);
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem, 8vw, 7rem);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.street-stage-tag-rival { top: 14%; }
+.street-stage-tag-player { bottom: 9%; }
+
+.game-screen-v3 .game-hud-bar {
+  position: relative;
+  z-index: 3;
+  flex-wrap: wrap;
+  background:
+    linear-gradient(180deg, rgba(14, 9, 8, 0.92), rgba(7, 5, 4, 0.86)),
+    linear-gradient(90deg, rgba(180, 44, 28, 0.1), transparent 54%);
+  border-bottom-color: rgba(216, 166, 100, 0.3);
+  box-shadow: 0 20px 58px rgba(0, 0, 0, 0.4);
+}
+
+.game-screen-v3 .board-grid {
+  position: relative;
+  z-index: 2;
+  width: min(100%, 1280px);
+  margin: 0 auto;
+  grid-template-columns: minmax(7rem, 0.7fr) minmax(17rem, 34rem) minmax(7rem, 0.7fr);
+  gap: clamp(0.6rem, 2vw, 2rem);
+  padding: clamp(0.55rem, 2vw, 1.5rem);
+}
+
+.game-screen-v3 .board-slot {
+  border-color: rgba(216, 166, 100, 0.24);
+  background:
+    linear-gradient(180deg, rgba(18, 14, 13, 0.78), rgba(6, 5, 5, 0.84)),
+    radial-gradient(circle at 50% 0%, rgba(224, 177, 95, 0.08), transparent 64%);
+  box-shadow: inset 0 1px 0 rgba(255, 230, 190, 0.06), 0 18px 54px rgba(0, 0, 0, 0.36);
+  backdrop-filter: blur(4px);
+}
+
+.game-screen-v3 .board-slot-turf {
+  height: min(100%, 46vh);
+  border-radius: 24px;
+}
+
+.game-screen-v3 .board-slot-draw,
+.game-screen-v3 .board-slot-reserves {
+  width: clamp(5.8rem, 9vw, 8.5rem);
+  height: clamp(8rem, 17vh, 11.5rem);
+  align-self: center;
+}
+
+.game-screen-v3 .board-slot-draw::before,
+.game-screen-v3 .board-slot-reserves::before {
+  content: "";
+  position: absolute;
+  inset: 0.5rem;
+  border: 1px dashed rgba(224, 177, 95, 0.12);
+  border-radius: 16px;
+  pointer-events: none;
+}
+
+.game-screen-v3 .board-slot-draw::after,
+.game-screen-v3 .board-slot-reserves::after {
+  position: absolute;
+  left: 50%;
+  bottom: 0.45rem;
+  color: rgba(224, 177, 95, 0.46);
+  font-family: var(--font-display);
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.game-screen-v3 .board-slot-player-draw::after { content: "Your Deck"; }
+.game-screen-v3 .board-slot-opponent-draw::after { content: "Rival Deck"; }
+.game-screen-v3 .board-slot-player-reserves::after { content: "Backups"; }
+.game-screen-v3 .board-slot-opponent-reserves::after { content: "Rivals"; }
+
+.game-screen-v3 .board-slot-turf::before {
+  content: "Active Turf";
+  position: absolute;
+  top: 0.55rem;
+  left: 0.65rem;
+  z-index: 2;
+  color: rgba(224, 177, 95, 0.5);
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.game-screen-v3 .board-slot-opponent::before { content: "Rival Turf"; }
+.game-screen-v3 .board-slot-player::before { content: "Your Turf"; }
+
+.game-screen-v3 .board-slot-player {
+  border-color: rgba(224, 177, 95, 0.34);
+}
+
+.game-screen-v3 .board-slot-opponent {
+  border-color: rgba(190, 54, 42, 0.34);
+}
+
+.game-screen-v3[data-coach-step='draw'] [data-testid='slot-player-draw'],
+.game-screen-v3[data-coach-step='stack'] [data-testid='turf-lane-A'],
+.game-screen-v3[data-coach-step='strike'] [data-testid='turf-lane-B'],
+.game-screen-v3[data-coach-step='heat'] .heat-meter,
+.game-screen-v3[data-coach-step='seize'] [data-testid='turf-lane-B'] {
+  outline: 2px solid rgba(224, 177, 95, 0.9);
+  outline-offset: 4px;
+  box-shadow:
+    0 0 0 5px rgba(127, 29, 21, 0.34),
+    0 24px 70px rgba(0, 0, 0, 0.54);
+}
+
+.first-war-coach {
+  position: absolute;
+  z-index: 6;
+  right: clamp(0.75rem, 3vw, 2rem);
+  bottom: clamp(0.75rem, 3vw, 2rem);
+  width: min(25rem, calc(100vw - 1.5rem));
+  padding: 1rem;
+  border: 1px solid rgba(216, 166, 100, 0.32);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(30, 18, 15, 0.94), rgba(7, 6, 5, 0.96)),
+    radial-gradient(circle at 100% 0%, rgba(166, 39, 27, 0.24), transparent 58%);
+  box-shadow: 0 28px 88px rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(14px) saturate(1.05);
+  pointer-events: none;
+}
+
+.first-war-coach-count {
+  float: right;
+  color: rgba(224, 177, 95, 0.55);
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  letter-spacing: 0.16em;
+}
+
+.first-war-coach-label {
+  margin: 0 0 0.25rem;
+  color: var(--text-hot);
+  font-family: var(--font-display);
+  font-size: 0.68rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.first-war-coach h2 {
+  margin: 0;
+  color: var(--accent-paper);
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.first-war-coach p:last-of-type {
+  margin: 0.55rem 0 0;
+  color: var(--text-dim);
+  line-height: 1.45;
+}
+
+.first-war-coach-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  margin-top: 0.9rem;
+}
+
+.first-war-coach-actions button {
+  border: 1px solid rgba(216, 166, 100, 0.3);
+  border-radius: 10px;
+  background: rgba(20, 14, 12, 0.82);
+  color: var(--text-main);
+  padding: 0.5rem 0.8rem;
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.first-war-coach-actions button:last-child {
+  background: rgba(122, 23, 18, 0.86);
+  border-color: rgba(224, 177, 95, 0.5);
+  color: #ffe8d2;
+}
+
+/* ---- Visual Journey Pass: contraband pack ritual ---- */
+.pack-screen.world-screen-spoils {
+  background:
+    radial-gradient(circle at 50% 35%, rgba(154, 33, 24, 0.2), transparent 34%),
+    linear-gradient(180deg, #130a08 0%, #050403 100%);
+}
+
+.pack-header {
+  position: relative;
+  z-index: 2;
+  background:
+    linear-gradient(180deg, rgba(13, 9, 8, 0.82), rgba(6, 5, 4, 0.72)),
+    linear-gradient(90deg, rgba(224, 177, 95, 0.08), transparent 60%);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+}
+
+.pack-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 3vw, 2rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pack-sealed-stage,
+.pack-reveal-stage,
+.pack-summary-grid,
+.pack-summary-stats,
+.pack-summary-actions,
+.pack-pips {
+  position: relative;
+  z-index: 1;
+}
+
+.pack-sealed-stage::before,
+.pack-reveal-stage::before {
+  content: "";
+  position: absolute;
+  width: min(84vw, 860px);
+  aspect-ratio: 1.9 / 1;
+  bottom: clamp(6%, 9vh, 12%);
+  left: 50%;
+  transform: translateX(-50%) perspective(800px) rotateX(64deg);
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse at center, rgba(224, 177, 95, 0.12), transparent 64%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0 1px, transparent 1px 28px);
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.8);
+}
+
+.pack-sealed-box {
+  width: min(76vw, 430px);
+  height: min(66vh, 500px);
+  border: 1px solid rgba(216, 166, 100, 0.42);
+  border-radius: 28px;
+  background:
+    linear-gradient(145deg, rgba(43, 28, 22, 0.94), rgba(11, 8, 7, 0.98)),
+    radial-gradient(circle at 50% 20%, rgba(224, 177, 95, 0.16), transparent 48%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 236, 200, 0.1),
+    0 32px 90px rgba(0, 0, 0, 0.64);
+}
+
+.pack-sealed-box:hover {
+  transform: translateY(-4px) scale(1.02);
+}
+
+.pack-sealed-box::before,
+.pack-sealed-box::after {
+  content: "";
+  position: absolute;
+  inset-inline: 12%;
+  height: 1px;
+  z-index: 2;
+  background: linear-gradient(90deg, transparent, rgba(255, 230, 190, 0.34), transparent);
+}
+
+.pack-sealed-box::before { top: 23%; }
+.pack-sealed-box::after { bottom: 22%; }
+
+.pack-drop-duffel {
+  position: absolute;
+  width: 58%;
+  left: 22%;
+  top: 17%;
+  opacity: 0.84;
+}
+
+.pack-drop-bag {
+  position: absolute;
+  width: 34%;
+  right: 9%;
+  bottom: 23%;
+  transform: rotate(14deg);
+  opacity: 0.68;
+}
+
+.pack-drop-cash {
+  position: absolute;
+  width: 30%;
+  left: 10%;
+  bottom: 24%;
+  transform: rotate(-18deg);
+  opacity: 0.66;
+}
+
+.pack-sealed-icon {
+  position: relative;
+  z-index: 2;
+  margin-top: auto;
+  color: rgba(224, 177, 95, 0.9);
+}
+
+.pack-sealed-stamp {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 2;
+  color: rgba(255, 231, 190, 0.52);
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  transform: rotate(-8deg);
+}
+
+.pack-sealed-label {
+  position: relative;
+  z-index: 2;
+  margin-bottom: 1.5rem;
+  color: #ffe8d2;
+  font-family: var(--font-display);
+  font-size: 1rem;
+}
+
+.pack-reveal-stage {
+  isolation: isolate;
+}
+
+.pack-reveal-table {
+  position: absolute;
+  inset: auto 0 11% 0;
+  z-index: -1;
+  display: flex;
+  justify-content: center;
+  gap: clamp(2rem, 10vw, 7rem);
+  opacity: 0.48;
+  transform: perspective(700px) rotateX(58deg);
+}
+
+.pack-reveal-card {
+  max-width: min(34vw, 340px);
+}
+
+.pack-reveal-card::before {
+  content: "";
+  position: absolute;
+  inset: -18px;
+  z-index: -1;
+  border-radius: 28px;
+  background: radial-gradient(circle, rgba(224, 177, 95, 0.2), transparent 65%);
+  filter: blur(4px);
+}
+
+.pack-rarity-frame-uncommon {
+  filter: drop-shadow(0 0 14px rgba(52, 211, 153, 0.26));
+}
+
+.pack-rarity-frame-mythic {
+  filter: drop-shadow(0 0 24px rgba(239, 68, 68, 0.46));
+  animation:
+    pack-card-flip 0.45s cubic-bezier(0.4, 0, 0.2, 1) both,
+    pack-mythic-pulse 2.2s ease-in-out 0.5s infinite;
+}
+
+@keyframes pack-mythic-pulse {
+  0%, 100% { filter: drop-shadow(0 0 24px rgba(239, 68, 68, 0.46)); }
+  50% { filter: drop-shadow(0 0 36px rgba(239, 68, 68, 0.76)); }
+}
+
+.pack-summary-grid {
+  width: min(100%, 1180px);
+  margin: 0 auto;
+  padding: clamp(1rem, 2vw, 1.35rem) clamp(0.75rem, 3vw, 2rem);
+  border-top: 1px solid rgba(216, 166, 100, 0.14);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(224, 177, 95, 0.08), transparent 60%),
+    linear-gradient(180deg, rgba(14, 10, 9, 0.22), transparent);
+}
+
+.pack-summary-cell {
+  padding: 0.4rem;
+  border-radius: 18px;
+  background: rgba(8, 6, 5, 0.28);
+}
+
+@media (min-width: 900px) {
+  .pack-reveal-card {
+    display: grid;
+    min-height: 340px;
+    place-items: center;
+  }
+
+  .pack-reveal-card .card-shell:not(.card-shell-compact) {
+    transform: scale(1.26);
+    transform-origin: center;
+  }
+
+  .pack-reveal-hint {
+    margin-top: 0.4rem;
+  }
+
+  .pack-summary-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .pack-summary-cell {
+    max-width: 220px;
+  }
+}
+
+.pack-done-btn {
+  background: rgba(122, 23, 18, 0.82);
+  border-color: rgba(224, 177, 95, 0.44);
+  color: #ffe8d2;
+  font-family: var(--font-display);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* ---- Visual Journey Pass: supporting screen chrome ---- */
+.deck-garage-screen,
+.coll-screen,
+.cards-screen,
+.gameover-screen {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(122, 23, 18, 0.2), transparent 30%),
+    linear-gradient(180deg, #120807 0%, #050404 100%);
+}
+
+.deck-garage-header,
+.deck-garage-rail,
+.coll-header,
+.coll-summary,
+.coll-filters,
+.cards-hud,
+.gameover-panel,
+.gameover-reward-summary {
+  backdrop-filter: blur(12px) saturate(1.04);
+}
+
+.cards-hud,
+.coll-header {
+  border-bottom-color: rgba(216, 166, 100, 0.24);
+  background:
+    linear-gradient(180deg, rgba(13, 9, 8, 0.88), rgba(7, 5, 4, 0.8)),
+    linear-gradient(90deg, rgba(224, 177, 95, 0.08), transparent 60%);
+}
+
+.cards-gallery,
+.coll-grid {
+  position: relative;
+  z-index: 1;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(224, 177, 95, 0.05), transparent 38%),
+    repeating-linear-gradient(115deg, rgba(255,255,255,0.018) 0 1px, transparent 1px 20px);
+}
+
+.gameover-screen {
+  min-height: 100vh;
+  min-height: 100svh;
+}
+
+.gameover-spoils-props {
+  display: flex;
+  justify-content: center;
+  gap: clamp(1rem, 4vw, 3rem);
+  width: min(32rem, 100%);
+  opacity: 0.66;
+  transform: rotate(-2deg);
+}
+
+@media (max-width: 640px) {
+  .ambient-silhouette-layer img {
+    width: 190px;
+    opacity: 0.09;
+  }
+
+  .menu-shell-phone-poster .menu-backdrop::after {
+    background:
+      radial-gradient(circle at 50% 26%, rgba(0, 0, 0, 0.05), transparent 32%),
+      linear-gradient(180deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.78) 62%, rgba(0, 0, 0, 0.95));
+  }
+
+  .tutorial-brief-card {
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+    margin: 0.55rem 0 0.45rem;
+    padding: 0.72rem;
+  }
+
+  .tutorial-brief-props {
+    justify-content: center;
+    opacity: 0.55;
+  }
+
+  .tutorial-modal {
+    box-sizing: border-box;
+    width: calc(100vw - 1rem);
+    max-height: calc(100svh - 1rem);
+    padding: 0.72rem;
+  }
+
+  .tutorial-modal .app-modal-header {
+    gap: 0.45rem;
+  }
+
+  .tutorial-modal .app-modal-title {
+    font-size: clamp(1.45rem, 8vw, 2rem);
+  }
+
+  .tutorial-modal .app-modal-body,
+  .tutorial-modal .app-modal-body-compact {
+    gap: 0.55rem;
+    padding-block: 0.5rem;
+  }
+
+  .tutorial-modal .app-modal-actions {
+    bottom: -0.65rem;
+    padding-top: 0.45rem;
+  }
+
+  .tutorial-modal .menu-button {
+    min-height: 48px;
+  }
+
+  .tutorial-brief-card h3 {
+    font-size: clamp(1.05rem, 6vw, 1.45rem);
+  }
+
+  .tutorial-brief-card p:last-child,
+  .tutorial-step p {
+    font-size: 0.74rem;
+    line-height: 1.28;
+  }
+
+  .tutorial-board {
+    gap: 0.45rem;
+    margin: 0.45rem 0;
+    padding: 0.5rem;
+    border-radius: 16px;
+  }
+
+  .tutorial-lane {
+    min-height: 94px;
+    padding: 0.6rem;
+    gap: 0.35rem;
+  }
+
+  .tutorial-stack {
+    min-height: 62px;
+  }
+
+  .tutorial-card {
+    height: 46px;
+    font-size: 0.56rem;
+  }
+
+  .tutorial-action-line {
+    height: 10px;
+  }
+
+  .tutorial-steps {
+    gap: 0.45rem;
+    padding-bottom: 0.35rem;
+  }
+
+  .tutorial-step {
+    grid-template-columns: 3.7rem 1fr;
+    gap: 0.55rem;
+    padding: 0.58rem;
+    border-radius: 13px;
+  }
+
+  .tutorial-step-icon {
+    min-height: 3.4rem;
+  }
+
+  .tutorial-step h3 {
+    margin-block: 0.08rem 0.18rem;
+    font-size: 0.82rem;
+  }
+
+  .game-screen-v3 .board-grid {
+    width: 100%;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 0.45rem;
+    padding: 0.4rem;
+  }
+
+  .game-screen-v3 .board-slot-turf {
+    height: min(100%, 35vh);
+    border-radius: 18px;
+  }
+
+  .street-stage::before {
+    inset: 4.4rem 0.35rem 0;
+    border-radius: 24px 24px 0 0;
+  }
+
+  .street-stage-line,
+  .street-stage-tag {
+    display: none;
+  }
+
+  .first-war-coach {
+    left: 0.55rem;
+    right: 0.55rem;
+    bottom: 0.55rem;
+    width: auto;
+    padding: 0.8rem;
+  }
+
+  .first-war-coach p:last-of-type {
+    font-size: 0.84rem;
+  }
+
+  .pack-sealed-box {
+    width: min(82vw, 320px);
+    height: min(50vh, 380px);
+  }
+
+  .pack-reveal-card {
+    max-width: 230px;
+  }
+
+  .gameover-spoils-props {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) and (max-height: 760px) {
+  .tutorial-brief-props {
+    display: none;
+  }
+
+  .tutorial-board {
+    grid-template-columns: 1fr auto 1fr;
+  }
+
+  .tutorial-action-line {
+    width: 22px;
+    height: auto;
+    grid-template-columns: 1fr;
+  }
+
+  .tutorial-lane {
+    min-height: 80px;
+    padding: 0.48rem;
+  }
+
+  .tutorial-lane-label,
+  .tutorial-step-label {
+    font-size: 0.56rem;
+    letter-spacing: 0.14em;
+  }
+
+  .tutorial-stack {
+    min-height: 50px;
+  }
+
+  .tutorial-card {
+    height: 38px;
+  }
+
+  .tutorial-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tutorial-step {
+    display: block;
+  }
+
+  .tutorial-step-icon {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pack-sealed-glow,
+  .pack-reveal-enter,
+  .pack-rarity-frame-legendary,
+  .pack-rarity-frame-mythic,
+  .pack-new-badge,
+  .pack-summary-enter-0,
+  .pack-summary-enter-1,
+  .pack-summary-enter-2,
+  .pack-summary-enter-3,
+  .pack-summary-enter-4,
+  .board-pending-badge {
+    animation: none !important;
+  }
+}

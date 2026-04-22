@@ -11,6 +11,7 @@ import type {
   Rarity,
 } from '../../sim/turf/types';
 import { Card as CardComponent } from '../cards';
+import { AmbientSilhouetteLayer } from './VisualStage';
 
 type CategoryFilter = 'all' | CardCategory;
 
@@ -113,8 +114,9 @@ export function CollectionScreen({ onBack, onPlay }: CollectionScreenProps) {
     });
   }, [mergedCatalog, categoryFilter, rarityFilter]);
 
-  const ownedCount = [...catalogIds].filter((id) => ownedCards[id] != null)
-    .length;
+  const ownedCount = [...catalogIds].filter(
+    (id) => ownedCards[id] != null,
+  ).length;
   const categoryCounts = useMemo(
     () => countByCategory(mergedCatalog),
     [mergedCatalog],
@@ -126,10 +128,11 @@ export function CollectionScreen({ onBack, onPlay }: CollectionScreenProps) {
 
   return (
     <main
-      className="coll-screen"
+      className="coll-screen world-screen world-screen-collection"
       data-testid="collection-screen"
       aria-label="Card Collection"
     >
+      <AmbientSilhouetteLayer variant="street" />
       <header className="coll-header">
         <button
           className="coll-back-btn"

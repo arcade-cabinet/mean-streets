@@ -252,6 +252,13 @@ regenerates them after the card art pass. Difficulty and tutorial UI use
 those locked generated icons so the visual language stays consistent with
 the card portrait factory.
 
+The visual journey layer uses shared world-stage primitives (`world-screen`,
+`street-stage`, `ambient-silhouette-layer`, `contraband-prop`, and
+`screen-header-card`) to keep menu, tutorial, combat, pack-opening, garage,
+collection, cards, and game-over surfaces in the same noir street world.
+First-run onboarding is split between the street-brief modal and an in-combat
+first-war coach; completion is persisted in `AppSettings.firstWarTutorialSeen`.
+
 ### Game Simulation
 
 ```

@@ -4,6 +4,7 @@ import { ArrowLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { loadCollectibleCards } from '../../sim/cards/catalog';
 import type { Card as CardType, Rarity } from '../../sim/turf/types';
 import { Card as CardComponent } from '../cards';
+import { AmbientSilhouetteLayer, ContrabandProp } from './VisualStage';
 
 const DEFAULT_PACK_CARD_IDS = [
   'card-001',
@@ -19,6 +20,7 @@ interface PackOpeningScreenProps {
   onBack: () => void;
   cards?: CardType[];
   ownedCardIds?: Iterable<string>;
+  initialPhase?: Phase;
 }
 
 type Phase = 'sealed' | 'revealing' | 'summary';
@@ -42,6 +44,7 @@ export function PackOpeningScreen({
   onBack,
   cards,
   ownedCardIds,
+  initialPhase = 'sealed',
 }: PackOpeningScreenProps) {
   const { layout } = useAppShell();
   const compact = layout.id === 'phone-portrait' || layout.id === 'folded';
@@ -54,19 +57,36 @@ export function PackOpeningScreen({
     [ownedCardIds],
   );
 
-  const [phase, setPhase] = useState<Phase>('sealed');
-  const [revealIdx, setRevealIdx] = useState(-1);
+  const [phase, setPhase] = useState<Phase>(initialPhase);
+  const [revealIdx, setRevealIdx] = useState(() =>
+    initialPhase === 'sealed' ? -1 : 0,
+  );
   const [revealed, setRevealed] = useState<boolean[]>(() =>
-    new Array(packCards.length).fill(false),
+    Array.from(
+      { length: packCards.length },
+      (_, index) =>
+        initialPhase === 'summary' ||
+        (initialPhase === 'revealing' && index === 0),
+    ),
   );
 
   useEffect(() => {
-    setPhase('sealed');
-    setRevealIdx(-1);
-    setRevealed(new Array(packCards.length).fill(false));
-  }, [packCards]);
+    setPhase(initialPhase);
+    setRevealIdx(initialPhase === 'sealed' ? -1 : 0);
+    setRevealed(
+      Array.from(
+        { length: packCards.length },
+        (_, index) =>
+          initialPhase === 'summary' ||
+          (initialPhase === 'revealing' && index === 0),
+      ),
+    );
+  }, [packCards, initialPhase]);
 
-  const currentCard = revealIdx >= 0 && revealIdx < packCards.length ? packCards[revealIdx] : null;
+  const currentCard =
+    revealIdx >= 0 && revealIdx < packCards.length
+      ? packCards[revealIdx]
+      : null;
   const allRevealed = revealed.length > 0 && revealed.every(Boolean);
 
   const revealNext = useCallback(() => {
@@ -76,7 +96,7 @@ export function PackOpeningScreen({
       return;
     }
     setRevealIdx(nextIdx);
-    setRevealed(prev => {
+    setRevealed((prev) => {
       const next = [...prev];
       next[nextIdx] = true;
       return next;
@@ -116,40 +136,64 @@ export function PackOpeningScreen({
     return () => window.removeEventListener('keydown', onKey);
   }, [phase, handleOpenPack, handleAdvance, onBack]);
 
-  const isNew = useCallback((card: CardType) => !ownedIds.has(card.id), [ownedIds]);
+  const isNew = useCallback(
+    (card: CardType) => !ownedIds.has(card.id),
+    [ownedIds],
+  );
 
   const rarityStats = useMemo(() => {
     const counts: Record<Rarity, number> = {
-      common: 0, uncommon: 0, rare: 0, legendary: 0, mythic: 0,
+      common: 0,
+      uncommon: 0,
+      rare: 0,
+      legendary: 0,
+      mythic: 0,
     };
     for (const c of packCards) counts[c.rarity]++;
     return counts;
   }, [packCards]);
 
   const newCount = useMemo(
-    () => packCards.filter(c => isNew(c)).length,
+    () => packCards.filter((c) => isNew(c)).length,
     [packCards, isNew],
   );
 
   if (phase === 'sealed') {
     return (
-      <main className="pack-screen" data-testid="pack-opening-screen" aria-label="Pack Opening">
+      <main
+        className="pack-screen world-screen world-screen-spoils"
+        data-testid="pack-opening-screen"
+        aria-label="Pack Opening"
+      >
+        <AmbientSilhouetteLayer variant="spoils" />
         <header className="pack-header">
-          <button className="pack-back-btn" onClick={onBack} aria-label="Back" data-testid="pack-back">
+          <button
+            className="pack-back-btn"
+            onClick={onBack}
+            aria-label="Back"
+            data-testid="pack-back"
+          >
             <ArrowLeft size={20} />
           </button>
-          <h1 className="pack-title">Open Pack</h1>
+          <div>
+            <p className="pack-kicker">Street Reward</p>
+            <h1 className="pack-title">Crack the Drop</h1>
+          </div>
         </header>
         <div className="pack-sealed-stage">
           <button
             className="pack-sealed-box"
             onClick={handleOpenPack}
             data-testid="pack-open-btn"
-            aria-label="Open pack"
+            aria-label="Crack open reward drop"
           >
             <div className="pack-sealed-glow" aria-hidden="true" />
-            <Sparkles size={48} className="pack-sealed-icon" />
-            <span className="pack-sealed-label">Tap to Open</span>
+            <ContrabandProp asset="duffel" className="pack-drop-duffel" />
+            <ContrabandProp asset="evidenceBag" className="pack-drop-bag" />
+            <ContrabandProp asset="cash" className="pack-drop-cash" />
+            <Sparkles size={42} className="pack-sealed-icon" />
+            <span className="pack-sealed-stamp">Evidence 05</span>
+            <span className="pack-sealed-label">Tap to Crack</span>
           </button>
         </div>
       </main>
@@ -158,14 +202,38 @@ export function PackOpeningScreen({
 
   if (phase === 'revealing' && currentCard) {
     return (
-      <main className="pack-screen" data-testid="pack-opening-screen" aria-label="Pack Opening">
+      <main
+        className="pack-screen world-screen world-screen-spoils"
+        data-testid="pack-opening-screen"
+        aria-label="Pack Opening"
+      >
+        <AmbientSilhouetteLayer variant="spoils" />
         <header className="pack-header">
-          <button className="pack-back-btn" onClick={onBack} aria-label="Back" data-testid="pack-back">
+          <button
+            className="pack-back-btn"
+            onClick={onBack}
+            aria-label="Back"
+            data-testid="pack-back"
+          >
             <ArrowLeft size={20} />
           </button>
-          <h1 className="pack-title">Card {revealIdx + 1} / {packCards.length}</h1>
+          <div>
+            <p className="pack-kicker">Evidence Pull</p>
+            <h1 className="pack-title">
+              Pull {revealIdx + 1} / {packCards.length}
+            </h1>
+          </div>
         </header>
-        <div className="pack-reveal-stage" onClick={handleAdvance} data-testid="pack-reveal-stage">
+        <div
+          className="pack-reveal-stage"
+          onClick={handleAdvance}
+          data-testid="pack-reveal-stage"
+        >
+          <div className="pack-reveal-table" aria-hidden="true">
+            <ContrabandProp asset="burner" />
+            <ContrabandProp asset="knuckles" />
+            <ContrabandProp asset="bricks" />
+          </div>
           <div
             className={`pack-reveal-card pack-reveal-enter pack-rarity-frame-${currentCard.rarity}`}
             key={currentCard.id + revealIdx}
@@ -173,14 +241,18 @@ export function PackOpeningScreen({
           >
             <CardComponent card={currentCard} compact={compact} />
             {isNew(currentCard) && (
-              <span className="pack-new-badge" data-testid="pack-new-badge">NEW</span>
+              <span className="pack-new-badge" data-testid="pack-new-badge">
+                NEW
+              </span>
             )}
           </div>
           <div className="pack-reveal-hint">
             {allRevealed ? (
               <span>Tap to view summary</span>
             ) : (
-              <span>Tap for next card <ChevronRight size={16} /></span>
+              <span>
+                Tap for next card <ChevronRight size={16} />
+              </span>
             )}
           </div>
         </div>
@@ -189,7 +261,11 @@ export function PackOpeningScreen({
             <span
               key={c.id + i}
               className={`pack-pip ${revealed[i] ? `pack-pip-revealed pack-pip-${c.rarity}` : ''} ${i === revealIdx ? 'pack-pip-current' : ''}`}
-              aria-label={revealed[i] ? `Card ${i + 1}: ${c.rarity}` : `Card ${i + 1}: hidden`}
+              aria-label={
+                revealed[i]
+                  ? `Card ${i + 1}: ${c.rarity}`
+                  : `Card ${i + 1}: hidden`
+              }
             />
           ))}
         </div>
@@ -198,33 +274,84 @@ export function PackOpeningScreen({
   }
 
   return (
-    <main className="pack-screen" data-testid="pack-opening-screen" aria-label="Pack Opening">
+    <main
+      className="pack-screen world-screen world-screen-spoils"
+      data-testid="pack-opening-screen"
+      aria-label="Pack Opening"
+    >
+      <AmbientSilhouetteLayer variant="spoils" />
       <header className="pack-header">
-        <button className="pack-back-btn" onClick={onBack} aria-label="Back" data-testid="pack-back">
+        <button
+          className="pack-back-btn"
+          onClick={onBack}
+          aria-label="Back"
+          data-testid="pack-back"
+        >
           <ArrowLeft size={20} />
         </button>
-        <h1 className="pack-title">Pack Contents</h1>
+        <div>
+          <p className="pack-kicker">After-Action Payout</p>
+          <h1 className="pack-title">Street Spoils</h1>
+        </div>
       </header>
       <div className="pack-summary-stats" data-testid="pack-summary-stats">
-        {newCount > 0 && <span className="pack-stat pack-stat-new">{newCount} New</span>}
-        {rarityStats.mythic > 0 && <span className="pack-stat pack-stat-mythic">{rarityStats.mythic} Mythic</span>}
-        {rarityStats.legendary > 0 && <span className="pack-stat pack-stat-legendary">{rarityStats.legendary} Legendary</span>}
-        {rarityStats.rare > 0 && <span className="pack-stat pack-stat-rare">{rarityStats.rare} Rare</span>}
-        {rarityStats.uncommon > 0 && <span className="pack-stat pack-stat-uncommon">{rarityStats.uncommon} Uncommon</span>}
-        {rarityStats.common > 0 && <span className="pack-stat pack-stat-common">{rarityStats.common} Common</span>}
+        {newCount > 0 && (
+          <span className="pack-stat pack-stat-new">{newCount} New</span>
+        )}
+        {rarityStats.mythic > 0 && (
+          <span className="pack-stat pack-stat-mythic">
+            {rarityStats.mythic} Mythic
+          </span>
+        )}
+        {rarityStats.legendary > 0 && (
+          <span className="pack-stat pack-stat-legendary">
+            {rarityStats.legendary} Legendary
+          </span>
+        )}
+        {rarityStats.rare > 0 && (
+          <span className="pack-stat pack-stat-rare">
+            {rarityStats.rare} Rare
+          </span>
+        )}
+        {rarityStats.uncommon > 0 && (
+          <span className="pack-stat pack-stat-uncommon">
+            {rarityStats.uncommon} Uncommon
+          </span>
+        )}
+        {rarityStats.common > 0 && (
+          <span className="pack-stat pack-stat-common">
+            {rarityStats.common} Common
+          </span>
+        )}
       </div>
-      <section className="pack-summary-grid" aria-label="Pack cards" data-testid="pack-summary-grid">
+      <section
+        className="pack-summary-grid"
+        aria-label="Pack cards"
+        data-testid="pack-summary-grid"
+      >
         {packCards.map((card, i) => (
-          <div key={card.id + i} className={`pack-summary-cell pack-summary-enter-${i}`}>
+          <div
+            key={card.id + i}
+            className={`pack-summary-cell pack-summary-enter-${i}`}
+          >
             <CardComponent card={card} compact={compact} />
             {isNew(card) && (
-              <span className="pack-new-badge" data-testid={`pack-summary-new-${i}`}>NEW</span>
+              <span
+                className="pack-new-badge"
+                data-testid={`pack-summary-new-${i}`}
+              >
+                NEW
+              </span>
             )}
           </div>
         ))}
       </section>
       <div className="pack-summary-actions">
-        <button className="pack-done-btn" onClick={onBack} data-testid="pack-done-btn">
+        <button
+          className="pack-done-btn"
+          onClick={onBack}
+          data-testid="pack-done-btn"
+        >
           Done
         </button>
       </div>

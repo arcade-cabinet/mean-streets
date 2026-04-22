@@ -42,11 +42,15 @@ screens.
 ## Current Fixture Set (v0.3)
 
 - `menu` — Main menu live navigation surface
+- `tutorial` — First-run street brief modal over the landing surface
 - `difficulty` — Difficulty tier grid (Easy/Medium/Hard/Nightmare/Ultra)
 - `deck-garage` — Deck list / garage overview fixture
 - `combat` — Single-lane live `GameScreen` fixture
+- `combat-tutorial` — First-war coach overlay in live `GameScreen`
 - `card` — Mixed card gallery fixture (tough / weapon / drug / currency / mythic)
-- `pack-opening` — Sealed → revealing → summary preview fixture with deterministic authored cards
+- `pack-opening` — Sealed contraband-drop reward fixture with deterministic authored cards
+- `pack-opening-reveal` — Pack reveal beat fixture
+- `pack-opening-summary` — Street-spoils summary fixture
 - `game-over` — Victory-state game-over fixture with authored war outcome + sample rewards
 
 ## Review Targets
@@ -84,7 +88,7 @@ Focus review on:
 - Exported screenshots are intentionally ignored by git.
 - Playwright attachments still land in `test-results/` for one-off debugging.
 - If visual changes are made, regenerate the export set before doing subjective review.
-- FixtureApp currently supports exactly the 7 fixture routes listed
+- FixtureApp supports exactly the fixture routes listed
   above. Add the route first before documenting any new fixture here.
 - `e2e/pack-opening.spec.ts` now runs against the `?fixture=pack-opening`
   route rather than a dead live-app path.
@@ -108,15 +112,18 @@ characters.
 |------------------|-------------------------|-------------------------------------------|---------------|
 | menu             | desktop-chromium        | Title wordmark + action spacing           |               |
 | menu             | iphone-14               | Safe-area top, touch-friendly chips       |               |
+| tutorial         | iphone-14               | Street brief fits without text-wall feel  |               |
 | difficulty       | desktop-chromium        | Grid balance, tier icon tinting           |               |
 | difficulty       | iphone-14               | Compact grid, touch target adequacy       |               |
 | deck-garage      | desktop-chromium        | Deck card density, hierarchy              |               |
 | deck-garage      | iphone-14               | Single-column fit, scroll rhythm          |               |
 | combat           | desktop-chromium        | Turf readability, action bar balance      |               |
 | combat           | iphone-14               | Action bar fit, hand card sizing          |               |
+| combat-tutorial  | iphone-14               | Coach panel does not block core play      |               |
 | card             | desktop-chromium        | Card frame, rarity borders, portraits     |               |
-| pack-opening     | iphone-14               | Sealed state and summary readability      |               |
-| pack-opening     | ipad-pro-landscape      | Reveal composition on wide screens        |               |
+| pack-opening     | iphone-14               | Sealed contraband-drop readability        |               |
+| pack-opening-reveal | ipad-pro-landscape   | Reveal composition on wide screens        |               |
+| pack-opening-summary | iphone-14           | Street-spoils summary readability         |               |
 | game-over        | iphone-14               | Reward summary and CTA fit                |               |
 | game-over        | desktop-chromium        | Reward panel hierarchy                    |               |
 
@@ -132,5 +139,7 @@ characters.
 - 2026-04-20 — Reconciled the fixture list with the actual `FixtureApp`
   routes (`menu`, `difficulty`, `deck-garage`, `combat`, `card`,
   `pack-opening`, `game-over`) and documented deterministic screenshot capture.
+- 2026-04-22 — Added visual-journey fixtures for first-run tutorial,
+  first-war coach, and pack reveal/summary states.
 - 2026-04-17 — Updated fixture set for v0.3 single-lane rewrite: HeatMeter, BlackMarketPanel, HoldingPanel, MythicBadge, and TurfCompositeCard with HP bars replace v0.2 parallel-turf fixtures.
 - 2026-04-15 — Updated fixture set and review targets for v0.2 (stack redesign).

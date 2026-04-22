@@ -58,9 +58,7 @@ import {
 } from './ui/deckbuilder/storage';
 import { GrittyFilters } from './ui/filters';
 import { type DrawerTab, GameMenuDrawer, TutorialModal } from './ui/overlays';
-import {
-  MainMenuScreen,
-} from './ui/screens';
+import { MainMenuScreen } from './ui/screens';
 
 const CardsScreen = lazy(async () => {
   const mod = await import('./ui/screens/CardsScreen');
@@ -147,7 +145,9 @@ function buildCardCatalogMap(): Map<string, Card> {
   return new Map(loadCollectibleCards().map((card) => [card.id, card]));
 }
 
-function getOutcomeSnapshotFromWorld(world: World | null): WorldOutcomeSnapshot {
+function getOutcomeSnapshotFromWorld(
+  world: World | null,
+): WorldOutcomeSnapshot {
   if (!world) {
     return {
       metrics: EMPTY_METRICS,
@@ -187,10 +187,12 @@ export default function App() {
     audioEnabled: true,
     motionReduced: false,
     rulesSeen: false,
+    firstWarTutorialSeen: false,
   });
   const [drawerTab, setDrawerTab] = useState<DrawerTab>('settings');
   const [hasActiveRun, setHasActiveRun] = useState(false);
   const [activeConfig, setActiveConfig] = useState<GameConfig | null>(null);
+  const [firstWarTutorialActive, setFirstWarTutorialActive] = useState(false);
   const [lastRewards, setLastRewards] = useState<GameOverRewards>(
     EMPTY_GAME_OVER_REWARDS,
   );
@@ -262,6 +264,7 @@ export default function App() {
       );
       setWorld(resumedWorld);
       setActiveConfig(activeRun.config);
+      setFirstWarTutorialActive(false);
       setModal(null);
       setScreen(activeRun.phase);
     })();
@@ -269,6 +272,7 @@ export default function App() {
 
   function handleSelectDifficulty(config: GameConfig) {
     const seed = randomSeed();
+    const showFirstWarTutorial = !settings.firstWarTutorialSeen;
     setModal(null);
     void (async () => {
       await grantAIStarterCollection(createRng(seed * 5 + 11));
@@ -282,18 +286,17 @@ export default function App() {
           loadCollectionInventory(),
           loadAICollection(),
         ]);
-      const playerPreferences = await loadPreferences(
-        [...new Set(playerInventory.map(({ card }) => collectionPreferenceKey(card)))],
-      );
+      const playerPreferences = await loadPreferences([
+        ...new Set(
+          playerInventory.map(({ card }) => collectionPreferenceKey(card)),
+        ),
+      ]);
       const playerDeck = buildCollectionDeck(
         playerInventory.map(({ card }) => card),
         createRng(seed * 2 + 1),
         playerPreferences,
       );
-      const aiDeck = buildCollectionDeck(
-        aiCollection,
-        createRng(seed * 3 + 7),
-      );
+      const aiDeck = buildCollectionDeck(aiCollection, createRng(seed * 3 + 7));
       const newWorld = createGameWorld(
         config,
         seed,
@@ -307,6 +310,7 @@ export default function App() {
       );
       setWorld(newWorld);
       setActiveConfig(config);
+      setFirstWarTutorialActive(showFirstWarTutorial);
       setHasActiveRun(true);
       void saveActiveRun<ActiveRunState>({
         phase: 'combat',
@@ -321,8 +325,13 @@ export default function App() {
   }
 
   function handleGameOver(w: 'A' | 'B') {
-    const { metrics: nextMetrics, mythicAssignments, mythicPool, warStats, rng } =
-      getOutcomeSnapshotFromWorld(world);
+    const {
+      metrics: nextMetrics,
+      mythicAssignments,
+      mythicPool,
+      warStats,
+      rng,
+    } = getOutcomeSnapshotFromWorld(world);
     const config = activeConfig;
     const unlockDifficulty = config?.difficulty ?? 'easy';
     const playerWon = w === 'A';
@@ -330,6 +339,7 @@ export default function App() {
     setWinner(w);
     setMetrics(nextMetrics);
     setHasActiveRun(false);
+    setFirstWarTutorialActive(false);
     setLastRewards(EMPTY_GAME_OVER_REWARDS);
     void saveActiveRun<ActiveRunState>(null);
     void (async () => {
@@ -361,10 +371,9 @@ export default function App() {
       let rewardPacks: PackInstance[] = [];
 
       if (config) {
-        const perfectWarFallbackCount =
-          playerWon
-            ? result.updatedProfile.perfectWarsAfterPoolExhaustion ?? 0
-            : aiProfile.aiPerfectWarFallbackCount;
+        const perfectWarFallbackCount = playerWon
+          ? (result.updatedProfile.perfectWarsAfterPoolExhaustion ?? 0)
+          : aiProfile.aiPerfectWarFallbackCount;
         const bundle = computeRewardBundle(
           warStats,
           true,
@@ -378,7 +387,8 @@ export default function App() {
         rewardCurrencyAmount = bundle.warOutcomeReward.escalatingCurrency;
 
         if (bundle.warOutcomeReward.mythicDraw) {
-          nextMythicAssignments[bundle.warOutcomeReward.mythicDraw] = winnerSide;
+          nextMythicAssignments[bundle.warOutcomeReward.mythicDraw] =
+            winnerSide;
           if (playerWon) {
             const mythicCard = COLLECTIBLE_CARD_MAP.get(
               bundle.warOutcomeReward.mythicDraw,
@@ -401,14 +411,8 @@ export default function App() {
         .filter(([, side]) => side === 'A')
         .map(([id]) => id);
       await Promise.all([
-        syncPlayerMythicOwnership(
-          playerMythicIds,
-          unlockDifficulty,
-        ),
-        saveAIMythicAssignments(
-          nextMythicAssignments,
-          unlockDifficulty,
-        ),
+        syncPlayerMythicOwnership(playerMythicIds, unlockDifficulty),
+        saveAIMythicAssignments(nextMythicAssignments, unlockDifficulty),
       ]);
 
       if (config) {
@@ -450,9 +454,18 @@ export default function App() {
   function handlePlayAgain() {
     setWorld(null);
     setHasActiveRun(false);
+    setFirstWarTutorialActive(false);
     setLastRewards(EMPTY_GAME_OVER_REWARDS);
     void saveActiveRun<ActiveRunState>(null);
     handleOpenDifficulty();
+  }
+
+  function handleCompleteFirstWarTutorial() {
+    setFirstWarTutorialActive(false);
+    if (settings.firstWarTutorialSeen) return;
+    const next = { ...settings, firstWarTutorialSeen: true };
+    setSettingsState(next);
+    void saveSettings(next);
   }
 
   function handleSettingsChange(next: AppSettings) {
@@ -503,6 +516,8 @@ export default function App() {
               world={world}
               onGameOver={handleGameOver}
               onOpenMenu={() => handleOpenGameMenu('settings')}
+              tutorialMode={firstWarTutorialActive ? 'first-war' : undefined}
+              onTutorialComplete={handleCompleteFirstWarTutorial}
             />
           </WorldProvider>
         </ScreenBoundary>

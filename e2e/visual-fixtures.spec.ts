@@ -24,6 +24,10 @@ test.describe('@visual visual fixtures', () => {
     await assertFixture(page, 'menu', 'main-menu-screen');
   });
 
+  test('renders tutorial fixture', async ({ page }) => {
+    await assertFixture(page, 'tutorial', 'tutorial-modal');
+  });
+
   test('renders difficulty fixture', async ({ page }) => {
     await assertFixture(page, 'difficulty', 'difficulty-screen');
   });
@@ -36,12 +40,24 @@ test.describe('@visual visual fixtures', () => {
     await assertFixture(page, 'combat', 'game-screen');
   });
 
+  test('renders first-war coach fixture', async ({ page }) => {
+    await assertFixture(page, 'combat-tutorial', 'first-war-coach');
+  });
+
   test('renders card fixture', async ({ page }) => {
     await assertFixture(page, 'card', 'fixture-root');
   });
 
   test('renders pack opening fixture', async ({ page }) => {
     await assertFixture(page, 'pack-opening', 'pack-opening-screen');
+  });
+
+  test('renders pack reveal fixture', async ({ page }) => {
+    await assertFixture(page, 'pack-opening-reveal', 'pack-opening-screen');
+  });
+
+  test('renders pack summary fixture', async ({ page }) => {
+    await assertFixture(page, 'pack-opening-summary', 'pack-opening-screen');
   });
 
   test('renders game over fixture', async ({ page }) => {

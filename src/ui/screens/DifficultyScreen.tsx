@@ -34,7 +34,8 @@ const TIERS: TierDef[] = [
     firstTurnActions: simConfig.difficulty.easy.firstTurnActions,
     rewardMult: simConfig.packEconomy.difficultyRewardMult.easy,
     tagline: 'The street lets you make one more mistake.',
-    description: 'Short lockups, lighter rival pressure, and room to see the machine move.',
+    description:
+      'Short lockups, lighter rival pressure, and room to see the machine move.',
   },
   {
     id: 'medium',
@@ -46,7 +47,8 @@ const TIERS: TierDef[] = [
     firstTurnActions: simConfig.difficulty.medium.firstTurnActions,
     rewardMult: simConfig.packEconomy.difficultyRewardMult.medium,
     tagline: 'Clean rules. Dirty hands.',
-    description: 'Baseline turf war: no mercy math, no hidden crutch, just the board state.',
+    description:
+      'Baseline turf war: no mercy math, no hidden crutch, just the board state.',
   },
   {
     id: 'hard',
@@ -70,7 +72,8 @@ const TIERS: TierDef[] = [
     firstTurnActions: simConfig.difficulty.nightmare.firstTurnActions,
     rewardMult: simConfig.packEconomy.difficultyRewardMult.nightmare,
     tagline: 'You can win, but nothing stays free.',
-    description: 'The rival crew presses reserves, heat gets expensive, and lockup bleeds turns.',
+    description:
+      'The rival crew presses reserves, heat gets expensive, and lockup bleeds turns.',
   },
   {
     id: 'ultra-nightmare',
@@ -82,7 +85,8 @@ const TIERS: TierDef[] = [
     firstTurnActions: simConfig.difficulty['ultra-nightmare'].firstTurnActions,
     rewardMult: simConfig.packEconomy.difficultyRewardMult['ultra-nightmare'],
     tagline: 'The city already picked your funeral song.',
-    description: 'Permadeath is forced, lockup is effectively permanent, and the rival sees farther.',
+    description:
+      'Permadeath is forced, lockup is effectively permanent, and the rival sees farther.',
   },
 ];
 
@@ -110,7 +114,10 @@ function PortraitIcon({
   active: boolean;
 }) {
   return (
-    <span className={`diff-portrait ${active ? 'diff-portrait-active' : ''}`} aria-hidden="true">
+    <span
+      className={`diff-portrait ${active ? 'diff-portrait-active' : ''}`}
+      aria-hidden="true"
+    >
       <img src={src} alt="" draggable={false} />
       <span className="diff-portrait-grit" />
       <span className="diff-portrait-label">{label}</span>
@@ -129,7 +136,10 @@ function TierTile({
   selected: boolean;
   compact: boolean;
   onSelect: (tier: DifficultyTier) => void;
-  onKeyDown: (event: KeyboardEvent<HTMLButtonElement>, tier: DifficultyTier) => void;
+  onKeyDown: (
+    event: KeyboardEvent<HTMLButtonElement>,
+    tier: DifficultyTier,
+  ) => void;
 }) {
   return (
     <button
@@ -143,7 +153,9 @@ function TierTile({
     >
       <PortraitIcon src={tier.art} label={tier.short} active={selected} />
       <span className="diff-tile-label">{tier.label}</span>
-      <span className="diff-tile-copy">{compact ? tier.short : tier.tagline}</span>
+      <span className="diff-tile-copy">
+        {compact ? tier.short : tier.tagline}
+      </span>
     </button>
   );
 }
@@ -158,7 +170,8 @@ export function DifficultyScreen({ onSelect, onBack }: DifficultyScreenProps) {
   const permadeathForced = selected === 'ultra-nightmare';
   const effectivePermadeath = permadeathForced || permadeath;
   const effectiveRewardMult =
-    selectedTier.rewardMult * (effectivePermadeath ? PERMADEATH_REWARD_MULT : 1);
+    selectedTier.rewardMult *
+    (effectivePermadeath ? PERMADEATH_REWARD_MULT : 1);
 
   function handleSelect(tier: DifficultyTier) {
     setSelected(tier);
@@ -166,7 +179,9 @@ export function DifficultyScreen({ onSelect, onBack }: DifficultyScreenProps) {
 
   function focusTier(tier: DifficultyTier) {
     window.requestAnimationFrame(() => {
-      document.querySelector<HTMLButtonElement>(`[data-testid="diff-tile-${tier}"]`)?.focus();
+      document
+        .querySelector<HTMLButtonElement>(`[data-testid="diff-tile-${tier}"]`)
+        ?.focus();
     });
   }
 
@@ -223,14 +238,18 @@ export function DifficultyScreen({ onSelect, onBack }: DifficultyScreenProps) {
           </button>
           <div>
             <p className="diff-kicker">Choose the shape of the war</p>
-            <h1 className="diff-title" id="difficulty-title">Set the Stakes</h1>
+            <h1 className="diff-title" id="difficulty-title">
+              Set the Stakes
+            </h1>
           </div>
         </div>
 
         <div
           className={`diff-grid ${compact ? 'diff-grid-compact' : ''}`}
+          role="radiogroup"
+          aria-label="Difficulty tiers"
         >
-          <div className="diff-tier-grid" role="radiogroup" aria-label="Difficulty tiers">
+          <div className="diff-tier-grid">
             {TIERS.map((tier) => (
               <TierTile
                 key={tier.id}
@@ -263,7 +282,9 @@ export function DifficultyScreen({ onSelect, onBack }: DifficultyScreenProps) {
             />
             <span className="diff-tile-label">Body Bags</span>
             <span className="diff-tile-copy">
-              {permadeathForced ? 'Ultra Nightmare demands it' : 'Raid seizure means death'}
+              {permadeathForced
+                ? 'Ultra Nightmare demands it'
+                : 'Raid seizure means death'}
             </span>
           </button>
         </div>
@@ -272,14 +293,23 @@ export function DifficultyScreen({ onSelect, onBack }: DifficultyScreenProps) {
           <div className="diff-detail">
             <span className="diff-detail-tagline">{selectedTier.tagline}</span>
             <p className="diff-detail-copy">{selectedTier.description}</p>
-            <div className="diff-stat-strip" aria-label="Selected difficulty terms">
+            <div
+              className="diff-stat-strip"
+              aria-label="Selected difficulty terms"
+            >
               <span>{selectedTier.turfs} blocks to take</span>
-              <span>{selectedTier.firstTurnActions}/{selectedTier.actions} tempo</span>
+              <span>
+                {selectedTier.firstTurnActions}/{selectedTier.actions} tempo
+              </span>
               <span>{effectiveRewardMult.toFixed(2)}x reward roll</span>
             </div>
             {effectivePermadeath && (
-              <p className="diff-permadeath-warning" data-testid="diff-permadeath-warning">
-                Body Bags active: raid-seized toughs die immediately with their attached stack.
+              <p
+                className="diff-permadeath-warning"
+                data-testid="diff-permadeath-warning"
+              >
+                Body Bags active: raid-seized toughs die immediately with their
+                attached stack.
               </p>
             )}
           </div>

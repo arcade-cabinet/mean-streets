@@ -20,6 +20,7 @@ import {
   MainMenuScreen,
   PackOpeningScreen,
 } from '../ui/screens';
+import { TutorialModal } from '../ui/overlays';
 import {
   loadPackOpeningFixtureCards,
   PACK_OPENING_FIXTURE_OWNED_IDS,
@@ -27,11 +28,15 @@ import {
 
 type FixtureName =
   | 'menu'
+  | 'tutorial'
   | 'difficulty'
   | 'deck-garage'
   | 'combat'
+  | 'combat-tutorial'
   | 'card'
   | 'pack-opening'
+  | 'pack-opening-reveal'
+  | 'pack-opening-summary'
   | 'game-over';
 
 interface FixtureAppProps {
@@ -169,11 +174,16 @@ function sampleRewardCards(): CardType[] {
   return sampleCards().slice(0, 3);
 }
 
-function renderWorldFixture() {
+function renderWorldFixture(tutorial = false) {
   const world = createGameWorld(undefined, 42);
   return (
     <WorldProvider world={world}>
-      <GameScreen world={world} onGameOver={() => {}} />
+      <GameScreen
+        world={world}
+        onGameOver={() => {}}
+        tutorialMode={tutorial ? 'first-war' : undefined}
+        onTutorialComplete={() => {}}
+      />
     </WorldProvider>
   );
 }
@@ -191,6 +201,20 @@ function renderFixture(fixture: FixtureName) {
           canLoadGame={false}
         />
       );
+    case 'tutorial':
+      return (
+        <>
+          <MainMenuScreen
+            onNewGame={() => {}}
+            onLoadGame={() => {}}
+            onCollection={() => {}}
+            onGarage={() => {}}
+            onCards={() => {}}
+            canLoadGame={false}
+          />
+          <TutorialModal onClose={() => {}} />
+        </>
+      );
     case 'difficulty':
       return <DifficultyScreen onSelect={() => {}} onBack={() => {}} />;
     case 'deck-garage':
@@ -205,6 +229,8 @@ function renderFixture(fixture: FixtureName) {
       );
     case 'combat':
       return renderWorldFixture();
+    case 'combat-tutorial':
+      return renderWorldFixture(true);
     case 'card':
       return (
         <div className="min-h-screen bg-stone-950 p-8 flex flex-wrap gap-4 items-start justify-center">
@@ -220,6 +246,24 @@ function renderFixture(fixture: FixtureName) {
         <PackOpeningScreen
           cards={loadPackOpeningFixtureCards()}
           ownedCardIds={PACK_OPENING_FIXTURE_OWNED_IDS}
+          onBack={() => {}}
+        />
+      );
+    case 'pack-opening-reveal':
+      return (
+        <PackOpeningScreen
+          cards={loadPackOpeningFixtureCards()}
+          ownedCardIds={PACK_OPENING_FIXTURE_OWNED_IDS}
+          initialPhase="revealing"
+          onBack={() => {}}
+        />
+      );
+    case 'pack-opening-summary':
+      return (
+        <PackOpeningScreen
+          cards={loadPackOpeningFixtureCards()}
+          ownedCardIds={PACK_OPENING_FIXTURE_OWNED_IDS}
+          initialPhase="summary"
           onBack={() => {}}
         />
       );

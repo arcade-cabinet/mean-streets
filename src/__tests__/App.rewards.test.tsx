@@ -75,27 +75,22 @@ const mockWinner = vi.hoisted(() => ({
   side: 'A' as 'A' | 'B',
 }));
 
-const mockGameOverProps = vi.hoisted(
-  () =>
-    ({
-      rewardCards: [] as Array<{ id: string }>,
-      rewardOutcome: null as string | null,
-      rewardCurrencyAmount: null as number | null,
-    }),
-);
+const mockGameOverProps = vi.hoisted(() => ({
+  rewardCards: [] as Array<{ id: string }>,
+  rewardOutcome: null as string | null,
+  rewardCurrencyAmount: null as number | null,
+}));
 
-const mockPlayerProfile = vi.hoisted(
-  () => ({
-    unlockedCardIds: [] as string[],
-    cardInstances: {} as Record<
-      string,
-      { rolledRarity: string; unlockDifficulty: string }
-    >,
-    wins: 0,
-    lastPlayedAt: null as string | null,
-    perfectWarsAfterPoolExhaustion: 0,
-  }),
-);
+const mockPlayerProfile = vi.hoisted(() => ({
+  unlockedCardIds: [] as string[],
+  cardInstances: {} as Record<
+    string,
+    { rolledRarity: string; unlockDifficulty: string }
+  >,
+  wins: 0,
+  lastPlayedAt: null as string | null,
+  perfectWarsAfterPoolExhaustion: 0,
+}));
 
 const mockAIProfile = vi.hoisted(() => ({
   aiCollection: [],
@@ -121,13 +116,18 @@ vi.mock('../ecs/world', () => ({
 
 vi.mock('../platform/achievements/achievements', () => ({
   ownPositionsLostFromWarStats: () => 0,
-  processGameEnd: (_event: unknown, _cards: unknown, profile: typeof mockPlayerProfile) => ({
+  processGameEnd: (
+    _event: unknown,
+    _cards: unknown,
+    profile: typeof mockPlayerProfile,
+  ) => ({
     updatedProfile: { ...profile, wins: profile.wins + 1 },
   }),
 }));
 
 vi.mock('../platform/persistence/collection', () => ({
-  loadCollection: () => Promise.resolve([{ id: 'starter-tough', kind: 'tough' }]),
+  loadCollection: () =>
+    Promise.resolve([{ id: 'starter-tough', kind: 'tough' }]),
   loadCollectionInventory: () =>
     Promise.resolve([
       {
@@ -137,8 +137,10 @@ vi.mock('../platform/persistence/collection', () => ({
     ]),
   loadPreferences: () => Promise.resolve([]),
   loadPlayerOwnedMythicIds: () => Promise.resolve([]),
-  openRewardPackInstances: (...args: unknown[]) => mockOpenRewardPackInstances(...args),
-  syncPlayerMythicOwnership: (...args: unknown[]) => mockSyncPlayerMythics(...args),
+  openRewardPackInstances: (...args: unknown[]) =>
+    mockOpenRewardPackInstances(...args),
+  syncPlayerMythicOwnership: (...args: unknown[]) =>
+    mockSyncPlayerMythics(...args),
 }));
 
 vi.mock('../platform/persistence/ai-profile', () => ({
@@ -191,6 +193,7 @@ vi.mock('../ui/deckbuilder/storage', () => ({
       audioEnabled: true,
       motionReduced: false,
       rulesSeen: true,
+      firstWarTutorialSeen: true,
     }),
   saveActiveRun: () => Promise.resolve(),
   saveProfile: (...args: unknown[]) => mockSaveProfile(...args),
@@ -208,11 +211,11 @@ vi.mock('../ui/overlays', () => ({
 }));
 
 vi.mock('../ui/screens', () => ({
-  MainMenuScreen: ({
-    onNewGame,
-  }: {
-    onNewGame: () => void;
-  }) => <button data-testid="new-game-button" onClick={onNewGame}>New</button>,
+  MainMenuScreen: ({ onNewGame }: { onNewGame: () => void }) => (
+    <button data-testid="new-game-button" onClick={onNewGame}>
+      New
+    </button>
+  ),
 }));
 
 vi.mock('../ui/screens/DifficultyScreen', () => ({
@@ -221,21 +224,14 @@ vi.mock('../ui/screens/DifficultyScreen', () => ({
   }: {
     onSelect: (config: GameConfig) => void;
   }) => (
-    <button
-      data-testid="difficulty-start"
-      onClick={() => onSelect(mockConfig)}
-    >
+    <button data-testid="difficulty-start" onClick={() => onSelect(mockConfig)}>
       Start
     </button>
   ),
 }));
 
 vi.mock('../ui/screens/GameScreen', () => ({
-  GameScreen: ({
-    onGameOver,
-  }: {
-    onGameOver: (winner: 'A' | 'B') => void;
-  }) => (
+  GameScreen: ({ onGameOver }: { onGameOver: (winner: 'A' | 'B') => void }) => (
     <button
       data-testid="finish-war-button"
       onClick={() => onGameOver(mockWinner.side)}
@@ -308,7 +304,9 @@ describe('App reward flow', () => {
     mockAddPendingPacksToAI.mockReset();
     mockOpenPendingAIPacks.mockReset();
     mockIncrementAIPerfectWarFallbackCount.mockReset();
-    mockOpenRewardPackInstances.mockImplementation(async () => [...mockRewardPackCards]);
+    mockOpenRewardPackInstances.mockImplementation(async () => [
+      ...mockRewardPackCards,
+    ]);
   });
 
   async function playWar(winner: 'A' | 'B' = 'A'): Promise<void> {
@@ -352,7 +350,9 @@ describe('App reward flow', () => {
       { 'mythic-01': 'A' },
       'hard',
     );
-    expect(mockGameOverProps.rewardCards.map((card) => card.id)).toContain('mythic-01');
+    expect(mockGameOverProps.rewardCards.map((card) => card.id)).toContain(
+      'mythic-01',
+    );
   });
 
   it('preserves the war-outcome summary on losses while routing packs to the AI', async () => {
@@ -367,9 +367,13 @@ describe('App reward flow', () => {
     });
     expect(mockGameOverProps.rewardCards).toEqual([]);
     expect(mockAddPendingPacksToAI).toHaveBeenCalledOnce();
-    expect(mockOpenPendingAIPacks).toHaveBeenCalledWith('hard', expect.any(Number), {
-      permadeath: false,
-    });
+    expect(mockOpenPendingAIPacks).toHaveBeenCalledWith(
+      'hard',
+      expect.any(Number),
+      {
+        permadeath: false,
+      },
+    );
     expect(mockIncrementAIPerfectWarFallbackCount).toHaveBeenCalledOnce();
   });
 

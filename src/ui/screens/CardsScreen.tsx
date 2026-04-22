@@ -5,6 +5,7 @@ import { loadProfile } from '../../platform/persistence/storage';
 import { loadCollectibleCards } from '../../sim/cards/catalog';
 import type { Card as CardType, DifficultyTier } from '../../sim/turf/types';
 import { Card as CardComponent } from '../cards';
+import { AmbientSilhouetteLayer } from './VisualStage';
 
 interface CardsScreenProps {
   onBack: () => void;
@@ -60,7 +61,11 @@ export function CardsScreen({
   const selected = selectedIdx !== null ? allCards[selectedIdx] : null;
 
   return (
-    <div className="cards-screen" data-testid="cards-screen">
+    <div
+      className="cards-screen world-screen world-screen-cards"
+      data-testid="cards-screen"
+    >
+      <AmbientSilhouetteLayer variant="street" />
       <div className="cards-hud">
         <button
           type="button"
