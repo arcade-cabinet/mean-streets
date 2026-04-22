@@ -3,7 +3,8 @@ import { test } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-const DIR = process.env.MEAN_STREETS_VISUAL_EXPORT_DIR ?? 'artifacts/visual-review';
+const DIR =
+  process.env.MEAN_STREETS_VISUAL_EXPORT_DIR ?? 'artifacts/visual-review';
 const RUN = process.env.MEAN_STREETS_FULLPAGE === '1';
 const SCREENSHOT_TIMEOUT_MS = 30_000;
 
@@ -25,15 +26,21 @@ test.skip(
   'Use `pnpm run test:visual:fullpage` / `visual:export:fullpage*` or set MEAN_STREETS_FULLPAGE=1 to run this spec directly.',
 );
 
-test('capture full-page screenshots across every fixture', async ({ page }, testInfo) => {
+test('capture full-page screenshots across every fixture', async ({
+  page,
+}, testInfo) => {
   const project = testInfo.project.name;
   for (const fixture of [
     'menu',
+    'tutorial',
     'difficulty',
     'deck-garage',
     'combat',
+    'combat-tutorial',
     'card',
     'pack-opening',
+    'pack-opening-reveal',
+    'pack-opening-summary',
     'game-over',
   ] as const) {
     await full(page, fixture, project);

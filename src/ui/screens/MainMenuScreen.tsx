@@ -1,4 +1,5 @@
 import { useAppShell } from '../../platform';
+import { AmbientSilhouetteLayer } from './VisualStage';
 
 interface MainMenuScreenProps {
   onNewGame: () => void;
@@ -22,21 +23,26 @@ export function MainMenuScreen({
   const { layout } = useAppShell();
   const heroImage = `${import.meta.env.BASE_URL}assets/hero.png`;
   const logoImage = `${import.meta.env.BASE_URL}assets/logo.png`;
-  const useHero = layout.deviceClass !== 'phone' || layout.id !== 'phone-portrait';
+  const isPhonePoster =
+    layout.deviceClass === 'phone' && layout.id === 'phone-portrait';
 
   return (
     <main
-      className={`menu-shell ${useHero ? 'menu-shell-hero' : 'menu-shell-solid'}`}
+      className={`menu-shell ${isPhonePoster ? 'menu-shell-phone-poster' : 'menu-shell-hero'}`}
       data-testid="main-menu-screen"
       aria-label="Main Menu"
     >
-      {useHero && (
-        <div
-          className="menu-backdrop"
-          style={{ backgroundImage: `url(${heroImage})` }}
-          aria-hidden="true"
-        />
-      )}
+      <div
+        className="menu-backdrop"
+        style={{ backgroundImage: `url(${heroImage})` }}
+        aria-hidden="true"
+      />
+      <AmbientSilhouetteLayer variant="menu" />
+      <div className="menu-street-signage" aria-hidden="true">
+        <span>No Dice</span>
+        <strong>Own The Block</strong>
+        <span>No Overnights</span>
+      </div>
 
       <img
         src={logoImage}

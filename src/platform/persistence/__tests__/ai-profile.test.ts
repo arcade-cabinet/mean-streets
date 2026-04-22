@@ -72,7 +72,7 @@ describe('ai-profile collection bootstrap', () => {
       'single',
       [],
       expect.any(Object),
-      { unlockDifficulty: 'hard' },
+      { unlockDifficulty: 'hard', permadeath: undefined },
     );
   });
 });

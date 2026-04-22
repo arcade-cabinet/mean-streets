@@ -107,7 +107,7 @@ export function ResolutionOverlay({
       {phase.kind === 'raid' && (
         <div className="resolution-raid-flash" data-testid="resolution-raid-flash">
           <span className="resolution-raid-title">RAID</span>
-          <span className="resolution-raid-sub">Market cleared · Tops locked up</span>
+          <span className="resolution-raid-sub">Market cleared · Tops seized</span>
         </div>
       )}
       {currentStrike && (

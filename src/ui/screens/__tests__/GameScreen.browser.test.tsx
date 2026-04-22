@@ -5,11 +5,29 @@ import { GameScreen } from '../GameScreen';
 import { renderInBrowser, settleBrowser } from '../../../test/render-browser';
 import { resetTestViewport, setTestViewport } from '../../../test/viewport';
 
-function renderGameScreen(onGameOver = vi.fn()) {
-  const world = createGameWorld({ difficulty: 'easy', suddenDeath: false, turfCount: 5, actionsPerTurn: 3, firstTurnActions: 5 }, 42);
+function renderGameScreen(
+  onGameOver = vi.fn(),
+  tutorialMode?: 'first-war',
+  onTutorialComplete = vi.fn(),
+) {
+  const world = createGameWorld(
+    {
+      difficulty: 'easy',
+      suddenDeath: false,
+      turfCount: 5,
+      actionsPerTurn: 3,
+      firstTurnActions: 5,
+    },
+    42,
+  );
   return renderInBrowser(
     <WorldProvider world={world}>
-      <GameScreen world={world} onGameOver={onGameOver} />
+      <GameScreen
+        world={world}
+        onGameOver={onGameOver}
+        tutorialMode={tutorialMode}
+        onTutorialComplete={onTutorialComplete}
+      />
     </WorldProvider>,
   );
 }
@@ -25,7 +43,9 @@ describe('GameScreen board layout (browser)', () => {
   it('renders the game screen with board grid', async () => {
     cleanup = (await renderGameScreen()).unmount;
     await settleBrowser();
-    expect(document.querySelector('[data-testid="game-screen"]')).not.toBeNull();
+    expect(
+      document.querySelector('[data-testid="game-screen"]'),
+    ).not.toBeNull();
     expect(document.querySelector('.board-grid')).not.toBeNull();
   });
 
@@ -33,15 +53,23 @@ describe('GameScreen board layout (browser)', () => {
     cleanup = (await renderGameScreen()).unmount;
     await settleBrowser();
     expect(document.querySelector('.game-hud-bar')).not.toBeNull();
-    expect(document.querySelector('[data-testid="action-budget"]')).not.toBeNull();
-    expect(document.querySelector('[data-testid="mythic-pool-indicator"]')).not.toBeNull();
+    expect(
+      document.querySelector('[data-testid="action-budget"]'),
+    ).not.toBeNull();
+    expect(
+      document.querySelector('[data-testid="mythic-pool-indicator"]'),
+    ).not.toBeNull();
   });
 
   it('renders player and opponent turf lanes', async () => {
     cleanup = (await renderGameScreen()).unmount;
     await settleBrowser();
-    expect(document.querySelector('[data-testid="turf-lane-A"]')).not.toBeNull();
-    expect(document.querySelector('[data-testid="turf-lane-B"]')).not.toBeNull();
+    expect(
+      document.querySelector('[data-testid="turf-lane-A"]'),
+    ).not.toBeNull();
+    expect(
+      document.querySelector('[data-testid="turf-lane-B"]'),
+    ).not.toBeNull();
   });
 
   it('renders draw pile slot for player', async () => {
@@ -55,14 +83,20 @@ describe('GameScreen board layout (browser)', () => {
   it('renders Market and Custody in HUD', async () => {
     cleanup = (await renderGameScreen()).unmount;
     await settleBrowser();
-    expect(document.querySelector('[data-testid="slot-market"]')).not.toBeNull();
-    expect(document.querySelector('[data-testid="slot-holding"]')).not.toBeNull();
+    expect(
+      document.querySelector('[data-testid="slot-market"]'),
+    ).not.toBeNull();
+    expect(
+      document.querySelector('[data-testid="slot-holding"]'),
+    ).not.toBeNull();
   });
 
   it('renders end turn button', async () => {
     cleanup = (await renderGameScreen()).unmount;
     await settleBrowser();
-    expect(document.querySelector('[data-testid="action-end_turn"]')).not.toBeNull();
+    expect(
+      document.querySelector('[data-testid="action-end_turn"]'),
+    ).not.toBeNull();
   });
 
   it('board grid fills viewport on desktop', async () => {
@@ -83,11 +117,48 @@ describe('GameScreen board layout (browser)', () => {
   it('completes the opponent turn immediately in automation mode', async () => {
     cleanup = (await renderGameScreen()).unmount;
     await settleBrowser();
-    const endTurn = document.querySelector<HTMLElement>('[data-testid="action-end_turn"]')!;
+    const endTurn = document.querySelector<HTMLElement>(
+      '[data-testid="action-end_turn"]',
+    )!;
     endTurn.click();
     await settleBrowser();
-    const overlay = document.querySelector('[data-testid="opponent-turn-overlay"]');
+    const overlay = document.querySelector(
+      '[data-testid="opponent-turn-overlay"]',
+    );
     expect(overlay).toBeNull();
-    expect(document.querySelector('[data-testid="action-budget"]')?.textContent).toContain('3/3');
+    expect(
+      document.querySelector('[data-testid="action-budget"]')?.textContent,
+    ).toContain('3/3');
+  });
+
+  it('renders and advances the first-war coach without changing the board', async () => {
+    const onTutorialComplete = vi.fn();
+    cleanup = (await renderGameScreen(vi.fn(), 'first-war', onTutorialComplete))
+      .unmount;
+    await settleBrowser();
+
+    expect(
+      document.querySelector('[data-testid="first-war-coach"]'),
+    ).not.toBeNull();
+    expect(
+      document
+        .querySelector('[data-testid="game-screen"]')
+        ?.getAttribute('data-coach-step'),
+    ).toBe('draw');
+
+    document
+      .querySelector<HTMLElement>('[data-testid="first-war-coach-next"]')!
+      .click();
+    await settleBrowser();
+
+    expect(
+      document
+        .querySelector('[data-testid="game-screen"]')
+        ?.getAttribute('data-coach-step'),
+    ).toBe('stack');
+    expect(
+      document.querySelector('[data-testid="turf-lane-A"]'),
+    ).not.toBeNull();
+    expect(onTutorialComplete).not.toHaveBeenCalled();
   });
 });

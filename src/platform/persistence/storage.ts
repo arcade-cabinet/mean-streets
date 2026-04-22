@@ -19,6 +19,7 @@ export interface AppSettings {
   audioEnabled: boolean;
   motionReduced: boolean;
   rulesSeen: boolean;
+  firstWarTutorialSeen: boolean;
 }
 
 /**
@@ -34,7 +35,12 @@ export interface AppSettings {
  */
 export interface StoredCardInstance {
   rolledRarity: 'common' | 'uncommon' | 'rare' | 'legendary' | 'mythic';
-  unlockDifficulty: 'easy' | 'medium' | 'hard' | 'nightmare' | 'ultra-nightmare';
+  unlockDifficulty:
+    | 'easy'
+    | 'medium'
+    | 'hard'
+    | 'nightmare'
+    | 'ultra-nightmare';
 }
 
 /**
@@ -90,6 +96,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   audioEnabled: true,
   motionReduced: false,
   rulesSeen: false,
+  firstWarTutorialSeen: false,
 };
 
 const DEFAULT_PROFILE: PlayerProfile = {
@@ -118,12 +125,24 @@ export async function initializePersistence(): Promise<void> {
 
 export async function loadSettings(): Promise<AppSettings> {
   await initializePersistence();
-  return (await getItem<AppSettings>(SETTINGS_NAMESPACE, 'current')) ?? DEFAULT_SETTINGS;
+  return normalizeSettings(
+    await getItem<Partial<AppSettings>>(SETTINGS_NAMESPACE, 'current'),
+  );
 }
 
-export async function saveSettings(settings: AppSettings): Promise<AppSettings> {
-  await setItem(SETTINGS_NAMESPACE, 'current', settings);
-  return settings;
+export async function saveSettings(
+  settings: Partial<AppSettings>,
+): Promise<AppSettings> {
+  const next = normalizeSettings(settings);
+  await setItem(SETTINGS_NAMESPACE, 'current', next);
+  return next;
+}
+
+function normalizeSettings(settings: Partial<AppSettings> | null): AppSettings {
+  return {
+    ...DEFAULT_SETTINGS,
+    ...settings,
+  };
 }
 
 export async function loadCrewPresets(): Promise<CardPreset[]> {
@@ -131,7 +150,9 @@ export async function loadCrewPresets(): Promise<CardPreset[]> {
   return listNamespace<CardPreset>(CREW_PRESETS_NAMESPACE);
 }
 
-export async function saveCrewPreset(preset: CardPreset): Promise<CardPreset[]> {
+export async function saveCrewPreset(
+  preset: CardPreset,
+): Promise<CardPreset[]> {
   await setItem(CREW_PRESETS_NAMESPACE, preset.id, preset);
   return loadCrewPresets();
 }
@@ -141,7 +162,9 @@ export async function loadModifierPresets(): Promise<CardPreset[]> {
   return listNamespace<CardPreset>(MOD_PRESETS_NAMESPACE);
 }
 
-export async function saveModifierPreset(preset: CardPreset): Promise<CardPreset[]> {
+export async function saveModifierPreset(
+  preset: CardPreset,
+): Promise<CardPreset[]> {
   await setItem(MOD_PRESETS_NAMESPACE, preset.id, preset);
   return loadModifierPresets();
 }
@@ -151,7 +174,9 @@ export async function loadDeckLoadouts(): Promise<DeckLoadout[]> {
   return listNamespace<DeckLoadout>(DECKS_NAMESPACE);
 }
 
-export async function saveDeckLoadout(loadout: DeckLoadout): Promise<DeckLoadout[]> {
+export async function saveDeckLoadout(
+  loadout: DeckLoadout,
+): Promise<DeckLoadout[]> {
   await setItem(DECKS_NAMESPACE, loadout.id, loadout);
   return loadDeckLoadouts();
 }
@@ -166,7 +191,9 @@ const LEGACY_SUDDEN_DEATH = 'sudden-death';
 
 export async function loadProfile(): Promise<PlayerProfile> {
   await initializePersistence();
-  const profile = (await getItem<PlayerProfile>(PROFILE_NAMESPACE, 'current')) ?? DEFAULT_PROFILE;
+  const profile =
+    (await getItem<PlayerProfile>(PROFILE_NAMESPACE, 'current')) ??
+    DEFAULT_PROFILE;
   if (profile.cardInstances) {
     let migrated = false;
     for (const instance of Object.values(profile.cardInstances)) {
@@ -192,7 +219,9 @@ export async function loadProfile(): Promise<PlayerProfile> {
   return profile;
 }
 
-export async function saveProfile(profile: PlayerProfile): Promise<PlayerProfile> {
+export async function saveProfile(
+  profile: PlayerProfile,
+): Promise<PlayerProfile> {
   await setItem(PROFILE_NAMESPACE, 'current', profile);
   return profile;
 }
@@ -227,18 +256,25 @@ function safeParse<T>(raw: string, source: string): T | null {
   try {
     return JSON.parse(raw) as T;
   } catch (error) {
-    console.warn(`[persistence] discarding corrupted value from ${source}:`, error);
+    console.warn(
+      `[persistence] discarding corrupted value from ${source}:`,
+      error,
+    );
     return null;
   }
 }
 
-async function listNamespace<T extends { updatedAt?: string }>(namespace: string): Promise<T[]> {
+async function listNamespace<T extends { updatedAt?: string }>(
+  namespace: string,
+): Promise<T[]> {
   if (isTestPersistenceEnv()) {
     return Array.from(testStore.entries())
       .filter(([key]) => key.startsWith(`${namespace}::`))
       .map(([key, value]) => safeParse<T>(value, key))
       .filter((parsed): parsed is T => parsed !== null)
-      .sort((a, b) => String(b.updatedAt ?? '').localeCompare(String(a.updatedAt ?? '')));
+      .sort((a, b) =>
+        String(b.updatedAt ?? '').localeCompare(String(a.updatedAt ?? '')),
+      );
   }
 
   const db = await getDatabase();
@@ -266,7 +302,11 @@ async function getItem<T>(namespace: string, key: string): Promise<T | null> {
   return row ? safeParse<T>(String(row.value), `${namespace}::${key}`) : null;
 }
 
-async function setItem<T>(namespace: string, key: string, value: T): Promise<void> {
+async function setItem<T>(
+  namespace: string,
+  key: string,
+  value: T,
+): Promise<void> {
   if (isTestPersistenceEnv()) {
     testStore.set(scopedKey(namespace, key), JSON.stringify(value));
     return;
@@ -291,17 +331,25 @@ async function deleteItem(namespace: string, key: string): Promise<void> {
   }
 
   await withDatabaseWriteLock(async (db) => {
-    await db.run('DELETE FROM app_kv WHERE namespace = ? AND item_key = ?', [namespace, key]);
+    await db.run('DELETE FROM app_kv WHERE namespace = ? AND item_key = ?', [
+      namespace,
+      key,
+    ]);
   });
 }
 
 async function namespaceCount(namespace: string): Promise<number> {
   if (isTestPersistenceEnv()) {
-    return Array.from(testStore.keys()).filter((key) => key.startsWith(`${namespace}::`)).length;
+    return Array.from(testStore.keys()).filter((key) =>
+      key.startsWith(`${namespace}::`),
+    ).length;
   }
 
   const db = await getDatabase();
-  const result = await db.query('SELECT COUNT(*) as count FROM app_kv WHERE namespace = ?', [namespace]);
+  const result = await db.query(
+    'SELECT COUNT(*) as count FROM app_kv WHERE namespace = ?',
+    [namespace],
+  );
   return Number(result.values?.[0]?.count ?? 0);
 }
 

@@ -17,7 +17,7 @@ test.describe('@governor Player Governor vs AI', () => {
 
     await activate(page.getByTestId('new-game-button'), testInfo);
 
-    const rulesBtn = page.getByTestId('close-rules-button');
+    const rulesBtn = page.getByTestId('close-tutorial-button');
     if (await rulesBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
       await activate(rulesBtn, testInfo);
     }
@@ -58,7 +58,7 @@ test.describe('@governor Player Governor vs AI', () => {
 
     await activate(page.getByTestId('new-game-button'), testInfo);
 
-    const rulesBtn = page.getByTestId('close-rules-button');
+    const rulesBtn = page.getByTestId('close-tutorial-button');
     if (await rulesBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
       await activate(rulesBtn, testInfo);
     }

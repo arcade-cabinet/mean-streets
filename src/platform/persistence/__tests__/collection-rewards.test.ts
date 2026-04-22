@@ -52,7 +52,32 @@ describe('collection reward opening', () => {
       'single',
       [],
       expect.any(Object),
-      { unlockDifficulty: 'nightmare' },
+      { unlockDifficulty: 'nightmare', permadeath: undefined },
+    );
+  });
+
+  it('passes the permadeath reward modifier through to pack generation', async () => {
+    const generateSpy = vi
+      .spyOn(generator, 'generatePack')
+      .mockReturnValue([]);
+    const rewardPacks: PackInstance[] = [
+      {
+        id: 'reward-pack-01',
+        kind: 'single',
+        cards: [],
+        openedAt: null,
+      },
+    ];
+
+    await openRewardPackInstances(rewardPacks, 'hard', 123, {
+      permadeath: true,
+    });
+
+    expect(generateSpy).toHaveBeenCalledWith(
+      'single',
+      [],
+      expect.any(Object),
+      { unlockDifficulty: 'hard', permadeath: true },
     );
   });
 });

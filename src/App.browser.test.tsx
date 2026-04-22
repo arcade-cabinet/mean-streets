@@ -4,12 +4,16 @@ import App from './App';
 import { renderInBrowser, settleBrowser } from './test/render-browser';
 import {
   loadActiveRun,
+  loadSettings,
   resetPersistenceForTests,
   saveProfile,
   saveSettings,
 } from './ui/deckbuilder/storage';
 
-async function waitForSelector(selector: string, timeoutMs = 5000): Promise<Element | null> {
+async function waitForSelector(
+  selector: string,
+  timeoutMs = 5000,
+): Promise<Element | null> {
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
     const match = document.querySelector(selector);
@@ -19,8 +23,11 @@ async function waitForSelector(selector: string, timeoutMs = 5000): Promise<Elem
   return document.querySelector(selector);
 }
 
-async function dismissRulesOnboarding(): Promise<void> {
-  const closeBtn = await waitForSelector('[data-testid="close-rules-button"]', 2000);
+async function dismissTutorialOnboarding(): Promise<void> {
+  const closeBtn = await waitForSelector(
+    '[data-testid="close-tutorial-button"]',
+    2000,
+  );
   if (closeBtn) {
     await userEvent.click(closeBtn as HTMLButtonElement);
     await settleBrowser();
@@ -54,78 +61,199 @@ describe('App flow', () => {
   it('renders the main menu with 5 entry points', async () => {
     cleanup = (await renderInBrowser(<App />)).unmount;
 
-    expect(document.querySelector('[data-testid="main-menu-screen"]')).not.toBeNull();
-    expect(document.querySelector('[data-testid="new-game-button"]')).not.toBeNull();
-    expect(document.querySelector('[data-testid="load-game-button"]')).not.toBeNull();
-    expect(document.querySelector('[data-testid="collection-button"]')).not.toBeNull();
-    expect(document.querySelector('[data-testid="garage-button"]')).not.toBeNull();
-    expect(document.querySelector('[data-testid="cards-button"]')).not.toBeNull();
+    expect(
+      document.querySelector('[data-testid="main-menu-screen"]'),
+    ).not.toBeNull();
+    expect(
+      document.querySelector('[data-testid="new-game-button"]'),
+    ).not.toBeNull();
+    expect(
+      document.querySelector('[data-testid="load-game-button"]'),
+    ).not.toBeNull();
+    expect(
+      document.querySelector('[data-testid="collection-button"]'),
+    ).not.toBeNull();
+    expect(
+      document.querySelector('[data-testid="garage-button"]'),
+    ).not.toBeNull();
+    expect(
+      document.querySelector('[data-testid="cards-button"]'),
+    ).not.toBeNull();
   });
 
-  it('opens rules onboarding on first New Game, then routes to difficulty', async () => {
+  it('normalizes legacy settings without a first-war tutorial flag', async () => {
+    await saveSettings({
+      audioEnabled: true,
+      motionReduced: false,
+      rulesSeen: true,
+    });
+
+    expect((await loadSettings()).firstWarTutorialSeen).toBe(false);
+  });
+
+  it('opens visual tutorial onboarding on first New Game, then opens difficulty over menu', async () => {
     cleanup = (await renderInBrowser(<App />)).unmount;
 
-    await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="new-game-button"]')!);
+    await userEvent.click(
+      document.querySelector<HTMLButtonElement>(
+        '[data-testid="new-game-button"]',
+      )!,
+    );
     await settleBrowser();
 
-    expect(await waitForSelector('[data-testid="close-rules-button"]')).not.toBeNull();
-    await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="close-rules-button"]')!);
+    expect(
+      await waitForSelector('[data-testid="tutorial-modal"]'),
+    ).not.toBeNull();
+    await userEvent.click(
+      document.querySelector<HTMLButtonElement>(
+        '[data-testid="close-tutorial-button"]',
+      )!,
+    );
     await settleBrowser();
 
-    expect(await waitForSelector('[data-testid="difficulty-screen"]')).not.toBeNull();
-    expect(document.querySelector('[data-testid="diff-tile-easy"]')).not.toBeNull();
-    expect(document.querySelector('[data-testid="diff-tile-medium"]')).not.toBeNull();
-    expect(document.querySelector('[data-testid="diff-tile-hard"]')).not.toBeNull();
-    expect(document.querySelector('[data-testid="diff-tile-nightmare"]')).not.toBeNull();
-    expect(document.querySelector('[data-testid="diff-tile-ultra-nightmare"]')).not.toBeNull();
-    expect(document.querySelector('[data-testid="diff-sudden-death"]')).toBeNull();
+    expect(
+      document.querySelector('[data-testid="main-menu-screen"]'),
+    ).not.toBeNull();
+    expect(
+      await waitForSelector('[data-testid="difficulty-screen"]'),
+    ).not.toBeNull();
+    expect(
+      document.querySelector('[data-testid="diff-tile-easy"]'),
+    ).not.toBeNull();
+    expect(
+      document.querySelector('[data-testid="diff-tile-medium"]'),
+    ).not.toBeNull();
+    expect(
+      document.querySelector('[data-testid="diff-tile-hard"]'),
+    ).not.toBeNull();
+    expect(
+      document.querySelector('[data-testid="diff-tile-nightmare"]'),
+    ).not.toBeNull();
+    expect(
+      document.querySelector('[data-testid="diff-tile-ultra-nightmare"]'),
+    ).not.toBeNull();
+    expect(
+      document.querySelector('[data-testid="diff-permadeath"]'),
+    ).not.toBeNull();
     expect(document.querySelector('[data-testid="diff-start"]')).not.toBeNull();
   });
 
   it('routes Collection entry point to the collection screen', async () => {
     cleanup = (await renderInBrowser(<App />)).unmount;
 
-    await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="collection-button"]')!);
+    await userEvent.click(
+      document.querySelector<HTMLButtonElement>(
+        '[data-testid="collection-button"]',
+      )!,
+    );
     await settleBrowser();
 
-    expect(await waitForSelector('[data-testid="collection-screen"]')).not.toBeNull();
+    expect(
+      await waitForSelector('[data-testid="collection-screen"]'),
+    ).not.toBeNull();
   });
 
   it('routes Garage entry point to the card garage screen', async () => {
     cleanup = (await renderInBrowser(<App />)).unmount;
 
-    await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="garage-button"]')!);
+    await userEvent.click(
+      document.querySelector<HTMLButtonElement>(
+        '[data-testid="garage-button"]',
+      )!,
+    );
     await settleBrowser();
 
-    expect(await waitForSelector('[data-testid="card-garage-screen"]')).not.toBeNull();
+    expect(
+      await waitForSelector('[data-testid="card-garage-screen"]'),
+    ).not.toBeNull();
   });
 
   it('routes Cards entry point to the cards screen', async () => {
     cleanup = (await renderInBrowser(<App />)).unmount;
 
-    await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="cards-button"]')!);
+    await userEvent.click(
+      document.querySelector<HTMLButtonElement>(
+        '[data-testid="cards-button"]',
+      )!,
+    );
     await settleBrowser();
 
-    expect(await waitForSelector('[data-testid="cards-screen"]')).not.toBeNull();
+    expect(
+      await waitForSelector('[data-testid="cards-screen"]'),
+    ).not.toBeNull();
   });
 
   it('difficulty -> start spawns the game screen', async () => {
     cleanup = (await renderInBrowser(<App />)).unmount;
 
-    await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="new-game-button"]')!);
+    await userEvent.click(
+      document.querySelector<HTMLButtonElement>(
+        '[data-testid="new-game-button"]',
+      )!,
+    );
     await settleBrowser();
-    await dismissRulesOnboarding();
+    await dismissTutorialOnboarding();
 
-    expect(await waitForSelector('[data-testid="difficulty-screen"]')).not.toBeNull();
+    expect(
+      await waitForSelector('[data-testid="difficulty-screen"]'),
+    ).not.toBeNull();
 
-    await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="diff-tile-medium"]')!);
+    await userEvent.click(
+      document.querySelector<HTMLButtonElement>(
+        '[data-testid="diff-tile-medium"]',
+      )!,
+    );
     await settleBrowser();
 
-    await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="diff-start"]')!);
+    await userEvent.click(
+      document.querySelector<HTMLButtonElement>('[data-testid="diff-start"]')!,
+    );
     await settleBrowser();
 
-    expect(await waitForSelector('[data-testid="game-screen"]', 10000)).not.toBeNull();
-    expect(document.querySelector('[data-testid="action-budget"]')).not.toBeNull();
+    expect(
+      await waitForSelector('[data-testid="game-screen"]', 10000),
+    ).not.toBeNull();
+    expect(
+      document.querySelector('[data-testid="action-budget"]'),
+    ).not.toBeNull();
+  });
+
+  it('shows first-war coach after the first difficulty start and persists dismissal', async () => {
+    cleanup = (await renderInBrowser(<App />)).unmount;
+
+    await userEvent.click(
+      document.querySelector<HTMLButtonElement>(
+        '[data-testid="new-game-button"]',
+      )!,
+    );
+    await settleBrowser();
+    await dismissTutorialOnboarding();
+
+    await userEvent.click(
+      document.querySelector<HTMLButtonElement>(
+        '[data-testid="diff-tile-easy"]',
+      )!,
+    );
+    await settleBrowser();
+    await userEvent.click(
+      document.querySelector<HTMLButtonElement>('[data-testid="diff-start"]')!,
+    );
+    await settleBrowser();
+
+    expect(
+      await waitForSelector('[data-testid="first-war-coach"]', 10000),
+    ).not.toBeNull();
+    await userEvent.click(
+      document.querySelector<HTMLButtonElement>(
+        '[data-testid="first-war-coach-skip"]',
+      )!,
+    );
+    await settleBrowser();
+
+    expect(
+      document.querySelector('[data-testid="first-war-coach"]'),
+    ).toBeNull();
+    expect((await loadSettings()).firstWarTutorialSeen).toBe(true);
   });
 
   it('starts wars from full owned inventory instead of the deduped summary collection', async () => {
@@ -169,13 +297,28 @@ describe('App flow', () => {
 
     cleanup = (await renderInBrowser(<App />)).unmount;
 
-    await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="new-game-button"]')!);
+    await userEvent.click(
+      document.querySelector<HTMLButtonElement>(
+        '[data-testid="new-game-button"]',
+      )!,
+    );
     await settleBrowser();
-    expect(await waitForSelector('[data-testid="difficulty-screen"]')).not.toBeNull();
+    expect(
+      await waitForSelector('[data-testid="difficulty-screen"]'),
+    ).not.toBeNull();
+    expect(
+      document.querySelector('[data-testid="main-menu-screen"]'),
+    ).not.toBeNull();
 
-    await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="diff-tile-easy"]')!);
+    await userEvent.click(
+      document.querySelector<HTMLButtonElement>(
+        '[data-testid="diff-tile-easy"]',
+      )!,
+    );
     await settleBrowser();
-    await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="diff-start"]')!);
+    await userEvent.click(
+      document.querySelector<HTMLButtonElement>('[data-testid="diff-start"]')!,
+    );
     await settleBrowser();
 
     const activeRun = await waitForActiveRun();

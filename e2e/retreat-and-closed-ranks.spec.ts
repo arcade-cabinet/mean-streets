@@ -8,7 +8,7 @@ async function goToGame(
   await page.goto('/');
   await expect(page.getByTestId('main-menu-screen')).toBeVisible();
   await activate(page.getByTestId('new-game-button'), testInfo);
-  await activate(page.getByTestId('close-rules-button'), testInfo);
+  await activate(page.getByTestId('close-tutorial-button'), testInfo);
   await activate(page.getByTestId('diff-tile-easy'), testInfo);
   await activate(page.getByTestId('diff-start'), testInfo);
   await expect(page.getByTestId('game-screen')).toBeVisible({

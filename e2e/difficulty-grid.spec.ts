@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { activate } from './helpers/activate';
 
-// v0.3 removed Sudden Death; 5 tiers only.
+// Five base tiers, plus a separate Permadeath modifier in the center of row 2.
 const TIERS = [
   'easy',
   'medium',
@@ -11,16 +11,17 @@ const TIERS = [
 ] as const;
 
 test.describe('difficulty grid', () => {
-  test('fixture renders all 5 tier tiles', async ({ page }) => {
+  test('fixture renders all 5 tier tiles and the permadeath modifier', async ({ page }) => {
     await page.goto('?fixture=difficulty');
     await expect(page.getByTestId('difficulty-screen')).toBeVisible();
 
     for (const tier of TIERS) {
       await expect(page.getByTestId(`diff-tile-${tier}`)).toBeVisible();
     }
+    await expect(page.getByTestId('diff-permadeath')).toBeVisible();
   });
 
-  test('Sudden Death tier is absent (removed in v0.3)', async ({ page }) => {
+  test('old Sudden Death tier is absent', async ({ page }) => {
     await page.goto('?fixture=difficulty');
     await expect(page.getByTestId('difficulty-screen')).toBeVisible();
 
@@ -41,6 +42,25 @@ test.describe('difficulty grid', () => {
       // After selecting any tier, start must be enabled (not just visible)
       await expect(startBtn, `start should be enabled after selecting ${tier}`).toBeEnabled();
     }
+  });
+
+  test('permadeath toggles for normal tiers and is forced by Ultra Nightmare', async ({ page }, testInfo) => {
+    await page.goto('?fixture=difficulty');
+    await expect(page.getByTestId('difficulty-screen')).toBeVisible();
+
+    const permadeath = page.getByTestId('diff-permadeath');
+    await expect(permadeath).toHaveAttribute('aria-checked', 'false');
+
+    await activate(permadeath, testInfo);
+    await expect(permadeath).toHaveAttribute('aria-checked', 'true');
+    await expect(page.getByTestId('diff-permadeath-warning')).toBeVisible();
+
+    await activate(permadeath, testInfo);
+    await expect(permadeath).toHaveAttribute('aria-checked', 'false');
+
+    await activate(page.getByTestId('diff-tile-ultra-nightmare'), testInfo);
+    await expect(permadeath).toHaveAttribute('aria-checked', 'true');
+    await expect(permadeath).toHaveAttribute('aria-disabled', 'true');
   });
 
   test('grid tiles fit within viewport on all device profiles', async ({ page }) => {

@@ -55,6 +55,16 @@ for (const tier of DIFFICULTY_TIERS) {
   }
 }
 const DIFFICULTY_REWARD_MULT = _diffMult as Record<DifficultyTier, number>;
+const PERMADEATH_REWARD_MULT = _pe.permadeathRewardMult;
+if (
+  typeof PERMADEATH_REWARD_MULT !== 'number' ||
+  !Number.isFinite(PERMADEATH_REWARD_MULT) ||
+  PERMADEATH_REWARD_MULT < 1
+) {
+  throw new Error(
+    'turf-sim.json packEconomy.permadeathRewardMult must be a finite number >= 1',
+  );
+}
 
 const VALID_PACK_KINDS: ReadonlySet<string> = new Set([
   'single',
@@ -191,6 +201,7 @@ function pickCardOfBase(
 
 export interface GeneratePackOptions {
   unlockDifficulty?: DifficultyTier;
+  permadeath?: boolean;
 }
 
 export function generatePack(
@@ -200,7 +211,10 @@ export function generatePack(
   options: GeneratePackOptions = {},
 ): Card[] {
   const size = PACK_SIZE[kind];
-  const mult = DIFFICULTY_REWARD_MULT[options.unlockDifficulty ?? 'easy'];
+  const difficultyMult = DIFFICULTY_REWARD_MULT[options.unlockDifficulty ?? 'easy'];
+  const mult = options.permadeath
+    ? difficultyMult * PERMADEATH_REWARD_MULT
+    : difficultyMult;
 
   const cards: Card[] = [];
   const usedIds = new Set(collection.map((c) => c.id));
@@ -266,8 +280,8 @@ export function starterGrant(rng: Rng): Card[] {
 
 /**
  * Returns per-difficulty pack rewards for a completed match.
- * The `_suddenDeath` param is kept for call-site back-compat but is
- * ignored — Sudden Death was removed in v0.3.
+ * The `_suddenDeath` param is kept for call-site back-compat; Permadeath's
+ * reward-quality bonus applies when those packs are opened.
  */
 export function matchRewardPacks(
   difficulty: string,

@@ -69,11 +69,47 @@ describe('generatePack', () => {
       for (const c of ultra) ultraCounts[c.rarity]++;
     }
 
-    const easyTotal = easyCounts.common + easyCounts.uncommon + easyCounts.rare + easyCounts.legendary;
-    const ultraTotal = ultraCounts.common + ultraCounts.uncommon + ultraCounts.rare + ultraCounts.legendary;
-    const easyHigh = (easyCounts.rare + easyCounts.legendary) / easyTotal;
-    const ultraHigh = (ultraCounts.rare + ultraCounts.legendary) / ultraTotal;
+    const easyTotal =
+      easyCounts.common + easyCounts.uncommon + easyCounts.rare +
+      easyCounts.legendary + easyCounts.mythic;
+    const ultraTotal =
+      ultraCounts.common + ultraCounts.uncommon + ultraCounts.rare +
+      ultraCounts.legendary + ultraCounts.mythic;
+    const easyHigh = (easyCounts.rare + easyCounts.legendary + easyCounts.mythic) / easyTotal;
+    const ultraHigh = (ultraCounts.rare + ultraCounts.legendary + ultraCounts.mythic) / ultraTotal;
     expect(ultraHigh).toBeGreaterThanOrEqual(easyHigh);
+  });
+
+  it('permadeath stacks an extra roll-up bonus onto the selected difficulty', () => {
+    const normalCounts: Record<string, number> = {
+      common: 0, uncommon: 0, rare: 0, legendary: 0, mythic: 0,
+    };
+    const permaCounts: Record<string, number> = {
+      common: 0, uncommon: 0, rare: 0, legendary: 0, mythic: 0,
+    };
+
+    for (let seed = 1; seed <= 160; seed++) {
+      const normal = generatePack('standard', emptyCollection, createRng(seed), {
+        unlockDifficulty: 'hard',
+      });
+      for (const c of normal) normalCounts[c.rarity]++;
+
+      const perma = generatePack('standard', emptyCollection, createRng(seed), {
+        unlockDifficulty: 'hard',
+        permadeath: true,
+      });
+      for (const c of perma) permaCounts[c.rarity]++;
+    }
+
+    const normalTotal =
+      normalCounts.common + normalCounts.uncommon + normalCounts.rare +
+      normalCounts.legendary + normalCounts.mythic;
+    const permaTotal =
+      permaCounts.common + permaCounts.uncommon + permaCounts.rare +
+      permaCounts.legendary + permaCounts.mythic;
+    const normalHigh = (normalCounts.rare + normalCounts.legendary + normalCounts.mythic) / normalTotal;
+    const permaHigh = (permaCounts.rare + permaCounts.legendary + permaCounts.mythic) / permaTotal;
+    expect(permaHigh).toBeGreaterThanOrEqual(normalHigh);
   });
 
   it('is deterministic with the same seed', () => {

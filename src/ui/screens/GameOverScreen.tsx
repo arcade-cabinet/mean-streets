@@ -1,12 +1,9 @@
 import { useEffect } from 'react';
 import type { WarOutcome } from '../../sim/packs';
-import type {
-  Card,
-  DifficultyTier,
-  TurfMetrics,
-} from '../../sim/turf/types';
+import type { Card, DifficultyTier, TurfMetrics } from '../../sim/turf/types';
 import { Card as CardComponent } from '../cards';
 import { playVictory, playDefeat } from '../audio/sfx';
+import { AmbientSilhouetteLayer, ContrabandProp } from './VisualStage';
 
 interface GameOverScreenProps {
   winner: 'A' | 'B';
@@ -64,12 +61,15 @@ export function GameOverScreen({
 
   return (
     <div
-      className="gameover-screen"
+      className="gameover-screen world-screen world-screen-gameover"
       data-testid="gameover-screen"
     >
+      <AmbientSilhouetteLayer variant="spoils" />
       <div className="gameover-copy">
         <p className="gameover-kicker">Case Closed</p>
-        <h1 className={`gameover-title ${isVictory ? 'gameover-title-victory' : 'gameover-title-defeat'}`}>
+        <h1
+          className={`gameover-title ${isVictory ? 'gameover-title-victory' : 'gameover-title-defeat'}`}
+        >
           {isVictory ? 'Victory' : 'Defeat'}
         </h1>
         <p className="gameover-subtitle">
@@ -83,7 +83,10 @@ export function GameOverScreen({
         <StatRow label="Turns" value={metrics.turns} />
         <StatRow label="Kills" value={metrics.kills} />
         <StatRow label="Seizures" value={metrics.seizures} />
-        <StatRow label="Strikes" value={metrics.directStrikes + metrics.pushedStrikes} />
+        <StatRow
+          label="Strikes"
+          value={metrics.directStrikes + metrics.pushedStrikes}
+        />
         <StatRow label="Recruits" value={metrics.fundedRecruits} />
         <StatRow label="Raids" value={metrics.raids} />
         <StatRow label="Cards Played" value={metrics.cardsPlayed} />
@@ -113,7 +116,7 @@ export function GameOverScreen({
           )}
           {rewardCards.length > 0 && (
             <div className="gameover-rewards-grid">
-              {rewardCards.map(card => (
+              {rewardCards.map((card) => (
                 <div key={card.id} className="gameover-reward-cell">
                   <CardComponent
                     card={card}
@@ -127,13 +130,21 @@ export function GameOverScreen({
         </div>
       )}
 
+      <div className="gameover-spoils-props" aria-hidden="true">
+        <ContrabandProp asset="duffel" />
+        <ContrabandProp asset="cash" />
+        <ContrabandProp asset="evidenceBag" />
+      </div>
+
       <button
         onClick={onPlayAgain}
         data-testid="play-again-button"
         className="menu-button menu-button-primary gameover-button"
       >
         <span className="menu-button-label">Play Again</span>
-        <span className="menu-button-detail">Build another deck and retake the street.</span>
+        <span className="menu-button-detail">
+          Build another deck and retake the street.
+        </span>
       </button>
     </div>
   );

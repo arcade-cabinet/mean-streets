@@ -188,6 +188,116 @@ describe('resolvePhase — dominance ordering', () => {
     expect(state.heat).toBeGreaterThan(0.3);
     expect(state.metrics.raids).toBeGreaterThanOrEqual(1);
   });
+
+  it('permadeath raid seizures kill top toughs instead of sending them to lockup', () => {
+    const A = [
+      mkTurf('a1', [
+        ...Array.from({ length: 5 }, (_, i) =>
+          sc(mkTough({ id: `aT${i}`, rarity: 'mythic' }), true),
+        ),
+        sc(mkWeapon({ id: 'aEvidence' }), true, 'aTop'),
+        sc(mkTough({ id: 'aTop', rarity: 'mythic' }), true),
+      ]),
+    ];
+    const B = [
+      mkTurf('b1', [
+        ...Array.from({ length: 5 }, (_, i) =>
+          sc(mkTough({ id: `bT${i}`, rarity: 'mythic' }), true),
+        ),
+        sc(mkWeapon({ id: 'bEvidence' }), true, 'bTop'),
+        sc(mkTough({ id: 'bTop', rarity: 'mythic' }), true),
+      ]),
+    ];
+    const state = mkState(A, B, { seed: 7 });
+    state.config.difficulty = 'nightmare';
+    state.config.suddenDeath = true;
+
+    resolvePhase(state);
+
+    expect(state.metrics.raids).toBeGreaterThanOrEqual(1);
+    expect(state.lockup.A).toHaveLength(0);
+    expect(state.lockup.B).toHaveLength(0);
+    expect(state.players.A.turfs[0].stack.some((entry) => entry.card.id === 'aTop')).toBe(false);
+    expect(state.players.B.turfs[0].stack.some((entry) => entry.card.id === 'bTop')).toBe(false);
+    expect(state.players.A.turfs[0].stack.some((entry) => entry.card.id === 'aEvidence')).toBe(false);
+    expect(state.players.B.turfs[0].stack.some((entry) => entry.card.id === 'bEvidence')).toBe(false);
+    expect(state.blackMarket.some((card) => card.id === 'aEvidence')).toBe(false);
+    expect(state.blackMarket.some((card) => card.id === 'bEvidence')).toBe(false);
+  });
+
+  it('does not spend LAUNDER currency for raid bail', () => {
+    const launder = mkCurrency(1000, 'currency-launder', {
+      rarity: 'legendary',
+      abilities: ['LAUNDER'],
+    });
+    const spendable = [0, 1, 2, 3, 4].map((i) => mkCurrency(1000, `bailCash${i}`));
+    const A = [
+      mkTurf(
+        'a1',
+        Array.from({ length: 11 }, (_, i) =>
+          sc(mkTough({ id: `aHeat${i}`, rarity: 'mythic', power: 10 }), true),
+        ),
+        { closedRanks: true },
+      ),
+    ];
+    const B = [
+      mkTurf('b1', [
+        sc(launder, true, 'bTop'),
+        ...spendable.map((card) => sc(card, true, 'bTop')),
+        sc(mkTough({ id: 'bTop', rarity: 'mythic' }), true),
+      ]),
+    ];
+    const state = mkState(A, B, { seed: 7 });
+    state.config.difficulty = 'nightmare';
+
+    resolvePhase(state);
+
+    expect(state.metrics.raids).toBeGreaterThanOrEqual(1);
+    expect(state.lockup.B).toHaveLength(0);
+    expect(state.players.B.turfs[0].stack.some((entry) => entry.card.id === 'bTop')).toBe(true);
+    expect(state.players.B.turfs[0].stack.some(
+      (entry) => entry.card.id === 'currency-launder',
+    )).toBe(true);
+    expect(state.blackMarket.some((card) => card.id === 'currency-launder')).toBe(false);
+  });
+
+  it('raid seizure of the only active tough costs the turf before combat', () => {
+    const A = [
+      mkTurf(
+        'a1',
+        Array.from({ length: 11 }, (_, i) =>
+          sc(mkTough({ id: `aHeat${i}`, rarity: 'mythic', power: 10 }), true),
+        ),
+        { closedRanks: true },
+      ),
+    ];
+    const B = [
+      mkTurf('b1', [
+        sc(mkTough({ id: 'bOnly', rarity: 'mythic', resistance: 3 }), true),
+      ]),
+    ];
+    const state = mkState(A, B, { seed: 7 });
+    state.config.difficulty = 'nightmare';
+    state.players.A.queued.push({
+      kind: 'direct_strike',
+      side: 'A',
+      turfIdx: 0,
+      targetTurfIdx: 0,
+    });
+
+    resolvePhase(state);
+
+    expect(state.metrics.raids).toBeGreaterThanOrEqual(1);
+    expect(state.metrics.directStrikes).toBe(0);
+    expect(state.lockup.B.map((entry) => entry.tough.id)).toEqual(['bOnly']);
+    expect(state.players.B.turfs).toHaveLength(0);
+    expect(state.warStats.seizures).toContainEqual({
+      seizedBy: 'A',
+      seizedTurfIdx: 0,
+      turnsOnThatTurf: 1,
+    });
+    expect(state.winner).toBe('A');
+  });
 });
 
 describe('resolvePhase — turf-wide bribe pool', () => {

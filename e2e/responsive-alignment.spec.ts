@@ -3,11 +3,15 @@ import type { Page } from '@playwright/test';
 
 const FIXTURES = [
   'menu',
+  'tutorial',
   'difficulty',
   'deck-garage',
   'combat',
+  'combat-tutorial',
   'card',
   'pack-opening',
+  'pack-opening-reveal',
+  'pack-opening-summary',
   'game-over',
 ] as const;
 
@@ -39,9 +43,12 @@ test.describe('responsive horizontal alignment', () => {
 });
 
 test.describe('menu logo does not overlap menu actions', () => {
-  test('logo bottom is above first menu button top on phone-portrait', async ({ page }, testInfo) => {
+  test('logo bottom is above first menu button top on phone-portrait', async ({
+    page,
+  }, testInfo) => {
     test.skip(
-      testInfo.project.name !== 'iphone-14' && testInfo.project.name !== 'pixel-7',
+      testInfo.project.name !== 'iphone-14' &&
+        testInfo.project.name !== 'pixel-7',
       'only assert against stacked menu variant',
     );
 
@@ -49,8 +56,12 @@ test.describe('menu logo does not overlap menu actions', () => {
     await page.waitForLoadState('networkidle');
 
     const rects = await page.evaluate(() => {
-      const logo = document.querySelector('[data-testid="menu-logo"]') as HTMLElement | null;
-      const btn = document.querySelector('[data-testid="new-game-button"]') as HTMLElement | null;
+      const logo = document.querySelector(
+        '[data-testid="menu-logo"]',
+      ) as HTMLElement | null;
+      const btn = document.querySelector(
+        '[data-testid="new-game-button"]',
+      ) as HTMLElement | null;
       return {
         logoBottom: logo?.getBoundingClientRect().bottom ?? null,
         btnTop: btn?.getBoundingClientRect().top ?? null,

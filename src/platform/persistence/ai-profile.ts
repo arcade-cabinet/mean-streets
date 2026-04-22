@@ -27,6 +27,10 @@ export interface AIProfileData {
   aiPerfectWarFallbackCount: number;
 }
 
+export interface AIRewardOpenOptions {
+  permadeath?: boolean;
+}
+
 const AI_NS = 'ai-profile';
 const AI_KEY = 'current';
 
@@ -173,6 +177,7 @@ export async function addPendingPacksToAI(
 export async function openPendingAIPacks(
   unlockDifficulty: DifficultyTier = 'easy',
   seed?: number,
+  options: AIRewardOpenOptions = {},
 ): Promise<CardInstance[]> {
   return withAIProfileLock(async () => {
     const profile = (await rawGet()) ?? { ...DEFAULT_AI_PROFILE };
@@ -184,7 +189,10 @@ export async function openPendingAIPacks(
     const running: Card[] = [];
     const fresh: CardInstance[] = [];
     for (const pack of profile.aiPendingPacks) {
-      const cards = generatePack(pack.kind, running, rng, { unlockDifficulty });
+      const cards = generatePack(pack.kind, running, rng, {
+        unlockDifficulty,
+        permadeath: options.permadeath,
+      });
       for (const c of cards) {
         fresh.push(asInstance(c, unlockDifficulty));
         if (!running.some((r) => r.id === c.id)) running.push(c);

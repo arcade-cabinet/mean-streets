@@ -521,6 +521,9 @@ Roll d1000. If roll < p × 1000 → raid fires.
 - **Black Market wiped**: all pooled modifiers destroyed.
 - Any face-up top tough on either side's active turf → **Lockup**
   with all attached modifiers seized (unless bail paid; see below).
+- If Permadeath is active, that raid seizure kills the tough
+  immediately instead of sending it to Lockup; attached modifiers are
+  confiscated with the body and do not enter the Black Market.
 - Raids do NOT touch Closed Ranks turfs (face-down top = plausible
   deniability).
 
@@ -529,8 +532,9 @@ turf currency to prevent lockup. Cops always pocket $500+; any
 additional currency is kept by cops (corrupt). Tough returns to
 stack immediately.
 
-**If raid locks up the only tough on your active turf → turf is
-seized** (counted as normal turf loss).
+**If a raid seizes the only tough on your active turf → turf is
+seized** before combat (counted as normal turf loss). Under Permadeath,
+that same seizure kills the tough instead of adding a Lockup entry.
 
 ### 10.3 Combat resolution — two-pass
 
@@ -717,6 +721,11 @@ Wars played at higher difficulty earn a reward-quality **multiplier**:
 Multiplier affects roll probability of higher-rarity rolls in pack
 openings. Applies to player AND AI.
 
+Permadeath is a separate run modifier available on every tier. When
+active, pack openings stack an additional ×1.25 reward-quality
+multiplier on top of the selected difficulty. Ultra-Nightmare forces
+Permadeath.
+
 ### 13.4 Mythic acquisition
 
 - **Combat**: defeat an opponent's tough carrying a mythic → unlock
@@ -728,24 +737,28 @@ openings. Applies to player AND AI.
 
 ## 14. Difficulty
 
-| Tier              | Turfs | Actions/turn | Perma-lockup |
-|-------------------|-------|--------------|--------------|
-| Easy              | 5     | 3            | No           |
-| Medium            | 4     | 3            | No           |
-| Hard              | 3     | 4            | No           |
-| Nightmare         | 2     | 3            | No           |
-| Ultra-Nightmare   | 1     | 3            | Yes          |
+| Tier              | Turfs | Actions/turn | Permadeath | Perma-lockup |
+|-------------------|-------|--------------|------------|--------------|
+| Easy              | 5     | 3            | Optional   | No           |
+| Medium            | 4     | 3            | Optional   | No           |
+| Hard              | 3     | 4            | Optional   | No           |
+| Nightmare         | 2     | 3            | Optional   | No           |
+| Ultra-Nightmare   | 1     | 3            | Forced     | Yes          |
 
-**Perma-lockup** (Ultra-Nightmare only): toughs sent to Lockup
-never return. Raid seizure of active top = permanent loss.
+**Permadeath / Body Bags**: if active, a raid-seized top tough dies
+immediately instead of entering Lockup. Bail still prevents the seizure.
+This is separate from Ultra-Nightmare's **perma-lockup**, where toughs
+that do reach Lockup never return.
 
-The new-game screen presents a difficulty carousel. Difficulty
-choice affects:
+The new-game flow presents a centered difficulty modal over the landing
+page: three base tiers on the first row, then Nightmare, Permadeath, and
+Ultra-Nightmare on the second row. Difficulty choice affects:
 - Starting turf count
 - Per-turn action budget
 - AI skill (top-K sampling, noise, lookahead)
 - Raid probability coefficient
 - Reward multiplier (§13.3)
+- Whether Permadeath is optional or forced
 
 ## 15. AI Difficulty
 
@@ -757,7 +770,7 @@ AI decision quality modulates by difficulty:
 | Medium           | Top-3 sampling, 15% noise                          |
 | Hard             | Top-2 sampling, 5% noise, +1 action                |
 | Nightmare        | Best action, 0% noise, −1 player action            |
-| Ultra-Nightmare  | Best + 2-ply lookahead, 1-turf match, perma-lockup  |
+| Ultra-Nightmare  | Best + 2-ply lookahead, 1-turf match, forced Permadeath + perma-lockup |
 
 AI also runs collection curation (merge + enable/disable + priority)
 before each war using the same planner that scores moves. AI's
