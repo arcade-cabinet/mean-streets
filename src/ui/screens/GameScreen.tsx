@@ -28,6 +28,7 @@ import {
 import { useOpponentTurn } from './useOpponentTurn';
 import { ResolutionOverlay } from './ResolutionOverlay';
 import { buildGameActions } from './useGameActions';
+import { ContrabandProp } from './VisualStage';
 
 const RESOLVE_FLASH_MS = 1200;
 
@@ -259,6 +260,14 @@ export function GameScreen({
       <div className="street-stage street-stage-combat" aria-hidden="true">
         <span className="street-stage-line street-stage-line-left" />
         <span className="street-stage-line street-stage-line-right" />
+        <div className="street-stage-prop-cluster street-stage-prop-cluster-left">
+          <ContrabandProp asset="burner" />
+          <ContrabandProp asset="bricks" />
+        </div>
+        <div className="street-stage-prop-cluster street-stage-prop-cluster-right">
+          <ContrabandProp asset="evidenceBag" />
+          <ContrabandProp asset="knuckles" />
+        </div>
         <span className="street-stage-tag street-stage-tag-player">
           Your corner
         </span>
