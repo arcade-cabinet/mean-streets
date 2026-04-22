@@ -169,7 +169,7 @@ Do not manually create version tags. Let release-please manage them.
 ```
 ci.yml        (pull_request)   lint + typecheck + test:node + test:dom
                                + test:browser + release-gate + build
-                               + headless E2E smoke
+                               + xvfb E2E smoke
 ↓
 release.yml   (push: main)     release-please opens/updates release PR
                                (no artifact build until that PR merges)
@@ -178,7 +178,7 @@ release.yml   (push: main, after release PR merge)
                                release-please creates tag → android AAB
                                + iOS archive jobs run
 ↓
-cd.yml        (push: main)     release checks with headless E2E smoke
+cd.yml        (push: main)     release checks with xvfb E2E smoke
                                + deploy Pages + debug APK
 ```
 
@@ -194,8 +194,7 @@ Before tagging a release manually (rare — prefer release-please):
 pnpm run lint                  # must be clean
 pnpm run build                 # must succeed
 pnpm run test                  # node + DOM
-pnpm run test:e2e              # local smoke flow
-pnpm run test:e2e:headless     # CI/CD-safe smoke flow
+pnpm run test:e2e              # desktop smoke flow
 pnpm run test:e2e:full         # full local E2E, visual, and governor suite
 pnpm run analysis:benchmark    # check Medium winrate in [0.48, 0.52]
 pnpm run test:release          # release gate

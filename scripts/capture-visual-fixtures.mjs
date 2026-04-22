@@ -16,7 +16,7 @@ const EXPORT_DIR = process.env.MEAN_STREETS_VISUAL_EXPORT_DIR ?? null;
 const SCREENSHOT_TIMEOUT_MS = 30_000;
 const SERVER_START_TIMEOUT_MS = 30_000;
 const GAME_ARGS = ['--no-sandbox'];
-const HEADLESS = process.env.CI ? true : process.env.PW_HEADLESS === '1';
+const HEADLESS = process.env.PW_HEADLESS === '1';
 
 const PROJECTS = [
   ['desktop-chromium', { viewport: { width: 1920, height: 1080 } }],
