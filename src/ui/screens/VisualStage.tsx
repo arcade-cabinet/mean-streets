@@ -49,9 +49,9 @@ export function AmbientSilhouetteLayer({
       className={`ambient-silhouette-layer ambient-silhouette-layer-${variant}`}
       aria-hidden="true"
     >
-      {AMBIENT_ICONS.map((icon, index) => (
+      {AMBIENT_ICONS.map((icon) => (
         <img
-          key={`${icon}-${index}`}
+          key={icon}
           src={silhouetteIconPath(icon)}
           alt=""
           draggable={false}

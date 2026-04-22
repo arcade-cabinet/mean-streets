@@ -41,7 +41,8 @@ test.describe('@visual visual fixtures', () => {
   });
 
   test('renders first-war coach fixture', async ({ page }) => {
-    await assertFixture(page, 'combat-tutorial', 'first-war-coach');
+    await assertFixture(page, 'combat-tutorial', 'game-screen');
+    await expect(page.getByTestId('first-war-coach')).toBeVisible();
   });
 
   test('renders card fixture', async ({ page }) => {

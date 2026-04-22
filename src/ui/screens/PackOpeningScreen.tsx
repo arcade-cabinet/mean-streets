@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppShell } from '../../platform';
 import { ArrowLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { loadCollectibleCards } from '../../sim/cards/catalog';
@@ -24,6 +24,13 @@ interface PackOpeningScreenProps {
 }
 
 type Phase = 'sealed' | 'revealing' | 'summary';
+
+function revealedForPhase(length: number, phase: Phase): boolean[] {
+  return Array.from(
+    { length },
+    (_, index) => phase === 'summary' || (phase === 'revealing' && index === 0),
+  );
+}
 
 export function loadPackOpeningFixtureCards(): CardType[] {
   const cardsById = new Map(
@@ -62,26 +69,21 @@ export function PackOpeningScreen({
     initialPhase === 'sealed' ? -1 : 0,
   );
   const [revealed, setRevealed] = useState<boolean[]>(() =>
-    Array.from(
-      { length: packCards.length },
-      (_, index) =>
-        initialPhase === 'summary' ||
-        (initialPhase === 'revealing' && index === 0),
-    ),
+    revealedForPhase(packCards.length, initialPhase),
   );
+  const packResetKey = useMemo(
+    () => `${initialPhase}:${packCards.map((card) => card.id).join('|')}`,
+    [initialPhase, packCards],
+  );
+  const lastPackResetKey = useRef(packResetKey);
 
   useEffect(() => {
+    if (lastPackResetKey.current === packResetKey) return;
+    lastPackResetKey.current = packResetKey;
     setPhase(initialPhase);
     setRevealIdx(initialPhase === 'sealed' ? -1 : 0);
-    setRevealed(
-      Array.from(
-        { length: packCards.length },
-        (_, index) =>
-          initialPhase === 'summary' ||
-          (initialPhase === 'revealing' && index === 0),
-      ),
-    );
-  }, [packCards, initialPhase]);
+    setRevealed(revealedForPhase(packCards.length, initialPhase));
+  }, [packCards.length, packResetKey, initialPhase]);
 
   const currentCard =
     revealIdx >= 0 && revealIdx < packCards.length

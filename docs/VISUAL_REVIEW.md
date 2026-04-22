@@ -1,6 +1,6 @@
 ---
 title: Visual Review Workflow
-updated: 2026-04-20
+updated: 2026-04-22
 status: current
 domain: ui
 ---
