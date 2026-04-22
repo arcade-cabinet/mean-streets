@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { AppSettings } from '../deckbuilder/storage';
 import { CardFrame } from '../cards';
+import { silhouetteIconPath, type TutorialIconId } from '../iconography/silhouetteIconography';
 
 export type DrawerTab = 'settings' | 'rules';
 
@@ -127,25 +128,34 @@ export function RulesModal({ onClose }: RulesModalProps) {
 const TUTORIAL_STEPS = [
   {
     label: 'Stack',
+    icon: 'tutorial-stack',
     title: 'Build a face-down crew stack',
     copy: 'Toughs carry the block. Weapons, drugs, and cash tuck under them as pressure.',
   },
   {
     label: 'Reveal',
+    icon: 'tutorial-reveal',
     title: 'Strike only when the math is yours',
     copy: 'No dice. Power, resistance, wounds, and board state decide the hit.',
   },
   {
     label: 'Heat',
+    icon: 'tutorial-heat',
     title: 'Every loud card invites cops',
     copy: 'Bail can save a top tough. Permadeath turns a raid seizure into a body bag.',
   },
   {
     label: 'Seize',
+    icon: 'tutorial-seize',
     title: 'Take the block before yours folds',
     copy: 'Drop their active turf, promote the next reserve, and finish the war street by street.',
   },
-];
+] satisfies Array<{
+  label: string;
+  icon: TutorialIconId;
+  title: string;
+  copy: string;
+}>;
 
 interface TutorialModalProps {
   onClose: () => void;
@@ -180,7 +190,10 @@ export function TutorialModal({ onClose }: TutorialModalProps) {
       <div className="tutorial-steps" aria-label="Tutorial steps">
         {TUTORIAL_STEPS.map((step, index) => (
           <section className="tutorial-step" key={step.label}>
-            <span className="tutorial-step-number">{String(index + 1).padStart(2, '0')}</span>
+            <span className="tutorial-step-icon" aria-hidden="true">
+              <img src={silhouetteIconPath(step.icon)} alt="" draggable={false} />
+              <span>{String(index + 1).padStart(2, '0')}</span>
+            </span>
             <div>
               <span className="tutorial-step-label">{step.label}</span>
               <h3>{step.title}</h3>

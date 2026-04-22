@@ -3,6 +3,7 @@ import { useState } from 'react';
 import simConfig from '../../data/ai/turf-sim.json';
 import { useAppShell } from '../../platform';
 import type { DifficultyTier, GameConfig } from '../../sim/turf/types';
+import { silhouetteIconPath } from '../iconography/silhouetteIconography';
 
 interface DifficultyScreenProps {
   onSelect: (config: GameConfig) => void;
@@ -22,14 +23,12 @@ interface TierDef {
   description: string;
 }
 
-const artPath = (file: string) => `${import.meta.env.BASE_URL}assets/card-art/${file}.png`;
-
 const TIERS: TierDef[] = [
   {
     id: 'easy',
     label: 'Corner Mercy',
     short: 'Learn the block',
-    art: artPath('card-001'),
+    art: silhouetteIconPath('difficulty-corner-mercy'),
     turfs: simConfig.difficulty.easy.turfCount,
     actions: simConfig.difficulty.easy.actionsPerTurn,
     firstTurnActions: simConfig.difficulty.easy.firstTurnActions,
@@ -41,7 +40,7 @@ const TIERS: TierDef[] = [
     id: 'medium',
     label: 'Street Code',
     short: 'The intended knife fight',
-    art: artPath('card-015'),
+    art: silhouetteIconPath('difficulty-street-code'),
     turfs: simConfig.difficulty.medium.turfCount,
     actions: simConfig.difficulty.medium.actionsPerTurn,
     firstTurnActions: simConfig.difficulty.medium.firstTurnActions,
@@ -53,7 +52,7 @@ const TIERS: TierDef[] = [
     id: 'hard',
     label: 'Heavy Heat',
     short: 'Cops watch closer',
-    art: artPath('card-050'),
+    art: silhouetteIconPath('difficulty-heavy-heat'),
     turfs: simConfig.difficulty.hard.turfCount,
     actions: simConfig.difficulty.hard.actionsPerTurn,
     firstTurnActions: simConfig.difficulty.hard.firstTurnActions,
@@ -65,7 +64,7 @@ const TIERS: TierDef[] = [
     id: 'nightmare',
     label: 'Kingpin Debt',
     short: 'Every favor collects',
-    art: artPath('card-086'),
+    art: silhouetteIconPath('difficulty-kingpin-debt'),
     turfs: simConfig.difficulty.nightmare.turfCount,
     actions: simConfig.difficulty.nightmare.actionsPerTurn,
     firstTurnActions: simConfig.difficulty.nightmare.firstTurnActions,
@@ -77,7 +76,7 @@ const TIERS: TierDef[] = [
     id: 'ultra-nightmare',
     label: 'No Dawn',
     short: 'Ultra Nightmare',
-    art: artPath('mythic-09'),
+    art: silhouetteIconPath('difficulty-no-dawn'),
     turfs: simConfig.difficulty['ultra-nightmare'].turfCount,
     actions: simConfig.difficulty['ultra-nightmare'].actionsPerTurn,
     firstTurnActions: simConfig.difficulty['ultra-nightmare'].firstTurnActions,
@@ -88,7 +87,7 @@ const TIERS: TierDef[] = [
 ];
 
 const PERMADEATH_REWARD_MULT = simConfig.packEconomy.permadeathRewardMult;
-const PERMADEATH_ART = artPath('card-099');
+const PERMADEATH_ART = silhouetteIconPath('difficulty-body-bags');
 
 function buildConfig(tier: DifficultyTier, permadeath: boolean): GameConfig {
   const raw = simConfig.difficulty[tier];

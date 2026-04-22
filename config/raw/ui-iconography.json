@@ -1,0 +1,479 @@
+{
+  "version": 1,
+  "canvas": {
+    "width": 180,
+    "height": 120
+  },
+  "icons": {
+    "difficulty-corner-mercy": {
+      "label": "Corner Mercy",
+      "layers": [
+        {
+          "sprite": "back/backpack.png",
+          "scale": 0.54,
+          "x": -44,
+          "y": 16,
+          "rotation": -16,
+          "mirror": false,
+          "color": [162, 176, 120, 44],
+          "anchor": "bottom"
+        },
+        {
+          "sprite": "legs/kneel-recover.png",
+          "scale": 0.7,
+          "x": 28,
+          "y": 18,
+          "rotation": 11,
+          "mirror": true,
+          "color": [139, 157, 96, 70],
+          "anchor": "bottom"
+        },
+        {
+          "sprite": "torsos/hoodie-2.png",
+          "scale": 0.76,
+          "x": 6,
+          "y": 13,
+          "rotation": 3,
+          "mirror": false,
+          "color": [74, 92, 52, 122],
+          "anchor": "bottom"
+        },
+        {
+          "sprite": "bodies/short-femme.png",
+          "scale": 0.88,
+          "x": 0,
+          "y": 5,
+          "rotation": -2,
+          "mirror": false,
+          "color": [11, 13, 10, 242],
+          "anchor": "bottom"
+        },
+        {
+          "sprite": "torsos/fists.png",
+          "scale": 0.47,
+          "x": 29,
+          "y": 0,
+          "rotation": -18,
+          "mirror": true,
+          "color": [219, 194, 148, 46],
+          "anchor": "bottom"
+        }
+      ]
+    },
+    "difficulty-street-code": {
+      "label": "Street Code",
+      "layers": [
+        {
+          "sprite": "crew-marks/kings_row.png",
+          "scale": 0.5,
+          "x": -44,
+          "y": 8,
+          "rotation": -10,
+          "mirror": false,
+          "color": [220, 185, 102, 42],
+          "anchor": "center"
+        },
+        {
+          "sprite": "torsos/wide-braced.png",
+          "scale": 0.76,
+          "x": 24,
+          "y": 13,
+          "rotation": 12,
+          "mirror": false,
+          "color": [162, 94, 54, 68],
+          "anchor": "bottom"
+        },
+        {
+          "sprite": "torsos/bomber-3.png",
+          "scale": 0.79,
+          "x": -3,
+          "y": 8,
+          "rotation": -3,
+          "mirror": false,
+          "color": [118, 76, 36, 126],
+          "anchor": "bottom"
+        },
+        {
+          "sprite": "bodies/cap.png",
+          "scale": 0.92,
+          "x": 2,
+          "y": 2,
+          "rotation": 1,
+          "mirror": false,
+          "color": [13, 12, 10, 242],
+          "anchor": "bottom"
+        },
+        {
+          "sprite": "weapons/crowbar.png",
+          "scale": 0.52,
+          "x": 32,
+          "y": -8,
+          "rotation": -25,
+          "mirror": true,
+          "color": [226, 198, 132, 52],
+          "anchor": "bottom"
+        }
+      ]
+    },
+    "difficulty-heavy-heat": {
+      "label": "Heavy Heat",
+      "layers": [
+        {
+          "sprite": "back/phone-holster.png",
+          "scale": 0.56,
+          "x": -40,
+          "y": 14,
+          "rotation": -15,
+          "mirror": false,
+          "color": [210, 142, 78, 48],
+          "anchor": "bottom"
+        },
+        {
+          "sprite": "torsos/stalk-lunge.png",
+          "scale": 0.72,
+          "x": 26,
+          "y": 18,
+          "rotation": 15,
+          "mirror": false,
+          "color": [184, 74, 48, 72],
+          "anchor": "bottom"
+        },
+        {
+          "sprite": "torsos/tactical-vest.png",
+          "scale": 0.8,
+          "x": 0,
+          "y": 9,
+          "rotation": 0,
+          "mirror": false,
+          "color": [98, 48, 30, 124],
+          "anchor": "bottom"
+        },
+        {
+          "sprite": "bodies/ski-mask.png",
+          "scale": 0.9,
+          "x": 2,
+          "y": 2,
+          "rotation": -1,
+          "mirror": false,
+          "color": [13, 11, 10, 244],
+          "anchor": "bottom"
+        },
+        {
+          "sprite": "weapons/pistol-full.png",
+          "scale": 0.52,
+          "x": -35,
+          "y": -3,
+          "rotation": 18,
+          "mirror": false,
+          "color": [235, 190, 122, 54],
+          "anchor": "bottom"
+        }
+      ]
+    },
+    "difficulty-kingpin-debt": {
+      "label": "Kingpin Debt",
+      "layers": [
+        {
+          "sprite": "contraband/cash-stack.png",
+          "scale": 0.54,
+          "x": -47,
+          "y": 17,
+          "rotation": -20,
+          "mirror": false,
+          "color": [218, 181, 92, 54],
+          "anchor": "center"
+        },
+        {
+          "sprite": "legs/shotgun.png",
+          "scale": 0.6,
+          "x": 39,
+          "y": 17,
+          "rotation": 18,
+          "mirror": true,
+          "color": [216, 152, 102, 44],
+          "anchor": "bottom"
+        },
+        {
+          "sprite": "torsos/overcoat.png",
+          "scale": 0.82,
+          "x": -2,
+          "y": 8,
+          "rotation": -2,
+          "mirror": false,
+          "color": [108, 42, 38, 132],
+          "anchor": "bottom"
+        },
+        {
+          "sprite": "bodies/heavy-2.png",
+          "scale": 0.94,
+          "x": 2,
+          "y": 2,
+          "rotation": 1,
+          "mirror": false,
+          "color": [12, 10, 10, 246],
+          "anchor": "bottom"
+        },
+        {
+          "sprite": "weapons/chain.png",
+          "scale": 0.5,
+          "x": 35,
+          "y": -7,
+          "rotation": -19,
+          "mirror": true,
+          "color": [231, 139, 102, 56],
+          "anchor": "bottom"
+        }
+      ]
+    },
+    "difficulty-body-bags": {
+      "label": "Body Bags",
+      "layers": [
+        {
+          "sprite": "contraband/duffel-bag.png",
+          "scale": 0.64,
+          "x": -42,
+          "y": 22,
+          "rotation": -14,
+          "mirror": false,
+          "color": [198, 190, 168, 50],
+          "anchor": "bottom"
+        },
+        {
+          "sprite": "back/stalk-lunge.png",
+          "scale": 0.74,
+          "x": 28,
+          "y": 20,
+          "rotation": 14,
+          "mirror": true,
+          "color": [142, 46, 42, 74],
+          "anchor": "bottom"
+        },
+        {
+          "sprite": "torsos/hood-mask.png",
+          "scale": 0.78,
+          "x": 0,
+          "y": 9,
+          "rotation": 0,
+          "mirror": false,
+          "color": [94, 48, 44, 126],
+          "anchor": "bottom"
+        },
+        {
+          "sprite": "bodies/hood-mask.png",
+          "scale": 0.9,
+          "x": 0,
+          "y": 2,
+          "rotation": -1,
+          "mirror": false,
+          "color": [10, 9, 9, 246],
+          "anchor": "bottom"
+        },
+        {
+          "sprite": "weapons/hook-blade.png",
+          "scale": 0.5,
+          "x": 34,
+          "y": -5,
+          "rotation": -28,
+          "mirror": true,
+          "color": [234, 210, 176, 58],
+          "anchor": "bottom"
+        }
+      ]
+    },
+    "difficulty-no-dawn": {
+      "label": "No Dawn",
+      "layers": [
+        {
+          "sprite": "mythics/the-phantom-alt.png",
+          "scale": 0.96,
+          "x": 0,
+          "y": 2,
+          "rotation": 0,
+          "mirror": false,
+          "color": [12, 9, 9, 246],
+          "anchor": "bottom"
+        }
+      ]
+    },
+    "tutorial-stack": {
+      "label": "Stack",
+      "layers": [
+        {
+          "sprite": "contraband/cash-stack.png",
+          "scale": 0.48,
+          "x": -45,
+          "y": 22,
+          "rotation": -20,
+          "mirror": false,
+          "color": [226, 190, 100, 48],
+          "anchor": "center"
+        },
+        {
+          "sprite": "weapons/crowbar.png",
+          "scale": 0.46,
+          "x": 43,
+          "y": 16,
+          "rotation": 18,
+          "mirror": true,
+          "color": [206, 168, 132, 52],
+          "anchor": "bottom"
+        },
+        {
+          "sprite": "torsos/hoodie.png",
+          "scale": 0.76,
+          "x": 0,
+          "y": 9,
+          "rotation": 0,
+          "mirror": false,
+          "color": [98, 58, 42, 124],
+          "anchor": "bottom"
+        },
+        {
+          "sprite": "bodies/average.png",
+          "scale": 0.9,
+          "x": 1,
+          "y": 2,
+          "rotation": -1,
+          "mirror": false,
+          "color": [11, 10, 10, 244],
+          "anchor": "bottom"
+        }
+      ]
+    },
+    "tutorial-reveal": {
+      "label": "Reveal",
+      "layers": [
+        {
+          "sprite": "weapons/pistol-compact.png",
+          "scale": 0.6,
+          "x": -36,
+          "y": -4,
+          "rotation": -18,
+          "mirror": false,
+          "color": [231, 176, 104, 64],
+          "anchor": "center"
+        },
+        {
+          "sprite": "weapons/hook-blade.png",
+          "scale": 0.56,
+          "x": 34,
+          "y": 5,
+          "rotation": 24,
+          "mirror": true,
+          "color": [208, 104, 70, 56],
+          "anchor": "center"
+        },
+        {
+          "sprite": "torsos/flank-lean.png",
+          "scale": 0.74,
+          "x": 14,
+          "y": 12,
+          "rotation": 8,
+          "mirror": false,
+          "color": [118, 52, 42, 118],
+          "anchor": "bottom"
+        },
+        {
+          "sprite": "bodies/fedora.png",
+          "scale": 0.86,
+          "x": -4,
+          "y": 2,
+          "rotation": -3,
+          "mirror": false,
+          "color": [12, 10, 10, 244],
+          "anchor": "bottom"
+        }
+      ]
+    },
+    "tutorial-heat": {
+      "label": "Heat",
+      "layers": [
+        {
+          "sprite": "contraband/burner-phone.png",
+          "scale": 0.54,
+          "x": -44,
+          "y": -2,
+          "rotation": -18,
+          "mirror": false,
+          "color": [222, 130, 78, 58],
+          "anchor": "center"
+        },
+        {
+          "sprite": "crew-marks/reapers.png",
+          "scale": 0.5,
+          "x": 42,
+          "y": 0,
+          "rotation": 16,
+          "mirror": true,
+          "color": [238, 72, 48, 44],
+          "anchor": "center"
+        },
+        {
+          "sprite": "torsos/hunched.png",
+          "scale": 0.76,
+          "x": 6,
+          "y": 12,
+          "rotation": 4,
+          "mirror": false,
+          "color": [104, 46, 38, 124],
+          "anchor": "bottom"
+        },
+        {
+          "sprite": "bodies/hood.png",
+          "scale": 0.9,
+          "x": 0,
+          "y": 2,
+          "rotation": 0,
+          "mirror": false,
+          "color": [12, 10, 10, 244],
+          "anchor": "bottom"
+        }
+      ]
+    },
+    "tutorial-seize": {
+      "label": "Seize",
+      "layers": [
+        {
+          "sprite": "back/flank-lean.png",
+          "scale": 0.62,
+          "x": -38,
+          "y": 18,
+          "rotation": -17,
+          "mirror": false,
+          "color": [150, 54, 46, 68],
+          "anchor": "bottom"
+        },
+        {
+          "sprite": "torsos/runner-4.png",
+          "scale": 0.72,
+          "x": 35,
+          "y": 17,
+          "rotation": 16,
+          "mirror": true,
+          "color": [225, 158, 86, 52],
+          "anchor": "bottom"
+        },
+        {
+          "sprite": "torsos/bat.png",
+          "scale": 0.74,
+          "x": 0,
+          "y": 8,
+          "rotation": 0,
+          "mirror": false,
+          "color": [102, 44, 34, 126],
+          "anchor": "bottom"
+        },
+        {
+          "sprite": "bodies/tall-longcoat.png",
+          "scale": 0.9,
+          "x": -1,
+          "y": 2,
+          "rotation": -1,
+          "mirror": false,
+          "color": [10, 9, 9, 246],
+          "anchor": "bottom"
+        }
+      ]
+    }
+  }
+}

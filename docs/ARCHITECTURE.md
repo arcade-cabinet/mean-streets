@@ -244,6 +244,14 @@ custom sprite in `config/raw/cards/mythics/*.json`, and the schema plus
 compiler reject cross-assignment so a mythic cannot accidentally inherit
 another mythic's design.
 
+UI iconography can use the same extracted silhouette library without
+borrowing full card portraits. Authored icon stacks live in
+`config/raw/ui-iconography.json`; `pnpm run ui:icons` composes them into
+`public/assets/ui/silhouette-icons/*.png`, and `pnpm run cards:art`
+regenerates them after the card art pass. Difficulty and tutorial UI use
+those locked generated icons so the visual language stays consistent with
+the card portrait factory.
+
 ### Game Simulation
 
 ```

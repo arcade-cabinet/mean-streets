@@ -101,4 +101,10 @@ describe('DifficultyScreen', () => {
     expect(tile.textContent).toContain('No Dawn');
     expect(tile.textContent).toContain('funeral song');
   });
+
+  it('uses generated silhouette-factory iconography', () => {
+    render(wrap(<DifficultyScreen onSelect={vi.fn()} onBack={vi.fn()} />));
+    const image = screen.getByTestId('diff-tile-medium').querySelector('img');
+    expect(image?.getAttribute('src')).toContain('assets/ui/silhouette-icons/difficulty-street-code.png');
+  });
 });
