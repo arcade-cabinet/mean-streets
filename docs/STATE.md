@@ -108,7 +108,8 @@ mythic abilities, pack simplification, and workflow consolidation.
 | Node (sim, ECS, pure logic) | 624 pass / 4 skip | `pnpm run test:node` |
 | DOM (jsdom presentational) | 116 pass | `pnpm run test:dom` |
 | Browser (real Chromium) | 106 pass | `pnpm run test:browser` |
-| E2E (4 device viewports) | 157 pass / 9 skip + 28 visual captures | `pnpm run test:e2e` (local) |
+| E2E smoke | App-flow smoke across Playwright viewports | `pnpm run test:e2e` |
+| Full E2E (local) | 157 pass / 9 skip + 28 visual captures | `pnpm run test:e2e:full` |
 
 ## Current Work
 
@@ -131,6 +132,7 @@ pnpm run test:analysis:slow    # full slow analysis sweep
 pnpm run typecheck            # referenced TS projects (app/node/sim)
 pnpm run test:node             # node tests (fast)
 pnpm run test:browser          # browser tests (real Chromium)
-pnpm run test:e2e              # E2E (local only, 4 device viewports)
+pnpm run test:e2e              # E2E smoke
+pnpm run test:e2e:full         # Full local E2E, visual, and governor suite
 pnpm run test:release          # release gate check
 ```

@@ -192,7 +192,8 @@ Before tagging a release manually (rare — prefer release-please):
 pnpm run lint                  # must be clean
 pnpm run build                 # must succeed
 pnpm run test                  # node + DOM
-pnpm run test:e2e              # 4 profiles
+pnpm run test:e2e              # smoke flow
+pnpm run test:e2e:full         # full local E2E across 4 profiles
 pnpm run analysis:benchmark    # check Medium winrate in [0.48, 0.52]
 pnpm run test:release          # release gate
 ```
