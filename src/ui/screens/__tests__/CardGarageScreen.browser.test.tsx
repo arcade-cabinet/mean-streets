@@ -6,7 +6,13 @@ import {
   resetPersistenceForTests,
   saveProfile,
 } from '../../../ui/deckbuilder/storage';
-import { grantStarterCollection } from '../../../platform/persistence/collection';
+import { saveCollection } from '../../../platform/persistence/collection';
+import { loadToughCards } from '../../../sim/cards/catalog';
+import {
+  generateDrugs,
+  generateWeapons,
+  loadCurrencyCatalog,
+} from '../../../sim/turf/generators';
 import { CardGarageScreen } from '../CardGarageScreen';
 
 async function waitForSelector(selector: string, timeoutMs = 10000): Promise<Element | null> {
@@ -19,6 +25,15 @@ async function waitForSelector(selector: string, timeoutMs = 10000): Promise<Ele
   return document.querySelector(selector);
 }
 
+async function seedGarageCollection(): Promise<void> {
+  await saveCollection([
+    loadToughCards()[0],
+    generateWeapons()[0],
+    generateDrugs()[0],
+    loadCurrencyCatalog()[0],
+  ]);
+}
+
 describe('CardGarageScreen', () => {
   let cleanup: (() => void) | undefined;
 
@@ -28,7 +43,7 @@ describe('CardGarageScreen', () => {
   });
 
   it('renders loading state then loads collection', async () => {
-    await grantStarterCollection();
+    await seedGarageCollection();
     cleanup = (await renderInBrowser(
       <CardGarageScreen onBack={() => {}} />,
     )).unmount;
@@ -39,7 +54,7 @@ describe('CardGarageScreen', () => {
   });
 
   it('shows category sections after loading', async () => {
-    await grantStarterCollection();
+    await seedGarageCollection();
     cleanup = (await renderInBrowser(
       <CardGarageScreen onBack={() => {}} />,
     )).unmount;
@@ -53,7 +68,7 @@ describe('CardGarageScreen', () => {
   });
 
   it('shows difficulty filter bar', async () => {
-    await grantStarterCollection();
+    await seedGarageCollection();
     cleanup = (await renderInBrowser(
       <CardGarageScreen onBack={() => {}} />,
     )).unmount;
@@ -66,7 +81,7 @@ describe('CardGarageScreen', () => {
   });
 
   it('back button calls onBack', async () => {
-    await grantStarterCollection();
+    await seedGarageCollection();
     const onBack = vi.fn();
     cleanup = (await renderInBrowser(
       <CardGarageScreen onBack={onBack} />,
@@ -78,7 +93,7 @@ describe('CardGarageScreen', () => {
   });
 
   it('difficulty filter changes visible cards', async () => {
-    await grantStarterCollection();
+    await seedGarageCollection();
     cleanup = (await renderInBrowser(
       <CardGarageScreen onBack={() => {}} />,
     )).unmount;
