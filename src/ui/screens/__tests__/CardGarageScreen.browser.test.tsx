@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { renderInBrowser, settleBrowser } from '../../../test/render-browser';
 import {
@@ -13,6 +13,7 @@ import {
   generateWeapons,
   loadCurrencyCatalog,
 } from '../../../sim/turf/generators';
+import type { DifficultyTier } from '../../../sim/turf/types';
 import { CardGarageScreen } from '../CardGarageScreen';
 
 async function waitForSelector(selector: string, timeoutMs = 10000): Promise<Element | null> {
@@ -26,20 +27,46 @@ async function waitForSelector(selector: string, timeoutMs = 10000): Promise<Ele
 }
 
 async function seedGarageCollection(): Promise<void> {
-  await saveCollection([
+  const cards = [
     loadToughCards()[0],
     generateWeapons()[0],
     generateDrugs()[0],
     loadCurrencyCatalog()[0],
-  ]);
+  ];
+  if (cards.some((card) => !card)) {
+    throw new Error('Test seed failed: one or more card catalogs are empty.');
+  }
+  await saveCollection(cards);
+
+  const difficulties: DifficultyTier[] = ['easy', 'medium', 'easy', 'medium'];
+  const profile = await loadProfile();
+  profile.cardInventory = (profile.cardInventory ?? []).map((item, index) => ({
+    ...item,
+    unlockDifficulty: difficulties[index % difficulties.length],
+  }));
+  profile.cardInstances = Object.fromEntries(
+    profile.cardInventory.map((item) => [
+      item.cardId,
+      {
+        rolledRarity: item.rolledRarity,
+        unlockDifficulty: item.unlockDifficulty,
+      },
+    ]),
+  );
+  await saveProfile(profile);
 }
 
 describe('CardGarageScreen', () => {
   let cleanup: (() => void) | undefined;
 
+  beforeEach(() => {
+    window.__MEAN_STREETS_TEST__ = true;
+  });
+
   afterEach(async () => {
     await resetPersistenceForTests();
     cleanup?.();
+    delete window.__MEAN_STREETS_TEST__;
   });
 
   it('renders loading state then loads collection', async () => {
@@ -100,9 +127,13 @@ describe('CardGarageScreen', () => {
 
     await waitForSelector('[data-testid="garage-diff-filter"]');
 
+    const allRows = document.querySelectorAll('.garage-row').length;
     await userEvent.click(document.querySelector<HTMLButtonElement>('[data-testid="garage-diff-medium"]')!);
     await settleBrowser();
 
+    const mediumRows = document.querySelectorAll('.garage-row').length;
+    expect(mediumRows).toBeGreaterThan(0);
+    expect(mediumRows).toBeLessThan(allRows);
     const subtitle = document.querySelector('.garage-subtitle')?.textContent ?? '';
     expect(subtitle).toContain('unlocked');
   });

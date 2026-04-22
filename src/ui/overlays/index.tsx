@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import type { AppSettings } from '../deckbuilder/storage';
 import { CardFrame } from '../cards';
 import { silhouetteIconPath, type TutorialIconId } from '../iconography/silhouetteIconography';
@@ -14,13 +14,20 @@ interface ModalFrameProps {
 }
 
 export function ModalFrame({ title, subtitle, onClose, children, className }: ModalFrameProps) {
+  const titleId = useId();
+
   return (
     <div className="app-modal-backdrop" role="presentation">
-      <div className={`app-modal ${className ?? ''}`.trim()}>
+      <div
+        className={`app-modal ${className ?? ''}`.trim()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+      >
         <div className="app-modal-header">
           <div>
             <p className="app-modal-kicker">{subtitle}</p>
-            <h2 className="app-modal-title">{title}</h2>
+            <h2 className="app-modal-title" id={titleId}>{title}</h2>
           </div>
           <button className="app-modal-close" onClick={onClose} aria-label="Close modal">
             <CardFrame variant="button" className="card-frame-svg card-frame-svg-utility-button" />

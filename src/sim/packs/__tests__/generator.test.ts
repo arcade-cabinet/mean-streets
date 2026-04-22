@@ -69,10 +69,14 @@ describe('generatePack', () => {
       for (const c of ultra) ultraCounts[c.rarity]++;
     }
 
-    const easyTotal = easyCounts.common + easyCounts.uncommon + easyCounts.rare + easyCounts.legendary;
-    const ultraTotal = ultraCounts.common + ultraCounts.uncommon + ultraCounts.rare + ultraCounts.legendary;
-    const easyHigh = (easyCounts.rare + easyCounts.legendary) / easyTotal;
-    const ultraHigh = (ultraCounts.rare + ultraCounts.legendary) / ultraTotal;
+    const easyTotal =
+      easyCounts.common + easyCounts.uncommon + easyCounts.rare +
+      easyCounts.legendary + easyCounts.mythic;
+    const ultraTotal =
+      ultraCounts.common + ultraCounts.uncommon + ultraCounts.rare +
+      ultraCounts.legendary + ultraCounts.mythic;
+    const easyHigh = (easyCounts.rare + easyCounts.legendary + easyCounts.mythic) / easyTotal;
+    const ultraHigh = (ultraCounts.rare + ultraCounts.legendary + ultraCounts.mythic) / ultraTotal;
     expect(ultraHigh).toBeGreaterThanOrEqual(easyHigh);
   });
 
@@ -97,10 +101,14 @@ describe('generatePack', () => {
       for (const c of perma) permaCounts[c.rarity]++;
     }
 
-    const normalTotal = normalCounts.common + normalCounts.uncommon + normalCounts.rare + normalCounts.legendary;
-    const permaTotal = permaCounts.common + permaCounts.uncommon + permaCounts.rare + permaCounts.legendary;
-    const normalHigh = (normalCounts.rare + normalCounts.legendary) / normalTotal;
-    const permaHigh = (permaCounts.rare + permaCounts.legendary) / permaTotal;
+    const normalTotal =
+      normalCounts.common + normalCounts.uncommon + normalCounts.rare +
+      normalCounts.legendary + normalCounts.mythic;
+    const permaTotal =
+      permaCounts.common + permaCounts.uncommon + permaCounts.rare +
+      permaCounts.legendary + permaCounts.mythic;
+    const normalHigh = (normalCounts.rare + normalCounts.legendary + normalCounts.mythic) / normalTotal;
+    const permaHigh = (permaCounts.rare + permaCounts.legendary + permaCounts.mythic) / permaTotal;
     expect(permaHigh).toBeGreaterThanOrEqual(normalHigh);
   });
 

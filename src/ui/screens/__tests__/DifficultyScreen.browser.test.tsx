@@ -57,6 +57,7 @@ describe('DifficultyScreen (browser)', () => {
     await settleBrowser();
     document.querySelector<HTMLElement>('[data-testid="diff-start"]')!.click();
 
+    expect(onSelect).toHaveBeenCalledOnce();
     expect(onSelect.mock.calls[0][0].suddenDeath).toBe(true);
   });
 

@@ -67,10 +67,9 @@ test('difficulty selector exposes dialog semantics and a heading', async ({ page
   await expect(page.getByTestId('difficulty-screen')).toBeVisible();
 
   const hasLandmark = await page.evaluate(() => {
-    return Boolean(
-      document.querySelector('[role="dialog"][aria-modal="true"]') &&
-        document.querySelector('h1'),
-    );
+    const dialog = document.querySelector('[role="dialog"][aria-modal="true"]');
+    if (!dialog) return false;
+    return Boolean(dialog.querySelector('h1'));
   });
   expect(hasLandmark, 'difficulty selector should expose modal dialog semantics and h1').toBe(true);
 });

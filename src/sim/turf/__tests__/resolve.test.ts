@@ -219,8 +219,46 @@ describe('resolvePhase — dominance ordering', () => {
     expect(state.lockup.B).toHaveLength(0);
     expect(state.players.A.turfs[0].stack.some((entry) => entry.card.id === 'aTop')).toBe(false);
     expect(state.players.B.turfs[0].stack.some((entry) => entry.card.id === 'bTop')).toBe(false);
+    expect(state.players.A.turfs[0].stack.some((entry) => entry.card.id === 'aEvidence')).toBe(false);
+    expect(state.players.B.turfs[0].stack.some((entry) => entry.card.id === 'bEvidence')).toBe(false);
     expect(state.blackMarket.some((card) => card.id === 'aEvidence')).toBe(false);
     expect(state.blackMarket.some((card) => card.id === 'bEvidence')).toBe(false);
+  });
+
+  it('does not spend LAUNDER currency for raid bail', () => {
+    const launder = mkCurrency(1000, 'currency-launder', {
+      rarity: 'legendary',
+      abilities: ['LAUNDER'],
+    });
+    const spendable = [0, 1, 2, 3, 4].map((i) => mkCurrency(1000, `bailCash${i}`));
+    const A = [
+      mkTurf(
+        'a1',
+        Array.from({ length: 11 }, (_, i) =>
+          sc(mkTough({ id: `aHeat${i}`, rarity: 'mythic', power: 10 }), true),
+        ),
+        { closedRanks: true },
+      ),
+    ];
+    const B = [
+      mkTurf('b1', [
+        sc(launder, true, 'bTop'),
+        ...spendable.map((card) => sc(card, true, 'bTop')),
+        sc(mkTough({ id: 'bTop', rarity: 'mythic' }), true),
+      ]),
+    ];
+    const state = mkState(A, B, { seed: 7 });
+    state.config.difficulty = 'nightmare';
+
+    resolvePhase(state);
+
+    expect(state.metrics.raids).toBeGreaterThanOrEqual(1);
+    expect(state.lockup.B).toHaveLength(0);
+    expect(state.players.B.turfs[0].stack.some((entry) => entry.card.id === 'bTop')).toBe(true);
+    expect(state.players.B.turfs[0].stack.some(
+      (entry) => entry.card.id === 'currency-launder',
+    )).toBe(true);
+    expect(state.blackMarket.some((card) => card.id === 'currency-launder')).toBe(false);
   });
 
   it('raid seizure of the only active tough costs the turf before combat', () => {

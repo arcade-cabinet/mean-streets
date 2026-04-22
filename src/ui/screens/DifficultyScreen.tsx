@@ -1,5 +1,5 @@
 import { ArrowLeft } from 'lucide-react';
-import { useState } from 'react';
+import { type KeyboardEvent, useState } from 'react';
 import simConfig from '../../data/ai/turf-sim.json';
 import { useAppShell } from '../../platform';
 import type { DifficultyTier, GameConfig } from '../../sim/turf/types';
@@ -123,18 +123,22 @@ function TierTile({
   selected,
   compact,
   onSelect,
+  onKeyDown,
 }: {
   tier: TierDef;
   selected: boolean;
   compact: boolean;
   onSelect: (tier: DifficultyTier) => void;
+  onKeyDown: (event: KeyboardEvent<HTMLButtonElement>, tier: DifficultyTier) => void;
 }) {
   return (
     <button
       role="radio"
       aria-checked={selected}
+      tabIndex={selected ? 0 : -1}
       className={`diff-tile ${selected ? 'diff-tile-selected' : ''} diff-tile-${tier.id}`}
       onClick={() => onSelect(tier.id)}
+      onKeyDown={(event) => onKeyDown(event, tier.id)}
       data-testid={`diff-tile-${tier.id}`}
     >
       <PortraitIcon src={tier.art} label={tier.short} active={selected} />
@@ -158,6 +162,36 @@ export function DifficultyScreen({ onSelect, onBack }: DifficultyScreenProps) {
 
   function handleSelect(tier: DifficultyTier) {
     setSelected(tier);
+  }
+
+  function focusTier(tier: DifficultyTier) {
+    window.requestAnimationFrame(() => {
+      document.querySelector<HTMLButtonElement>(`[data-testid="diff-tile-${tier}"]`)?.focus();
+    });
+  }
+
+  function handleTierKeyDown(
+    event: KeyboardEvent<HTMLButtonElement>,
+    tier: DifficultyTier,
+  ) {
+    const currentIndex = TIERS.findIndex((entry) => entry.id === tier);
+    let nextIndex = currentIndex;
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+      nextIndex = (currentIndex - 1 + TIERS.length) % TIERS.length;
+    } else if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+      nextIndex = (currentIndex + 1) % TIERS.length;
+    } else if (event.key === 'Home') {
+      nextIndex = 0;
+    } else if (event.key === 'End') {
+      nextIndex = TIERS.length - 1;
+    } else {
+      return;
+    }
+
+    event.preventDefault();
+    const nextTier = TIERS[nextIndex].id;
+    setSelected(nextTier);
+    focusTier(nextTier);
   }
 
   function handleTogglePermadeath() {
@@ -195,24 +229,19 @@ export function DifficultyScreen({ onSelect, onBack }: DifficultyScreenProps) {
 
         <div
           className={`diff-grid ${compact ? 'diff-grid-compact' : ''}`}
-          role="radiogroup"
-          aria-label="Difficulty tiers"
         >
-          {TIERS.slice(0, 3).map((tier) => (
-            <TierTile
-              key={tier.id}
-              tier={tier}
-              selected={selected === tier.id}
-              compact={compact}
-              onSelect={handleSelect}
-            />
-          ))}
-          <TierTile
-            tier={TIERS[3]}
-            selected={selected === TIERS[3].id}
-            compact={compact}
-            onSelect={handleSelect}
-          />
+          <div className="diff-tier-grid" role="radiogroup" aria-label="Difficulty tiers">
+            {TIERS.map((tier) => (
+              <TierTile
+                key={tier.id}
+                tier={tier}
+                selected={selected === tier.id}
+                compact={compact}
+                onSelect={handleSelect}
+                onKeyDown={handleTierKeyDown}
+              />
+            ))}
+          </div>
           <button
             type="button"
             role="switch"
@@ -237,12 +266,6 @@ export function DifficultyScreen({ onSelect, onBack }: DifficultyScreenProps) {
               {permadeathForced ? 'Ultra Nightmare demands it' : 'Raid seizure means death'}
             </span>
           </button>
-          <TierTile
-            tier={TIERS[4]}
-            selected={selected === TIERS[4].id}
-            compact={compact}
-            onSelect={handleSelect}
-          />
         </div>
 
         <div className="diff-footer">

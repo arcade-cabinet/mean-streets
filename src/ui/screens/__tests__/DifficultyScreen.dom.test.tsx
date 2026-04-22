@@ -95,6 +95,16 @@ describe('DifficultyScreen', () => {
     expect(screen.getByTestId('diff-tile-easy').getAttribute('role')).toBe('radio');
   });
 
+  it('supports roving keyboard selection between difficulty radios', () => {
+    render(wrap(<DifficultyScreen onSelect={vi.fn()} onBack={vi.fn()} />));
+    const medium = screen.getByTestId('diff-tile-medium');
+    fireEvent.keyDown(medium, { key: 'ArrowRight' });
+
+    expect(screen.getByTestId('diff-tile-hard').getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByTestId('diff-tile-hard').getAttribute('tabindex')).toBe('0');
+    expect(screen.getByTestId('diff-tile-medium').getAttribute('tabindex')).toBe('-1');
+  });
+
   it('displays authored branded copy on tiles', () => {
     render(wrap(<DifficultyScreen onSelect={vi.fn()} onBack={vi.fn()} />));
     const tile = screen.getByTestId('diff-tile-ultra-nightmare');

@@ -185,7 +185,9 @@ function raidPhase(state: TurfGameState): boolean {
     const currencyIndices: Array<{ idx: number; denom: number }> = [];
     for (let ci = 0; ci < active.stack.length; ci++) {
       const sc = active.stack[ci];
-      if (sc.card.kind === 'currency') currencyIndices.push({ idx: ci, denom: sc.card.denomination });
+      if (sc.card.kind === 'currency' && isBribeSpendableCurrency(sc.card)) {
+        currencyIndices.push({ idx: ci, denom: sc.card.denomination });
+      }
     }
     const totalBailCash = currencyIndices.reduce((s, e) => s + e.denom, 0);
     if (totalBailCash >= bailAmount) {
