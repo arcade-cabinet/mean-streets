@@ -74,9 +74,10 @@ Focus review on:
   Runs the multi-project visual fixture capture lane.
 - `pnpm run test:visual:fullpage`
   Runs the opt-in multi-project full-page capture lane.
-- `pnpm run test:e2e`
-  Runs the full e2e suite across 4 device profiles (desktop-chromium,
-  iphone-14, pixel-7, ipad-pro-landscape).
+- `pnpm run test:e2e:full`
+  Runs full E2E across desktop-chromium, iphone-14, pixel-7, and
+  ipad-pro-landscape, then performs visual capture and the desktop-only
+  governor lane.
 
 ## Notes
 

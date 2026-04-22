@@ -1,8 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const IS_CI = !!process.env.CI;
-const IS_HEADLESS = IS_CI || process.env.PW_HEADLESS === '1';
-const CHROMIUM_CHANNEL = IS_HEADLESS ? undefined : 'chrome';
+const IS_HEADLESS = process.env.PW_HEADLESS === '1';
+const CHROMIUM_CHANNEL =
+  process.env.PW_CHROMIUM_CHANNEL ?? (!IS_CI && !IS_HEADLESS ? 'chrome' : undefined);
 const DEFAULT_PLAYWRIGHT_PORT = 41739;
 const configuredPort = Number(
   process.env.PLAYWRIGHT_PORT ?? process.env.PW_PORT,

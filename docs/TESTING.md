@@ -70,16 +70,20 @@ shell configuration.
 Current test files: `StackFanModal.browser.test.tsx`,
 `TurfCompositeCard.browser.test.tsx`, and the core component suite.
 
-### E2E Tests — Full Application Flows
+### E2E Tests
 
 ```bash
-pnpm run test:e2e
+pnpm run test:e2e      # desktop smoke flow
+pnpm run test:e2e:full # full local suite
 ```
 
 Environment: Playwright against the running dev server
 (`playwright.config.ts`). Tests in `e2e/*.spec.ts`.
 
-`pnpm run test:e2e` is intentionally split:
+`pnpm run test:e2e` is the deploy-safe smoke lane used by CI/CD under
+`xvfb-run`. It runs only `e2e/app-flow.spec.ts` on `desktop-chromium`.
+
+`pnpm run test:e2e:full` is intentionally split for local release review:
 - `test:e2e:core` runs the normal parallel Playwright batch.
 - `test:e2e:visual` runs the dedicated visual-capture script
   (`scripts/capture-visual-fixtures.mjs`), which drives Playwright's raw
@@ -88,19 +92,16 @@ Environment: Playwright against the running dev server
   (`MEAN_STREETS_VISUAL_SPECS=1`) as a fixture-route smoke test; screenshot
   capture lives in `scripts/capture-visual-fixtures.mjs`.
 - `test:e2e:governor` runs the long-form `@governor` full-game suite
-  separately, headless, on `desktop-chromium` with `--workers=1`.
+  separately on `desktop-chromium` with `--workers=1`.
 
-That separation prevents the long-lived AI-turn timers and the high-memory
-fixture screenshots from being starved by the generic parallel browser batch
-during local runs.
+That separation keeps CI/CD on a bounded smoke signal while preserving the
+long-lived AI-turn timers and high-memory fixture screenshots for explicit local
+full-suite runs.
 
 The harness owns its own dedicated Vite port (`41739`) so it does not
 silently attach to another local workspace that happens to already be on
 the default preview/dev ports. If you explicitly want to reuse an already
 running Mean Streets dev server on that port, set `PW_REUSE_SERVER=1`.
-
-`PW_HEADLESS=1` is honored by `playwright.config.ts`, so the `*:headless`
-scripts now genuinely run headless outside CI too.
 
 Four device profiles:
 - `desktop-chromium` — 1280×720

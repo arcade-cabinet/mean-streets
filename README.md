@@ -111,7 +111,8 @@ pnpm run build                 # Production build (tsc + vite)
 pnpm run lint                  # Biome
 pnpm run test                  # Node + DOM unit tests
 pnpm run test:browser          # Real Chromium tests (Vitest + Playwright)
-pnpm run test:e2e              # Playwright across 4 device profiles
+pnpm run test:e2e              # Playwright desktop smoke flow
+pnpm run test:e2e:full         # Full local E2E + visual + governor suite
 pnpm run test:visual           # Playwright visual fixture capture
 pnpm run test:visual:fullpage  # Full-page visual fixture capture
 pnpm run test:analysis:slow    # Slow sim-backed curated sweep
