@@ -1,6 +1,6 @@
 ---
 title: Codex Instructions
-updated: 2026-04-14
+updated: 2026-04-23
 status: current
 ---
 
@@ -10,16 +10,24 @@ status: current
 
 A gritty tactical turf war card game. 25 toughs + up to 25 quarter-cards packed into backpacks per deck, 5v5 position seizure, simultaneous rounds, no dice.
 
-**Doc pillars** — each file owns one area:
-- `docs/DESIGN.md` — vision / identity / philosophy
-- `docs/RULES.md` — authoritative gameplay mechanics
-- `docs/ARCHITECTURE.md` — technical stack + directory + data flow
-- `docs/PRODUCTION.md` — release readiness + blockers + platform status
-- `docs/VISUAL_REVIEW.md` — visual fixture workflow
+**Doc pillars** — start with `docs/README.md` for the domain map, then go to the owner doc for the area you're changing:
+- `docs/README.md` — canonical docs index, pillar map, remaining-work summary
+- `docs/DESIGN.md` — product vision, identity, player journey, future direction
+- `docs/RULES.md` — authoritative gameplay mechanics and invariants
+- `docs/LORE.md` — world, tone, factions, character fiction
+- `docs/ARCHITECTURE.md` — technical stack, runtime data flow, file ownership
+- `docs/TESTING.md` — test lanes, release gate, fixture/test expectations
+- `docs/VISUAL_REVIEW.md` — visual fixtures, review workflow, screenshot targets
+- `docs/DEPLOYMENT.md` — environments, secrets, CI/CD deployment mechanics
+- `docs/RELEASE.md` — release-please and store-cut runbook
+- `docs/LAUNCH_READINESS.md` — pre-submit manual QA and signing checklist
+- `docs/PRODUCTION.md` — single source of truth for remaining launch/polish work
+- `docs/STATE.md` — current shipped state and recent release history
+- `docs/store-listing.md` — store metadata and screenshot deliverables
 
 ## Critical Rules
 
-1. **The game design is LOCKED IN.** Do not reinvent mechanics. `docs/RULES.md` is the authoritative source of truth for gameplay; `docs/PRODUCTION.md` is the release tracker.
+1. **The game design is LOCKED IN.** Do not reinvent mechanics. `docs/RULES.md` is the authoritative source of truth for gameplay; `docs/PRODUCTION.md` is the release tracker; `docs/README.md` is the docs map.
 2. **Balance is simulation-proven.** Any rule change must be validated with `pnpm run analysis:benchmark` (optionally `analysis:lock`) before committing.
 3. **No dice, no coin flip.** Outcomes are deterministic. Only randomness is draw order.
 4. **The simulation engine runs WITHOUT React.** Pure TypeScript, testable independently.
@@ -48,7 +56,7 @@ pnpm run cap:sync
 - `src/platform/` — Capacitor shell, responsive layout classification, SQLite persistence
 - `src/data/pools/` — JSON card data (names, archetypes, affiliations, products, weapons)
 - `src/data/cards.json` — Authored 100-card crew pool used by runtime and analysis
-- `docs/` — Design doc, architecture, production checklist
+- `docs/` — Root source-of-truth docs split by product, creative, technical, quality, UI, release, context, and ops domains
 - `sim/reports/` — JSON balance reports from simulation runs
 
 ## Key Types

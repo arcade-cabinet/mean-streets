@@ -32,6 +32,8 @@ describe('PackOpeningScreen', () => {
     expect(screen.getByTestId('pack-opening-screen')).not.toBeNull();
     expect(screen.getByTestId('pack-open-btn')).not.toBeNull();
     expect(screen.getByText('Tap to Crack')).not.toBeNull();
+    expect(screen.getByText('Case File')).not.toBeNull();
+    expect(screen.getByText('Unbroken')).not.toBeNull();
   });
 
   it('has accessible labels on sealed phase', async () => {
@@ -46,6 +48,8 @@ describe('PackOpeningScreen', () => {
     fireEvent.click(screen.getByTestId('pack-open-btn'));
     expect(screen.getByTestId('pack-reveal-card-0')).not.toBeNull();
     expect(screen.getByText(/Pull 1 \//)).not.toBeNull();
+    expect(screen.getByText('Evidence 1')).not.toBeNull();
+    expect(screen.getByText(/lead|piece/i)).not.toBeNull();
   });
 
   it('shows progress pips in revealing phase', async () => {
@@ -76,6 +80,8 @@ describe('PackOpeningScreen', () => {
       expect(screen.getByTestId('pack-summary-grid')).not.toBeNull(),
     );
     expect(screen.getByText('Street Spoils')).not.toBeNull();
+    expect(screen.getByText('Evidence Table')).not.toBeNull();
+    expect(screen.getByText(/Bag 1/)).not.toBeNull();
   });
 
   it('shows summary stats in summary phase', async () => {
