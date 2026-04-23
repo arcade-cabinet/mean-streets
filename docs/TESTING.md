@@ -1,6 +1,6 @@
 ---
 title: Testing
-updated: 2026-04-17
+updated: 2026-04-23
 status: current
 domain: quality
 ---
@@ -113,6 +113,11 @@ Current specs: `app-flow`, `accessibility`, `difficulty-grid`, `pack-opening`,
 `war-outcome`, `responsive-alignment`, `visual-fixtures`,
 `layout-classification`, `fold-posture`.
 
+Smoke means "can the shipped app boot, start a run, and survive its primary
+golden path in CI/CD?" It should stay narrow. If an e2e spec grows into broad
+layout review, long visual capture, or multi-screen art-direction verification,
+it belongs in the local full lane instead.
+
 ### Visual Fixture Capture
 
 ```bash
@@ -127,7 +132,8 @@ Playwright Chromium session directly when `PW_HEADLESS=1`. The default
 `pnpm run test:visual` script runs it headed for interactive review; use
 `pnpm run test:visual:headless` or set `PW_HEADLESS=1` to capture without a
 display. The capture script still covers each fixture root across all four
-device profiles.
+device profiles, including the first-run tutorial, first-war coach, and the
+pack-opening sealed / reveal / summary ritual states.
 
 ### Combined
 
@@ -228,6 +234,8 @@ pnpm run analysis:autobalance    # iterative stat tuning loop
   Live app routes should be covered through real navigation flows; fixture-only
   surfaces such as `pack-opening` may be covered through explicit `?fixture=`
   routes instead.
+- Reward and onboarding flows: keep DOM/browser coverage on the copy/state
+  transitions that make the fantasy legible, not just on button existence.
 - Balance: 70% lock coverage before release; 100% post-launch (weekly cron).
 
 ### Integration Smoke

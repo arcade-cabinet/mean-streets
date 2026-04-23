@@ -25,8 +25,36 @@ export const CONTRABAND_ASSETS = {
     '../../../raw-assets/sprites/contraband/wrapped-bricks.png',
     import.meta.url,
   ).href,
+  brickKilo: new URL(
+    '../../../raw-assets/sprites/contraband/brick-kilo.png',
+    import.meta.url,
+  ).href,
+  drugBag: new URL(
+    '../../../raw-assets/sprites/contraband/drug-bag.png',
+    import.meta.url,
+  ).href,
+  herbBag: new URL(
+    '../../../raw-assets/sprites/contraband/herb-bag.png',
+    import.meta.url,
+  ).href,
   knuckles: new URL(
     '../../../raw-assets/sprites/contraband/brass-knuckles.png',
+    import.meta.url,
+  ).href,
+  moneyClip: new URL(
+    '../../../raw-assets/sprites/contraband/money-clip.png',
+    import.meta.url,
+  ).href,
+  pillBottle: new URL(
+    '../../../raw-assets/sprites/contraband/pill-bottle.png',
+    import.meta.url,
+  ).href,
+  syringe: new URL(
+    '../../../raw-assets/sprites/contraband/syringe.png',
+    import.meta.url,
+  ).href,
+  wallet: new URL(
+    '../../../raw-assets/sprites/contraband/wallet.png',
     import.meta.url,
   ).href,
 } as const;

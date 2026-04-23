@@ -1,6 +1,6 @@
 ---
 title: Visual Review Workflow
-updated: 2026-04-22
+updated: 2026-04-23
 status: current
 domain: ui
 ---
@@ -65,11 +65,15 @@ Focus review on:
 - **Deck garage density**: deck cards, controls, and spacing hold up in single-column mobile layouts
 - **Single-lane combat readability**: active turf, hand, HUD, and action bar remain legible without overflow
 - **Card frame language**: rarity borders, portrait area, affiliation markers, and HP bars read clearly at card scale
-- **Pack opening flow**: sealed state, reveal state, and summary state all feel deliberate and readable
+- **Pack opening flow**: sealed state, reveal dossier, and street-spoils
+  evidence-table summary all feel deliberate, legible, and materially more
+  ritualized than a generic reward screen
 - **Black / dark-red / cold-metal balance** across all exported screens
 - **Typography emphasis and hierarchy**
 - **Spacing, density, and empty-space usage**
 - **Mobile portrait clarity** versus tablet/wide composition
+- **Desktop/tablet side-world staging**: unused width should read as atmosphere,
+  props, signage, or silhouette language rather than dead black margins
 - **Consistency across** menu, difficulty, deck-garage, combat, card, pack-opening, and game-over
 
 ## Current Test Surface
@@ -122,8 +126,8 @@ characters.
 | combat-tutorial  | iphone-14               | Coach panel does not block core play      |               |
 | card             | desktop-chromium        | Card frame, rarity borders, portraits     |               |
 | pack-opening     | iphone-14               | Sealed contraband-drop readability        |               |
-| pack-opening-reveal | ipad-pro-landscape   | Reveal composition on wide screens        |               |
-| pack-opening-summary | iphone-14           | Street-spoils summary readability         |               |
+| pack-opening-reveal | ipad-pro-landscape   | Reveal dossier and rarity lighting rhythm |               |
+| pack-opening-summary | iphone-14           | Evidence table + reward scan readability  |               |
 | game-over        | iphone-14               | Reward summary and CTA fit                |               |
 | game-over        | desktop-chromium        | Reward panel hierarchy                    |               |
 
@@ -141,5 +145,7 @@ characters.
   `pack-opening`, `game-over`) and documented deterministic screenshot capture.
 - 2026-04-22 — Added visual-journey fixtures for first-run tutorial,
   first-war coach, and pack reveal/summary states.
+- 2026-04-23 — Expanded pack-opening review language around case-file,
+  reveal-dossier, and evidence-table ritual surfaces.
 - 2026-04-17 — Updated fixture set for v0.3 single-lane rewrite: HeatMeter, BlackMarketPanel, HoldingPanel, MythicBadge, and TurfCompositeCard with HP bars replace v0.2 parallel-turf fixtures.
 - 2026-04-15 — Updated fixture set and review targets for v0.2 (stack redesign).

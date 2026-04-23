@@ -16,6 +16,14 @@ const DEFAULT_PACK_CARD_IDS = [
 
 const DEFAULT_OWNED_CARD_IDS = ['card-001', 'currency-1000'] as const;
 
+const RARITY_LABELS: Record<Rarity, string> = {
+  common: 'Common',
+  uncommon: 'Uncommon',
+  rare: 'Rare',
+  legendary: 'Legendary',
+  mythic: 'Mythic',
+};
+
 interface PackOpeningScreenProps {
   onBack: () => void;
   cards?: CardType[];
@@ -159,6 +167,21 @@ export function PackOpeningScreen({
     () => packCards.filter((c) => isNew(c)).length,
     [packCards, isNew],
   );
+  const dropTag = useMemo(
+    () => `MS-${packCards.length}-M${rarityStats.mythic}-N${newCount}`,
+    [newCount, packCards.length, rarityStats.mythic],
+  );
+  const currentCardType = useMemo(
+    () =>
+      currentCard
+        ? currentCard.kind === 'tough'
+          ? currentCard.archetype
+          : currentCard.kind === 'currency'
+            ? `$${currentCard.denomination}`
+            : currentCard.category
+        : '',
+    [currentCard],
+  );
 
   if (phase === 'sealed') {
     return (
@@ -182,7 +205,31 @@ export function PackOpeningScreen({
             <h1 className="pack-title">Crack the Drop</h1>
           </div>
         </header>
+        <aside className="pack-case-file" aria-label="Sealed drop manifest">
+          <p className="pack-case-file-label">Case File</p>
+          <dl>
+            <div>
+              <dt>Drop Tag</dt>
+              <dd>{dropTag}</dd>
+            </div>
+            <div>
+              <dt>Contents</dt>
+              <dd>{packCards.length} sealed pulls</dd>
+            </div>
+            <div>
+              <dt>Chain</dt>
+              <dd>Unbroken</dd>
+            </div>
+          </dl>
+        </aside>
         <div className="pack-sealed-stage">
+          <div
+            className="pack-stage-props pack-stage-props-left"
+            aria-hidden="true"
+          >
+            <ContrabandProp asset="wallet" />
+            <ContrabandProp asset="pillBottle" />
+          </div>
           <button
             className="pack-sealed-box"
             onClick={handleOpenPack}
@@ -194,9 +241,18 @@ export function PackOpeningScreen({
             <ContrabandProp asset="evidenceBag" className="pack-drop-bag" />
             <ContrabandProp asset="cash" className="pack-drop-cash" />
             <Sparkles size={42} className="pack-sealed-icon" />
-            <span className="pack-sealed-stamp">Evidence 05</span>
+            <span className="pack-sealed-stamp">
+              Evidence {packCards.length.toString().padStart(2, '0')}
+            </span>
             <span className="pack-sealed-label">Tap to Crack</span>
           </button>
+          <div
+            className="pack-stage-props pack-stage-props-right"
+            aria-hidden="true"
+          >
+            <ContrabandProp asset="drugBag" />
+            <ContrabandProp asset="moneyClip" />
+          </div>
         </div>
       </main>
     );
@@ -229,12 +285,43 @@ export function PackOpeningScreen({
         <div
           className="pack-reveal-stage"
           onClick={handleAdvance}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              handleAdvance();
+            }
+          }}
+          role="button"
+          tabIndex={0}
+          aria-label={allRevealed ? 'View pack summary' : 'Reveal next card'}
           data-testid="pack-reveal-stage"
         >
+          <aside
+            className="pack-reveal-dossier"
+            aria-live="polite"
+            aria-label="Evidence dossier"
+          >
+            <p>Evidence {revealIdx + 1}</p>
+            <h2>{currentCard.name}</h2>
+            <dl>
+              <div>
+                <dt>Grade</dt>
+                <dd>{RARITY_LABELS[currentCard.rarity]}</dd>
+              </div>
+              <div>
+                <dt>Type</dt>
+                <dd>{currentCardType}</dd>
+              </div>
+              <div>
+                <dt>Status</dt>
+                <dd>{isNew(currentCard) ? 'Fresh lead' : 'Filed piece'}</dd>
+              </div>
+            </dl>
+          </aside>
           <div className="pack-reveal-table" aria-hidden="true">
             <ContrabandProp asset="burner" />
             <ContrabandProp asset="knuckles" />
-            <ContrabandProp asset="bricks" />
+            <ContrabandProp asset="brickKilo" />
           </div>
           <div
             className={`pack-reveal-card pack-reveal-enter pack-rarity-frame-${currentCard.rarity}`}
@@ -296,57 +383,72 @@ export function PackOpeningScreen({
           <h1 className="pack-title">Street Spoils</h1>
         </div>
       </header>
-      <div className="pack-summary-stats" data-testid="pack-summary-stats">
-        {newCount > 0 && (
-          <span className="pack-stat pack-stat-new">{newCount} New</span>
-        )}
-        {rarityStats.mythic > 0 && (
-          <span className="pack-stat pack-stat-mythic">
-            {rarityStats.mythic} Mythic
-          </span>
-        )}
-        {rarityStats.legendary > 0 && (
-          <span className="pack-stat pack-stat-legendary">
-            {rarityStats.legendary} Legendary
-          </span>
-        )}
-        {rarityStats.rare > 0 && (
-          <span className="pack-stat pack-stat-rare">
-            {rarityStats.rare} Rare
-          </span>
-        )}
-        {rarityStats.uncommon > 0 && (
-          <span className="pack-stat pack-stat-uncommon">
-            {rarityStats.uncommon} Uncommon
-          </span>
-        )}
-        {rarityStats.common > 0 && (
-          <span className="pack-stat pack-stat-common">
-            {rarityStats.common} Common
-          </span>
-        )}
-      </div>
-      <section
-        className="pack-summary-grid"
-        aria-label="Pack cards"
-        data-testid="pack-summary-grid"
-      >
-        {packCards.map((card, i) => (
-          <div
-            key={card.id + i}
-            className={`pack-summary-cell pack-summary-enter-${i}`}
-          >
-            <CardComponent card={card} compact={compact} />
-            {isNew(card) && (
-              <span
-                className="pack-new-badge"
-                data-testid={`pack-summary-new-${i}`}
-              >
-                NEW
+      <section className="pack-summary-table" aria-label="Evidence table">
+        <div className="pack-summary-table-header">
+          <p>Evidence Table</p>
+          <span>{dropTag}</span>
+        </div>
+        <div className="pack-summary-props" aria-hidden="true">
+          <ContrabandProp asset="wallet" />
+          <ContrabandProp asset="syringe" />
+          <ContrabandProp asset="herbBag" />
+        </div>
+        <div className="pack-summary-stats" data-testid="pack-summary-stats">
+          {newCount > 0 && (
+            <span className="pack-stat pack-stat-new">{newCount} New</span>
+          )}
+          {rarityStats.mythic > 0 && (
+            <span className="pack-stat pack-stat-mythic">
+              {rarityStats.mythic} Mythic
+            </span>
+          )}
+          {rarityStats.legendary > 0 && (
+            <span className="pack-stat pack-stat-legendary">
+              {rarityStats.legendary} Legendary
+            </span>
+          )}
+          {rarityStats.rare > 0 && (
+            <span className="pack-stat pack-stat-rare">
+              {rarityStats.rare} Rare
+            </span>
+          )}
+          {rarityStats.uncommon > 0 && (
+            <span className="pack-stat pack-stat-uncommon">
+              {rarityStats.uncommon} Uncommon
+            </span>
+          )}
+          {rarityStats.common > 0 && (
+            <span className="pack-stat pack-stat-common">
+              {rarityStats.common} Common
+            </span>
+          )}
+        </div>
+        <section
+          className="pack-summary-grid"
+          aria-label="Pack cards"
+          data-testid="pack-summary-grid"
+        >
+          {packCards.map((card, i) => (
+            <div
+              key={card.id + i}
+              className={`pack-summary-cell pack-summary-enter-${i}`}
+            >
+              <CardComponent card={card} compact={compact} />
+              {isNew(card) && (
+                <span
+                  className="pack-new-badge"
+                  data-testid={`pack-summary-new-${i}`}
+                >
+                  NEW
+                </span>
+              )}
+              <span className="pack-summary-ledger">
+                Bag {i + 1} / {RARITY_LABELS[card.rarity]} /{' '}
+                {isNew(card) ? 'Fresh' : 'Filed'}
               </span>
-            )}
-          </div>
-        ))}
+            </div>
+          ))}
+        </section>
       </section>
       <div className="pack-summary-actions">
         <button

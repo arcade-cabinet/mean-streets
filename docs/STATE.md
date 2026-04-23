@@ -1,6 +1,6 @@
 ---
 title: State
-updated: 2026-04-20
+updated: 2026-04-23
 status: current
 domain: context
 ---
@@ -11,12 +11,15 @@ What is done, what is in flight, and what comes next. Release-readiness
 status lives in [PRODUCTION.md](./PRODUCTION.md). Branch history in
 `git log`; CHANGELOG.md is the canonical per-version diff.
 
-## Where We Are (2026-04-20)
+## Where We Are (2026-04-23)
 
 Latest release tag: `v1.2.1-beta.1`. Most recent balance lock:
-`winRateA 0.512` / `timeoutRate 0.000` / `avgTurns 16.3`. No active
-feature branches. Post-1.0 polish runway tracked in
-[PRODUCTION.md](./PRODUCTION.md). For exact `main` HEAD use
+`winRateA 0.512` / `timeoutRate 0.000` / `avgTurns 16.3`. `main` now
+includes the visual-journey polish sequence after that tag: richer landing and
+onboarding, centered difficulty modal, first-war coach, street-stage combat
+staging, and the continuing contraband pack-opening ritual pass. Remaining
+polish and launch blockers live in [PRODUCTION.md](./PRODUCTION.md). For exact
+`main` HEAD use
 `git log -1 main`.
 
 ## Recent Releases
@@ -36,6 +39,18 @@ feature branches. Post-1.0 polish runway tracked in
 - Clarified historical versioning: public Git tags jump `v0.7.1 →
   v1.2.0-beta.1`; `v1.0.0` and `v1.1.0-beta.1` remain documented
   milestones, not published tags.
+
+### Post-v1.2.1 `main` milestones — 2026-04-21 to 2026-04-23
+
+- **PR #43** — mean-streets visual journey pass: landing hero/world staging,
+  first-run street brief, centered difficulty overlay, first-war coach,
+  combat board atmosphere, pack-opening ritual baseline, and shared chrome for
+  support screens.
+- **PR #44** — combat street staging polish: stronger board framing, wider
+  screen use, ambient side-world treatment, and follow-up responsive fixes.
+- **Current branch follow-up** — pack opening continues moving toward an
+  evidence-table / contraband-drop ritual with stronger sealed, reveal, and
+  summary presentation plus aligned docs.
 
 ### v1.1.0-beta.1 — 2026-04-19
 
@@ -106,14 +121,17 @@ mythic abilities, pack simplification, and workflow consolidation.
 | Suite | Count | Runner |
 |-------|-------|--------|
 | Node (sim, ECS, pure logic) | 624 pass / 4 skip | `pnpm run test:node` |
-| DOM (jsdom presentational) | 116 pass | `pnpm run test:dom` |
-| Browser (real Chromium) | 106 pass | `pnpm run test:browser` |
-| E2E smoke | App-flow smoke on desktop Chromium | `pnpm run test:e2e` |
-| Full E2E (local) | 157 pass / 9 skip + 28 visual captures | `pnpm run test:e2e:full` |
+| DOM (jsdom presentational) | Active suite, count changes with shipped UI | `pnpm run test:dom` |
+| Browser (real Chromium) | Active suite, count changes with shipped UI | `pnpm run test:browser` |
+| E2E smoke | Bounded CI/CD smoke lane on desktop Chromium | `pnpm run test:e2e` |
+| Full E2E (local) | Expanded local lane: core + visual + governor | `pnpm run test:e2e:full` |
 
 ## Current Work
 
-No active feature branches. Beta channel is `v1.2.1-beta.1`.
+Beta channel is `v1.2.1-beta.1`. Ongoing work is an incremental polish track on
+top of `main`, not a mechanics rewrite: branded onboarding/difficulty pass,
+continued pack-opening ritual refinement, remaining support-screen world
+coherence, and release-readiness/documentation cleanup.
 
 ## What Comes Next
 
