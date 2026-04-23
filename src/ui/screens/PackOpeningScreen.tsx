@@ -171,13 +171,17 @@ export function PackOpeningScreen({
     () => `MS-${packCards.length}-M${rarityStats.mythic}-N${newCount}`,
     [newCount, packCards.length, rarityStats.mythic],
   );
-  const currentCardType = currentCard
-    ? currentCard.kind === 'tough'
-      ? currentCard.archetype
-      : currentCard.kind === 'currency'
-        ? `$${currentCard.denomination}`
-        : currentCard.category
-    : '';
+  const currentCardType = useMemo(
+    () =>
+      currentCard
+        ? currentCard.kind === 'tough'
+          ? currentCard.archetype
+          : currentCard.kind === 'currency'
+            ? `$${currentCard.denomination}`
+            : currentCard.category
+        : '',
+    [currentCard],
+  );
 
   if (phase === 'sealed') {
     return (
@@ -237,7 +241,9 @@ export function PackOpeningScreen({
             <ContrabandProp asset="evidenceBag" className="pack-drop-bag" />
             <ContrabandProp asset="cash" className="pack-drop-cash" />
             <Sparkles size={42} className="pack-sealed-icon" />
-            <span className="pack-sealed-stamp">Evidence 05</span>
+            <span className="pack-sealed-stamp">
+              Evidence {packCards.length.toString().padStart(2, '0')}
+            </span>
             <span className="pack-sealed-label">Tap to Crack</span>
           </button>
           <div
@@ -290,7 +296,11 @@ export function PackOpeningScreen({
           aria-label={allRevealed ? 'View pack summary' : 'Reveal next card'}
           data-testid="pack-reveal-stage"
         >
-          <aside className="pack-reveal-dossier" aria-live="polite">
+          <aside
+            className="pack-reveal-dossier"
+            aria-live="polite"
+            aria-label="Evidence dossier"
+          >
             <p>Evidence {revealIdx + 1}</p>
             <h2>{currentCard.name}</h2>
             <dl>
