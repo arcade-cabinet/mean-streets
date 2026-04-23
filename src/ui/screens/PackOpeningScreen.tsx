@@ -168,7 +168,7 @@ export function PackOpeningScreen({
     [packCards, isNew],
   );
   const dropTag = useMemo(
-    () => `MS-${packCards.length}${rarityStats.mythic}${newCount}`,
+    () => `MS-${packCards.length}-M${rarityStats.mythic}-N${newCount}`,
     [newCount, packCards.length, rarityStats.mythic],
   );
   const currentCardType = currentCard
@@ -279,6 +279,15 @@ export function PackOpeningScreen({
         <div
           className="pack-reveal-stage"
           onClick={handleAdvance}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              handleAdvance();
+            }
+          }}
+          role="button"
+          tabIndex={0}
+          aria-label={allRevealed ? 'View pack summary' : 'Reveal next card'}
           data-testid="pack-reveal-stage"
         >
           <aside className="pack-reveal-dossier" aria-live="polite">

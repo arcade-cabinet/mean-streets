@@ -50,6 +50,7 @@ describe('PackOpeningScreen', () => {
     expect(screen.getByText(/Pull 1 \//)).not.toBeNull();
     expect(screen.getByText('Evidence 1')).not.toBeNull();
     expect(screen.getByText(/lead|piece/i)).not.toBeNull();
+    expect(screen.getByLabelText('Reveal next card')).not.toBeNull();
   });
 
   it('shows progress pips in revealing phase', async () => {
