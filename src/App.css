@@ -8127,11 +8127,56 @@ select {
 }
 
 @media (max-width: 760px) {
-  .pack-case-file,
-  .pack-reveal-dossier,
   .pack-stage-props,
   .pack-summary-props {
     display: none;
+  }
+
+  .pack-case-file,
+  .pack-reveal-dossier {
+    position: static;
+    width: auto;
+    margin: 0.5rem 0.7rem 0;
+    padding: 0.7rem 0.8rem;
+    border-radius: 14px;
+    transform: none;
+  }
+
+  .pack-case-file {
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.28);
+  }
+
+  .pack-reveal-dossier {
+    margin-top: 0.65rem;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.24);
+  }
+
+  .pack-case-file dl,
+  .pack-reveal-dossier dl {
+    gap: 0.45rem;
+    margin-top: 0.6rem;
+  }
+
+  .pack-case-file div,
+  .pack-reveal-dossier div {
+    gap: 0.5rem;
+    padding-top: 0.35rem;
+  }
+
+  .pack-case-file dt,
+  .pack-reveal-dossier dt,
+  .pack-summary-table-header span,
+  .pack-summary-ledger {
+    font-size: 0.62rem;
+  }
+
+  .pack-case-file dd,
+  .pack-reveal-dossier dd {
+    font-size: 0.72rem;
+  }
+
+  .pack-reveal-dossier h2 {
+    font-size: 0.94rem;
   }
 
   .pack-summary-table {

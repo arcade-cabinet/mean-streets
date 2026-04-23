@@ -49,7 +49,7 @@ describe('PackOpeningScreen', () => {
     expect(screen.getByTestId('pack-reveal-card-0')).not.toBeNull();
     expect(screen.getByText(/Pull 1 \//)).not.toBeNull();
     expect(screen.getByText('Evidence 1')).not.toBeNull();
-    expect(screen.getByText(/lead|piece/i)).not.toBeNull();
+    expect(screen.getByText(/fresh lead|filed piece/i)).not.toBeNull();
     expect(screen.getByLabelText('Reveal next card')).not.toBeNull();
   });
 

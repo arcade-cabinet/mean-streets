@@ -89,8 +89,10 @@ or **explicitly post-launch polish**. If work is complete and already true on
 
 - [ ] **Mythic art editorial pass** — replace geometric SVG placeholders with
       authored illustrations.
-- [ ] **Mythic balance paper-playtest** — review each of the 10 mythics
-      individually despite the locked core ruleset.
+- [ ] **Mythic paper-playtest review** — review each of the 10 mythics
+      individually for UX, readability, and authored identity; mechanics,
+      stats, and rules remain locked by `docs/RULES.md` unless explicitly
+      approved and validated with `pnpm run analysis:benchmark` before commit.
 - [ ] **Writer sign-off** — lore, tutorial copy, difficulty copy, and
       achievement/store copy all need a final brand/voice review.
 - [ ] **Splash screen custom art** — replace the temporary color-only splash.
